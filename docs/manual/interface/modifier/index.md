@@ -1,6 +1,6 @@
 # Modifier
 
-Modifiers are some of the key components of [ASLS Studio](/). They offer a way to interract and manipulate a show's ressources such as [universe](/modifiers/universe/), [Groups](/modifiers/group/), [chases](modifiers/chase/) and much more, live. They are placed at the bottom section of the app and can be accessed by interracting with both the [toolbar](/interface/toolbar/) and [group pool](/interface/grouppool/) interface components.
+Modifiers are some of the key components of [ASLS Studio](/). They offer a way to interract and manipulate a show's ressources such as [universe](/modifiers/universe/), [Groups](/modifiers/group/), [chases](/modifiers/chase/) and much more, live. They are placed at the bottom section of the app and can be accessed by interracting with both the [toolbar](/interface/toolbar/) and [group pool](/interface/grouppool/) interface components.
 
 Modifiers are comprised of modifier-specific widgets that can be used in order to visualize, edit and store show properties.
 
