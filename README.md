@@ -12,7 +12,7 @@ Part of ASLS (Autonomous Stage Lighting Systems) development, it was originally 
 
 ## Features
 
-ASLS Studio comes with standard DMX lighting control software features such as [Universe patching](/patch/), [Fixture grouping](manual/workflow/groups/), [Scene generation](/cues/scene), [Effect engines](manual/workflow/cues/effects/), [Show Emulation](/manual/interface/visualizer/) and much more. The following manual aims to guide you through each individual feature.
+ASLS Studio comes with standard DMX lighting control software features such as Universe patching, Fixture grouping, Scene generation, Effect engines, Show Emulation and much more. The following manual aims to guide you through each individual feature.
 
 
 # Installation
