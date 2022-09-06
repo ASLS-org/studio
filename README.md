@@ -1,5 +1,7 @@
 # asls_studio
 
+ASLS Studio is an open-source web-based DMX lighting control software implementing WebGL-based real time Visualization.
+
 ## Project setup
 ```
 npm install

@@ -1,0 +1,244 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "WashFX",
+  "categories": ["Color Changer"],
+  "meta": {
+    "authors": ["Justin Hornsby", "Felix Edelmann"],
+    "createDate": "2017-11-21",
+    "lastModifyDate": "2018-08-10"
+  },
+  "links": {
+    "manual": ["https://www.chauvetdj.com/wp-content/uploads/2015/12/Wash_FX_UM_Rev1_WO-1.pdf"],
+    "productPage": ["https://www.chauvetdj.com/products/wash-fx/"],
+    "video": [
+      "https://www.youtube.com/watch?v=VCuOFK6Vr9k",
+      "https://www.youtube.com/watch?v=YYqyuCCxH7w"
+    ]
+  },
+  "physical": {
+    "dimensions": [215, 255, 180],
+    "weight": 2.2,
+    "power": 75,
+    "DMXconnector": "3-pin",
+    "bulb": {
+      "type": "LED"
+    },
+    "lens": {
+      "degreesMinMax": [90, 90]
+    }
+  },
+  "matrix": {
+    "pixelKeys": [
+      [
+        ["4", "5", "6"],
+        ["3", "2", "1"]
+      ]
+    ]
+  },
+  "availableChannels": {
+    "Red": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Red"
+      }
+    },
+    "Green": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Green"
+      }
+    },
+    "Blue": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Blue"
+      }
+    },
+    "Strobe": {
+      "capability": {
+        "type": "ShutterStrobe",
+        "shutterEffect": "Strobe",
+        "speedStart": "0Hz",
+        "speedEnd": "20Hz"
+      }
+    },
+    "Auto Program": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 5],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [6, 20],
+          "type": "Effect",
+          "effectName": "Pattern 1"
+        },
+        {
+          "dmxRange": [21, 35],
+          "type": "Effect",
+          "effectName": "Pattern 2"
+        },
+        {
+          "dmxRange": [36, 50],
+          "type": "Effect",
+          "effectName": "Pattern 3"
+        },
+        {
+          "dmxRange": [51, 65],
+          "type": "Effect",
+          "effectName": "Pattern 4"
+        },
+        {
+          "dmxRange": [66, 80],
+          "type": "Effect",
+          "effectName": "Pattern 5"
+        },
+        {
+          "dmxRange": [81, 95],
+          "type": "Effect",
+          "effectName": "Pattern 6"
+        },
+        {
+          "dmxRange": [96, 110],
+          "type": "Effect",
+          "effectName": "Pattern 7"
+        },
+        {
+          "dmxRange": [111, 125],
+          "type": "Effect",
+          "effectName": "Pattern 8"
+        },
+        {
+          "dmxRange": [126, 140],
+          "type": "Effect",
+          "effectName": "Pattern 9"
+        },
+        {
+          "dmxRange": [141, 155],
+          "type": "Effect",
+          "effectName": "Pattern 10"
+        },
+        {
+          "dmxRange": [156, 170],
+          "type": "Effect",
+          "effectName": "Pattern 11"
+        },
+        {
+          "dmxRange": [171, 185],
+          "type": "Effect",
+          "effectName": "Pattern 12"
+        },
+        {
+          "dmxRange": [186, 200],
+          "type": "Effect",
+          "effectName": "Pattern 13"
+        },
+        {
+          "dmxRange": [201, 215],
+          "type": "Effect",
+          "effectName": "Pattern 14"
+        },
+        {
+          "dmxRange": [216, 230],
+          "type": "Effect",
+          "effectName": "Pattern 15"
+        },
+        {
+          "dmxRange": [231, 245],
+          "type": "Effect",
+          "effectName": "Pattern 16"
+        },
+        {
+          "dmxRange": [246, 255],
+          "type": "Effect",
+          "effectName": "Sound Active",
+          "soundControlled": true
+        }
+      ]
+    },
+    "Auto Program Speed": {
+      "capability": {
+        "type": "EffectSpeed",
+        "speedStart": "slow",
+        "speedEnd": "fast"
+      }
+    },
+    "Auto or Sound Program": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 10],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [11, 127],
+          "type": "Effect",
+          "effectName": "Auto Program"
+        },
+        {
+          "dmxRange": [128, 255],
+          "type": "Effect",
+          "effectName": "Sound Program"
+        }
+      ]
+    },
+    "Master Dimmer": {
+      "capability": {
+        "type": "Intensity"
+      }
+    }
+  },
+  "templateChannels": {
+    "Red $pixelKey": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Red"
+      }
+    },
+    "Green $pixelKey": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Green"
+      }
+    },
+    "Blue $pixelKey": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Blue"
+      }
+    }
+  },
+  "modes": [
+    {
+      "name": "7ch",
+      "channels": [
+        "Red",
+        "Green",
+        "Blue",
+        "Strobe",
+        "Auto Program",
+        "Auto Program Speed",
+        "Auto or Sound Program"
+      ]
+    },
+    {
+      "name": "23ch",
+      "channels": [
+        "Master Dimmer",
+        "Auto Program",
+        "Auto Program Speed",
+        "Strobe",
+        "Auto or Sound Program",
+        {
+          "insert": "matrixChannels",
+          "repeatFor": "eachPixelABC",
+          "channelOrder": "perPixel",
+          "templateChannels": [
+            "Red $pixelKey",
+            "Green $pixelKey",
+            "Blue $pixelKey"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "Pan/Tilt Fader",
+  "shortName": "PanTilt",
+  "categories": ["Moving Head"],
+  "meta": {
+    "authors": ["Flo Edelmann"],
+    "createDate": "2017-07-17",
+    "lastModifyDate": "2018-09-04"
+  },
+  "availableChannels": {
+    "Pan": {
+      "fineChannelAliases": ["Pan fine", "Pan fine^2"],
+      "defaultValue": "50%",
+      "capability": {
+        "type": "Pan",
+        "angleStart": "0deg",
+        "angleEnd": "540deg"
+      }
+    },
+    "Tilt": {
+      "fineChannelAliases": ["Tilt fine", "Tilt fine^2"],
+      "defaultValue": "50%",
+      "capability": {
+        "type": "Tilt",
+        "angleStart": "0deg",
+        "angleEnd": "180deg"
+      }
+    }
+  },
+  "modes": [
+    {
+      "name": "8 bit",
+      "shortName": "8bit",
+      "channels": [
+        "Pan",
+        "Tilt"
+      ]
+    },
+    {
+      "name": "16 bit",
+      "shortName": "16bit",
+      "channels": [
+        "Pan",
+        "Pan fine",
+        "Tilt",
+        "Tilt fine"
+      ]
+    },
+    {
+      "name": "16 bit (alternate)",
+      "shortName": "16bit-alt",
+      "channels": [
+        "Pan",
+        "Tilt",
+        "Pan fine",
+        "Tilt fine"
+      ]
+    },
+    {
+      "name": "24 bit",
+      "shortName": "24bit",
+      "channels": [
+        "Pan",
+        "Pan fine",
+        "Pan fine^2",
+        "Tilt",
+        "Tilt fine",
+        "Tilt fine^2"
+      ]
+    },
+    {
+      "name": "24 bit (alternate)",
+      "shortName": "24bit-alt",
+      "channels": [
+        "Pan",
+        "Tilt",
+        "Pan fine",
+        "Tilt fine",
+        "Pan fine^2",
+        "Tilt fine^2"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,429 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "Stage TRI LED",
+  "categories": ["Stand", "Color Changer"],
+  "meta": {
+    "authors": ["p_0g_8mm3_", "Flo Edelmann"],
+    "createDate": "2018-01-30",
+    "lastModifyDate": "2019-03-10"
+  },
+  "links": {
+    "manual": ["https://images.thomann.de/pics/prod/238663_manual.pdf"],
+    "video": [
+      "https://www.youtube.com/watch?v=ySy35Mulrx0"
+    ]
+  },
+  "physical": {
+    "dimensions": [1200, 2400, 10],
+    "weight": 16,
+    "power": 90,
+    "DMXconnector": "3-pin",
+    "bulb": {
+      "type": "4x 7x 3W RGB LEDs"
+    },
+    "lens": {
+      "degreesMinMax": [40, 40]
+    }
+  },
+  "matrix": {
+    "pixelKeys": [
+      [
+        ["1", "2", "3", "4"]
+      ]
+    ],
+    "pixelGroups": {
+      "1+2": ["1", "2"],
+      "3+4": ["3", "4"],
+      "Master": ["1", "2", "3", "4"]
+    }
+  },
+  "availableChannels": {
+    "Dimmer": {
+      "capability": {
+        "type": "Intensity"
+      }
+    },
+    "Program": {
+      "defaultValue": 0,
+      "capabilities": [
+        {
+          "dmxRange": [0, 9],
+          "type": "NoFunction",
+          "switchChannels": {
+            "Speed / Sound Sensitivity": "Speed"
+          }
+        },
+        {
+          "dmxRange": [10, 19],
+          "type": "ColorPreset",
+          "colors": ["#ff0000"],
+          "comment": "Red",
+          "switchChannels": {
+            "Speed / Sound Sensitivity": "Speed"
+          }
+        },
+        {
+          "dmxRange": [20, 29],
+          "type": "ColorPreset",
+          "colors": ["#ffff00"],
+          "comment": "Yellow",
+          "switchChannels": {
+            "Speed / Sound Sensitivity": "Speed"
+          }
+        },
+        {
+          "dmxRange": [30, 39],
+          "type": "ColorPreset",
+          "colors": ["#00ff00"],
+          "comment": "Green",
+          "switchChannels": {
+            "Speed / Sound Sensitivity": "Speed"
+          }
+        },
+        {
+          "dmxRange": [40, 49],
+          "type": "ColorPreset",
+          "colors": ["#00ffff"],
+          "comment": "Cyan",
+          "switchChannels": {
+            "Speed / Sound Sensitivity": "Speed"
+          }
+        },
+        {
+          "dmxRange": [50, 59],
+          "type": "ColorPreset",
+          "colors": ["#0000ff"],
+          "comment": "Blue",
+          "switchChannels": {
+            "Speed / Sound Sensitivity": "Speed"
+          }
+        },
+        {
+          "dmxRange": [60, 69],
+          "type": "ColorPreset",
+          "colors": ["#ff00ff"],
+          "comment": "Violet",
+          "switchChannels": {
+            "Speed / Sound Sensitivity": "Speed"
+          }
+        },
+        {
+          "dmxRange": [70, 79],
+          "type": "ColorPreset",
+          "colors": ["#ffffff"],
+          "comment": "White",
+          "switchChannels": {
+            "Speed / Sound Sensitivity": "Speed"
+          }
+        },
+        {
+          "dmxRange": [80, 89],
+          "type": "Effect",
+          "effectName": "Program 1",
+          "switchChannels": {
+            "Speed / Sound Sensitivity": "Speed"
+          }
+        },
+        {
+          "dmxRange": [90, 99],
+          "type": "Effect",
+          "effectName": "Program 2",
+          "switchChannels": {
+            "Speed / Sound Sensitivity": "Speed"
+          }
+        },
+        {
+          "dmxRange": [100, 109],
+          "type": "Effect",
+          "effectName": "Program 3",
+          "switchChannels": {
+            "Speed / Sound Sensitivity": "Speed"
+          }
+        },
+        {
+          "dmxRange": [110, 119],
+          "type": "Effect",
+          "effectName": "Program 4",
+          "switchChannels": {
+            "Speed / Sound Sensitivity": "Speed"
+          }
+        },
+        {
+          "dmxRange": [120, 129],
+          "type": "Effect",
+          "effectName": "Program 5",
+          "switchChannels": {
+            "Speed / Sound Sensitivity": "Speed"
+          }
+        },
+        {
+          "dmxRange": [130, 139],
+          "type": "Effect",
+          "effectName": "Program 6",
+          "switchChannels": {
+            "Speed / Sound Sensitivity": "Speed"
+          }
+        },
+        {
+          "dmxRange": [140, 149],
+          "type": "Effect",
+          "effectName": "Program 7",
+          "switchChannels": {
+            "Speed / Sound Sensitivity": "Speed"
+          }
+        },
+        {
+          "dmxRange": [150, 159],
+          "type": "Effect",
+          "effectName": "Program 8",
+          "switchChannels": {
+            "Speed / Sound Sensitivity": "Speed"
+          }
+        },
+        {
+          "dmxRange": [160, 169],
+          "type": "Effect",
+          "effectName": "Program 9",
+          "switchChannels": {
+            "Speed / Sound Sensitivity": "Speed"
+          }
+        },
+        {
+          "dmxRange": [170, 179],
+          "type": "Effect",
+          "effectName": "Program 10",
+          "switchChannels": {
+            "Speed / Sound Sensitivity": "Speed"
+          }
+        },
+        {
+          "dmxRange": [180, 189],
+          "type": "Effect",
+          "effectName": "Program 11",
+          "switchChannels": {
+            "Speed / Sound Sensitivity": "Speed"
+          }
+        },
+        {
+          "dmxRange": [190, 199],
+          "type": "Effect",
+          "effectName": "Program 12",
+          "switchChannels": {
+            "Speed / Sound Sensitivity": "Speed"
+          }
+        },
+        {
+          "dmxRange": [200, 209],
+          "type": "Effect",
+          "effectName": "Program 13",
+          "switchChannels": {
+            "Speed / Sound Sensitivity": "Speed"
+          }
+        },
+        {
+          "dmxRange": [210, 219],
+          "type": "Effect",
+          "effectName": "Program 14",
+          "switchChannels": {
+            "Speed / Sound Sensitivity": "Speed"
+          }
+        },
+        {
+          "dmxRange": [220, 229],
+          "type": "Effect",
+          "effectName": "Program 15",
+          "switchChannels": {
+            "Speed / Sound Sensitivity": "Speed"
+          }
+        },
+        {
+          "dmxRange": [230, 239],
+          "type": "Effect",
+          "effectName": "Program 16",
+          "switchChannels": {
+            "Speed / Sound Sensitivity": "Speed"
+          }
+        },
+        {
+          "dmxRange": [240, 255],
+          "type": "Effect",
+          "effectName": "Sound control",
+          "soundControlled": true,
+          "switchChannels": {
+            "Speed / Sound Sensitivity": "Sound Sensitivity"
+          }
+        }
+      ]
+    },
+    "Speed": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 0],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Closed"
+        },
+        {
+          "dmxRange": [1, 255],
+          "type": "EffectSpeed",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        }
+      ]
+    },
+    "Sound Sensitivity": {
+      "capability": {
+        "type": "SoundSensitivity",
+        "soundSensitivityStart": "low",
+        "soundSensitivityEnd": "high"
+      }
+    },
+    "Strobe": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 9],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [10, 255],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        }
+      ]
+    },
+    "Mode": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 9],
+          "type": "Maintenance",
+          "comment": "RGB"
+        },
+        {
+          "dmxRange": [10, 249],
+          "type": "Maintenance",
+          "comment": "Programs",
+          "helpWanted": "Are individual programs selectable in this capability?"
+        },
+        {
+          "dmxRange": [250, 255],
+          "type": "Maintenance",
+          "comment": "Sound control"
+        }
+      ]
+    }
+  },
+  "templateChannels": {
+    "Red $pixelKey": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Red"
+      }
+    },
+    "Green $pixelKey": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Green"
+      }
+    },
+    "Blue $pixelKey": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Blue"
+      }
+    }
+  },
+  "modes": [
+    {
+      "name": "RGB",
+      "shortName": "d-P1",
+      "channels": [
+        "Red Master",
+        "Green Master",
+        "Blue Master"
+      ]
+    },
+    {
+      "name": "RGBD",
+      "shortName": "d-P2",
+      "channels": [
+        "Red Master",
+        "Green Master",
+        "Blue Master",
+        "Dimmer"
+      ]
+    },
+    {
+      "name": "Program",
+      "shortName": "d-P5",
+      "channels": [
+        "Program",
+        "Speed / Sound Sensitivity"
+      ]
+    },
+    {
+      "name": "Color + Program",
+      "shortName": "d-P7",
+      "channels": [
+        "Red Master",
+        "Green Master",
+        "Blue Master",
+        "Program",
+        "Speed / Sound Sensitivity",
+        "Strobe",
+        "Dimmer"
+      ]
+    },
+    {
+      "name": "Split",
+      "shortName": "d-P3",
+      "channels": [
+        "Red 1+2",
+        "Green 1+2",
+        "Blue 1+2",
+        "Red 3+4",
+        "Green 3+4",
+        "Blue 3+4",
+        "Strobe",
+        "Dimmer"
+      ]
+    },
+    {
+      "name": "Individual",
+      "shortName": "d-P4",
+      "channels": [
+        {
+          "insert": "matrixChannels",
+          "repeatFor": "eachPixelABC",
+          "channelOrder": "perPixel",
+          "templateChannels": [
+            "Red $pixelKey",
+            "Green $pixelKey",
+            "Blue $pixelKey"
+          ]
+        },
+        "Strobe",
+        "Dimmer"
+      ]
+    },
+    {
+      "name": "Complete",
+      "shortName": "d-P6",
+      "channels": [
+        "Mode",
+        "Dimmer",
+        "Strobe",
+        {
+          "insert": "matrixChannels",
+          "repeatFor": "eachPixelABC",
+          "channelOrder": "perPixel",
+          "templateChannels": [
+            "Red $pixelKey",
+            "Green $pixelKey",
+            "Blue $pixelKey"
+          ]
+        }
+      ]
+    }
+  ]
+}

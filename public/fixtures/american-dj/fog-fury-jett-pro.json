@@ -1,0 +1,379 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "Fog Fury Jett Pro",
+  "shortName": "FuryJettPro",
+  "categories": ["Smoke", "Color Changer"],
+  "meta": {
+    "authors": ["Felix Edelmann"],
+    "createDate": "2017-08-06",
+    "lastModifyDate": "2018-11-26"
+  },
+  "links": {
+    "manual": [
+      "https://cdb.s3-us-west-1.amazonaws.com/ItemRelatedFiles/10687/ADJ%20Fog%20Fury%20Jett%20Pro%20User%20Manual.pdf"
+    ],
+    "productPage": [
+      "https://www.adj.com/fog-fury-jett-pro"
+    ],
+    "video": [
+      "https://www.youtube.com/watch?v=dN6IbP1x5Fo",
+      "https://www.youtube.com/watch?v=0mFX-qgHLbo"
+    ]
+  },
+  "physical": {
+    "dimensions": [419, 206, 315],
+    "weight": 9.5,
+    "power": 1550,
+    "DMXconnector": "3-pin",
+    "bulb": {
+      "type": "3W LEDs (6x Red, 7x Green, 6x Blue, 3x Amber, 6x UV)"
+    }
+  },
+  "availableChannels": {
+    "Fog & Color Change": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 31],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [32, 255],
+          "type": "Fog",
+          "comment": "with color change",
+          "fogType": "Fog",
+          "fogOutput": "1133m^3/min"
+        }
+      ]
+    },
+    "Fog": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 31],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [32, 255],
+          "type": "Fog",
+          "fogType": "Fog",
+          "fogOutput": "1133m^3/min"
+        }
+      ]
+    },
+    "Color Macros": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 7],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [8, 15],
+          "type": "ColorPreset",
+          "colors": ["#ff0000"],
+          "comment": "Red"
+        },
+        {
+          "dmxRange": [16, 23],
+          "type": "ColorPreset",
+          "colors": ["#00ff00"],
+          "comment": "Green"
+        },
+        {
+          "dmxRange": [24, 31],
+          "type": "ColorPreset",
+          "colors": ["#0000ff", "#8800ff"],
+          "comment": "Blue + UV"
+        },
+        {
+          "dmxRange": [32, 39],
+          "type": "ColorPreset",
+          "colors": ["#ffbf00"],
+          "comment": "Amber"
+        },
+        {
+          "dmxRange": [40, 47],
+          "type": "ColorPreset",
+          "colors": ["#8800ff"],
+          "comment": "UV"
+        },
+        {
+          "dmxRange": [48, 55],
+          "type": "ColorPreset",
+          "colors": ["#ff00ff", "#8800ff"],
+          "comment": "Red + Blue + UV"
+        },
+        {
+          "dmxRange": [56, 63],
+          "type": "ColorPreset",
+          "colors": ["#92ff00"],
+          "comment": "OuterGreen + Amber"
+        },
+        {
+          "dmxRange": [64, 71],
+          "type": "ColorPreset",
+          "colors": ["#ff0000", "#8800ff"],
+          "comment": "Red + UV"
+        },
+        {
+          "dmxRange": [72, 79],
+          "type": "ColorPreset",
+          "colors": ["#ffbfff"],
+          "comment": "Blue + Amber"
+        },
+        {
+          "dmxRange": [80, 87],
+          "type": "ColorPreset",
+          "colors": ["#00ffff"],
+          "comment": "InnerGreen + Blue"
+        },
+        {
+          "dmxRange": [88, 95],
+          "type": "ColorPreset",
+          "colors": ["#ffff00"],
+          "comment": "Red + InnerGreen"
+        },
+        {
+          "dmxRange": [96, 103],
+          "type": "ColorPreset",
+          "colors": ["#ffffff"],
+          "comment": "Red + InnerGreen + Blue"
+        },
+        {
+          "dmxRange": [104, 111],
+          "type": "ColorPreset",
+          "colors": ["#84cf78"],
+          "comment": "Colormix 1"
+        },
+        {
+          "dmxRange": [112, 119],
+          "type": "ColorPreset",
+          "colors": ["#89ff00", "#30005a"],
+          "comment": "Colormix 2 + UV"
+        },
+        {
+          "dmxRange": [120, 127],
+          "type": "ColorPreset",
+          "colors": ["#6bfd00", "#6500be"],
+          "comment": "Colormix 3 + UV"
+        },
+        {
+          "dmxRange": [128, 135],
+          "type": "ColorPreset",
+          "colors": ["#b98ce9", "#250046"],
+          "comment": "Colormix 4 + UV"
+        },
+        {
+          "dmxRange": [136, 143],
+          "type": "ColorPreset",
+          "colors": ["#ffc916", "#6b00c8"],
+          "comment": "Colormix 5 + UV"
+        },
+        {
+          "dmxRange": [144, 151],
+          "type": "ColorPreset",
+          "colors": ["#35ff00", "#500096"],
+          "comment": "Colormix 6 + UV"
+        },
+        {
+          "dmxRange": [152, 159],
+          "type": "ColorPreset",
+          "colors": ["#00c8c8", "#6b00c8"],
+          "comment": "Colormix 7 + UV"
+        },
+        {
+          "dmxRange": [160, 167],
+          "type": "ColorPreset",
+          "colors": ["#2d7db4", "#20003c"],
+          "comment": "Colormix 8 + UV"
+        },
+        {
+          "dmxRange": [168, 175],
+          "type": "ColorPreset",
+          "colors": ["#c8b1eb"],
+          "comment": "Colormix 9"
+        },
+        {
+          "dmxRange": [176, 183],
+          "type": "ColorPreset",
+          "colors": ["#c9ff1a", "#1d0037"],
+          "comment": "Colormix 10 + UV"
+        },
+        {
+          "dmxRange": [184, 191],
+          "type": "ColorPreset",
+          "colors": ["#adff14", "#5b00aa"],
+          "comment": "Colormix 11 + UV"
+        },
+        {
+          "dmxRange": [192, 199],
+          "type": "ColorPreset",
+          "colors": ["#86ff00", "#350064"],
+          "comment": "Colormix 12 + UV"
+        },
+        {
+          "dmxRange": [200, 207],
+          "type": "ColorPreset",
+          "colors": ["#ff8a00"],
+          "comment": "Colormix 13"
+        },
+        {
+          "dmxRange": [208, 215],
+          "type": "ColorPreset",
+          "colors": ["#645096", "#8800ff"],
+          "comment": "Colormix 14 + UV"
+        },
+        {
+          "dmxRange": [216, 223],
+          "type": "ColorPreset",
+          "colors": ["#b4ff94"],
+          "comment": "Colormix 15"
+        },
+        {
+          "dmxRange": [224, 231],
+          "type": "ColorPreset",
+          "colors": ["#becf50", "#7600de"],
+          "comment": "Colormix 16 + UV"
+        },
+        {
+          "dmxRange": [232, 239],
+          "type": "ColorPreset",
+          "colors": ["#ffffff", "#8800ff"],
+          "comment": "All on"
+        },
+        {
+          "dmxRange": [240, 247],
+          "type": "Effect",
+          "effectName": "Random color 1"
+        },
+        {
+          "dmxRange": [248, 255],
+          "type": "Effect",
+          "effectName": "Random color 2"
+        }
+      ]
+    },
+    "Strobe": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 31],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [32, 95],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        },
+        {
+          "dmxRange": [96, 159],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Pulse"
+        },
+        {
+          "dmxRange": [160, 255],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "slow",
+          "speedEnd": "fast",
+          "randomTiming": true
+        }
+      ]
+    },
+    "Red": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Red"
+      }
+    },
+    "Green (Outer LEDs)": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Green"
+      }
+    },
+    "Blue": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Blue"
+      }
+    },
+    "Amber": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Amber"
+      }
+    },
+    "Green (Inner LEDs)": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Green"
+      }
+    },
+    "UV": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "UV"
+      }
+    },
+    "Dimmer": {
+      "highlightValue": 255,
+      "capability": {
+        "type": "Intensity"
+      }
+    }
+  },
+  "modes": [
+    {
+      "name": "1-channel",
+      "shortName": "1ch",
+      "channels": [
+        "Fog & Color Change"
+      ]
+    },
+    {
+      "name": "2-channel",
+      "shortName": "2ch",
+      "channels": [
+        "Fog",
+        "Color Macros"
+      ]
+    },
+    {
+      "name": "3-channel",
+      "shortName": "3ch",
+      "channels": [
+        "Fog",
+        "Color Macros",
+        "Strobe"
+      ]
+    },
+    {
+      "name": "7-channel",
+      "shortName": "7ch",
+      "channels": [
+        "Fog",
+        "Red",
+        "Green (Outer LEDs)",
+        "Blue",
+        "Amber",
+        "Green (Inner LEDs)",
+        "UV"
+      ]
+    },
+    {
+      "name": "9-channel",
+      "shortName": "9ch",
+      "channels": [
+        "Fog",
+        "Red",
+        "Green (Outer LEDs)",
+        "Blue",
+        "Amber",
+        "Green (Inner LEDs)",
+        "UV",
+        "Strobe",
+        "Dimmer"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,416 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "DS-1000RGB",
+  "categories": ["Laser", "Color Changer"],
+  "meta": {
+    "authors": ["finnTE"],
+    "createDate": "2019-01-08",
+    "lastModifyDate": "2019-01-08"
+  },
+  "links": {
+    "manual": [
+      "https://www.laserworld.com/en/download-file-51-Laserworld_Diode_Series_web.html"
+    ],
+    "productPage": [
+      "https://www.laserworld.com/en/laserworld-ds/laserworld-ds-1000rgb.html"
+    ],
+    "video": [
+      "https://www.youtube.com/watch?v=IbVylAJv3_0"
+    ]
+  },
+  "physical": {
+    "dimensions": [200, 110, 140],
+    "weight": 2.8,
+    "power": 40,
+    "DMXconnector": "3-pin"
+  },
+  "availableChannels": {
+    "Mode Select": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 63],
+          "type": "Maintenance",
+          "comment": "Laser Off"
+        },
+        {
+          "dmxRange": [64, 127],
+          "type": "Effect",
+          "effectName": "Sound mode",
+          "soundControlled": true
+        },
+        {
+          "dmxRange": [128, 159],
+          "type": "Effect",
+          "effectName": "Auto mode (beam patterns)"
+        },
+        {
+          "dmxRange": [160, 191],
+          "type": "Effect",
+          "effectName": "Auto mode (graphics)"
+        },
+        {
+          "dmxRange": [192, 255],
+          "type": "NoFunction",
+          "comment": "DMX Mode"
+        }
+      ]
+    },
+    "Pattern Selection": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 87],
+          "type": "Effect",
+          "effectName": "Graphics patterns"
+        },
+        {
+          "dmxRange": [88, 253],
+          "type": "Effect",
+          "effectName": "Beam patterns"
+        },
+        {
+          "dmxRange": [254, 255],
+          "type": "Maintenance",
+          "comment": "Laser Off"
+        }
+      ]
+    },
+    "Strobe Effect": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 0],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [1, 255],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "fast",
+          "speedEnd": "slow"
+        }
+      ]
+    },
+    "Horizontal Movement": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 0],
+          "type": "BeamPosition",
+          "horizontalAngle": "center"
+        },
+        {
+          "dmxRange": [1, 167],
+          "type": "BeamPosition",
+          "horizontalAngleStart": "left",
+          "horizontalAngleEnd": "right"
+        },
+        {
+          "dmxRange": [168, 188],
+          "type": "Effect",
+          "effectName": "Movement rightwards",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        },
+        {
+          "dmxRange": [189, 209],
+          "type": "Effect",
+          "effectName": "Movement leftwards",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        },
+        {
+          "dmxRange": [210, 254],
+          "type": "Effect",
+          "effectName": "Movement rightwards/leftwards alternating",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        },
+        {
+          "dmxRange": [255, 255],
+          "type": "BeamPosition",
+          "horizontalAngle": "center"
+        }
+      ]
+    },
+    "Vertical Movement": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 0],
+          "type": "BeamPosition",
+          "verticalAngle": "center"
+        },
+        {
+          "dmxRange": [1, 167],
+          "type": "BeamPosition",
+          "verticalAngleStart": "top",
+          "verticalAngleEnd": "bottom"
+        },
+        {
+          "dmxRange": [168, 188],
+          "type": "Effect",
+          "effectName": "Movement downwards",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        },
+        {
+          "dmxRange": [189, 209],
+          "type": "Effect",
+          "effectName": "Movement upwards",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        },
+        {
+          "dmxRange": [210, 254],
+          "type": "Effect",
+          "effectName": "Movement downwards/upwards alternating",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        },
+        {
+          "dmxRange": [255, 255],
+          "type": "BeamPosition",
+          "verticalAngle": "center"
+        }
+      ]
+    },
+    "Zoom": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 0],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [1, 167],
+          "type": "Zoom",
+          "angleStart": "narrow",
+          "angleEnd": "wide"
+        },
+        {
+          "dmxRange": [168, 188],
+          "type": "Effect",
+          "effectName": "Increasing angle",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        },
+        {
+          "dmxRange": [189, 209],
+          "type": "Effect",
+          "effectName": "Decreasing angle",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        },
+        {
+          "dmxRange": [210, 254],
+          "type": "Effect",
+          "effectName": "Alternate decreasing/increasing angle",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        },
+        {
+          "dmxRange": [255, 255],
+          "type": "Effect",
+          "effectName": "Opposite zoom of X- and Y-axis"
+        }
+      ]
+    },
+    "Rotation Y-axis": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 150],
+          "type": "Rotation",
+          "angleStart": "0deg",
+          "angleEnd": "360deg",
+          "helpWanted": "Correct angle?"
+        },
+        {
+          "dmxRange": [151, 255],
+          "type": "Rotation",
+          "speedStart": "slow CW",
+          "speedEnd": "fast CW"
+        }
+      ]
+    },
+    "Rotation X-axis": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 150],
+          "type": "Rotation",
+          "angleStart": "0deg",
+          "angleEnd": "360deg",
+          "helpWanted": "Correct angle?"
+        },
+        {
+          "dmxRange": [151, 255],
+          "type": "Rotation",
+          "speedStart": "slow CW",
+          "speedEnd": "fast CW"
+        }
+      ]
+    },
+    "Rotation Z-axis": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 180],
+          "type": "Rotation",
+          "angleStart": "0deg",
+          "angleEnd": "360deg",
+          "helpWanted": "Correct angle?"
+        },
+        {
+          "dmxRange": [181, 217],
+          "type": "Rotation",
+          "speedStart": "slow CW",
+          "speedEnd": "fast CW"
+        },
+        {
+          "dmxRange": [218, 255],
+          "type": "Rotation",
+          "speedStart": "slow CCW",
+          "speedEnd": "fast CCW"
+        }
+      ]
+    },
+    "Blanking": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 70],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [71, 139],
+          "type": "Effect",
+          "effectName": "Dot visibility",
+          "speedStart": "fast",
+          "speedEnd": "slow"
+        },
+        {
+          "dmxRange": [140, 209],
+          "type": "Effect",
+          "effectName": "Dashed Lines"
+        },
+        {
+          "dmxRange": [210, 255],
+          "type": "Effect",
+          "effectName": "Point selection"
+        }
+      ]
+    },
+    "Wave Movement": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 0],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [1, 127],
+          "type": "Effect",
+          "effectName": "Wave positioning",
+          "parameterStart": "0%",
+          "parameterEnd": "100%"
+        },
+        {
+          "dmxRange": [128, 191],
+          "type": "Effect",
+          "effectName": "Wave movement",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        },
+        {
+          "dmxRange": [192, 255],
+          "type": "Effect",
+          "effectName": "Wave movement",
+          "speedStart": "slow reverse",
+          "speedEnd": "fast reverse"
+        }
+      ]
+    },
+    "Color Selection": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 19],
+          "type": "ColorPreset",
+          "colors": ["#ffffff"],
+          "comment": "White"
+        },
+        {
+          "dmxRange": [20, 39],
+          "type": "ColorPreset",
+          "colors": ["#ff0000"],
+          "comment": "Red"
+        },
+        {
+          "dmxRange": [40, 59],
+          "type": "ColorPreset",
+          "colors": ["#00ff00"],
+          "comment": "Green"
+        },
+        {
+          "dmxRange": [60, 79],
+          "type": "ColorPreset",
+          "colors": ["#0000ff"],
+          "comment": "Blue"
+        },
+        {
+          "dmxRange": [80, 99],
+          "type": "ColorPreset",
+          "colors": ["#ffff00"],
+          "comment": "Yellow"
+        },
+        {
+          "dmxRange": [100, 119],
+          "type": "ColorPreset",
+          "colors": ["#ff00ff"],
+          "comment": "Magenta"
+        },
+        {
+          "dmxRange": [120, 138],
+          "type": "ColorPreset",
+          "colors": ["#00ffff"],
+          "comment": "Cyan"
+        },
+        {
+          "dmxRange": [139, 164],
+          "type": "ColorPreset",
+          "comment": "Multi-color"
+        },
+        {
+          "dmxRange": [165, 248],
+          "type": "Effect",
+          "effectPreset": "ColorJump",
+          "speedStart": "fast",
+          "speedEnd": "slow"
+        },
+        {
+          "dmxRange": [249, 254],
+          "type": "Effect",
+          "effectName": "Changing multi-color",
+          "speedStart": "fast",
+          "speedEnd": "slow"
+        },
+        {
+          "dmxRange": [255, 255],
+          "type": "ColorPreset",
+          "comment": "Multi-color without red"
+        }
+      ]
+    }
+  },
+  "modes": [
+    {
+      "name": "12-channel",
+      "shortName": "12ch",
+      "channels": [
+        "Mode Select",
+        "Pattern Selection",
+        "Strobe Effect",
+        "Horizontal Movement",
+        "Vertical Movement",
+        "Zoom",
+        "Rotation Y-axis",
+        "Rotation X-axis",
+        "Rotation Z-axis",
+        "Blanking",
+        "Wave Movement",
+        "Color Selection"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,563 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "Inno Pocket Fusion",
+  "shortName": "ADJInnoPocketFusion",
+  "categories": ["Barrel Scanner", "Laser", "Color Changer"],
+  "meta": {
+    "authors": ["Flo Edelmann", "EXELBONSAI"],
+    "createDate": "2018-07-26",
+    "lastModifyDate": "2018-08-09"
+  },
+  "links": {
+    "manual": [
+      "https://cdb.s3-us-west-1.amazonaws.com/ItemRelatedFiles/8780/inno_pocket_fusion.pdf"
+    ],
+    "video": [
+      "https://www.youtube.com/watch?v=hLYHfn-D5aY",
+      "https://www.youtube.com/watch?v=Zdd0t-rlqck",
+      "https://www.youtube.com/watch?v=uy0yZrFI4zg"
+    ],
+    "other": ["https://www.qlcplus.org/forum/viewtopic.php?f=6&t=12415"]
+  },
+  "physical": {
+    "dimensions": [340, 177, 132],
+    "weight": 3.4,
+    "power": 32,
+    "DMXconnector": "3-pin",
+    "bulb": {
+      "type": "12W White LED + 4.9mW Green Laser Diode",
+      "lumens": 50
+    },
+    "lens": {
+      "degreesMinMax": [2, 5]
+    }
+  },
+  "wheels": {
+    "Color Wheel": {
+      "slots": [
+        {
+          "type": "Open"
+        },
+        {
+          "type": "Color",
+          "name": "Red",
+          "colors": ["#ff0000"]
+        },
+        {
+          "type": "Color",
+          "name": "Orange",
+          "colors": ["#ffaa00"]
+        },
+        {
+          "type": "Color",
+          "name": "Yellow",
+          "colors": ["#ffff00"]
+        },
+        {
+          "type": "Color",
+          "name": "Green",
+          "colors": ["#00ff00"]
+        },
+        {
+          "type": "Color",
+          "name": "Blue",
+          "colors": ["#0000ff"]
+        },
+        {
+          "type": "Color",
+          "name": "Light Blue",
+          "colors": ["#77ccff"]
+        },
+        {
+          "type": "Color",
+          "name": "Pink",
+          "colors": ["#ff00ff"]
+        }
+      ]
+    }
+  },
+  "availableChannels": {
+    "Pan": {
+      "defaultValue": "50%",
+      "capability": {
+        "type": "Pan",
+        "angleStart": "0deg",
+        "angleEnd": "180deg"
+      }
+    },
+    "Tilt": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 9],
+          "type": "TiltContinuous",
+          "speed": "stop"
+        },
+        {
+          "dmxRange": [10, 120],
+          "type": "TiltContinuous",
+          "speedStart": "slow CCW",
+          "speedEnd": "fast CCW"
+        },
+        {
+          "dmxRange": [121, 134],
+          "type": "TiltContinuous",
+          "speed": "stop"
+        },
+        {
+          "dmxRange": [135, 245],
+          "type": "TiltContinuous",
+          "speedStart": "fast CW",
+          "speedEnd": "slow CW"
+        },
+        {
+          "dmxRange": [246, 255],
+          "type": "TiltContinuous",
+          "speed": "stop"
+        }
+      ]
+    },
+    "Color Wheel": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 7],
+          "type": "WheelSlot",
+          "slotNumber": 1
+        },
+        {
+          "dmxRange": [8, 15],
+          "type": "WheelSlot",
+          "slotNumber": 2
+        },
+        {
+          "dmxRange": [16, 23],
+          "type": "WheelSlot",
+          "slotNumber": 3
+        },
+        {
+          "dmxRange": [24, 31],
+          "type": "WheelSlot",
+          "slotNumber": 4
+        },
+        {
+          "dmxRange": [32, 39],
+          "type": "WheelSlot",
+          "slotNumber": 5
+        },
+        {
+          "dmxRange": [40, 47],
+          "type": "WheelSlot",
+          "slotNumber": 6
+        },
+        {
+          "dmxRange": [48, 55],
+          "type": "WheelSlot",
+          "slotNumber": 7
+        },
+        {
+          "dmxRange": [56, 63],
+          "type": "WheelSlot",
+          "slotNumber": 8
+        },
+        {
+          "dmxRange": [64, 71],
+          "type": "WheelSlot",
+          "slotNumber": 1.5
+        },
+        {
+          "dmxRange": [72, 79],
+          "type": "WheelSlot",
+          "slotNumber": 2.5
+        },
+        {
+          "dmxRange": [80, 87],
+          "type": "WheelSlot",
+          "slotNumber": 3.5
+        },
+        {
+          "dmxRange": [88, 95],
+          "type": "WheelSlot",
+          "slotNumber": 4.5
+        },
+        {
+          "dmxRange": [96, 103],
+          "type": "WheelSlot",
+          "slotNumber": 5.5
+        },
+        {
+          "dmxRange": [104, 111],
+          "type": "WheelSlot",
+          "slotNumber": 6.5
+        },
+        {
+          "dmxRange": [112, 127],
+          "type": "WheelSlot",
+          "slotNumber": 7.5
+        },
+        {
+          "dmxRange": [128, 255],
+          "type": "WheelRotation",
+          "speedStart": "slow CW",
+          "speedEnd": "fast CW"
+        }
+      ]
+    },
+    "LED Strobe": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 7],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Closed"
+        },
+        {
+          "dmxRange": [8, 15],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open"
+        },
+        {
+          "dmxRange": [16, 131],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        },
+        {
+          "dmxRange": [132, 139],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open"
+        },
+        {
+          "dmxRange": [140, 181],
+          "type": "ShutterStrobe",
+          "shutterEffect": "RampUp"
+        },
+        {
+          "dmxRange": [182, 189],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open"
+        },
+        {
+          "dmxRange": [190, 231],
+          "type": "ShutterStrobe",
+          "shutterEffect": "RampDown"
+        },
+        {
+          "dmxRange": [232, 239],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open"
+        },
+        {
+          "dmxRange": [240, 247],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "randomTiming": true
+        },
+        {
+          "dmxRange": [248, 255],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open"
+        }
+      ]
+    },
+    "Master Dimmer": {
+      "capability": {
+        "type": "Intensity"
+      }
+    },
+    "Laser Movement": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 9],
+          "type": "Rotation",
+          "speed": "stop"
+        },
+        {
+          "dmxRange": [10, 120],
+          "type": "Rotation",
+          "speedStart": "slow CW",
+          "speedEnd": "fast CW"
+        },
+        {
+          "dmxRange": [121, 135],
+          "type": "Rotation",
+          "speed": "stop"
+        },
+        {
+          "dmxRange": [136, 245],
+          "type": "Rotation",
+          "speedStart": "slow CCW",
+          "speedEnd": "fast CCW"
+        },
+        {
+          "dmxRange": [246, 255],
+          "type": "Rotation",
+          "speed": "stop"
+        }
+      ]
+    },
+    "Laser Strobe": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 7],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open"
+        },
+        {
+          "dmxRange": [8, 15],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open"
+        },
+        {
+          "dmxRange": [16, 131],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        },
+        {
+          "dmxRange": [132, 239],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open"
+        },
+        {
+          "dmxRange": [240, 247],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "randomTiming": true
+        },
+        {
+          "dmxRange": [248, 255],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open"
+        }
+      ]
+    },
+    "Show": {
+      "defaultValue": 0,
+      "capabilities": [
+        {
+          "dmxRange": [0, 7],
+          "type": "NoFunction",
+          "switchChannels": {
+            "Show Speed / Sound Sensitivity": "Show Speed"
+          }
+        },
+        {
+          "dmxRange": [8, 33],
+          "type": "Effect",
+          "effectName": "Show 1",
+          "switchChannels": {
+            "Show Speed / Sound Sensitivity": "Show Speed"
+          }
+        },
+        {
+          "dmxRange": [34, 59],
+          "type": "Effect",
+          "effectName": "Show 2",
+          "switchChannels": {
+            "Show Speed / Sound Sensitivity": "Show Speed"
+          }
+        },
+        {
+          "dmxRange": [60, 85],
+          "type": "Effect",
+          "effectName": "Show 3",
+          "switchChannels": {
+            "Show Speed / Sound Sensitivity": "Show Speed"
+          }
+        },
+        {
+          "dmxRange": [86, 111],
+          "type": "Effect",
+          "effectName": "Show 4",
+          "switchChannels": {
+            "Show Speed / Sound Sensitivity": "Show Speed"
+          }
+        },
+        {
+          "dmxRange": [112, 137],
+          "type": "Effect",
+          "effectName": "Show 5",
+          "switchChannels": {
+            "Show Speed / Sound Sensitivity": "Show Speed"
+          }
+        },
+        {
+          "dmxRange": [138, 163],
+          "type": "Effect",
+          "effectName": "Show 6",
+          "switchChannels": {
+            "Show Speed / Sound Sensitivity": "Show Speed"
+          }
+        },
+        {
+          "dmxRange": [164, 189],
+          "type": "Effect",
+          "effectName": "Show 7",
+          "switchChannels": {
+            "Show Speed / Sound Sensitivity": "Show Speed"
+          }
+        },
+        {
+          "dmxRange": [190, 215],
+          "type": "Effect",
+          "effectName": "Show 8",
+          "switchChannels": {
+            "Show Speed / Sound Sensitivity": "Show Speed"
+          }
+        },
+        {
+          "dmxRange": [216, 255],
+          "type": "Effect",
+          "effectName": "Sound Active Show",
+          "soundControlled": true,
+          "switchChannels": {
+            "Show Speed / Sound Sensitivity": "Sound Sensitivity"
+          }
+        }
+      ]
+    },
+    "Show Speed": {
+      "capability": {
+        "type": "EffectSpeed",
+        "speedStart": "slow",
+        "speedEnd": "fast"
+      }
+    },
+    "Sound Sensitivity": {
+      "capability": {
+        "type": "SoundSensitivity",
+        "soundSensitivityStart": "low",
+        "soundSensitivityEnd": "high"
+      }
+    },
+    "Dimmer Mode": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 20],
+          "type": "Maintenance",
+          "comment": "Standard"
+        },
+        {
+          "dmxRange": [21, 40],
+          "type": "Maintenance",
+          "comment": "Stage"
+        },
+        {
+          "dmxRange": [41, 60],
+          "type": "Maintenance",
+          "comment": "TV"
+        },
+        {
+          "dmxRange": [61, 80],
+          "type": "Maintenance",
+          "comment": "Architectural"
+        },
+        {
+          "dmxRange": [81, 100],
+          "type": "Maintenance",
+          "comment": "Theater"
+        },
+        {
+          "dmxRange": [101, 255],
+          "type": "NoFunction",
+          "comment": "Default dimmer setting"
+        }
+      ]
+    },
+    "Reset": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 69],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [70, 79],
+          "type": "Maintenance",
+          "comment": "Blackout while pan movement"
+        },
+        {
+          "dmxRange": [80, 89],
+          "type": "Maintenance",
+          "comment": "Blackout while color wheel movement"
+        },
+        {
+          "dmxRange": [90, 99],
+          "type": "Maintenance",
+          "comment": "Reset all"
+        },
+        {
+          "dmxRange": [100, 255],
+          "type": "NoFunction"
+        }
+      ]
+    }
+  },
+  "modes": [
+    {
+      "name": "11-channel",
+      "shortName": "11ch",
+      "channels": [
+        "Pan",
+        "Tilt",
+        "Color Wheel",
+        "LED Strobe",
+        "Master Dimmer",
+        "Laser Movement",
+        "Laser Strobe",
+        "Show",
+        "Show Speed / Sound Sensitivity",
+        "Dimmer Mode",
+        "Reset"
+      ]
+    },
+    {
+      "name": "9-channel",
+      "shortName": "9ch",
+      "channels": [
+        "Pan",
+        "Tilt",
+        "Color Wheel",
+        "LED Strobe",
+        "Master Dimmer",
+        "Laser Movement",
+        "Laser Strobe",
+        "Dimmer Mode",
+        "Reset"
+      ]
+    },
+    {
+      "name": "8-channel",
+      "shortName": "8ch",
+      "channels": [
+        "Pan",
+        "Tilt",
+        "Color Wheel",
+        "LED Strobe",
+        "Master Dimmer",
+        "Laser Movement",
+        "Laser Strobe",
+        "Reset"
+      ]
+    },
+    {
+      "name": "6-channel",
+      "shortName": "6ch",
+      "channels": [
+        "Show",
+        "Show Speed / Sound Sensitivity",
+        "LED Strobe",
+        "Master Dimmer",
+        "Laser Strobe",
+        "Reset"
+      ]
+    },
+    {
+      "name": "2-channel",
+      "shortName": "2ch",
+      "channels": [
+        "Show",
+        "Show Speed / Sound Sensitivity"
+      ]
+    }
+  ]
+}

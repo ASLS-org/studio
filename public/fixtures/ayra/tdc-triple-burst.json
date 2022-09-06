@@ -1,0 +1,352 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "TDC Triple Burst",
+  "shortName": "AyraTDCTripleBurst",
+  "categories": ["Color Changer", "Effect"],
+  "meta": {
+    "authors": ["Flo Edelmann"],
+    "createDate": "2017-12-14",
+    "lastModifyDate": "2018-08-09"
+  },
+  "links": {
+    "manual": ["https://www.bax-shop.nl/downloads/products/9000-0007-6647/ayra_tdc_triple_burst_manual.pdf"],
+    "video": ["https://www.youtube.com/watch?v=WKCW9-JtCfs"]
+  },
+  "physical": {
+    "dimensions": [375, 260, 100],
+    "weight": 3,
+    "power": 60,
+    "DMXconnector": "3-pin",
+    "bulb": {
+      "type": "15x 3W LED (R/G/B/W/A)"
+    }
+  },
+  "matrix": {
+    "pixelCount": [3, 1, 1]
+  },
+  "availableChannels": {
+    "Show": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 7],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [8, 37],
+          "type": "Effect",
+          "effectName": "Show 1"
+        },
+        {
+          "dmxRange": [38, 67],
+          "type": "Effect",
+          "effectName": "Show 2"
+        },
+        {
+          "dmxRange": [68, 97],
+          "type": "Effect",
+          "effectName": "Show 3"
+        },
+        {
+          "dmxRange": [98, 127],
+          "type": "Effect",
+          "effectName": "Show 4"
+        },
+        {
+          "dmxRange": [128, 157],
+          "type": "Effect",
+          "effectName": "Show 5"
+        },
+        {
+          "dmxRange": [158, 187],
+          "type": "Effect",
+          "effectName": "Show 6"
+        },
+        {
+          "dmxRange": [188, 217],
+          "type": "Effect",
+          "effectName": "Show 7"
+        },
+        {
+          "dmxRange": [218, 247],
+          "type": "Effect",
+          "effectName": "Show 8"
+        },
+        {
+          "dmxRange": [248, 255],
+          "type": "Effect",
+          "effectName": "Random Show 1 - 8"
+        }
+      ]
+    },
+    "Color chase": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 7],
+          "type": "NoFunction",
+          "comment": "Manual control"
+        },
+        {
+          "dmxRange": [8, 22],
+          "type": "Effect",
+          "effectName": "Color chase 1"
+        },
+        {
+          "dmxRange": [23, 37],
+          "type": "Effect",
+          "effectName": "Color chase 2"
+        },
+        {
+          "dmxRange": [38, 52],
+          "type": "Effect",
+          "effectName": "Color chase 3"
+        },
+        {
+          "dmxRange": [53, 67],
+          "type": "Effect",
+          "effectName": "Color chase 4"
+        },
+        {
+          "dmxRange": [68, 82],
+          "type": "Effect",
+          "effectName": "Color chase 5"
+        },
+        {
+          "dmxRange": [83, 97],
+          "type": "Effect",
+          "effectName": "Color chase 6"
+        },
+        {
+          "dmxRange": [98, 112],
+          "type": "Effect",
+          "effectName": "Color chase 7"
+        },
+        {
+          "dmxRange": [113, 127],
+          "type": "Effect",
+          "effectName": "Color chase 8"
+        },
+        {
+          "dmxRange": [128, 142],
+          "type": "Effect",
+          "effectName": "Color chase 9"
+        },
+        {
+          "dmxRange": [143, 157],
+          "type": "Effect",
+          "effectName": "Color chase 10"
+        },
+        {
+          "dmxRange": [158, 172],
+          "type": "Effect",
+          "effectName": "Color chase 11"
+        },
+        {
+          "dmxRange": [173, 187],
+          "type": "Effect",
+          "effectName": "Color chase 12"
+        },
+        {
+          "dmxRange": [188, 202],
+          "type": "Effect",
+          "effectName": "Color chase 13"
+        },
+        {
+          "dmxRange": [203, 217],
+          "type": "Effect",
+          "effectName": "Color chase 14"
+        },
+        {
+          "dmxRange": [218, 232],
+          "type": "Effect",
+          "effectName": "Color chase 15"
+        },
+        {
+          "dmxRange": [233, 247],
+          "type": "Effect",
+          "effectName": "Color chase 16"
+        },
+        {
+          "dmxRange": [248, 255],
+          "type": "Effect",
+          "effectName": "Stand alone show"
+        }
+      ]
+    },
+    "Dimmer": {
+      "capability": {
+        "type": "Intensity"
+      }
+    },
+    "Strobe": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 7],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [8, 247],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        },
+        {
+          "dmxRange": [248, 255],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "soundControlled": true
+        }
+      ]
+    },
+    "Red": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Red"
+      }
+    },
+    "Green": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Green"
+      }
+    },
+    "Blue": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Blue"
+      }
+    },
+    "White": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "White"
+      }
+    },
+    "Amber": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Amber"
+      }
+    },
+    "Speed": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 7],
+          "type": "Speed",
+          "speed": "stop"
+        },
+        {
+          "dmxRange": [8, 255],
+          "type": "Speed",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        }
+      ]
+    }
+  },
+  "templateChannels": {
+    "Red $pixelKey": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Red"
+      }
+    },
+    "Green $pixelKey": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Green"
+      }
+    },
+    "Blue $pixelKey": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Blue"
+      }
+    },
+    "White $pixelKey": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "White"
+      }
+    },
+    "Amber $pixelKey": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Amber"
+      }
+    }
+  },
+  "modes": [
+    {
+      "name": "1 channel",
+      "shortName": "1ch",
+      "channels": [
+        "Show"
+      ]
+    },
+    {
+      "name": "3 channel",
+      "shortName": "3ch",
+      "channels": [
+        "Color chase",
+        "Dimmer",
+        "Strobe"
+      ]
+    },
+    {
+      "name": "9 channel",
+      "shortName": "9ch",
+      "channels": [
+        "Red",
+        "Green",
+        "Blue",
+        "White",
+        "Amber",
+        "Dimmer",
+        "Strobe",
+        "Color chase",
+        "Speed"
+      ]
+    },
+    {
+      "name": "15 channel",
+      "shortName": "15ch",
+      "channels": [
+        {
+          "insert": "matrixChannels",
+          "repeatFor": "eachPixelXYZ",
+          "channelOrder": "perPixel",
+          "templateChannels": [
+            "Red $pixelKey",
+            "Green $pixelKey",
+            "Blue $pixelKey",
+            "White $pixelKey",
+            "Amber $pixelKey"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "19 channel",
+      "shortName": "19ch",
+      "channels": [
+        {
+          "insert": "matrixChannels",
+          "repeatFor": "eachPixelXYZ",
+          "channelOrder": "perPixel",
+          "templateChannels": [
+            "Red $pixelKey",
+            "Green $pixelKey",
+            "Blue $pixelKey",
+            "White $pixelKey",
+            "Amber $pixelKey"
+          ]
+        },
+        "Dimmer",
+        "Strobe",
+        "Color chase",
+        "Speed"
+      ]
+    }
+  ]
+}

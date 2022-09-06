@@ -1,0 +1,102 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "theONE Atmospheric Generator",
+  "shortName": "MDGtheONE",
+  "categories": ["Hazer", "Smoke"],
+  "meta": {
+    "authors": ["Flo Edelmann"],
+    "createDate": "2017-10-13",
+    "lastModifyDate": "2018-08-09"
+  },
+  "comment": "Fog output: 85m³ per minute in Fog mode, at full pressure",
+  "links": {
+    "manual": [
+      "https://mdgfog.s3.amazonaws.com/uploads/docs/theONE-User-Guide-Rev-Af.pdf"
+    ],
+    "productPage": [
+      "https://www.mdgfog.com/en/theone"
+    ],
+    "video": [
+      "https://www.youtube.com/watch?v=Fa6w-k2p6l8"
+    ]
+  },
+  "rdm": {
+    "modelId": 1
+  },
+  "physical": {
+    "dimensions": [250, 610, 300],
+    "weight": 23,
+    "power": 1480,
+    "DMXconnector": "5-pin"
+  },
+  "availableChannels": {
+    "Power": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 127],
+          "type": "Maintenance",
+          "comment": "Unit off"
+        },
+        {
+          "dmxRange": [128, 255],
+          "type": "Maintenance",
+          "comment": "Unit On"
+        }
+      ]
+    },
+    "Haze / Fog": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 127],
+          "type": "FogType",
+          "fogType": "Haze"
+        },
+        {
+          "dmxRange": [128, 255],
+          "type": "FogType",
+          "fogType": "Fog"
+        }
+      ]
+    },
+    "Fog output": {
+      "capability": {
+        "type": "FogOutput",
+        "fogOutputStart": "weak",
+        "fogOutputEnd": "strong"
+      }
+    },
+    "Fog on/off": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 127],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [128, 255],
+          "type": "Fog"
+        }
+      ]
+    },
+    "External Fan": {
+      "capability": {
+        "type": "Rotation",
+        "speedStart": "slow CW",
+        "speedEnd": "fast CW"
+      }
+    }
+  },
+  "modes": [
+    {
+      "name": "5-channel",
+      "shortName": "5ch",
+      "rdmPersonalityIndex": 1,
+      "channels": [
+        "Power",
+        "Haze / Fog",
+        "Fog output",
+        "Fog on/off",
+        "External Fan"
+      ]
+    }
+  ]
+}

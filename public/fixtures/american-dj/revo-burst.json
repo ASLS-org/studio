@@ -1,0 +1,226 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "Revo Burst",
+  "shortName": "ADJRevoBurst",
+  "categories": ["Flower", "Effect"],
+  "meta": {
+    "authors": ["Flo Edelmann"],
+    "createDate": "2018-01-24",
+    "lastModifyDate": "2018-08-09"
+  },
+  "links": {
+    "manual": [
+      "http://adjmedia.s3-website-eu-west-1.amazonaws.com/manuals/Revo%20Burst%20LO.pdf"
+    ],
+    "video": [
+      "https://www.youtube.com/watch?v=wRo1JwMHJQE",
+      "https://www.youtube.com/watch?v=HnwEm7ExALw"
+    ],
+    "other": [
+      "https://www.qlcplus.org/forum/viewtopic.php?f=6&t=11824"
+    ]
+  },
+  "physical": {
+    "dimensions": [216, 239, 312],
+    "weight": 3.2,
+    "power": 20,
+    "DMXconnector": "3-pin",
+    "bulb": {
+      "type": "RGBW LEDs"
+    }
+  },
+  "matrix": {
+    "pixelKeys": [
+      [
+        [    null, null, "Beam 6", null,     null],
+        ["Beam 5", null,     null, null, "Beam 7"],
+        [    null, null, "Beam 1", null,     null],
+        ["Beam 4", null,     null, null, "Beam 2"],
+        [    null, null, "Beam 3", null,     null]
+      ]
+    ],
+    "pixelGroups": {
+      "All Beams": "all"
+    }
+  },
+  "availableChannels": {
+    "Mode": {
+      "defaultValue": 0,
+      "capabilities": [
+        {
+          "dmxRange": [0, 119],
+          "type": "Effect",
+          "effectName": "Pattern",
+          "switchChannels": {
+            "Strobe / Chase Speed": "Pattern Strobe"
+          }
+        },
+        {
+          "dmxRange": [120, 239],
+          "type": "Effect",
+          "effectName": "Chase",
+          "switchChannels": {
+            "Strobe / Chase Speed": "Chase Speed"
+          }
+        },
+        {
+          "dmxRange": [240, 255],
+          "type": "Effect",
+          "effectName": "Sound active",
+          "soundControlled": true,
+          "switchChannels": {
+            "Strobe / Chase Speed": "Pattern Strobe"
+          }
+        }
+      ]
+    },
+    "Pattern Strobe": {
+      "defaultValue": 0,
+      "capabilities": [
+        {
+          "dmxRange": [0, 9],
+          "type": "NoFunction",
+          "comment": "Strobe off"
+        },
+        {
+          "dmxRange": [10, 255],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        }
+      ]
+    },
+    "Chase Speed": {
+      "defaultValue": 0,
+      "capability": {
+        "type": "EffectSpeed",
+        "speedStart": "slow",
+        "speedEnd": "fast"
+      }
+    },
+    "Dimmer": {
+      "defaultValue": 0,
+      "highlightValue": 255,
+      "capability": {
+        "type": "Intensity"
+      }
+    }
+  },
+  "templateChannels": {
+    "Pattern / Chase $pixelKey": {
+      "defaultValue": 0,
+      "capabilities": [
+        {
+          "dmxRange": [0, 15],
+          "type": "Effect",
+          "effectName": "Blackout"
+        },
+        {
+          "dmxRange": [16, 31],
+          "type": "Effect",
+          "effectName": "Pattern / Chase 1"
+        },
+        {
+          "dmxRange": [32, 47],
+          "type": "Effect",
+          "effectName": "Pattern / Chase 2"
+        },
+        {
+          "dmxRange": [48, 63],
+          "type": "Effect",
+          "effectName": "Pattern / Chase 3"
+        },
+        {
+          "dmxRange": [64, 79],
+          "type": "Effect",
+          "effectName": "Pattern / Chase 4"
+        },
+        {
+          "dmxRange": [80, 95],
+          "type": "Effect",
+          "effectName": "Pattern / Chase 5"
+        },
+        {
+          "dmxRange": [96, 111],
+          "type": "Effect",
+          "effectName": "Pattern / Chase 6"
+        },
+        {
+          "dmxRange": [112, 127],
+          "type": "Effect",
+          "effectName": "Pattern / Chase 7"
+        },
+        {
+          "dmxRange": [128, 143],
+          "type": "Effect",
+          "effectName": "Pattern / Chase 8"
+        },
+        {
+          "dmxRange": [144, 159],
+          "type": "Effect",
+          "effectName": "Pattern / Chase 9"
+        },
+        {
+          "dmxRange": [160, 175],
+          "type": "Effect",
+          "effectName": "Pattern / Chase 10"
+        },
+        {
+          "dmxRange": [176, 191],
+          "type": "Effect",
+          "effectName": "Pattern / Chase 11"
+        },
+        {
+          "dmxRange": [192, 207],
+          "type": "Effect",
+          "effectName": "Pattern / Chase 12"
+        },
+        {
+          "dmxRange": [208, 223],
+          "type": "Effect",
+          "effectName": "Pattern / Chase 13"
+        },
+        {
+          "dmxRange": [224, 239],
+          "type": "Effect",
+          "effectName": "Pattern / Chase 14"
+        },
+        {
+          "dmxRange": [240, 255],
+          "type": "Effect",
+          "effectName": "Pattern / Chase 15"
+        }
+      ]
+    }
+  },
+  "modes": [
+    {
+      "name": "4-channel",
+      "shortName": "4ch",
+      "channels": [
+        "Mode",
+        "Pattern / Chase All Beams",
+        "Strobe / Chase Speed",
+        "Dimmer"
+      ]
+    },
+    {
+      "name": "10-channel",
+      "shortName": "10ch",
+      "channels": [
+        "Mode",
+        {
+          "insert": "matrixChannels",
+          "repeatFor": "eachPixelABC",
+          "channelOrder": "perPixel",
+          "templateChannels": [
+            "Pattern / Chase $pixelKey"
+          ]
+        },
+        "Strobe / Chase Speed",
+        "Dimmer"
+      ]
+    }
+  ]
+}

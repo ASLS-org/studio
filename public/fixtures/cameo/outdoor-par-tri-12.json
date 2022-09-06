@@ -1,0 +1,213 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "Outdoor PAR Tri 12",
+  "shortName": "CLPSTTRI12IP",
+  "categories": ["Color Changer"],
+  "meta": {
+    "authors": ["Flo Edelmann", "Felix Edelmann"],
+    "createDate": "2017-02-24",
+    "lastModifyDate": "2018-08-09"
+  },
+  "links": {
+    "manual": ["https://adamhall.s3.amazonaws.com/media/MARKEN/CAMEO/CLPSTTRI12IP/CLPSTTRI12IP_CAMEO_Bedienungsanleitung_EN_DE_FR_ES_PL_IT.pdf"],
+    "video": ["https://www.youtube.com/watch?v=ln1KAzrTtl0"]
+  },
+  "physical": {
+    "dimensions": [203, 203, 193],
+    "weight": 4.25,
+    "power": 50,
+    "DMXconnector": "3-pin XLR IP65",
+    "bulb": {
+      "type": "LED",
+      "lumens": 911
+    },
+    "lens": {
+      "degreesMinMax": [25, 25]
+    }
+  },
+  "availableChannels": {
+    "Master dimmer": {
+      "capability": {
+        "type": "Intensity"
+      }
+    },
+    "Color Macro Simple": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 31],
+          "type": "ColorPreset",
+          "colors": ["#000000"],
+          "comment": "Black"
+        },
+        {
+          "dmxRange": [32, 63],
+          "type": "ColorPreset",
+          "colors": ["#ff0000"],
+          "comment": "Red"
+        },
+        {
+          "dmxRange": [64, 95],
+          "type": "ColorPreset",
+          "colors": ["#00ff00"],
+          "comment": "Green"
+        },
+        {
+          "dmxRange": [96, 127],
+          "type": "ColorPreset",
+          "colors": ["#0000ff"],
+          "comment": "Blue"
+        },
+        {
+          "dmxRange": [128, 159],
+          "type": "ColorPreset",
+          "colors": ["#ffff00"],
+          "comment": "Yellow"
+        },
+        {
+          "dmxRange": [160, 191],
+          "type": "ColorPreset",
+          "colors": ["#00ffff"],
+          "comment": "Cyan"
+        },
+        {
+          "dmxRange": [192, 223],
+          "type": "ColorPreset",
+          "colors": ["#ff00ff"],
+          "comment": "Magenta"
+        },
+        {
+          "dmxRange": [224, 255],
+          "type": "ColorPreset",
+          "colors": ["#ffffff"],
+          "comment": "White"
+        }
+      ]
+    },
+    "Strobe": {
+      "capability": {
+        "type": "ShutterStrobe",
+        "shutterEffect": "Strobe",
+        "speedStart": "0%",
+        "speedEnd": "100%"
+      }
+    },
+    "Color Macro Advanced": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 4],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [5, 15],
+          "type": "ColorPreset",
+          "colors": ["#ff0000"],
+          "comment": "Red"
+        },
+        {
+          "dmxRange": [16, 26],
+          "type": "ColorPreset",
+          "colors": ["#00ff00"],
+          "comment": "Green"
+        },
+        {
+          "dmxRange": [27, 37],
+          "type": "ColorPreset",
+          "colors": ["#0000ff"],
+          "comment": "Blue"
+        },
+        {
+          "dmxRange": [38, 48],
+          "type": "ColorPreset",
+          "colors": ["#ffff00"],
+          "comment": "Yellow"
+        },
+        {
+          "dmxRange": [49, 59],
+          "type": "ColorPreset",
+          "colors": ["#00ffff"],
+          "comment": "Cyan"
+        },
+        {
+          "dmxRange": [60, 70],
+          "type": "ColorPreset",
+          "colors": ["#ff00ff"],
+          "comment": "Magenta"
+        },
+        {
+          "dmxRange": [71, 80],
+          "type": "ColorPreset",
+          "colors": ["#ffffff"],
+          "comment": "White"
+        },
+        {
+          "dmxRange": [81, 150],
+          "type": "Effect",
+          "effectPreset": "ColorJump"
+        },
+        {
+          "dmxRange": [151, 255],
+          "type": "Effect",
+          "effectPreset": "ColorFade"
+        }
+      ]
+    },
+    "Red": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Red"
+      }
+    },
+    "Green": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Green"
+      }
+    },
+    "Blue": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Blue"
+      }
+    }
+  },
+  "modes": [
+    {
+      "name": "2-channel",
+      "shortName": "2ch",
+      "channels": [
+        "Master dimmer",
+        "Color Macro Simple"
+      ]
+    },
+    {
+      "name": "3-channel 1",
+      "shortName": "3ch1",
+      "channels": [
+        "Master dimmer",
+        "Strobe",
+        "Color Macro Advanced"
+      ]
+    },
+    {
+      "name": "3-channel 2",
+      "shortName": "3ch2",
+      "channels": [
+        "Red",
+        "Green",
+        "Blue"
+      ]
+    },
+    {
+      "name": "6-channel",
+      "shortName": "6ch",
+      "channels": [
+        "Master dimmer",
+        "Strobe",
+        "Red",
+        "Green",
+        "Blue",
+        "Color Macro Advanced"
+      ]
+    }
+  ]
+}

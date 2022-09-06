@@ -1,0 +1,162 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "Atomic 3000",
+  "shortName": "MartinAt3000",
+  "categories": ["Strobe"],
+  "meta": {
+    "authors": ["Flo Edelmann", "Felix Edelmann"],
+    "createDate": "2017-01-20",
+    "lastModifyDate": "2018-08-09"
+  },
+  "links": {
+    "manual": [
+      "https://www.martin.com/files/files/productdocuments/11_MANUALS/999/35000094G%20UM_Atomic3000DMX_EN_G.pdf"
+    ],
+    "video": [
+      "https://www.youtube.com/watch?v=GMW1aEkfQYQ"
+    ]
+  },
+  "physical": {
+    "dimensions": [450, 239, 234],
+    "weight": 7.5,
+    "power": 3000,
+    "DMXconnector": "3-pin and 5-pin",
+    "bulb": {
+      "type": "Xenon 3000W",
+      "colorTemperature": 5600
+    }
+  },
+  "availableChannels": {
+    "Strobe": {
+      "highlightValue": 249,
+      "capabilities": [
+        {
+          "dmxRange": [0, 5],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Closed"
+        },
+        {
+          "dmxRange": [6, 249],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        },
+        {
+          "dmxRange": [250, 255],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open",
+          "comment": "Blind"
+        }
+      ]
+    },
+    "Intensity": {
+      "highlightValue": 255,
+      "capabilities": [
+        {
+          "dmxRange": [0, 5],
+          "type": "Intensity",
+          "brightness": "off"
+        },
+        {
+          "dmxRange": [6, 255],
+          "type": "Intensity",
+          "brightnessStart": "dark",
+          "brightnessEnd": "bright"
+        }
+      ]
+    },
+    "Flash Duration": {
+      "highlightValue": 255,
+      "capability": {
+        "type": "StrobeDuration",
+        "durationStart": "0ms",
+        "durationEnd": "650ms"
+      }
+    },
+    "Flash Rate": {
+      "highlightValue": 255,
+      "capabilities": [
+        {
+          "dmxRange": [0, 5],
+          "type": "Effect",
+          "effectName": "Single Flash"
+        },
+        {
+          "dmxRange": [6, 255],
+          "type": "StrobeSpeed",
+          "speedStart": "0.5Hz",
+          "speedEnd": "25Hz"
+        }
+      ]
+    },
+    "Effects": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 5],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe"
+        },
+        {
+          "dmxRange": [6, 42],
+          "type": "ShutterStrobe",
+          "shutterEffect": "RampUp"
+        },
+        {
+          "dmxRange": [43, 85],
+          "type": "ShutterStrobe",
+          "shutterEffect": "RampDown"
+        },
+        {
+          "dmxRange": [86, 128],
+          "type": "ShutterStrobe",
+          "shutterEffect": "RampUpDown"
+        },
+        {
+          "dmxRange": [129, 171],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "randomTiming": true
+        },
+        {
+          "dmxRange": [172, 214],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Lightning"
+        },
+        {
+          "dmxRange": [215, 255],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Spikes"
+        }
+      ]
+    }
+  },
+  "modes": [
+    {
+      "name": "1-channel",
+      "shortName": "1ch",
+      "channels": [
+        "Strobe"
+      ]
+    },
+    {
+      "name": "3-channel",
+      "shortName": "3ch",
+      "channels": [
+        "Intensity",
+        "Flash Duration",
+        "Flash Rate"
+      ]
+    },
+    {
+      "name": "4-channel",
+      "shortName": "4ch",
+      "channels": [
+        "Intensity",
+        "Flash Duration",
+        "Flash Rate",
+        "Effects"
+      ]
+    }
+  ]
+}

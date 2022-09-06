@@ -1,0 +1,386 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "GoboTracer",
+  "categories": ["Moving Head", "Color Changer"],
+  "meta": {
+    "authors": ["Justin Hornsby"],
+    "createDate": "2017-11-16",
+    "lastModifyDate": "2018-09-04"
+  },
+  "links": {
+    "video": [
+      "https://www.youtube.com/watch?v=ZW2WMacskD0"
+    ]
+  },
+  "physical": {
+    "DMXconnector": "3-pin",
+    "dimensions": [210, 285, 147],
+    "weight": 3.2,
+    "bulb": {
+      "type": "LED"
+    },
+    "lens": {
+      "degreesMinMax": [12, 12]
+    }
+  },
+  "wheels": {
+    "Color Wheel": {
+      "slots": [
+        {
+          "type": "Open"
+        },
+        {
+          "type": "Color",
+          "name": "Red",
+          "colors": ["#ff0000"]
+        },
+        {
+          "type": "Color",
+          "name": "Green",
+          "colors": ["#00ff00"]
+        },
+        {
+          "type": "Color",
+          "name": "Blue",
+          "colors": ["#0000ff"]
+        },
+        {
+          "type": "Color",
+          "name": "Yellow",
+          "colors": ["#ffff00"]
+        },
+        {
+          "type": "Color",
+          "name": "Purple",
+          "colors": ["#ff00ff"]
+        },
+        {
+          "type": "Color",
+          "name": "Orange",
+          "colors": ["#ffaa00"]
+        },
+        {
+          "type": "Color",
+          "name": "Cyan",
+          "colors": ["#00ffff"]
+        }
+      ]
+    },
+    "Gobo Wheel": {
+      "slots": [
+        {
+          "type": "Open"
+        },
+        {
+          "type": "Gobo"
+        },
+        {
+          "type": "Gobo"
+        },
+        {
+          "type": "Gobo"
+        },
+        {
+          "type": "Gobo"
+        },
+        {
+          "type": "Gobo"
+        },
+        {
+          "type": "Gobo"
+        },
+        {
+          "type": "Gobo"
+        }
+      ]
+    }
+  },
+  "availableChannels": {
+    "Pan": {
+      "fineChannelAliases": ["Pan fine"],
+      "defaultValue": "50%",
+      "capability": {
+        "type": "Pan",
+        "angleStart": "0deg",
+        "angleEnd": "540deg"
+      }
+    },
+    "Tilt": {
+      "fineChannelAliases": ["Tilt fine"],
+      "defaultValue": "50%",
+      "capability": {
+        "type": "Tilt",
+        "angleStart": "0deg",
+        "angleEnd": "230deg"
+      }
+    },
+    "Color Wheel": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 9],
+          "type": "WheelSlot",
+          "slotNumber": 1
+        },
+        {
+          "dmxRange": [10, 19],
+          "type": "WheelSlot",
+          "slotNumber": 2
+        },
+        {
+          "dmxRange": [20, 29],
+          "type": "WheelSlot",
+          "slotNumber": 3
+        },
+        {
+          "dmxRange": [30, 39],
+          "type": "WheelSlot",
+          "slotNumber": 4
+        },
+        {
+          "dmxRange": [40, 49],
+          "type": "WheelSlot",
+          "slotNumber": 5
+        },
+        {
+          "dmxRange": [50, 59],
+          "type": "WheelSlot",
+          "slotNumber": 6
+        },
+        {
+          "dmxRange": [60, 69],
+          "type": "WheelSlot",
+          "slotNumber": 7
+        },
+        {
+          "dmxRange": [70, 79],
+          "type": "WheelSlot",
+          "slotNumber": 8
+        },
+        {
+          "dmxRange": [80, 89],
+          "type": "WheelSlot",
+          "slotNumber": 1.5
+        },
+        {
+          "dmxRange": [90, 99],
+          "type": "WheelSlot",
+          "slotNumber": 2.5
+        },
+        {
+          "dmxRange": [100, 109],
+          "type": "WheelSlot",
+          "slotNumber": 3.5
+        },
+        {
+          "dmxRange": [110, 119],
+          "type": "WheelSlot",
+          "slotNumber": 4.5
+        },
+        {
+          "dmxRange": [120, 129],
+          "type": "WheelSlot",
+          "slotNumber": 5.5
+        },
+        {
+          "dmxRange": [130, 139],
+          "type": "WheelSlot",
+          "slotNumber": 6.5
+        },
+        {
+          "dmxRange": [140, 149],
+          "type": "WheelSlot",
+          "slotNumber": 7.5
+        },
+        {
+          "dmxRange": [150, 159],
+          "type": "WheelSlot",
+          "slotNumber": 8.5
+        },
+        {
+          "dmxRange": [160, 255],
+          "type": "WheelRotation",
+          "speedStart": "slow CW",
+          "speedEnd": "fast CW",
+          "comment": "Color scroll"
+        }
+      ]
+    },
+    "Gobo Wheel": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 7],
+          "type": "WheelSlot",
+          "slotNumber": 1
+        },
+        {
+          "dmxRange": [8, 15],
+          "type": "WheelSlot",
+          "slotNumber": 2
+        },
+        {
+          "dmxRange": [16, 23],
+          "type": "WheelSlot",
+          "slotNumber": 3
+        },
+        {
+          "dmxRange": [24, 31],
+          "type": "WheelSlot",
+          "slotNumber": 4
+        },
+        {
+          "dmxRange": [32, 39],
+          "type": "WheelSlot",
+          "slotNumber": 5
+        },
+        {
+          "dmxRange": [40, 47],
+          "type": "WheelSlot",
+          "slotNumber": 6
+        },
+        {
+          "dmxRange": [48, 55],
+          "type": "WheelSlot",
+          "slotNumber": 7
+        },
+        {
+          "dmxRange": [56, 63],
+          "type": "WheelSlot",
+          "slotNumber": 8
+        },
+        {
+          "dmxRange": [64, 127],
+          "type": "WheelShake",
+          "slotNumberStart": 2,
+          "slotNumberEnd": 8,
+          "helpWanted": "At which DMX values can which Gobos be selected?"
+        },
+        {
+          "dmxRange": [128, 255],
+          "type": "WheelRotation",
+          "speedStart": "slow CW",
+          "speedEnd": "fast CW"
+        }
+      ]
+    },
+    "Strobe": {
+      "capability": {
+        "type": "ShutterStrobe",
+        "shutterEffect": "Strobe",
+        "speedStart": "stop",
+        "speedEnd": "fast",
+        "helpWanted": "Up to which DMX value is Strobe off?"
+      }
+    },
+    "Dimmer": {
+      "capability": {
+        "type": "Intensity"
+      }
+    },
+    "Horizontal Vertical Run": {
+      "capability": {
+        "type": "Generic",
+        "helpWanted": "What is this channel for?"
+      }
+    },
+    "Auto Mode": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 59],
+          "type": "NoFunction",
+          "comment": "Other channels on"
+        },
+        {
+          "dmxRange": [60, 84],
+          "type": "Effect",
+          "effectName": "Auto mode 3"
+        },
+        {
+          "dmxRange": [85, 109],
+          "type": "Effect",
+          "effectName": "Auto mode 2"
+        },
+        {
+          "dmxRange": [110, 134],
+          "type": "Effect",
+          "effectName": "Auto mode 1"
+        },
+        {
+          "dmxRange": [135, 159],
+          "type": "Effect",
+          "effectName": "Sound-to-light mode 0",
+          "soundControlled": true
+        },
+        {
+          "dmxRange": [160, 184],
+          "type": "Effect",
+          "effectName": "Sound-to-light mode 3",
+          "soundControlled": true
+        },
+        {
+          "dmxRange": [185, 209],
+          "type": "Effect",
+          "effectName": "Sound-to-light mode 2",
+          "soundControlled": true
+        },
+        {
+          "dmxRange": [210, 234],
+          "type": "Effect",
+          "effectName": "Sound-to-light mode 1",
+          "soundControlled": true
+        },
+        {
+          "dmxRange": [235, 255],
+          "type": "Effect",
+          "effectName": "Sound-to-light mode 0",
+          "soundControlled": true
+        }
+      ]
+    },
+    "Reset": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 249],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [250, 255],
+          "type": "Maintenance",
+          "comment": "Reset",
+          "hold": "5s"
+        }
+      ]
+    }
+  },
+  "modes": [
+    {
+      "name": "9ch",
+      "channels": [
+        "Pan",
+        "Tilt",
+        "Color Wheel",
+        "Gobo Wheel",
+        "Strobe",
+        "Dimmer",
+        "Horizontal Vertical Run",
+        "Auto Mode",
+        "Reset"
+      ]
+    },
+    {
+      "name": "11ch",
+      "channels": [
+        "Pan",
+        "Pan fine",
+        "Tilt",
+        "Tilt fine",
+        "Color Wheel",
+        "Gobo Wheel",
+        "Strobe",
+        "Dimmer",
+        "Horizontal Vertical Run",
+        "Auto Mode",
+        "Reset"
+      ]
+    }
+  ]
+}

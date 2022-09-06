@@ -1,0 +1,51 @@
+:root {
+  --vp-c-brand: #646cff;
+  --vp-c-brand-light: #747bff;
+  --vp-c-brand-lighter: #8b91ff;
+  --vp-c-brand-dark: #646cff;
+  --vp-home-hero-name-background: -webkit-linear-gradient(120deg, #bd34fe, #41d1ff);
+  --primary-dark: #0C0E0A;
+  --primary-dark-alt: #131510;
+  --primary-light: #161913;
+  --primary-light-alt: #1c1f18;
+  --primary-lighter: #2e302b4d;
+  --primary-lighter-alt: #22251f;
+
+  
+  --test: #343434;
+
+  --some: #0b0b0b52;
+  
+  --secondary-lighter: #FFFFFFB3;
+  --secondary-light: #FFFFFF33;
+  --secondary-dark: #FFFFFF1A;
+  --secondary-darker: #FFFFFF0D;
+  
+  --accent-red: #B4475B;
+  --accent-yellow: #B2B447;
+  --accent-green: #49B447;
+  --accent-blue: #4786B4;
+}
+
+[data-theme="light"] {
+  --primary-dark: #a8a7a7;
+  --primary-dark-alt: #eceaef;
+  --primary-light: #e9e6ec;
+  --primary-light-alt: #e3e0e7;
+  --primary-lighter: #d1cfd44d;
+  --primary-lighter-alt: var(--primary-light);
+
+  
+  --some: #f4f4f452;
+  
+  --secondary-lighter: #000000B3;
+  --secondary-light: #00000033;
+  --secondary-dark: #0000001A;
+  --secondary-darker: #0000001D;
+}
+
+@media (min-width: 960px) {
+div.VPHome div.VPHomeHero div.VPHero.has-image div.container div.image div.image-container img.image-src{
+ max-width: 450px!important;
+}
+}

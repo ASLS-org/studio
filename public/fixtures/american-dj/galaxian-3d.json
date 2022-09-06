@@ -1,0 +1,208 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "Galaxian 3D",
+  "categories": ["Laser"],
+  "meta": {
+    "authors": ["eklynx", "Felix Edelmann"],
+    "createDate": "2017-09-11",
+    "lastModifyDate": "2018-08-09",
+    "importPlugin": {
+      "plugin": "qlcplus_4.11.2",
+      "date": "2017-09-11",
+      "comment": "created by Q Light Controller (version 3.0.7)"
+    }
+  },
+  "links": {
+    "manual": [
+      "https://cdb.s3-us-west-1.amazonaws.com/ItemRelatedFiles/7184/galaxian_3d.pdf"
+    ],
+    "video": [
+      "https://www.youtube.com/watch?v=-kcu0uBGF2Y",
+      "https://www.youtube.com/watch?v=sdMrkl5b1YE"
+    ]
+  },
+  "physical": {
+    "dimensions": [242, 71, 247],
+    "weight": 2.6,
+    "power": 22.5,
+    "DMXconnector": "3-pin",
+    "bulb": {
+      "type": "30mW Green Diode Laser, 80mW Red Diode Laser"
+    },
+    "lens": {
+      "degreesMinMax": [82, 82]
+    }
+  },
+  "matrix": {
+    "pixelKeys": [
+      [
+        ["Red", "Green"]
+      ]
+    ]
+  },
+  "availableChannels": {
+    "Macros": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 7],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [8, 23],
+          "type": "Effect",
+          "effectName": "Macro 1"
+        },
+        {
+          "dmxRange": [24, 39],
+          "type": "Effect",
+          "effectName": "Macro 2"
+        },
+        {
+          "dmxRange": [40, 55],
+          "type": "Effect",
+          "effectName": "Macro 3"
+        },
+        {
+          "dmxRange": [56, 71],
+          "type": "Effect",
+          "effectName": "Macro 4"
+        },
+        {
+          "dmxRange": [72, 87],
+          "type": "Effect",
+          "effectName": "Macro 5"
+        },
+        {
+          "dmxRange": [88, 103],
+          "type": "Effect",
+          "effectName": "Macro 6"
+        },
+        {
+          "dmxRange": [104, 119],
+          "type": "Effect",
+          "effectName": "Macro 7"
+        },
+        {
+          "dmxRange": [120, 135],
+          "type": "Effect",
+          "effectName": "Macro 8"
+        },
+        {
+          "dmxRange": [136, 151],
+          "type": "Effect",
+          "effectName": "Macro 9"
+        },
+        {
+          "dmxRange": [152, 167],
+          "type": "Effect",
+          "effectName": "Macro 10"
+        },
+        {
+          "dmxRange": [168, 183],
+          "type": "Effect",
+          "effectName": "Macro 11"
+        },
+        {
+          "dmxRange": [184, 199],
+          "type": "Effect",
+          "effectName": "Macro 12"
+        },
+        {
+          "dmxRange": [200, 215],
+          "type": "Effect",
+          "effectName": "Macro 13"
+        },
+        {
+          "dmxRange": [216, 231],
+          "type": "Effect",
+          "effectName": "Macro 14"
+        },
+        {
+          "dmxRange": [232, 247],
+          "type": "Effect",
+          "effectName": "Macro 15"
+        },
+        {
+          "dmxRange": [248, 255],
+          "type": "Effect",
+          "effectName": "Sound Active",
+          "soundControlled": true
+        }
+      ]
+    }
+  },
+  "templateChannels": {
+    "$pixelKey Laser": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 7],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Closed"
+        },
+        {
+          "dmxRange": [8, 15],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open"
+        },
+        {
+          "dmxRange": [16, 239],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        },
+        {
+          "dmxRange": [240, 247],
+          "type": "Effect",
+          "effectName": "Sound Active",
+          "soundControlled": true
+        },
+        {
+          "dmxRange": [248, 255],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open"
+        }
+      ]
+    },
+    "$pixelKey Laser Rotation": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 127],
+          "type": "Rotation",
+          "angleStart": "0%",
+          "angleEnd": "100%"
+        },
+        {
+          "dmxRange": [128, 189],
+          "type": "Rotation",
+          "speedStart": "fast CCW",
+          "speedEnd": "slow CCW"
+        },
+        {
+          "dmxRange": [190, 193],
+          "type": "Rotation",
+          "speed": "stop"
+        },
+        {
+          "dmxRange": [194, 255],
+          "type": "Rotation",
+          "speedStart": "slow CW",
+          "speedEnd": "fast CW"
+        }
+      ]
+    }
+  },
+  "modes": [
+    {
+      "name": "5-channel",
+      "shortName": "5ch",
+      "channels": [
+        "Red Laser",
+        "Green Laser",
+        "Red Laser Rotation",
+        "Green Laser Rotation",
+        "Macros"
+      ]
+    }
+  ]
+}

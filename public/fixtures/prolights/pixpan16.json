@@ -1,0 +1,264 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "PIXPAN16",
+  "categories": ["Matrix", "Color Changer"],
+  "meta": {
+    "authors": ["Felix Edelmann"],
+    "createDate": "2018-02-02",
+    "lastModifyDate": "2018-08-09"
+  },
+  "links": {
+    "manual": [
+      "https://www.musiclights.it/download.php?id=2249"
+    ],
+    "productPage": [
+      "https://www.prolights.it/product/PIXPAN16"
+    ],
+    "video": [
+      "https://www.youtube.com/watch?v=0hAYNFjOEsQ"
+    ]
+  },
+  "physical": {
+    "dimensions": [460, 460, 120],
+    "weight": 8,
+    "power": 390,
+    "DMXconnector": "3-pin and 5-pin",
+    "bulb": {
+      "type": "4x4 30W RGBW/FC COB-LEDs"
+    },
+    "lens": {
+      "degreesMinMax": [60, 60]
+    }
+  },
+  "matrix": {
+    "pixelCount": [4, 4, 1]
+  },
+  "availableChannels": {
+    "Red": {
+      "defaultValue": 0,
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Red"
+      }
+    },
+    "Green": {
+      "defaultValue": 0,
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Green"
+      }
+    },
+    "Blue": {
+      "defaultValue": 0,
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Blue"
+      }
+    },
+    "Dimmer": {
+      "defaultValue": 0,
+      "capability": {
+        "type": "Intensity"
+      }
+    },
+    "Shutter Extended": {
+      "name": "Shutter",
+      "defaultValue": 0,
+      "capabilities": [
+        {
+          "dmxRange": [0, 0],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [1, 5],
+          "type": "Effect",
+          "effectName": "Random Auto Show"
+        },
+        {
+          "dmxRange": [6, 10],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open"
+        },
+        {
+          "dmxRange": [11, 255],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        }
+      ]
+    },
+    "Chase": {
+      "defaultValue": 0,
+      "capabilities": [
+        {
+          "dmxRange": [0, 10],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [11, 30],
+          "type": "Effect",
+          "effectName": "Chase 1"
+        },
+        {
+          "dmxRange": [31, 50],
+          "type": "Effect",
+          "effectName": "Chase 2"
+        },
+        {
+          "dmxRange": [51, 70],
+          "type": "Effect",
+          "effectName": "Chase 3"
+        },
+        {
+          "dmxRange": [71, 90],
+          "type": "Effect",
+          "effectName": "Chase 4"
+        },
+        {
+          "dmxRange": [91, 110],
+          "type": "Effect",
+          "effectName": "Chase 5"
+        },
+        {
+          "dmxRange": [111, 130],
+          "type": "Effect",
+          "effectName": "Chase 6"
+        },
+        {
+          "dmxRange": [131, 150],
+          "type": "Effect",
+          "effectName": "Chase 7"
+        },
+        {
+          "dmxRange": [151, 170],
+          "type": "Effect",
+          "effectName": "Chase 8"
+        },
+        {
+          "dmxRange": [171, 190],
+          "type": "Effect",
+          "effectName": "Chase 9"
+        },
+        {
+          "dmxRange": [191, 210],
+          "type": "Effect",
+          "effectName": "Chase 10"
+        },
+        {
+          "dmxRange": [211, 230],
+          "type": "Effect",
+          "effectName": "Chase 11"
+        },
+        {
+          "dmxRange": [231, 250],
+          "type": "Effect",
+          "effectName": "Chase 12"
+        },
+        {
+          "dmxRange": [251, 255],
+          "type": "Effect",
+          "effectName": "Random auto show (1-12)"
+        }
+      ]
+    },
+    "Shutter Simple": {
+      "name": "Shutter",
+      "defaultValue": 0,
+      "capabilities": [
+        {
+          "dmxRange": [0, 10],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [11, 255],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        }
+      ]
+    },
+    "Speed": {
+      "capability": {
+        "type": "EffectSpeed",
+        "speedStart": "slow",
+        "speedEnd": "fast"
+      }
+    }
+  },
+  "templateChannels": {
+    "Red $pixelKey": {
+      "defaultValue": 0,
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Red"
+      }
+    },
+    "Green $pixelKey": {
+      "defaultValue": 0,
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Green"
+      }
+    },
+    "Blue $pixelKey": {
+      "defaultValue": 0,
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Blue"
+      }
+    }
+  },
+  "modes": [
+    {
+      "name": "3-channel",
+      "shortName": "3ch",
+      "channels": [
+        "Red",
+        "Green",
+        "Blue"
+      ]
+    },
+    {
+      "name": "5-channel",
+      "shortName": "5ch",
+      "channels": [
+        "Red",
+        "Green",
+        "Blue",
+        "Dimmer",
+        "Shutter Extended"
+      ]
+    },
+    {
+      "name": "7-channel",
+      "shortName": "7ch",
+      "channels": [
+        "Red",
+        "Green",
+        "Blue",
+        "Shutter Simple",
+        "Chase",
+        "Speed",
+        "Dimmer"
+      ]
+    },
+    {
+      "name": "48-channel",
+      "shortName": "48ch",
+      "channels": [
+        {
+          "insert": "matrixChannels",
+          "repeatFor": "eachPixelXYZ",
+          "channelOrder": "perPixel",
+          "templateChannels": [
+            "Red $pixelKey",
+            "Green $pixelKey",
+            "Blue $pixelKey"
+          ]
+        }
+      ]
+    }
+  ]
+}

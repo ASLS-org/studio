@@ -1,0 +1,257 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "LED TMH-9",
+  "shortName": "LEDTMH9",
+  "categories": ["Moving Head", "Color Changer"],
+  "meta": {
+    "authors": ["Flo Edelmann"],
+    "createDate": "2017-09-04",
+    "lastModifyDate": "2018-09-04"
+  },
+  "links": {
+    "manual": [
+      "https://media.steinigke.de/documents_t/51785964-MANUAL-1.10-de-en_00096748.pdf"
+    ],
+    "video": [
+      "https://www.youtube.com/watch?v=-QyjBCmLol0",
+      "https://www.youtube.com/watch?v=qofMKVKaikc"
+    ]
+  },
+  "physical": {
+    "dimensions": [175, 245, 175],
+    "weight": 3,
+    "power": 50,
+    "DMXconnector": "3-pin",
+    "bulb": {
+      "type": "7x 8W QCL LED"
+    },
+    "lens": {
+      "degreesMinMax": [18, 18]
+    }
+  },
+  "availableChannels": {
+    "Pan": {
+      "fineChannelAliases": ["Pan fine"],
+      "dmxValueResolution": "8bit",
+      "defaultValue": 128,
+      "capability": {
+        "type": "Pan",
+        "angleStart": "0deg",
+        "angleEnd": "540deg"
+      }
+    },
+    "Tilt": {
+      "fineChannelAliases": ["Tilt fine"],
+      "dmxValueResolution": "8bit",
+      "defaultValue": 128,
+      "capability": {
+        "type": "Tilt",
+        "angleStart": "0deg",
+        "angleEnd": "180deg"
+      }
+    },
+    "Color macros": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 15],
+          "type": "ColorPreset",
+          "colors": ["#000000"],
+          "comment": "Blackout"
+        },
+        {
+          "dmxRange": [16, 31],
+          "type": "ColorPreset",
+          "colors": ["#ff0000"],
+          "comment": "Red"
+        },
+        {
+          "dmxRange": [32, 47],
+          "type": "ColorPreset",
+          "colors": ["#00ff00"],
+          "comment": "Green"
+        },
+        {
+          "dmxRange": [48, 63],
+          "type": "ColorPreset",
+          "colors": ["#0000ff"],
+          "comment": "Blue"
+        },
+        {
+          "dmxRange": [64, 79],
+          "type": "ColorPreset",
+          "colors": ["#ffffff"],
+          "comment": "White"
+        },
+        {
+          "dmxRange": [80, 95],
+          "type": "ColorPreset",
+          "colors": ["#ffff00"],
+          "comment": "Red + Green"
+        },
+        {
+          "dmxRange": [96, 111],
+          "type": "ColorPreset",
+          "colors": ["#ff00ff"],
+          "comment": "Red + Blue"
+        },
+        {
+          "dmxRange": [112, 127],
+          "type": "ColorPreset",
+          "colors": ["#ff8080"],
+          "comment": "Red + White"
+        },
+        {
+          "dmxRange": [128, 143],
+          "type": "ColorPreset",
+          "colors": ["#00ffff"],
+          "comment": "Green + Blue"
+        },
+        {
+          "dmxRange": [144, 159],
+          "type": "ColorPreset",
+          "colors": ["#80ff80"],
+          "comment": "Green + White"
+        },
+        {
+          "dmxRange": [160, 175],
+          "type": "ColorPreset",
+          "colors": ["#8080ff"],
+          "comment": "Blue + White"
+        },
+        {
+          "dmxRange": [176, 191],
+          "type": "ColorPreset",
+          "colors": ["#ffffff"],
+          "comment": "Red + Green + Blue"
+        },
+        {
+          "dmxRange": [192, 207],
+          "type": "ColorPreset",
+          "colors": ["#ffff80"],
+          "comment": "Red + Green + White"
+        },
+        {
+          "dmxRange": [208, 223],
+          "type": "ColorPreset",
+          "colors": ["#80ffff"],
+          "comment": "Green + Blue + White"
+        },
+        {
+          "dmxRange": [224, 239],
+          "type": "ColorPreset",
+          "colors": ["#ff80ff"],
+          "comment": "Red + Blue + White"
+        },
+        {
+          "dmxRange": [240, 255],
+          "type": "ColorPreset",
+          "colors": ["#ffffff"],
+          "comment": "Red + Green + Blue + White"
+        }
+      ]
+    },
+    "Shutter": {
+      "defaultValue": 0,
+      "highlightValue": 255,
+      "capabilities": [
+        {
+          "dmxRange": [0, 20],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [21, 30],
+          "type": "Maintenance",
+          "comment": "Reset"
+        },
+        {
+          "dmxRange": [31, 200],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        },
+        {
+          "dmxRange": [201, 250],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "slow",
+          "speedEnd": "fast",
+          "randomTiming": true
+        },
+        {
+          "dmxRange": [251, 255],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open"
+        }
+      ]
+    },
+    "Pan / Tilt Speed": {
+      "defaultValue": 0,
+      "capability": {
+        "type": "PanTiltSpeed",
+        "speedStart": "fast",
+        "speedEnd": "slow"
+      }
+    },
+    "Red": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Red"
+      }
+    },
+    "Green": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Green"
+      }
+    },
+    "Blue": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Blue"
+      }
+    },
+    "White": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "White"
+      }
+    },
+    "Dimmer Intensity": {
+      "highlightValue": 255,
+      "capability": {
+        "type": "Intensity"
+      }
+    }
+  },
+  "modes": [
+    {
+      "name": "4-channel",
+      "shortName": "4ch",
+      "channels": [
+        "Pan",
+        "Tilt",
+        "Color macros",
+        "Shutter"
+      ]
+    },
+    {
+      "name": "12-channel",
+      "shortName": "12ch",
+      "channels": [
+        "Pan",
+        "Tilt",
+        "Pan / Tilt Speed",
+        "Red",
+        "Green",
+        "Blue",
+        "White",
+        "Color macros",
+        "Shutter",
+        "Dimmer Intensity",
+        "Pan fine",
+        "Tilt fine"
+      ]
+    }
+  ]
+}

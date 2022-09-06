@@ -1,0 +1,152 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "LED SVF-1",
+  "shortName": "SVF1",
+  "categories": ["Flower"],
+  "meta": {
+    "authors": ["Felix Edelmann"],
+    "createDate": "2017-08-01",
+    "lastModifyDate": "2018-08-09"
+  },
+  "links": {
+    "manual": [
+      "https://media.steinigke.de/documents_t/51918662-MANUAL-1.10-de-en_00073902.pdf"
+    ],
+    "video": [
+      "https://www.youtube.com/watch?v=fg8kl3vCfD4",
+      "https://www.youtube.com/watch?v=DyPYm84KdFQ"
+    ]
+  },
+  "physical": {
+    "dimensions": [580, 325, 625],
+    "weight": 6,
+    "power": 60,
+    "DMXconnector": "3-pin",
+    "bulb": {
+      "type": "LED 5mm"
+    },
+    "lens": {
+      "degreesMinMax": [25, 25]
+    }
+  },
+  "availableChannels": {
+    "Programs": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 12],
+          "type": "Effect",
+          "effectName": "Program 1"
+        },
+        {
+          "dmxRange": [13, 25],
+          "type": "Effect",
+          "effectName": "Program 2"
+        },
+        {
+          "dmxRange": [26, 38],
+          "type": "Effect",
+          "effectName": "Program 3"
+        },
+        {
+          "dmxRange": [39, 51],
+          "type": "Effect",
+          "effectName": "Program 4"
+        },
+        {
+          "dmxRange": [52, 64],
+          "type": "Effect",
+          "effectName": "Program 5"
+        },
+        {
+          "dmxRange": [65, 77],
+          "type": "Effect",
+          "effectName": "Program 6"
+        },
+        {
+          "dmxRange": [78, 90],
+          "type": "Effect",
+          "effectName": "Program 7"
+        },
+        {
+          "dmxRange": [91, 103],
+          "type": "Effect",
+          "effectName": "Program 8"
+        },
+        {
+          "dmxRange": [104, 116],
+          "type": "Effect",
+          "effectName": "Program 9"
+        },
+        {
+          "dmxRange": [117, 129],
+          "type": "Effect",
+          "effectName": "Program 10"
+        },
+        {
+          "dmxRange": [130, 142],
+          "type": "Effect",
+          "effectName": "Program 11"
+        },
+        {
+          "dmxRange": [143, 155],
+          "type": "Effect",
+          "effectName": "Program 12"
+        },
+        {
+          "dmxRange": [156, 168],
+          "type": "Effect",
+          "effectName": "Program 13"
+        },
+        {
+          "dmxRange": [169, 181],
+          "type": "Effect",
+          "effectName": "Program 14"
+        },
+        {
+          "dmxRange": [182, 194],
+          "type": "Effect",
+          "effectName": "Program 15"
+        },
+        {
+          "dmxRange": [195, 214],
+          "type": "Effect",
+          "effectName": "All programs looping"
+        },
+        {
+          "dmxRange": [215, 255],
+          "type": "Effect",
+          "effectName": "Sound Control",
+          "soundControlled": true
+        }
+      ]
+    },
+    "Program Speed": {
+      "defaultValue": 132,
+      "highlightValue": 255,
+      "capabilities": [
+        {
+          "dmxRange": [0, 10],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Closed",
+          "comment": "All LEDs off"
+        },
+        {
+          "dmxRange": [11, 255],
+          "type": "EffectSpeed",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        }
+      ]
+    }
+  },
+  "modes": [
+    {
+      "name": "2-Channel",
+      "shortName": "2ch",
+      "channels": [
+        "Programs",
+        "Program Speed"
+      ]
+    }
+  ]
+}

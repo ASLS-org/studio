@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Workspace>
+<Workspace xmlns="http://www.qlcplus.org/Workspace" CurrentWindow="ShowManager">
+ <Creator>
+  <Name>Q Light Controller Plus</Name>
+  <Version>4.12.4</Version>
+  <Author>root</Author>
+ </Creator>
+ <Engine>
+  <InputOutputMap>
+   <Universe Name="Universe 1" ID="0">
+    <Input Plugin="ArtNet" Line="1"/>
+   </Universe>
+   <Universe Name="Universe 2" ID="1"/>
+   <Universe Name="Universe 3" ID="2"/>
+   <Universe Name="Universe 4" ID="3"/>
+  </InputOutputMap>
+  <Fixture>
+   <Manufacturer>Martin</Manufacturer>
+   <Model>MAC Aura</Model>
+   <Mode>Extended Mode</Mode>
+   <ID>0</ID>
+   <Name>MAC Aura #1</Name>
+   <Universe>0</Universe>
+   <Address>41</Address>
+   <Channels>25</Channels>
+  </Fixture>
+  <Fixture>
+   <Manufacturer>Martin</Manufacturer>
+   <Model>MAC Aura</Model>
+   <Mode>Extended Mode</Mode>
+   <ID>1</ID>
+   <Name>MAC Aura</Name>
+   <Universe>0</Universe>
+   <Address>16</Address>
+   <Channels>25</Channels>
+  </Fixture>
+  <Fixture>
+   <Manufacturer>Martin</Manufacturer>
+   <Model>MAC Aura</Model>
+   <Mode>Extended Mode</Mode>
+   <ID>2</ID>
+   <Name>MAC Aura #2</Name>
+   <Universe>0</Universe>
+   <Address>66</Address>
+   <Channels>25</Channels>
+  </Fixture>
+  <Fixture>
+   <Manufacturer>Martin</Manufacturer>
+   <Model>MAC Aura</Model>
+   <Mode>Extended Mode</Mode>
+   <ID>3</ID>
+   <Name>MAC Aura #3</Name>
+   <Universe>0</Universe>
+   <Address>91</Address>
+   <Channels>25</Channels>
+  </Fixture>
+  <Fixture>
+   <Manufacturer>Martin</Manufacturer>
+   <Model>MAC Aura</Model>
+   <Mode>Extended Mode</Mode>
+   <ID>4</ID>
+   <Name>MAC Aura #4</Name>
+   <Universe>0</Universe>
+   <Address>116</Address>
+   <Channels>25</Channels>
+  </Fixture>
+  <FixtureGroup ID="0">
+   <Name>AURA</Name>
+   <Size X="4" Y="4"/>
+   <Head X="0" Y="0" Fixture="1">0</Head>
+   <Head X="1" Y="0" Fixture="1">1</Head>
+   <Head X="2" Y="0" Fixture="0">0</Head>
+   <Head X="3" Y="0" Fixture="0">1</Head>
+   <Head X="0" Y="1" Fixture="2">0</Head>
+   <Head X="1" Y="1" Fixture="2">1</Head>
+   <Head X="2" Y="1" Fixture="3">0</Head>
+   <Head X="3" Y="1" Fixture="3">1</Head>
+   <Head X="0" Y="2" Fixture="4">0</Head>
+   <Head X="1" Y="2" Fixture="4">1</Head>
+  </FixtureGroup>
+  <ChannelsGroup ID="0" Name="New Group" Value="0"/>
+  <Function ID="0" Type="Scene" Name="New Scene 0 (Copy) (Copy)">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="1">0,0,1,255,2,83,3,0,4,210,5,137,6,0,7,0,8,0,9,64,10,61,11,172,12,0,13,0,22,64,23,61,24,172</FixtureVal>
+   <FixtureVal ID="0">0,0,1,255,2,83,3,0,4,210,5,137,6,0,7,0,8,0,9,64,10,61,11,172,12,0,13,0,22,64,23,61,24,172</FixtureVal>
+   <FixtureVal ID="2">0,0,1,255,2,83,3,0,4,210,5,137,6,0,7,0,8,0,9,64,10,61,11,172,12,0,13,0,22,64,23,61,24,172</FixtureVal>
+   <FixtureVal ID="3">0,0,1,255,2,83,3,0,4,210,5,137,6,0,7,0,8,0,9,64,10,61,11,172,12,0,13,0,22,64,23,61,24,172</FixtureVal>
+   <FixtureVal ID="4">0,0,1,255,2,83,3,0,4,210,5,137,6,0,7,0,8,0,9,64,10,61,11,172,12,0,13,0,22,64,23,61,24,172</FixtureVal>
+  </Function>
+  <Function ID="1" Type="EFX" Name="New EFX 1">
+   <Fixture>
+    <ID>1</ID>
+    <Head>0</Head>
+    <Mode>0</Mode>
+    <Direction>Forward</Direction>
+    <StartOffset>180</StartOffset>
+   </Fixture>
+   <Fixture>
+    <ID>1</ID>
+    <Head>1</Head>
+    <Mode>0</Mode>
+    <Direction>Forward</Direction>
+    <StartOffset>0</StartOffset>
+   </Fixture>
+   <PropagationMode>Serial</PropagationMode>
+   <Speed FadeIn="0" FadeOut="0" Duration="20000"/>
+   <Direction>Forward</Direction>
+   <RunOrder>Loop</RunOrder>
+   <Algorithm>Eight</Algorithm>
+   <Width>32</Width>
+   <Height>32</Height>
+   <Rotation>0</Rotation>
+   <StartOffset>0</StartOffset>
+   <IsRelative>0</IsRelative>
+   <Axis Name="X">
+    <Offset>127</Offset>
+    <Frequency>2</Frequency>
+    <Phase>90</Phase>
+   </Axis>
+   <Axis Name="Y">
+    <Offset>127</Offset>
+    <Frequency>3</Frequency>
+    <Phase>0</Phase>
+   </Axis>
+  </Function>
+  <Function ID="2" Type="Chaser" Name="New Chaser 2">
+   <Speed FadeIn="0" FadeOut="0" Duration="150"/>
+   <Direction>Forward</Direction>
+   <RunOrder>Loop</RunOrder>
+   <SpeedModes FadeIn="Default" FadeOut="Default" Duration="Common"/>
+  </Function>
+  <Function ID="3" Type="Scene" Name="New Scene 0 (Copy)">
+   <Speed FadeIn="0" FadeOut="0" Duration="0"/>
+   <FixtureVal ID="1">0,0,1,255,2,125,3,0,4,210,5,137,6,0,7,0,8,0,9,255,10,64,11,172,12,0,13,0,22,172,23,41,24,172</FixtureVal>
+   <FixtureVal ID="0">0,0,1,255,2,125,3,0,4,210,5,137,6,0,7,0,8,0,9,255,10,64,11,172,12,0,13,0,22,172,23,41,24,172</FixtureVal>
+   <FixtureVal ID="2">0,0,1,255,2,125,3,0,4,210,5,137,6,0,7,0,8,0,9,255,10,64,11,172,12,0,13,0,22,172,23,41,24,172</FixtureVal>
+   <FixtureVal ID="3">0,0,1,255,2,125,3,0,4,210,5,137,6,0,7,0,8,0,9,255,10,64,11,172,12,0,13,0,22,172,23,41,24,172</FixtureVal>
+   <FixtureVal ID="4">0,0,1,255,2,125,3,0,4,210,5,137,6,0,7,0,8,0,9,255,10,64,11,172,12,0,13,0,22,172,23,41,24,172</FixtureVal>
+  </Function>
+  <Function ID="4" Type="EFX" Name="New EFX 4">
+   <Fixture>
+    <ID>1</ID>
+    <Head>0</Head>
+    <Mode>2</Mode>
+    <Direction>Forward</Direction>
+    <StartOffset>0</StartOffset>
+   </Fixture>
+   <Fixture>
+    <ID>1</ID>
+    <Head>1</Head>
+    <Mode>0</Mode>
+    <Direction>Forward</Direction>
+    <StartOffset>0</StartOffset>
+   </Fixture>
+   <Fixture>
+    <ID>0</ID>
+    <Head>0</Head>
+    <Mode>2</Mode>
+    <Direction>Backward</Direction>
+    <StartOffset>0</StartOffset>
+   </Fixture>
+   <Fixture>
+    <ID>0</ID>
+    <Head>1</Head>
+    <Mode>0</Mode>
+    <Direction>Backward</Direction>
+    <StartOffset>0</StartOffset>
+   </Fixture>
+   <Fixture>
+    <ID>2</ID>
+    <Head>0</Head>
+    <Mode>2</Mode>
+    <Direction>Forward</Direction>
+    <StartOffset>0</StartOffset>
+   </Fixture>
+   <Fixture>
+    <ID>2</ID>
+    <Head>1</Head>
+    <Mode>0</Mode>
+    <Direction>Forward</Direction>
+    <StartOffset>0</StartOffset>
+   </Fixture>
+   <Fixture>
+    <ID>3</ID>
+    <Head>0</Head>
+    <Mode>2</Mode>
+    <Direction>Backward</Direction>
+    <StartOffset>0</StartOffset>
+   </Fixture>
+   <Fixture>
+    <ID>3</ID>
+    <Head>1</Head>
+    <Mode>0</Mode>
+    <Direction>Backward</Direction>
+    <StartOffset>0</StartOffset>
+   </Fixture>
+   <Fixture>
+    <ID>4</ID>
+    <Head>0</Head>
+    <Mode>2</Mode>
+    <Direction>Forward</Direction>
+    <StartOffset>0</StartOffset>
+   </Fixture>
+   <Fixture>
+    <ID>4</ID>
+    <Head>1</Head>
+    <Mode>0</Mode>
+    <Direction>Forward</Direction>
+    <StartOffset>0</StartOffset>
+   </Fixture>
+   <PropagationMode>Asymmetric</PropagationMode>
+   <Speed FadeIn="0" FadeOut="0" Duration="10950"/>
+   <Direction>Backward</Direction>
+   <RunOrder>Loop</RunOrder>
+   <Algorithm>Circle</Algorithm>
+   <Width>64</Width>
+   <Height>64</Height>
+   <Rotation>0</Rotation>
+   <StartOffset>0</StartOffset>
+   <IsRelative>0</IsRelative>
+   <Axis Name="X">
+    <Offset>127</Offset>
+    <Frequency>2</Frequency>
+    <Phase>90</Phase>
+   </Axis>
+   <Axis Name="Y">
+    <Offset>127</Offset>
+    <Frequency>3</Frequency>
+    <Phase>0</Phase>
+   </Axis>
+  </Function>
+  <Function ID="32" Type="RGBMatrix" Name="New RGB Matrix 32">
+   <Speed FadeIn="0" FadeOut="0" Duration="500"/>
+   <Direction>Forward</Direction>
+   <RunOrder>Loop</RunOrder>
+   <Algorithm Type="Plain"/>
+   <MonoColor>4294967295</MonoColor>
+   <ControlMode>RGB</ControlMode>
+   <FixtureGroup>0</FixtureGroup>
+  </Function>
+  <Monitor DisplayMode="0" ShowLabels="1">
+   <Font>Arial,12,-1,5,50,0,0,0,0,0</Font>
+   <ChannelStyle>1</ChannelStyle>
+   <ValueStyle>1</ValueStyle>
+   <Grid Width="5" Height="3" Depth="5" Units="1"/>
+  </Monitor>
+ </Engine>
+ <VirtualConsole>
+  <Frame Caption="">
+   <Appearance>
+    <FrameStyle>None</FrameStyle>
+    <ForegroundColor>Default</ForegroundColor>
+    <BackgroundColor>Default</BackgroundColor>
+    <BackgroundImage>None</BackgroundImage>
+    <Font>Default</Font>
+   </Appearance>
+   <Button Caption="New EFX 3" ID="2" Icon="">
+    <WindowState Visible="False" X="135" Y="285" Width="50" Height="50"/>
+    <Appearance>
+     <FrameStyle>None</FrameStyle>
+     <ForegroundColor>Default</ForegroundColor>
+     <BackgroundColor>Default</BackgroundColor>
+     <BackgroundImage>None</BackgroundImage>
+     <Font>Default</Font>
+    </Appearance>
+    <Function ID="1"/>
+    <Action>Toggle</Action>
+    <Intensity Adjust="False">100</Intensity>
+   </Button>
+   <Button Caption="New Scene 0" ID="0" Icon="">
+    <WindowState Visible="False" X="145" Y="165" Width="50" Height="50"/>
+    <Appearance>
+     <FrameStyle>None</FrameStyle>
+     <ForegroundColor>Default</ForegroundColor>
+     <BackgroundColor>Default</BackgroundColor>
+     <BackgroundImage>None</BackgroundImage>
+     <Font>Default</Font>
+    </Appearance>
+    <Function ID="4294967295"/>
+    <Action>Toggle</Action>
+    <Intensity Adjust="False">100</Intensity>
+   </Button>
+   <Button Caption="New Scene 0 (Copy)" ID="1" Icon="">
+    <WindowState Visible="False" X="770" Y="215" Width="50" Height="50"/>
+    <Appearance>
+     <FrameStyle>None</FrameStyle>
+     <ForegroundColor>Default</ForegroundColor>
+     <BackgroundColor>Default</BackgroundColor>
+     <BackgroundImage>None</BackgroundImage>
+     <Font>Default</Font>
+    </Appearance>
+    <Function ID="3"/>
+    <Action>Toggle</Action>
+    <Intensity Adjust="False">100</Intensity>
+   </Button>
+   <Button Caption="New EFX 4" ID="3" Icon="">
+    <WindowState Visible="False" X="435" Y="225" Width="50" Height="50"/>
+    <Appearance>
+     <FrameStyle>None</FrameStyle>
+     <ForegroundColor>Default</ForegroundColor>
+     <BackgroundColor>Default</BackgroundColor>
+     <BackgroundImage>None</BackgroundImage>
+     <Font>Default</Font>
+    </Appearance>
+    <Function ID="4"/>
+    <Action>Toggle</Action>
+    <Intensity Adjust="False">100</Intensity>
+   </Button>
+  </Frame>
+  <Properties>
+   <Size Width="1920" Height="1080"/>
+   <GrandMaster ChannelMode="Intensity" ValueMode="Reduce" SliderMode="Normal"/>
+  </Properties>
+ </VirtualConsole>
+ <SimpleDesk>
+  <Engine/>
+ </SimpleDesk>
+</Workspace>

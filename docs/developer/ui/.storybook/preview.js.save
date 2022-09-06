@@ -1,0 +1,59 @@
+import Vue from 'vue';
+import './assets/styles/global.css'
+import './assets/styles/fonts.css'
+import uikit from './uikit/'
+import {storiesOf} from '@storybook/vue';
+const { parse } = require('comment-parser/lib')
+
+
+
+const ctx = require.context('!!raw-loader!./uikit/', true, /\.vue$/)
+const files = {};
+
+for (let filename of ctx.keys()) {
+  files[filename] = ctx(filename);
+  const parsed = parse(files[filename].default).filter(data=>{
+    return data.tags.filter(tag=>{
+       return tag.tag == "component"
+    }).length
+  })
+  if(parsed.length){
+    parsed.forEach(p=>{
+      console.log(p);
+      let component = p.tags.find(tag=>tag.tag === "component");
+      let stories = p.tags.filter(tag=>tag.tag === "story");
+      let storiesHandle = storiesOf(component.name);
+      stories.forEach(story=>{
+        storiesHandle.add(story.name || "unnamed story", () => `<${component.name}/>`);
+import      });
+    });
+  }
+}
+
+console.log(files);
+
+
+function registerComponents(components) {
+  Object.keys(components).forEach(componentKey => {
+    let component = components[componentKey]
+    console.log(component.__file)
+    if (component.name) {
+      Vue.component(component.name, component)
+    } else {
+      registerComponents(component)
+    }
+  })
+}
+
+registerComponents(uikit);
+
+
+export const parameters = {
+  actions: { argTypesRegex: "^on[A-Z].*" },
+  controls: {
+    matchers: {
+      color: /(background|color)$/i,
+      date: /Date$/,
+    },
+  },
+}

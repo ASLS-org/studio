@@ -1,0 +1,96 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "LED SLS-6 UV Floor",
+  "shortName": "LEDSLS6UV",
+  "categories": ["Dimmer"],
+  "meta": {
+    "authors": ["Flo Edelmann"],
+    "createDate": "2017-05-24",
+    "lastModifyDate": "2018-07-21"
+  },
+  "links": {
+    "manual": [
+      "https://media.steinigke.de/download_t/51915282-MANUAL-1.10-en-de_00102317.pdf"
+    ]
+  },
+  "physical": {
+    "dimensions": [230, 230, 110],
+    "weight": 1,
+    "power": 20,
+    "DMXconnector": "3-pin"
+  },
+  "availableChannels": {
+    "UV": {
+      "defaultValue": 0,
+      "highlightValue": 255,
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "UV"
+      }
+    },
+    "Strobe": {
+      "defaultValue": 0,
+      "highlightValue": 128,
+      "capabilities": [
+        {
+          "dmxRange": [0, 9],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [10, 255],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        }
+      ]
+    },
+    "Programs": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 9],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [10, 199],
+          "type": "Effect",
+          "effectName": "Auto mode"
+        },
+        {
+          "dmxRange": [200, 255],
+          "type": "Effect",
+          "effectName": "Sound mode",
+          "soundControlled": true
+        }
+      ]
+    },
+    "Program Speed": {
+      "defaultValue": 128,
+      "capability": {
+        "type": "EffectSpeed",
+        "speedStart": "slow",
+        "speedEnd": "fast"
+      }
+    }
+  },
+  "modes": [
+    {
+      "name": "2 channel",
+      "shortName": "2ch",
+      "channels": [
+        "UV",
+        "Strobe"
+      ]
+    },
+    {
+      "name": "4 channel",
+      "shortName": "4ch",
+      "channels": [
+        "UV",
+        "Strobe",
+        "Programs",
+        "Program Speed"
+      ]
+    }
+  ]
+}

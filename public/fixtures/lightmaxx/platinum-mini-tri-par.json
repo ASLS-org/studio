@@ -1,0 +1,203 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "Platinum Mini TRI-PAR",
+  "shortName": "MiniTri",
+  "categories": ["Color Changer"],
+  "meta": {
+    "authors": ["Flo Edelmann", "Felix Edelmann"],
+    "createDate": "2017-02-24",
+    "lastModifyDate": "2018-09-22"
+  },
+  "comment": "Platinum Line Mini TRI-PAR 7x3 Watt",
+  "links": {
+    "manual": ["https://www.musicstore.de/INTERSHOP/web/WFS/MusicStore-MusicStoreShop-Site/de_DE/-/EUR/ViewProductAttachment-ResolveManualURL?File=DE_LIG0008746-000.pdf"],
+    "video": ["https://www.youtube.com/watch?v=P5xIg3SfnnY"]
+  },
+  "physical": {
+    "dimensions": [170, 170, 160],
+    "weight": 2.0,
+    "power": 30,
+    "DMXconnector": "3-pin",
+    "bulb": {
+      "type": "LED"
+    },
+    "lens": {
+      "degreesMinMax": [25.0, 25.0]
+    }
+  },
+  "availableChannels": {
+    "Intensity": {
+      "highlightValue": 255,
+      "precedence": "HTP",
+      "capability": {
+        "type": "Intensity"
+      }
+    },
+    "Red": {
+      "highlightValue": 255,
+      "precedence": "HTP",
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Red"
+      }
+    },
+    "Green": {
+      "highlightValue": 255,
+      "precedence": "HTP",
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Green"
+      }
+    },
+    "Blue": {
+      "highlightValue": 255,
+      "precedence": "HTP",
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Blue"
+      }
+    },
+    "Macro": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 4],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [5, 9],
+          "type": "ColorPreset",
+          "colors": ["#ffffff"],
+          "comment": "White"
+        },
+        {
+          "dmxRange": [10, 14],
+          "type": "ColorPreset",
+          "colors": ["#add8e6"],
+          "comment": "Light blue"
+        },
+        {
+          "dmxRange": [15, 19],
+          "type": "ColorPreset",
+          "colors": ["#0000ff"],
+          "comment": "Blue"
+        },
+        {
+          "dmxRange": [20, 24],
+          "type": "ColorPreset",
+          "colors": ["#800080"],
+          "comment": "Purple"
+        },
+        {
+          "dmxRange": [25, 29],
+          "type": "ColorPreset",
+          "colors": ["#ffb6c1"],
+          "comment": "Light pink"
+        },
+        {
+          "dmxRange": [30, 34],
+          "type": "ColorPreset",
+          "colors": ["#ca1f7b"],
+          "comment": "Magenta"
+        },
+        {
+          "dmxRange": [35, 39],
+          "type": "ColorPreset",
+          "colors": ["#ffc0cb"],
+          "comment": "Pink"
+        },
+        {
+          "dmxRange": [40, 44],
+          "type": "ColorPreset",
+          "colors": ["#e75480"],
+          "comment": "Dark pink"
+        },
+        {
+          "dmxRange": [45, 49],
+          "type": "ColorPreset",
+          "colors": ["#ff0000"],
+          "comment": "Red"
+        },
+        {
+          "dmxRange": [50, 54],
+          "type": "ColorPreset",
+          "colors": ["#ff7f00"],
+          "comment": "Orange"
+        },
+        {
+          "dmxRange": [55, 59],
+          "type": "ColorPreset",
+          "colors": ["#facc00"],
+          "comment": "Light orange"
+        },
+        {
+          "dmxRange": [60, 64],
+          "type": "ColorPreset",
+          "colors": ["#ffff00"],
+          "comment": "Yellow"
+        },
+        {
+          "dmxRange": [65, 69],
+          "type": "ColorPreset",
+          "colors": ["#90ee90"],
+          "comment": "Light green"
+        },
+        {
+          "dmxRange": [70, 74],
+          "type": "ColorPreset",
+          "colors": ["#00ff00"],
+          "comment": "Green"
+        },
+        {
+          "dmxRange": [75, 79],
+          "type": "ColorPreset",
+          "colors": ["#7fffd4"],
+          "comment": "Aquamarine"
+        },
+        {
+          "dmxRange": [80, 84],
+          "type": "ColorPreset",
+          "colors": ["#00ffff"],
+          "comment": "Cyan"
+        },
+        {
+          "dmxRange": [85, 169],
+          "type": "Effect",
+          "effectPreset": "ColorJump",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        },
+        {
+          "dmxRange": [170, 255],
+          "type": "Effect",
+          "effectPreset": "ColorFade",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        }
+      ]
+    },
+    "Strobe": {
+      "highlightValue": 200,
+      "capabilities": [
+        {
+          "dmxRange": [0, 4],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open"
+        },
+        {
+          "dmxRange": [5, 255],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        }
+      ]
+    }
+  },
+  "modes": [
+    {
+      "name": "6-channel",
+      "shortName": "6ch",
+      "channels": ["Intensity", "Red", "Green", "Blue", "Macro", "Strobe"]
+    }
+  ]
+}

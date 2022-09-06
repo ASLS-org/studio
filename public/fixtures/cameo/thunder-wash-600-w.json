@@ -1,0 +1,271 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "Thunder Wash 600 W",
+  "shortName": "CLTW600W",
+  "categories": ["Strobe", "Blinder"],
+  "meta": {
+    "authors": ["Flo Edelmann"],
+    "createDate": "2017-02-24",
+    "lastModifyDate": "2018-08-09"
+  },
+  "links": {
+    "manual": ["https://adamhall.s3.amazonaws.com/media/MARKEN/CAMEO/CLTW600W/CLTW600W_Cameo_Bedienungsanleitung_EN_DE_FR_ES_PL_IT.pdf"],
+    "video": ["https://www.youtube.com/watch?v=bAnmeHVZfe0"]
+  },
+  "physical": {
+    "dimensions": [335, 182, 93],
+    "weight": 3.25,
+    "power": 130,
+    "DMXconnector": "3-pin",
+    "bulb": {
+      "type": "LED"
+    },
+    "lens": {
+      "degreesMinMax": [75.0, 75.0]
+    }
+  },
+  "matrix": {
+    "pixelKeys": [
+      [
+        ["1", "2"],
+        ["3", "4"]
+      ]
+    ]
+  },
+  "availableChannels": {
+    "strobe1": {
+      "name": "Strobe",
+      "highlightValue": 220,
+      "capabilities": [
+        {
+          "dmxRange": [0, 10],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Closed"
+        },
+        {
+          "dmxRange": [11, 255],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "0Hz",
+          "speedEnd": "30Hz",
+          "menuClick": "center"
+        }
+      ]
+    },
+    "strobe2": {
+      "name": "Strobe",
+      "highlightValue": 220,
+      "capabilities": [
+        {
+          "dmxRange": [0, 5],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open"
+        },
+        {
+          "dmxRange": [6, 10],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Closed"
+        },
+        {
+          "dmxRange": [11, 250],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "0Hz",
+          "speedEnd": "30Hz",
+          "menuClick": "center"
+        },
+        {
+          "dmxRange": [251, 255],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open",
+          "menuClick": "hidden"
+        }
+      ]
+    },
+    "strobe3": {
+      "name": "Strobe",
+      "highlightValue": 220,
+      "capabilities": [
+        {
+          "dmxRange": [0, 5],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open"
+        },
+        {
+          "dmxRange": [6, 10],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Closed"
+        },
+        {
+          "dmxRange": [11, 33],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Pulse",
+          "speedStart": "slow",
+          "speedEnd": "fast",
+          "randomTiming": true,
+          "menuClick": "center"
+        },
+        {
+          "dmxRange": [34, 56],
+          "type": "ShutterStrobe",
+          "shutterEffect": "RampUp",
+          "speedStart": "slow",
+          "speedEnd": "fast",
+          "randomTiming": true,
+          "menuClick": "center"
+        },
+        {
+          "dmxRange": [57, 79],
+          "type": "ShutterStrobe",
+          "shutterEffect": "RampDown",
+          "speedStart": "slow",
+          "speedEnd": "fast",
+          "randomTiming": true,
+          "menuClick": "center"
+        },
+        {
+          "dmxRange": [80, 102],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "slow",
+          "speedEnd": "fast",
+          "randomTiming": true,
+          "menuClick": "center"
+        },
+        {
+          "dmxRange": [103, 127],
+          "type": "ShutterStrobe",
+          "comment": "Break Effect",
+          "shutterEffect": "Strobe",
+          "durationStart": "5s",
+          "durationEnd": "1s",
+          "menuClick": "center"
+        },
+        {
+          "dmxRange": [128, 250],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "0Hz",
+          "speedEnd": "30Hz",
+          "menuClick": "center"
+        },
+        {
+          "dmxRange": [251, 255],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open",
+          "menuClick": "hidden"
+        }
+      ]
+    },
+    "Dimmer": {
+      "highlightValue": 255,
+      "capability": {
+        "type": "Intensity"
+      }
+    },
+    "Flash Duration": {
+      "capability": {
+        "type": "StrobeDuration",
+        "durationStart": "0ms",
+        "durationEnd": "512ms"
+      }
+    },
+    "Sound Control": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 5],
+          "type": "SoundSensitivity",
+          "soundSensitivity": "off"
+        },
+        {
+          "dmxRange": [6, 255],
+          "type": "SoundSensitivity",
+          "soundSensitivityStart": "low",
+          "soundSensitivityEnd": "high",
+          "menuClick": "center"
+        }
+      ]
+    },
+    "Programs": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 10],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [11, 255],
+          "type": "Effect",
+          "effectName": "Strobe Programs (alternating segments)"
+        }
+      ]
+    },
+    "Program Speed": {
+      "capability": {
+        "type": "EffectSpeed",
+        "speedStart": "slow",
+        "speedEnd": "fast"
+      }
+    }
+  },
+  "templateChannels": {
+    "LED$pixelKey Dimmer": {
+      "capability": {
+        "type": "Intensity"
+      }
+    }
+  },
+  "modes": [
+    {
+      "name": "1-channel",
+      "shortName": "1ch",
+      "channels": [
+        "strobe1"
+      ]
+    },
+    {
+      "name": "2-channel",
+      "shortName": "2ch",
+      "channels": [
+        "Dimmer",
+        "strobe2"
+      ]
+    },
+    {
+      "name": "3-channel",
+      "shortName": "3ch",
+      "channels": [
+        "Dimmer",
+        "strobe2",
+        "Flash Duration"
+      ]
+    },
+    {
+      "name": "5-channel",
+      "shortName": "5ch",
+      "channels": [
+        "Dimmer",
+        "strobe3",
+        "Programs",
+        "Program Speed",
+        "Sound Control"
+      ]
+    },
+    {
+      "name": "7-channel",
+      "shortName": "7ch",
+      "channels": [
+        "Dimmer",
+        "strobe2",
+        "Flash Duration",
+        {
+          "insert": "matrixChannels",
+          "repeatFor": "eachPixelABC",
+          "channelOrder": "perPixel",
+          "templateChannels": [
+            "LED$pixelKey Dimmer"
+          ]
+        }
+      ]
+    }
+  ]
+}

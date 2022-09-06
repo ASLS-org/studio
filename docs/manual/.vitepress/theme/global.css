@@ -1,0 +1,286 @@
+:root{
+  /** 
+   * @colorTheme dark
+   * @swatch Primary
+   * @color --primary-dark #0C0E0A
+   * @color --primary-dark-alt #131510
+   * @color --primary-light #161913
+   * @color --primary-light-alt #1c1f18;
+   * @color --primary-lighter #2e302b4d
+   * @color --primary-lighter-alt #22251f
+   */
+  --primary-dark: #0C0E0A;
+  --primary-dark-alt: #131510;
+  --primary-light: #161913;
+  --primary-light-alt: #1c1f18;
+  --primary-lighter: #2e302b4d;
+  --primary-lighter-alt: #22251f;
+  
+  /** 
+   * @colorTheme dark
+   * @swatch Secondary
+   * @color --secondary-lighter #FFFFFFB3
+   * @color --secondary-light #FFFFFF33
+   * @color --secondary-dark #FFFFFF1A
+   * @color --secondary-darker #FFFFFF0D;
+   */
+  --secondary-lighter: #FFFFFFB3;
+  --secondary-light: #FFFFFF33;
+  --secondary-dark: #FFFFFF1A;
+  --secondary-darker: #FFFFFF0D;
+  
+  /** 
+   * @colorTheme dark
+   * @swatch Accent
+   * @color --accent-red #B4475B
+   * @color --accent-yellow #B2B447
+   * @color --accent-green #49B447
+   * @color --accent-blue #4786B4;
+   */
+  --accent-red: #B4475B;
+  --accent-yellow: #B2B447;
+  --accent-green: #49B447;
+  --accent-blue: #4786B4;
+}
+
+[data-theme="light"] {
+  /** 
+   * @colorTheme light
+   * @swatch Primary
+   * @color --primary-dark #a8a7a7
+   * @color --primary-dark-alt #eceaef
+   * @color --primary-light #e9e6ec
+   * @color --primary-light-alt #e3e0e7;
+   * @color --primary-lighter #d1cfd44d
+   * @color --primary-lighter-alt #161913
+   */
+  --primary-dark: #a8a7a7;
+  --primary-dark-alt: #eceaef;
+  --primary-light: #e9e6ec;
+  --primary-light-alt: #e3e0e7;
+  --primary-lighter: #d1cfd44d;
+  --primary-lighter-alt: var(--primary-light);
+
+  /** 
+   * @colorTheme light
+   * @swatch Secondary
+   * @color --secondary-lighter #000000B3
+   * @color --secondary-light #00000033
+   * @color --secondary-dark #0000001A
+   * @color --secondary-darker #0000001D;
+   */
+  --secondary-lighter: #000000B3;
+  --secondary-light: #00000033;
+  --secondary-dark: #0000001A;
+  --secondary-darker: #0000001D;
+}
+
+
+/** App's main containers initialisation **/
+* {
+  user-select: none;
+}
+
+input {
+  user-select: auto;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  height: 100%;
+  margin: 0;
+  display: flex;
+}
+
+/** Global Box Sizing Initialisation **/
+* {
+  box-sizing: border-box;
+}
+
+/** Global Input Initialisation **/
+input::-moz-focus-outer {
+  border: 0;
+}
+
+select:-moz-focusring {
+  color: transparent;
+  text-shadow: 0 0 0 var(--secondary-lighter);
+}
+
+input:focus {
+  outline: none;
+}
+
+
+/** Global Typography Styleguide **/
+/** 
+  * @typeset h1
+  * @fontFamily Roboto-Regular
+  * @fontSize 24
+  */
+h1 {
+  font-family: Roboto-Regular;
+  font-size: 24px;
+  color: var(--secondary-lighter);
+}
+/** 
+  * @typeset h2
+  * @fontFamily Roboto-Regular
+  * @fontSize 16
+  */
+h2 {
+  font-family: Roboto-Regular;
+  font-size: 16px;
+  color: var(--secondary-lighter);
+}
+/** 
+  * @typeset h2
+  * @fontFamily Roboto-Bold
+  * @fontSize 12
+  * @uppercase
+  */
+h3 {
+  font-family: Roboto-Bold;
+  text-transform: uppercase;
+  font-size: 12px;
+  color: var(--secondary-lighter);
+  margin: 0;
+  padding: 0;
+  font-weight: normal;
+}
+/** 
+  * @typeset h4
+  * @fontFamily Roboto-Bold
+  * @fontSize 12
+  */
+h4 {
+  font-family: Roboto-Bold;
+  font-size: 12px;
+  color: var(--secondary-lighter);
+  margin: 0;
+  padding: 0;
+  font-weight: normal;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+/** 
+  * @typeset h4
+  * @fontFamily Roboto-Medium
+  * @fontSize 12
+  */
+p {
+  font-family: Roboto-Medium;
+  font-style: normal;
+  font-weight: normal;
+  font-stretch: normal;
+  -webkit-font-smoothing: antialiased;
+  line-height: 16px;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: var(--secondary-lighter);
+  margin: 0;
+}
+/** 
+  * @typeset button
+  * @fontFamily Roboto-Regular
+  * @fontSize 12
+  * @uppercase
+  */
+button {
+  text-transform: uppercase;
+  font-family: Roboto-Regular;
+  font-size: 12px;
+  color: var(--secondary-lighter);
+  border: none;
+}
+/*
+.label {
+  font-family: Roboto-Medium;
+  font-size: 12px;
+  color: var(--secondary-lighter);
+  margin: 0;
+  padding: 0;
+  font-weight: normal;
+  margin-bottom: 8px;
+}
+
+.select_value {
+  font-family: Roboto-Bold;
+  font-size: 12px;
+  color: var(--secondary-lighter);
+  margin: 0;
+  padding: 0;
+  font-weight: normal;
+}
+
+.label:after {
+  content: ":"
+}
+
+.label.disabled {
+  color: var(--secondary-light);
+}
+*/
+
+/** Global Scrollbar styling */
+* {
+  scrollbar-color: var(--secondary-dark) var(--primary-dark);
+  scrollbar-width: thin;
+  z-index: 0;
+}
+
+* .invisible_scrollbar{
+  scrollbar-color: transparent;
+  scrollbar-width: none;
+  z-index: 0;
+}
+
+::-webkit-scrollbar {
+  -webkit-appearance: none;
+  background:  var(--primary-dark);
+  width: 5px;
+  height: 5px;
+  z-index: 0;
+}
+
+div.invisible_scrollbar::-webkit-scrollbar {
+  background: transparent;
+  width: 0px;
+  height: 0px;
+  z-index: 0;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+
+::-webkit-scrollbar-track {
+  background:  var(--primary-dark);
+  width: 5px;
+  height: 5px;
+}
+
+div.invisible_scrollbar::-webkit-scrollbar-track  {
+  background: transparent;
+  width: 0px;
+  height: 0px;
+  z-index: 0;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--secondary-dark);
+  width: 5px;
+  height: 5px;
+}
+
+div.invisible_scrollbar::-webkit-scrollbar-thumb {
+  background: transparent;
+  width: 0px;
+  height: 0px;
+}

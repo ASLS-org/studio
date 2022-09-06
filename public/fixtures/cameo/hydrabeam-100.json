@@ -1,0 +1,363 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "Hydrabeam 100",
+  "shortName": "CLHB100RGBW",
+  "categories": ["Moving Head", "Color Changer"],
+  "meta": {
+    "authors": ["Felix Edelmann", "Flo Edelmann"],
+    "createDate": "2017-08-24",
+    "lastModifyDate": "2018-08-09"
+  },
+  "links": {
+    "manual": ["https://adamhall.s3.amazonaws.com/media/MARKEN/CAMEO/CLHB100RGBW/CLHB100RGBW_CAMEO_Bedienungsanleitung_EN_DE_FR_ES_PL_IT.pdf"],
+    "video": [
+      "https://www.youtube.com/watch?v=DqHGJd3NUJg",
+      "https://www.youtube.com/watch?v=5_bVB5iqG5s"
+    ]
+  },
+  "physical": {
+    "dimensions": [160, 240, 100],
+    "weight": 1.9,
+    "power": 20,
+    "DMXconnector": "3-pin",
+    "lens": {
+      "degreesMinMax": [4.5, 4.5]
+    }
+  },
+  "availableChannels": {
+    "Auto Modes": {
+      "defaultValue": 0,
+      "capabilities": [
+        {
+          "dmxRange": [0, 7],
+          "type": "NoFunction",
+          "switchChannels": {
+            "Sound Sensitivity / Auto Mode Speed": "Auto Mode Speed"
+          }
+        },
+        {
+          "dmxRange": [8, 30],
+          "type": "Effect",
+          "effectName": "Show mode 1",
+          "switchChannels": {
+            "Sound Sensitivity / Auto Mode Speed": "Auto Mode Speed"
+          }
+        },
+        {
+          "dmxRange": [31, 53],
+          "type": "Effect",
+          "effectName": "Show mode 2",
+          "switchChannels": {
+            "Sound Sensitivity / Auto Mode Speed": "Auto Mode Speed"
+          }
+        },
+        {
+          "dmxRange": [54, 76],
+          "type": "Effect",
+          "effectName": "Show mode 3",
+          "switchChannels": {
+            "Sound Sensitivity / Auto Mode Speed": "Auto Mode Speed"
+          }
+        },
+        {
+          "dmxRange": [77, 99],
+          "type": "Effect",
+          "effectName": "Show mode 4",
+          "switchChannels": {
+            "Sound Sensitivity / Auto Mode Speed": "Auto Mode Speed"
+          }
+        },
+        {
+          "dmxRange": [100, 122],
+          "type": "Effect",
+          "effectName": "Sound control",
+          "switchChannels": {
+            "Sound Sensitivity / Auto Mode Speed": "Sound Sensitivity"
+          }
+        },
+        {
+          "dmxRange": [123, 199],
+          "type": "NoFunction",
+          "switchChannels": {
+            "Sound Sensitivity / Auto Mode Speed": "Auto Mode Speed"
+          }
+        },
+        {
+          "dmxRange": [200, 224],
+          "type": "Maintenance",
+          "comment": "Reset",
+          "switchChannels": {
+            "Sound Sensitivity / Auto Mode Speed": "Auto Mode Speed"
+          }
+        },
+        {
+          "dmxRange": [225, 255],
+          "type": "NoFunction",
+          "switchChannels": {
+            "Sound Sensitivity / Auto Mode Speed": "Auto Mode Speed"
+          }
+        }
+      ]
+    },
+    "Sound Sensitivity": {
+      "capability": {
+        "type": "SoundSensitivity",
+        "soundSensitivityStart": "low",
+        "soundSensitivityEnd": "high",
+        "helpWanted": "Correct direction?"
+      }
+    },
+    "Auto Mode Speed": {
+      "defaultValue": 127,
+      "capability": {
+        "type": "EffectSpeed",
+        "speedStart": "slow",
+        "speedEnd": "fast"
+      }
+    },
+    "Dimmer": {
+      "capability": {
+        "type": "Intensity"
+      }
+    },
+    "Pan": {
+      "fineChannelAliases": ["Pan fine"],
+      "defaultValue": 32639,
+      "capability": {
+        "type": "Pan",
+        "angleStart": "0deg",
+        "angleEnd": "540deg"
+      }
+    },
+    "Tilt": {
+      "fineChannelAliases": ["Tilt fine"],
+      "defaultValue": 32639,
+      "capability": {
+        "type": "Tilt",
+        "angleStart": "0deg",
+        "angleEnd": "270deg"
+      }
+    },
+    "Head Speed": {
+      "defaultValue": 127,
+      "capability": {
+        "type": "PanTiltSpeed",
+        "speedStart": "slow",
+        "speedEnd": "fast"
+      }
+    },
+    "Strobe": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 10],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [11, 255],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        }
+      ]
+    },
+    "Color Macros": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 30],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [31, 45],
+          "type": "ColorPreset",
+          "colors": ["#ff0000"],
+          "comment": "Red"
+        },
+        {
+          "dmxRange": [46, 60],
+          "type": "ColorPreset",
+          "colors": ["#00ff00"],
+          "comment": "Green"
+        },
+        {
+          "dmxRange": [61, 75],
+          "type": "ColorPreset",
+          "colors": ["#0000ff"],
+          "comment": "Blue"
+        },
+        {
+          "dmxRange": [76, 90],
+          "type": "ColorPreset",
+          "colors": ["#ffffff"],
+          "comment": "White"
+        },
+        {
+          "dmxRange": [91, 105],
+          "type": "ColorPreset",
+          "colors": ["#ff0000", "#00ff00"],
+          "comment": "Red + Green"
+        },
+        {
+          "dmxRange": [106, 120],
+          "type": "ColorPreset",
+          "colors": ["#ff0000", "#0000ff"],
+          "comment": "Red + Blue"
+        },
+        {
+          "dmxRange": [121, 135],
+          "type": "ColorPreset",
+          "colors": ["#ff0000", "#ffffff"],
+          "comment": "Red + White"
+        },
+        {
+          "dmxRange": [136, 150],
+          "type": "ColorPreset",
+          "colors": ["#00ff00", "#0000ff"],
+          "comment": "Green + Blue"
+        },
+        {
+          "dmxRange": [151, 165],
+          "type": "ColorPreset",
+          "colors": ["#00ff00", "#ffffff"],
+          "comment": "Green + White"
+        },
+        {
+          "dmxRange": [166, 180],
+          "type": "ColorPreset",
+          "colors": ["#0000ff", "#ffffff"],
+          "comment": "Blue + White"
+        },
+        {
+          "dmxRange": [181, 195],
+          "type": "ColorPreset",
+          "colors": ["#ff0000", "#00ff00", "#0000ff"],
+          "comment": "Red + Green + Blue"
+        },
+        {
+          "dmxRange": [196, 210],
+          "type": "ColorPreset",
+          "colors": ["#ff0000", "#00ff00", "#ffffff"],
+          "comment": "Red + Green + White"
+        },
+        {
+          "dmxRange": [211, 225],
+          "type": "ColorPreset",
+          "colors": ["#ff0000", "#0000ff", "#ffffff"],
+          "comment": "Red + Blue + White"
+        },
+        {
+          "dmxRange": [226, 240],
+          "type": "ColorPreset",
+          "colors": ["#00ff00", "#0000ff", "#ffffff"],
+          "comment": "Green + Blue + White"
+        },
+        {
+          "dmxRange": [241, 255],
+          "type": "ColorPreset",
+          "colors": ["#ff0000", "#00ff00", "#0000ff", "#ffffff"],
+          "comment": "Red + Green + Blue + White"
+        }
+      ]
+    },
+    "Red": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Red"
+      }
+    },
+    "Green": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Green"
+      }
+    },
+    "Blue": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Blue"
+      }
+    },
+    "White": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "White"
+      }
+    }
+  },
+  "modes": [
+    {
+      "name": "3-channel",
+      "shortName": "3ch",
+      "channels": [
+        "Auto Modes",
+        "Sound Sensitivity / Auto Mode Speed",
+        "Dimmer"
+      ]
+    },
+    {
+      "name": "6-channel",
+      "shortName": "6ch",
+      "channels": [
+        "Pan",
+        "Tilt",
+        "Head Speed",
+        "Dimmer",
+        "Strobe",
+        "Color Macros"
+      ]
+    },
+    {
+      "name": "9-channel",
+      "shortName": "9ch",
+      "channels": [
+        "Pan",
+        "Tilt",
+        "Head Speed",
+        "Dimmer",
+        "Strobe",
+        "Red",
+        "Green",
+        "Blue",
+        "White"
+      ]
+    },
+    {
+      "name": "12-channel",
+      "shortName": "12ch",
+      "channels": [
+        "Pan",
+        "Pan fine",
+        "Tilt",
+        "Tilt fine",
+        "Head Speed",
+        "Dimmer",
+        "Strobe",
+        "Color Macros",
+        "Red",
+        "Green",
+        "Blue",
+        "White"
+      ]
+    },
+    {
+      "name": "14-channel",
+      "shortName": "14ch",
+      "channels": [
+        "Pan",
+        "Pan fine",
+        "Tilt",
+        "Tilt fine",
+        "Head Speed",
+        "Dimmer",
+        "Strobe",
+        "Color Macros",
+        "Auto Modes",
+        "Sound Sensitivity / Auto Mode Speed",
+        "Red",
+        "Green",
+        "Blue",
+        "White"
+      ]
+    }
+  ]
+}

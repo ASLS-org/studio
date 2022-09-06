@@ -1,0 +1,216 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "Quad Phase HP",
+  "shortName": "QPHP",
+  "categories": ["Flower", "Color Changer"],
+  "meta": {
+    "authors": ["Flo Edelmann"],
+    "createDate": "2017-04-09",
+    "lastModifyDate": "2018-08-09"
+  },
+  "links": {
+    "manual": [
+      "https://cdb.s3.amazonaws.com/ItemRelatedFiles/6976/ADJ%20Quad%20Phase%20HP%20-%20User%20Manual%20.pdf"
+    ],
+    "productPage": [
+      "https://www.adj.com/quad-phase-hp"
+    ],
+    "video": [
+      "https://www.youtube.com/watch?v=g3qTCXyDvK8",
+      "https://www.youtube.com/watch?v=pxrg2VxH0xY"
+    ]
+  },
+  "physical": {
+    "dimensions": [198, 279, 312],
+    "weight": 4,
+    "power": 64,
+    "DMXconnector": "3-pin",
+    "bulb": {
+      "type": "LED"
+    },
+    "lens": {
+      "degreesMinMax": [65, 65]
+    }
+  },
+  "availableChannels": {
+    "Color": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 16],
+          "type": "ColorPreset",
+          "colors": ["#ff0000"],
+          "comment": "Red"
+        },
+        {
+          "dmxRange": [17, 33],
+          "type": "ColorPreset",
+          "colors": ["#00ff00"],
+          "comment": "Green"
+        },
+        {
+          "dmxRange": [34, 50],
+          "type": "ColorPreset",
+          "colors": ["#0000ff"],
+          "comment": "Blue"
+        },
+        {
+          "dmxRange": [51, 67],
+          "type": "ColorPreset",
+          "colors": ["#ffffff"],
+          "comment": "White"
+        },
+        {
+          "dmxRange": [68, 84],
+          "type": "ColorPreset",
+          "colors": ["#ff0000", "#00ff00"],
+          "comment": "Red + Green"
+        },
+        {
+          "dmxRange": [85, 101],
+          "type": "ColorPreset",
+          "colors": ["#ff0000", "#0000ff"],
+          "comment": "Red + Blue"
+        },
+        {
+          "dmxRange": [102, 118],
+          "type": "ColorPreset",
+          "colors": ["#ff0000", "#ffffff"],
+          "comment": "Red + White"
+        },
+        {
+          "dmxRange": [119, 135],
+          "type": "ColorPreset",
+          "colors": ["#00ff00", "#0000ff"],
+          "comment": "Green + Blue"
+        },
+        {
+          "dmxRange": [136, 152],
+          "type": "ColorPreset",
+          "colors": ["#00ff00", "#ffffff"],
+          "comment": "Green + White"
+        },
+        {
+          "dmxRange": [153, 169],
+          "type": "ColorPreset",
+          "colors": ["#0000ff", "#ffffff"],
+          "comment": "Blue + White"
+        },
+        {
+          "dmxRange": [170, 186],
+          "type": "ColorPreset",
+          "colors": ["#ff0000", "#00ff00", "#0000ff"],
+          "comment": "Red + Green + Blue"
+        },
+        {
+          "dmxRange": [187, 203],
+          "type": "ColorPreset",
+          "colors": ["#ff0000", "#00ff00", "#ffffff"],
+          "comment": "Red + Green + White"
+        },
+        {
+          "dmxRange": [204, 220],
+          "type": "ColorPreset",
+          "colors": ["#ff0000", "#0000ff", "#ffffff"],
+          "comment": "Red + Blue + White"
+        },
+        {
+          "dmxRange": [221, 237],
+          "type": "ColorPreset",
+          "colors": ["#00ff00", "#0000ff", "#ffffff"],
+          "comment": "Green + Blue + White"
+        },
+        {
+          "dmxRange": [238, 255],
+          "type": "ColorPreset",
+          "colors": ["#ff0000", "#00ff00", "#0000ff", "#ffffff"],
+          "comment": "Red + Green + Blue + White"
+        }
+      ]
+    },
+    "Rotation": {
+      "defaultValue": 128,
+      "highlightValue": 220,
+      "capabilities": [
+        {
+          "dmxRange": [0, 9],
+          "type": "Rotation",
+          "speed": "stop"
+        },
+        {
+          "dmxRange": [10, 120],
+          "type": "Rotation",
+          "speedStart": "fast CW",
+          "speedEnd": "slow CW"
+        },
+        {
+          "dmxRange": [121, 134],
+          "type": "Rotation",
+          "speed": "stop",
+          "menuClick": "hidden"
+        },
+        {
+          "dmxRange": [135, 245],
+          "type": "Rotation",
+          "speedStart": "slow CCW",
+          "speedEnd": "fast CCW"
+        },
+        {
+          "dmxRange": [246, 249],
+          "type": "Rotation",
+          "speed": "stop",
+          "menuClick": "hidden"
+        },
+        {
+          "dmxRange": [250, 255],
+          "type": "Effect",
+          "effectName": "Sound Control",
+          "soundControlled": true
+        }
+      ]
+    },
+    "Strobe": {
+      "highlightValue": 200,
+      "capabilities": [
+        {
+          "dmxRange": [0, 0],
+          "type": "NoFunction",
+          "comment": "No Strobe"
+        },
+        {
+          "dmxRange": [1, 255],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        }
+      ]
+    },
+    "Shutter": {
+      "highlightValue": 255,
+      "capabilities": [
+        {
+          "dmxRange": [0, 15],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Closed"
+        },
+        {
+          "dmxRange": [16, 255],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open"
+        }
+      ]
+    }
+  },
+  "modes": [
+    {
+      "name": "4-channel",
+      "shortName": "4ch",
+      "channels": [
+        "Color",
+        "Rotation",
+        "Strobe",
+        "Shutter"
+      ]
+    }
+  ]
+}

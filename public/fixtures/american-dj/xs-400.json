@@ -1,0 +1,430 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "XS 400",
+  "shortName": "XS400",
+  "categories": ["Moving Head", "Color Changer"],
+  "meta": {
+    "authors": ["Flo Edelmann"],
+    "createDate": "2017-09-04",
+    "lastModifyDate": "2019-05-17"
+  },
+  "links": {
+    "manual": [
+      "http://adjmedia.s3-website-eu-west-1.amazonaws.com/manuals/XS%20400.pdf"
+    ],
+    "productPage": [
+      "https://www.americandj.eu/en/xs-400.html"
+    ],
+    "video": [
+      "https://www.youtube.com/watch?v=Don23z-XN-s",
+      "https://www.youtube.com/watch?v=AjbBAu8UHW8",
+      "https://www.youtube.com/watch?v=EpWMiggfdBM"
+    ]
+  },
+  "physical": {
+    "dimensions": [169.9, 284.5, 123.6],
+    "weight": 2.5,
+    "power": 45,
+    "DMXconnector": "3-pin",
+    "bulb": {
+      "type": "4x 10W RGBW LEDs",
+      "lumens": 454
+    },
+    "lens": {
+      "degreesMinMax": [5, 5]
+    }
+  },
+  "availableChannels": {
+    "Pan": {
+      "fineChannelAliases": ["Pan fine"],
+      "defaultValue": "50%",
+      "capability": {
+        "type": "Pan",
+        "angleStart": "0deg",
+        "angleEnd": "540deg"
+      }
+    },
+    "Tilt": {
+      "fineChannelAliases": ["Tilt fine"],
+      "defaultValue": "50%",
+      "capability": {
+        "type": "Tilt",
+        "angleStart": "0deg",
+        "angleEnd": "360deg"
+      }
+    },
+    "Tilt Continuous Rotation": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 55],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [56, 127],
+          "type": "TiltContinuous",
+          "speed": "fast CW"
+        },
+        {
+          "dmxRange": [128, 199],
+          "type": "TiltContinuous",
+          "speed": "fast CCW"
+        },
+        {
+          "dmxRange": [200, 255],
+          "type": "NoFunction"
+        }
+      ]
+    },
+    "Tilt Continuous Rotation Speed": {
+      "capability": {
+        "type": "Speed",
+        "speedStart": "slow",
+        "speedEnd": "fast",
+        "helpWanted": "Is this pan rotation? If not, is it correct that channel 'Tilt Continuous Rotation' only sets direction and this channel the rotation speed?"
+      }
+    },
+    "Red": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Red"
+      }
+    },
+    "Green": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Green"
+      }
+    },
+    "Blue": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Blue"
+      }
+    },
+    "White": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "White"
+      }
+    },
+    "Color Macros & Effects": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 10],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [11, 20],
+          "type": "ColorPreset",
+          "colors": ["#ff0000"],
+          "comment": "Red"
+        },
+        {
+          "dmxRange": [21, 30],
+          "type": "ColorPreset",
+          "colors": ["#00ff00"],
+          "comment": "Green"
+        },
+        {
+          "dmxRange": [31, 40],
+          "type": "ColorPreset",
+          "colors": ["#ff0000", "#00ff00"],
+          "comment": "Red + Green"
+        },
+        {
+          "dmxRange": [41, 50],
+          "type": "ColorPreset",
+          "colors": ["#0000ff"],
+          "comment": "Blue"
+        },
+        {
+          "dmxRange": [51, 60],
+          "type": "ColorPreset",
+          "colors": ["#ff0000", "#0000ff"],
+          "comment": "Red + Blue"
+        },
+        {
+          "dmxRange": [61, 70],
+          "type": "ColorPreset",
+          "colors": ["#00ff00", "#0000ff"],
+          "comment": "Green + Blue"
+        },
+        {
+          "dmxRange": [71, 80],
+          "type": "ColorPreset",
+          "colors": ["#ff0000", "#00ff00", "#0000ff"],
+          "comment": "Red + Green + Blue"
+        },
+        {
+          "dmxRange": [81, 123],
+          "type": "Effect",
+          "effectPreset": "ColorJump",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        },
+        {
+          "dmxRange": [124, 166],
+          "type": "Effect",
+          "effectName": "Color mix",
+          "speedStart": "slow",
+          "speedEnd": "fast",
+          "helpWanted": "How does this differ from the other color effects?"
+        },
+        {
+          "dmxRange": [167, 209],
+          "type": "Effect",
+          "effectPreset": "ColorFade",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        },
+        {
+          "dmxRange": [210, 249],
+          "type": "Effect",
+          "effectName": "Color change",
+          "speedStart": "slow",
+          "speedEnd": "fast",
+          "helpWanted": "How does this differ from the other color effects?"
+        },
+        {
+          "dmxRange": [250, 255],
+          "type": "Effect",
+          "effectName": "Sound control",
+          "soundControlled": true
+        }
+      ]
+    },
+    "Strobing": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 7],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [8, 139],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        },
+        {
+          "dmxRange": [140, 189],
+          "type": "ShutterStrobe",
+          "shutterEffect": "RampUp",
+          "speedStart": "slow",
+          "speedEnd": "fast",
+          "helpWanted": "Is the strobe speed controllable here?"
+        },
+        {
+          "dmxRange": [190, 239],
+          "type": "ShutterStrobe",
+          "shutterEffect": "RampDown",
+          "speedStart": "slow",
+          "speedEnd": "fast",
+          "helpWanted": "Is the strobe speed controllable here?"
+        },
+        {
+          "dmxRange": [240, 255],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "randomTiming": true
+        }
+      ]
+    },
+    "Master Dimmer": {
+      "capability": {
+        "type": "Intensity"
+      }
+    },
+    "Programs": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 15],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [16, 40],
+          "type": "Effect",
+          "effectName": "Program 1"
+        },
+        {
+          "dmxRange": [41, 65],
+          "type": "Effect",
+          "effectName": "Program 2"
+        },
+        {
+          "dmxRange": [66, 90],
+          "type": "Effect",
+          "effectName": "Program 3"
+        },
+        {
+          "dmxRange": [91, 115],
+          "type": "Effect",
+          "effectName": "Program 4"
+        },
+        {
+          "dmxRange": [116, 140],
+          "type": "Effect",
+          "effectName": "Program 5"
+        },
+        {
+          "dmxRange": [141, 165],
+          "type": "Effect",
+          "effectName": "Program 6"
+        },
+        {
+          "dmxRange": [166, 190],
+          "type": "Effect",
+          "effectName": "Program 7"
+        },
+        {
+          "dmxRange": [191, 215],
+          "type": "Effect",
+          "effectName": "Program 8"
+        },
+        {
+          "dmxRange": [216, 240],
+          "type": "Effect",
+          "effectName": "Random program playing 5 times each"
+        },
+        {
+          "dmxRange": [241, 255],
+          "type": "Effect",
+          "effectName": "Random program 2min each"
+        }
+      ]
+    },
+    "Program Speed": {
+      "capability": {
+        "type": "EffectSpeed",
+        "speedStart": "slow",
+        "speedEnd": "fast"
+      }
+    },
+    "Pan / Tilt Speed": {
+      "defaultValue": 0,
+      "capability": {
+        "type": "PanTiltSpeed",
+        "speedStart": "fast",
+        "speedEnd": "slow"
+      }
+    },
+    "Special Functions": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 69],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [70, 79],
+          "type": "Maintenance",
+          "comment": "Blackout with Pan / Tilt movement"
+        },
+        {
+          "dmxRange": [80, 89],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [90, 99],
+          "type": "Maintenance",
+          "comment": "Blackout with RGBW value change"
+        },
+        {
+          "dmxRange": [100, 199],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [200, 209],
+          "type": "Maintenance",
+          "comment": "Reset all"
+        },
+        {
+          "dmxRange": [210, 255],
+          "type": "NoFunction"
+        }
+      ]
+    },
+    "Dimmer Curve": {
+      "defaultValue": 255,
+      "capabilities": [
+        {
+          "dmxRange": [0, 20],
+          "type": "Maintenance",
+          "comment": "Standard"
+        },
+        {
+          "dmxRange": [21, 40],
+          "type": "Maintenance",
+          "comment": "Stage"
+        },
+        {
+          "dmxRange": [41, 60],
+          "type": "Maintenance",
+          "comment": "TV"
+        },
+        {
+          "dmxRange": [61, 80],
+          "type": "Maintenance",
+          "comment": "Architectural"
+        },
+        {
+          "dmxRange": [81, 100],
+          "type": "Maintenance",
+          "comment": "Theatre"
+        },
+        {
+          "dmxRange": [101, 255],
+          "type": "Maintenance",
+          "comment": "Default setting"
+        }
+      ]
+    }
+  },
+  "modes": [
+    {
+      "name": "16-channel",
+      "shortName": "16ch",
+      "channels": [
+        "Pan",
+        "Tilt",
+        "Tilt Continuous Rotation",
+        "Tilt Continuous Rotation Speed",
+        "Red",
+        "Green",
+        "Blue",
+        "White",
+        "Color Macros & Effects",
+        "Strobing",
+        "Master Dimmer",
+        "Programs",
+        "Program Speed",
+        "Pan / Tilt Speed",
+        "Special Functions",
+        "Dimmer Curve"
+      ]
+    },
+    {
+      "name": "18-channel",
+      "shortName": "18ch",
+      "channels": [
+        "Pan",
+        "Pan fine",
+        "Tilt",
+        "Tilt fine",
+        "Tilt Continuous Rotation",
+        "Tilt Continuous Rotation Speed",
+        "Red",
+        "Green",
+        "Blue",
+        "White",
+        "Color Macros & Effects",
+        "Strobing",
+        "Master Dimmer",
+        "Programs",
+        "Program Speed",
+        "Pan / Tilt Speed",
+        "Special Functions",
+        "Dimmer Curve"
+      ]
+    }
+  ]
+}

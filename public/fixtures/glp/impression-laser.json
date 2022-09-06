@@ -1,0 +1,619 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "impression Laser",
+  "shortName": "GLPLaser",
+  "categories": ["Laser", "Moving Head", "Color Changer"],
+  "meta": {
+    "authors": ["Felix Edelmann"],
+    "createDate": "2018-02-02",
+    "lastModifyDate": "2018-08-09"
+  },
+  "comment": "The manual leaves gaps between capabilities, which are corrected here.",
+  "links": {
+    "manual": ["https://www.glp.de/de/produkte?format=raw&task=download&fid=65"],
+    "video": ["https://www.youtube.com/watch?v=xtjhMXGvLiE"]
+  },
+  "physical": {
+    "dimensions": [340, 145, 370],
+    "weight": 7.5,
+    "power": 170,
+    "DMXconnector": "3-pin",
+    "lens": {
+      "degreesMinMax": [40, 40]
+    }
+  },
+  "availableChannels": {
+    "Pan": {
+      "fineChannelAliases": ["Pan fine"],
+      "defaultValue": 32768,
+      "capability": {
+        "type": "Pan",
+        "angleStart": "0deg",
+        "angleEnd": "660deg"
+      }
+    },
+    "Tilt": {
+      "fineChannelAliases": ["Tilt fine"],
+      "defaultValue": 32768,
+      "capability": {
+        "type": "Tilt",
+        "angleStart": "0deg",
+        "angleEnd": "300deg"
+      }
+    },
+    "Access": {
+      "defaultValue": 255,
+      "capabilities": [
+        {
+          "dmxRange": [0, 31],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Closed"
+        },
+        {
+          "dmxRange": [32, 95],
+          "type": "Maintenance",
+          "comment": "Basic range (8ch)"
+        },
+        {
+          "dmxRange": [96, 159],
+          "type": "Maintenance",
+          "comment": "Standard range (12ch)"
+        },
+        {
+          "dmxRange": [160, 223],
+          "type": "Maintenance",
+          "comment": "Extended range (16ch)"
+        },
+        {
+          "dmxRange": [224, 255],
+          "type": "Maintenance",
+          "comment": "Full range (20ch)"
+        }
+      ]
+    },
+    "Folder": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 15],
+          "type": "Effect",
+          "effectName": "Page 1"
+        },
+        {
+          "dmxRange": [16, 31],
+          "type": "Effect",
+          "effectName": "Page 2"
+        },
+        {
+          "dmxRange": [32, 47],
+          "type": "Effect",
+          "effectName": "Page 3"
+        },
+        {
+          "dmxRange": [48, 63],
+          "type": "Effect",
+          "effectName": "Page 4"
+        },
+        {
+          "dmxRange": [64, 79],
+          "type": "Effect",
+          "effectName": "Page 5"
+        },
+        {
+          "dmxRange": [80, 95],
+          "type": "Effect",
+          "effectName": "Page 6"
+        },
+        {
+          "dmxRange": [96, 111],
+          "type": "Effect",
+          "effectName": "Page 7"
+        },
+        {
+          "dmxRange": [112, 127],
+          "type": "Effect",
+          "effectName": "Page 8"
+        },
+        {
+          "dmxRange": [128, 255],
+          "type": "Effect",
+          "effectName": "Page 9"
+        }
+      ]
+    },
+    "File": {
+      "defaultValue": 0,
+      "capabilities": [
+        {
+          "dmxRange": [0, 32],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Closed"
+        },
+        {
+          "dmxRange": [33, 36],
+          "type": "Effect",
+          "effectName": "Cue 1"
+        },
+        {
+          "dmxRange": [37, 40],
+          "type": "Effect",
+          "effectName": "Cue 2"
+        },
+        {
+          "dmxRange": [41, 44],
+          "type": "Effect",
+          "effectName": "Cue 3"
+        },
+        {
+          "dmxRange": [45, 48],
+          "type": "Effect",
+          "effectName": "Cue 4"
+        },
+        {
+          "dmxRange": [49, 52],
+          "type": "Effect",
+          "effectName": "Cue 5"
+        },
+        {
+          "dmxRange": [53, 56],
+          "type": "Effect",
+          "effectName": "Cue 6"
+        },
+        {
+          "dmxRange": [57, 60],
+          "type": "Effect",
+          "effectName": "Cue 7"
+        },
+        {
+          "dmxRange": [61, 64],
+          "type": "Effect",
+          "effectName": "Cue 8"
+        },
+        {
+          "dmxRange": [65, 68],
+          "type": "Effect",
+          "effectName": "Cue 9"
+        },
+        {
+          "dmxRange": [69, 72],
+          "type": "Effect",
+          "effectName": "Cue 10"
+        },
+        {
+          "dmxRange": [73, 76],
+          "type": "Effect",
+          "effectName": "Cue 11"
+        },
+        {
+          "dmxRange": [77, 80],
+          "type": "Effect",
+          "effectName": "Cue 12"
+        },
+        {
+          "dmxRange": [81, 84],
+          "type": "Effect",
+          "effectName": "Cue 13"
+        },
+        {
+          "dmxRange": [85, 88],
+          "type": "Effect",
+          "effectName": "Cue 14"
+        },
+        {
+          "dmxRange": [89, 92],
+          "type": "Effect",
+          "effectName": "Cue 15"
+        },
+        {
+          "dmxRange": [93, 96],
+          "type": "Effect",
+          "effectName": "Cue 16"
+        },
+        {
+          "dmxRange": [97, 100],
+          "type": "Effect",
+          "effectName": "Cue 17"
+        },
+        {
+          "dmxRange": [101, 104],
+          "type": "Effect",
+          "effectName": "Cue 18"
+        },
+        {
+          "dmxRange": [105, 108],
+          "type": "Effect",
+          "effectName": "Cue 19"
+        },
+        {
+          "dmxRange": [109, 112],
+          "type": "Effect",
+          "effectName": "Cue 20"
+        },
+        {
+          "dmxRange": [113, 116],
+          "type": "Effect",
+          "effectName": "Cue 21"
+        },
+        {
+          "dmxRange": [117, 120],
+          "type": "Effect",
+          "effectName": "Cue 22"
+        },
+        {
+          "dmxRange": [121, 124],
+          "type": "Effect",
+          "effectName": "Cue 23"
+        },
+        {
+          "dmxRange": [125, 128],
+          "type": "Effect",
+          "effectName": "Cue 24"
+        },
+        {
+          "dmxRange": [129, 132],
+          "type": "Effect",
+          "effectName": "Cue 25"
+        },
+        {
+          "dmxRange": [133, 136],
+          "type": "Effect",
+          "effectName": "Cue 26"
+        },
+        {
+          "dmxRange": [137, 140],
+          "type": "Effect",
+          "effectName": "Cue 27"
+        },
+        {
+          "dmxRange": [141, 144],
+          "type": "Effect",
+          "effectName": "Cue 28"
+        },
+        {
+          "dmxRange": [145, 148],
+          "type": "Effect",
+          "effectName": "Cue 29"
+        },
+        {
+          "dmxRange": [149, 152],
+          "type": "Effect",
+          "effectName": "Cue 30"
+        },
+        {
+          "dmxRange": [153, 156],
+          "type": "Effect",
+          "effectName": "Cue 31"
+        },
+        {
+          "dmxRange": [157, 160],
+          "type": "Effect",
+          "effectName": "Cue 32"
+        },
+        {
+          "dmxRange": [161, 164],
+          "type": "Effect",
+          "effectName": "Cue 33"
+        },
+        {
+          "dmxRange": [165, 168],
+          "type": "Effect",
+          "effectName": "Cue 34"
+        },
+        {
+          "dmxRange": [169, 172],
+          "type": "Effect",
+          "effectName": "Cue 35"
+        },
+        {
+          "dmxRange": [173, 176],
+          "type": "Effect",
+          "effectName": "Cue 36"
+        },
+        {
+          "dmxRange": [177, 180],
+          "type": "Effect",
+          "effectName": "Cue 37"
+        },
+        {
+          "dmxRange": [181, 184],
+          "type": "Effect",
+          "effectName": "Cue 38"
+        },
+        {
+          "dmxRange": [185, 188],
+          "type": "Effect",
+          "effectName": "Cue 39"
+        },
+        {
+          "dmxRange": [189, 192],
+          "type": "Effect",
+          "effectName": "Cue 40"
+        },
+        {
+          "dmxRange": [193, 196],
+          "type": "Effect",
+          "effectName": "Cue 41"
+        },
+        {
+          "dmxRange": [197, 200],
+          "type": "Effect",
+          "effectName": "Cue 42"
+        },
+        {
+          "dmxRange": [201, 204],
+          "type": "Effect",
+          "effectName": "Cue 43"
+        },
+        {
+          "dmxRange": [205, 208],
+          "type": "Effect",
+          "effectName": "Cue 44"
+        },
+        {
+          "dmxRange": [209, 212],
+          "type": "Effect",
+          "effectName": "Cue 45"
+        },
+        {
+          "dmxRange": [213, 216],
+          "type": "Effect",
+          "effectName": "Cue 46"
+        },
+        {
+          "dmxRange": [217, 220],
+          "type": "Effect",
+          "effectName": "Cue 47"
+        },
+        {
+          "dmxRange": [221, 255],
+          "type": "Effect",
+          "effectName": "Cue 48"
+        }
+      ]
+    },
+    "Playback Speed": {
+      "defaultValue": 0,
+      "capabilities": [
+        {
+          "dmxRange": [0, 16],
+          "type": "EffectSpeed",
+          "speed": "100%",
+          "comment": "Normal speed"
+        },
+        {
+          "dmxRange": [17, 32],
+          "type": "EffectSpeed",
+          "speed": "stop"
+        },
+        {
+          "dmxRange": [33, 127],
+          "type": "EffectSpeed",
+          "speedStart": "25%",
+          "speedEnd": "99%"
+        },
+        {
+          "dmxRange": [128, 128],
+          "type": "EffectSpeed",
+          "speed": "100%"
+        },
+        {
+          "dmxRange": [129, 255],
+          "type": "EffectSpeed",
+          "speedStart": "101%",
+          "speedEnd": "200%"
+        }
+      ]
+    },
+    "Intensity": {
+      "defaultValue": 0,
+      "capability": {
+        "type": "Intensity"
+      }
+    },
+    "Zoom": {
+      "defaultValue": 128,
+      "capability": {
+        "type": "Zoom",
+        "angleStart": "wide",
+        "angleEnd": "narrow",
+        "helpWanted": "Is this the correct direction?"
+      }
+    },
+    "X Size": {
+      "defaultValue": 0,
+      "capability": {
+        "type": "BeamAngle",
+        "angleStart": "0deg",
+        "angleEnd": "40deg"
+      }
+    },
+    "Y Size": {
+      "defaultValue": 0,
+      "capability": {
+        "type": "BeamAngle",
+        "angleStart": "0deg",
+        "angleEnd": "40deg"
+      }
+    },
+    "Rotation": {
+      "capability": {
+        "type": "Rotation",
+        "angleStart": "0deg",
+        "angleEnd": "360deg"
+      }
+    },
+    "X Position": {
+      "defaultValue": 128,
+      "capability": {
+        "type": "BeamPosition",
+        "horizontalAngleStart": "0deg",
+        "horizontalAngleEnd": "40deg"
+      }
+    },
+    "Y Position": {
+      "defaultValue": 128,
+      "capability": {
+        "type": "BeamPosition",
+        "verticalAngleStart": "0deg",
+        "verticalAngleEnd": "40deg"
+      }
+    },
+    "Visible Points": {
+      "defaultValue": 255,
+      "capability": {
+        "type": "Maintenance",
+        "parameterStart": "0%",
+        "parameterEnd": "100%",
+        "comment": "Visible points"
+      }
+    },
+    "Scan Rate": {
+      "defaultValue": 0,
+      "capabilities": [
+        {
+          "dmxRange": [0, 31],
+          "type": "Maintenance",
+          "parameter": 30000,
+          "comment": "Default Scan Rate"
+        },
+        {
+          "dmxRange": [32, 255],
+          "type": "Maintenance",
+          "parameterStart": 6000,
+          "parameterEnd": 30000,
+          "comment": "Scan Rate"
+        }
+      ]
+    },
+    "Color": {
+      "defaultValue": 0,
+      "capabilities": [
+        {
+          "dmxRange": [0, 31],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [32, 42],
+          "type": "ColorPreset",
+          "colors": ["#ff0000"],
+          "comment": "Red"
+        },
+        {
+          "dmxRange": [43, 53],
+          "type": "ColorPreset",
+          "colors": ["#ffaa00"],
+          "comment": "Orange"
+        },
+        {
+          "dmxRange": [54, 75],
+          "type": "ColorPreset",
+          "colors": ["#ffff00"],
+          "comment": "Yellow"
+        },
+        {
+          "dmxRange": [76, 86],
+          "type": "ColorPreset",
+          "colors": ["#66ff00"],
+          "comment": "Lime"
+        },
+        {
+          "dmxRange": [87, 109],
+          "type": "ColorPreset",
+          "colors": ["#00dd00"],
+          "comment": "Green"
+        },
+        {
+          "dmxRange": [110, 163],
+          "type": "ColorPreset",
+          "colors": ["#00ffff"],
+          "comment": "Cyan"
+        },
+        {
+          "dmxRange": [164, 189],
+          "type": "ColorPreset",
+          "colors": ["#0000ff"],
+          "comment": "Blue"
+        },
+        {
+          "dmxRange": [190, 220],
+          "type": "ColorPreset",
+          "colors": ["#ffbbaa"],
+          "comment": "Pink"
+        },
+        {
+          "dmxRange": [221, 228],
+          "type": "ColorPreset",
+          "colors": ["#ff0000"],
+          "comment": "Red"
+        },
+        {
+          "dmxRange": [229, 255],
+          "type": "ColorPreset",
+          "colors": ["#ffffff"],
+          "comment": "White"
+        }
+      ]
+    },
+    "Release": {
+      "defaultValue": 0,
+      "capabilities": [
+        {
+          "dmxRange": [0, 31],
+          "type": "Maintenance",
+          "comment": "Default"
+        },
+        {
+          "dmxRange": [32, 95],
+          "type": "Maintenance",
+          "comment": "Hold"
+        },
+        {
+          "dmxRange": [96, 159],
+          "type": "Maintenance",
+          "comment": "Loop"
+        },
+        {
+          "dmxRange": [160, 223],
+          "type": "Maintenance",
+          "comment": "Next"
+        },
+        {
+          "dmxRange": [224, 255],
+          "type": "Maintenance",
+          "comment": "Stop"
+        }
+      ]
+    },
+    "Reserved": {
+      "capability": {
+        "type": "NoFunction"
+      }
+    }
+  },
+  "modes": [
+    {
+      "name": "Normal",
+      "channels": [
+        "Pan",
+        "Pan fine",
+        "Tilt",
+        "Tilt fine",
+        "Access",
+        "Folder",
+        "File",
+        "Playback Speed",
+        "Intensity",
+        "Zoom",
+        "X Size",
+        "Y Size",
+        "Rotation",
+        "X Position",
+        "Y Position",
+        "Visible Points",
+        "Scan Rate",
+        "Release",
+        "Color",
+        "Reserved"
+      ]
+    }
+  ]
+}

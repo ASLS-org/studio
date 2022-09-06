@@ -1,0 +1,703 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "XR1200 WASH",
+  "shortName": "DTSXR1200",
+  "categories": ["Moving Head", "Color Changer"],
+  "meta": {
+    "authors": ["novasfronteiras.co"],
+    "createDate": "2017-08-08",
+    "lastModifyDate": "2018-09-04"
+  },
+  "links": {
+    "manual": [
+      "https://dts-lighting.it/download/xr1200-wash/"
+    ],
+    "video": [
+      "https://www.youtube.com/watch?v=uu0jVaHAUXU"
+    ]
+  },
+  "physical": {
+    "dimensions": [490, 685, 500],
+    "weight": 38,
+    "power": 1320,
+    "DMXconnector": "3-pin and 5-pin",
+    "bulb": {
+      "type": "Phililps MSR Gold 1200 Fastfit",
+      "lumens": 50000
+    }
+  },
+  "wheels": {
+    "Color Wheel": {
+      "slots": [
+        {
+          "type": "Open"
+        },
+        {
+          "type": "Color",
+          "name": "CTO",
+          "colors": ["#ffd85e"],
+          "colorTemperature": "3200K"
+        },
+        {
+          "type": "Color",
+          "name": "CTB",
+          "colors": ["#d1ffff"],
+          "colorTemperature": "5600K"
+        },
+        {
+          "type": "Color",
+          "name": "Purple",
+          "colors": ["#7038aa"]
+        },
+        {
+          "type": "Color",
+          "name": "Orange",
+          "colors": ["#ff7000"]
+        },
+        {
+          "type": "Color",
+          "name": "Green",
+          "colors": ["#00c628"]
+        },
+        {
+          "type": "Color",
+          "name": "Red",
+          "colors": ["#f4001c"]
+        },
+        {
+          "type": "Color",
+          "name": "Dark Blue",
+          "colors": ["#660adb"]
+        },
+        {
+          "type": "Color",
+          "name": "Amber",
+          "colors": ["#ffbf00"]
+        }
+      ]
+    }
+  },
+  "availableChannels": {
+    "Pan": {
+      "fineChannelAliases": ["Pan fine"],
+      "defaultValue": "50%",
+      "capability": {
+        "type": "Pan",
+        "angleStart": "0deg",
+        "angleEnd": "540deg"
+      }
+    },
+    "Tilt": {
+      "fineChannelAliases": ["Tilt fine"],
+      "defaultValue": "50%",
+      "capability": {
+        "type": "Tilt",
+        "angleStart": "0deg",
+        "angleEnd": "320deg"
+      }
+    },
+    "Movement Speed": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 10],
+          "type": "NoFunction",
+          "comment": "Standard"
+        },
+        {
+          "dmxRange": [11, 25],
+          "type": "PanTiltSpeed",
+          "speed": "fast"
+        },
+        {
+          "dmxRange": [26, 127],
+          "type": "PanTiltSpeed",
+          "comment": "Vector mode",
+          "speedStart": "fast",
+          "speedEnd": "slow"
+        },
+        {
+          "dmxRange": [128, 247],
+          "type": "PanTiltSpeed",
+          "comment": "Reaction time to DMX signal",
+          "speedStart": "fast",
+          "speedEnd": "slow"
+        },
+        {
+          "dmxRange": [248, 255],
+          "type": "PanTiltSpeed",
+          "comment": "Reaction time to DMX signal",
+          "speed": "slow"
+        }
+      ]
+    },
+    "Dimmer": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 8],
+          "type": "Intensity",
+          "brightness": "off"
+        },
+        {
+          "dmxRange": [9, 255],
+          "type": "Intensity",
+          "brightnessStart": "dark",
+          "brightnessEnd": "bright"
+        }
+      ]
+    },
+    "Shutter": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 9],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Closed"
+        },
+        {
+          "dmxRange": [10, 23],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "randomTiming": true
+        },
+        {
+          "dmxRange": [24, 107],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        },
+        {
+          "dmxRange": [108, 163],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "slow",
+          "speedEnd": "fast",
+          "comment": "Flash open"
+        },
+        {
+          "dmxRange": [164, 219],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "slow",
+          "speedEnd": "fast",
+          "comment": "Flash closed"
+        },
+        {
+          "dmxRange": [220, 227],
+          "type": "Maintenance",
+          "comment": "Colors / Macros in black-out"
+        },
+        {
+          "dmxRange": [228, 233],
+          "type": "Maintenance",
+          "comment": "Pan / Tilt in black-out"
+        },
+        {
+          "dmxRange": [234, 255],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open"
+        }
+      ]
+    },
+    "Color Wheel": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 12],
+          "type": "WheelSlot",
+          "slotNumber": 1
+        },
+        {
+          "dmxRange": [13, 25],
+          "type": "WheelSlot",
+          "slotNumber": 2
+        },
+        {
+          "dmxRange": [26, 38],
+          "type": "WheelSlot",
+          "slotNumber": 3
+        },
+        {
+          "dmxRange": [39, 51],
+          "type": "WheelSlot",
+          "slotNumber": 4
+        },
+        {
+          "dmxRange": [52, 64],
+          "type": "WheelSlot",
+          "slotNumber": 4.5
+        },
+        {
+          "dmxRange": [65, 77],
+          "type": "WheelSlot",
+          "slotNumber": 5
+        },
+        {
+          "dmxRange": [78, 90],
+          "type": "WheelSlot",
+          "slotNumber": 5.5
+        },
+        {
+          "dmxRange": [91, 103],
+          "type": "WheelSlot",
+          "slotNumber": 6
+        },
+        {
+          "dmxRange": [104, 116],
+          "type": "WheelSlot",
+          "slotNumber": 6.5
+        },
+        {
+          "dmxRange": [117, 129],
+          "type": "WheelSlot",
+          "slotNumber": 7
+        },
+        {
+          "dmxRange": [130, 142],
+          "type": "WheelSlot",
+          "slotNumber": 7.5
+        },
+        {
+          "dmxRange": [143, 155],
+          "type": "WheelSlot",
+          "slotNumber": 8
+        },
+        {
+          "dmxRange": [156, 168],
+          "type": "WheelSlot",
+          "slotNumber": 8.5
+        },
+        {
+          "dmxRange": [169, 181],
+          "type": "WheelSlot",
+          "slotNumber": 9
+        },
+        {
+          "dmxRange": [182, 197],
+          "type": "WheelSlot",
+          "slotNumber": 9.5
+        },
+        {
+          "dmxRange": [198, 224],
+          "type": "WheelRotation",
+          "speedStart": "fast CW",
+          "speedEnd": "slow CW"
+        },
+        {
+          "dmxRange": [225, 228],
+          "type": "WheelRotation",
+          "speed": "stop"
+        },
+        {
+          "dmxRange": [229, 255],
+          "type": "WheelRotation",
+          "speedStart": "slow CCW",
+          "speedEnd": "fast CCW"
+        }
+      ]
+    },
+    "Cyan": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Cyan"
+      }
+    },
+    "Magenta": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Magenta"
+      }
+    },
+    "Yellow": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Yellow"
+      }
+    },
+    "Speed CMY / Dimmer": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 7],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [8, 255],
+          "type": "Speed",
+          "speedStart": "fast",
+          "speedEnd": "slow"
+        }
+      ]
+    },
+    "Macro CMY / Color": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 9],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [10, 14],
+          "type": "Effect",
+          "effectName": "Macro 1"
+        },
+        {
+          "dmxRange": [15, 19],
+          "type": "Effect",
+          "effectName": "Macro 2"
+        },
+        {
+          "dmxRange": [20, 24],
+          "type": "Effect",
+          "effectName": "Macro 3"
+        },
+        {
+          "dmxRange": [25, 29],
+          "type": "Effect",
+          "effectName": "Macro 4"
+        },
+        {
+          "dmxRange": [30, 34],
+          "type": "Effect",
+          "effectName": "Macro 5"
+        },
+        {
+          "dmxRange": [35, 39],
+          "type": "Effect",
+          "effectName": "Macro 6"
+        },
+        {
+          "dmxRange": [40, 44],
+          "type": "Effect",
+          "effectName": "Macro 7"
+        },
+        {
+          "dmxRange": [45, 49],
+          "type": "Effect",
+          "effectName": "Macro 8"
+        },
+        {
+          "dmxRange": [50, 54],
+          "type": "Effect",
+          "effectName": "Macro 9"
+        },
+        {
+          "dmxRange": [55, 59],
+          "type": "Effect",
+          "effectName": "Macro 10"
+        },
+        {
+          "dmxRange": [60, 64],
+          "type": "Effect",
+          "effectName": "Macro 11"
+        },
+        {
+          "dmxRange": [65, 69],
+          "type": "Effect",
+          "effectName": "Macro 12"
+        },
+        {
+          "dmxRange": [70, 74],
+          "type": "Effect",
+          "effectName": "Macro 13"
+        },
+        {
+          "dmxRange": [75, 79],
+          "type": "Effect",
+          "effectName": "Macro 14"
+        },
+        {
+          "dmxRange": [80, 84],
+          "type": "Effect",
+          "effectName": "Macro 15"
+        },
+        {
+          "dmxRange": [85, 89],
+          "type": "Effect",
+          "effectName": "Macro 16"
+        },
+        {
+          "dmxRange": [90, 94],
+          "type": "Effect",
+          "effectName": "Macro 17"
+        },
+        {
+          "dmxRange": [95, 99],
+          "type": "Effect",
+          "effectName": "Macro 18"
+        },
+        {
+          "dmxRange": [100, 104],
+          "type": "Effect",
+          "effectName": "Macro 19"
+        },
+        {
+          "dmxRange": [105, 109],
+          "type": "Effect",
+          "effectName": "Macro 20"
+        },
+        {
+          "dmxRange": [110, 114],
+          "type": "Effect",
+          "effectName": "Macro 21"
+        },
+        {
+          "dmxRange": [115, 121],
+          "type": "Effect",
+          "comment": "Macros wait = 0",
+          "effectPreset": "ColorFade",
+          "duration": "instant"
+        },
+        {
+          "dmxRange": [122, 128],
+          "type": "Effect",
+          "comment": "Macros wait = 2",
+          "effectPreset": "ColorFade",
+          "duration": "20%"
+        },
+        {
+          "dmxRange": [129, 135],
+          "type": "Effect",
+          "comment": "Macros wait = 3",
+          "effectPreset": "ColorFade",
+          "duration": "30%"
+        },
+        {
+          "dmxRange": [136, 142],
+          "type": "Effect",
+          "comment": "Macros wait = 4",
+          "effectPreset": "ColorFade",
+          "duration": "40%"
+        },
+        {
+          "dmxRange": [143, 149],
+          "type": "Effect",
+          "comment": "Macros wait = 5",
+          "effectPreset": "ColorFade",
+          "duration": "50%"
+        },
+        {
+          "dmxRange": [150, 156],
+          "type": "Effect",
+          "comment": "Macros wait = 6",
+          "effectPreset": "ColorFade",
+          "duration": "60%"
+        },
+        {
+          "dmxRange": [157, 163],
+          "type": "Effect",
+          "comment": "Macros wait = 7",
+          "effectPreset": "ColorFade",
+          "duration": "70%"
+        },
+        {
+          "dmxRange": [164, 170],
+          "type": "Effect",
+          "comment": "Macros wait = 8",
+          "effectPreset": "ColorFade",
+          "duration": "80%"
+        },
+        {
+          "dmxRange": [171, 177],
+          "type": "Effect",
+          "comment": "Macros wait = 9",
+          "effectPreset": "ColorFade",
+          "duration": "90%"
+        },
+        {
+          "dmxRange": [178, 184],
+          "type": "Effect",
+          "comment": "Macros wait = 10",
+          "effectPreset": "ColorFade",
+          "duration": "100%"
+        },
+        {
+          "dmxRange": [185, 191],
+          "type": "Effect",
+          "comment": "Full Colors wait = 0",
+          "effectPreset": "ColorFade",
+          "duration": "instant"
+        },
+        {
+          "dmxRange": [192, 198],
+          "type": "Effect",
+          "comment": "Full Colors wait = 2",
+          "effectPreset": "ColorFade",
+          "duration": "20%"
+        },
+        {
+          "dmxRange": [199, 205],
+          "type": "Effect",
+          "comment": "Full Colors wait = 3",
+          "effectPreset": "ColorFade",
+          "duration": "30%"
+        },
+        {
+          "dmxRange": [206, 212],
+          "type": "Effect",
+          "comment": "Full Colors wait = 4",
+          "effectPreset": "ColorFade",
+          "duration": "40%"
+        },
+        {
+          "dmxRange": [213, 219],
+          "type": "Effect",
+          "comment": "Full Colors wait = 5",
+          "effectPreset": "ColorFade",
+          "duration": "50%"
+        },
+        {
+          "dmxRange": [220, 226],
+          "type": "Effect",
+          "comment": "Full Colors wait = 6",
+          "effectPreset": "ColorFade",
+          "duration": "60%"
+        },
+        {
+          "dmxRange": [227, 233],
+          "type": "Effect",
+          "comment": "Full Colors wait = 7",
+          "effectPreset": "ColorFade",
+          "duration": "70%"
+        },
+        {
+          "dmxRange": [234, 240],
+          "type": "Effect",
+          "comment": "Full Colors wait = 8",
+          "effectPreset": "ColorFade",
+          "duration": "80%"
+        },
+        {
+          "dmxRange": [241, 247],
+          "type": "Effect",
+          "comment": "Full Colors wait = 9",
+          "effectPreset": "ColorFade",
+          "duration": "90%"
+        },
+        {
+          "dmxRange": [248, 255],
+          "type": "Effect",
+          "comment": "Full Colors wait = 10",
+          "effectPreset": "ColorFade",
+          "duration": "100%"
+        }
+      ]
+    },
+    "Effects": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 19],
+          "type": "Frost",
+          "frostIntensity": "100%"
+        },
+        {
+          "dmxRange": [20, 39],
+          "type": "Frost",
+          "frostIntensity": "0%"
+        },
+        {
+          "dmxRange": [40, 255],
+          "type": "Effect",
+          "effectName": "Beam shape"
+        }
+      ]
+    },
+    "Zoom": {
+      "capability": {
+        "type": "Zoom",
+        "angleStart": "0%",
+        "angleEnd": "100%"
+      }
+    },
+    "Lamp / Reset": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 9],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [10, 60],
+          "type": "Maintenance",
+          "comment": "Lamp OFF",
+          "hold": "3s"
+        },
+        {
+          "dmxRange": [61, 129],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [130, 179],
+          "type": "Maintenance",
+          "comment": "Lamp ON",
+          "hold": "3s"
+        },
+        {
+          "dmxRange": [180, 200],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [201, 239],
+          "type": "Maintenance",
+          "comment": "Internal Motors Reset"
+        },
+        {
+          "dmxRange": [240, 255],
+          "type": "Maintenance",
+          "comment": "Total Reset"
+        }
+      ]
+    }
+  },
+  "modes": [
+    {
+      "name": "Fresnel",
+      "physical": {
+        "lens": {
+          "name": "Fresnel Ø 200 mm",
+          "degreesMinMax": [20, 45]
+        }
+      },
+      "channels": [
+        "Pan",
+        "Pan fine",
+        "Tilt",
+        "Tilt fine",
+        "Movement Speed",
+        "Dimmer",
+        "Shutter",
+        "Color Wheel",
+        "Cyan",
+        "Magenta",
+        "Yellow",
+        "Speed CMY / Dimmer",
+        "Macro CMY / Color",
+        "Effects",
+        "Zoom",
+        "Lamp / Reset"
+      ]
+    },
+    {
+      "name": "PC",
+      "physical": {
+        "lens": {
+          "name": "PC (Pebble Convex) Ø 150 mm",
+          "degreesMinMax": [9, 19]
+        }
+      },
+      "channels": [
+        "Pan",
+        "Pan fine",
+        "Tilt",
+        "Tilt fine",
+        "Movement Speed",
+        "Dimmer",
+        "Shutter",
+        "Color Wheel",
+        "Cyan",
+        "Magenta",
+        "Yellow",
+        "Speed CMY / Dimmer",
+        "Macro CMY / Color",
+        "Effects",
+        "Zoom",
+        "Lamp / Reset"
+      ]
+    }
+  ]
+}

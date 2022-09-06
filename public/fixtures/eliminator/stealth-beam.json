@@ -1,0 +1,390 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "Stealth Beam",
+  "categories": ["Moving Head", "Color Changer"],
+  "meta": {
+    "authors": ["George Qualley IV"],
+    "createDate": "2017-09-19",
+    "lastModifyDate": "2018-09-04",
+    "importPlugin": {
+      "plugin": "qlcplus_4.11.2",
+      "date": "2017-09-19",
+      "comment": "created by Q Light Controller Plus (version 4.11.0)"
+    }
+  },
+  "links": {
+    "manual": [
+      "https://cdb.s3.amazonaws.com/ItemRelatedFiles/13271/Stealth%20Beam%20(1st%20Ed.).pdf"
+    ],
+    "productPage": [
+      "https://www.adj.com/stealth-beam"
+    ],
+    "video": [
+      "https://www.youtube.com/watch?v=A2l0YIFRARA",
+      "https://www.youtube.com/watch?v=vMqesfl5Fsk"
+    ]
+  },
+  "helpWanted": "The second mode is named \"16-channel\" in the manual, but contains 17 channels. What is the correct channel list?",
+  "physical": {
+    "dimensions": [239, 285, 146],
+    "weight": 3.8,
+    "power": 75,
+    "DMXconnector": "3-pin",
+    "bulb": {
+      "type": "1x 60W RGBW 4-in-1 LED"
+    },
+    "lens": {
+      "degreesMinMax": [11, 11]
+    }
+  },
+  "availableChannels": {
+    "Pan": {
+      "fineChannelAliases": ["Pan fine"],
+      "defaultValue": "50%",
+      "capability": {
+        "type": "Pan",
+        "angleStart": "0deg",
+        "angleEnd": "540deg"
+      }
+    },
+    "Tilt": {
+      "fineChannelAliases": ["Tilt fine"],
+      "defaultValue": "50%",
+      "capability": {
+        "type": "Tilt",
+        "angleStart": "0deg",
+        "angleEnd": "270deg"
+      }
+    },
+    "Red": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Red"
+      }
+    },
+    "Green": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Green"
+      }
+    },
+    "Blue": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Blue"
+      }
+    },
+    "White": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "White"
+      }
+    },
+    "Master Dimmer": {
+      "capability": {
+        "type": "Intensity"
+      }
+    },
+    "Color Macro": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 7],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [8, 17],
+          "type": "ColorPreset",
+          "colors": ["#ff0000"],
+          "comment": "Red"
+        },
+        {
+          "dmxRange": [18, 27],
+          "type": "ColorPreset",
+          "colors": ["#00ff00"],
+          "comment": "Green"
+        },
+        {
+          "dmxRange": [28, 37],
+          "type": "ColorPreset",
+          "colors": ["#0000ff"],
+          "comment": "Blue"
+        },
+        {
+          "dmxRange": [38, 47],
+          "type": "ColorPreset",
+          "colors": ["#ffffff"],
+          "comment": "White"
+        },
+        {
+          "dmxRange": [48, 57],
+          "type": "ColorPreset",
+          "colors": ["#ffff00"],
+          "comment": "Red/Green"
+        },
+        {
+          "dmxRange": [58, 67],
+          "type": "ColorPreset",
+          "colors": ["#00ffff"],
+          "comment": "Green/Blue"
+        },
+        {
+          "dmxRange": [68, 77],
+          "type": "ColorPreset",
+          "colors": ["#8080ff"],
+          "comment": "Blue/White"
+        },
+        {
+          "dmxRange": [78, 87],
+          "type": "ColorPreset",
+          "colors": ["#ff8080"],
+          "comment": "Red/White"
+        },
+        {
+          "dmxRange": [88, 97],
+          "type": "ColorPreset",
+          "colors": ["#ffffff"],
+          "comment": "Red/Green/Blue"
+        },
+        {
+          "dmxRange": [98, 107],
+          "type": "ColorPreset",
+          "colors": ["#80ffff"],
+          "comment": "Green/Blue/White"
+        },
+        {
+          "dmxRange": [108, 117],
+          "type": "ColorPreset",
+          "colors": ["#ff80ff"],
+          "comment": "Red/Blue/White"
+        },
+        {
+          "dmxRange": [118, 127],
+          "type": "ColorPreset",
+          "colors": ["#ffff80"],
+          "comment": "Red/Green/White"
+        },
+        {
+          "dmxRange": [128, 137],
+          "type": "ColorPreset",
+          "colors": ["#ffffff"],
+          "comment": "Red/Green/Blue/White"
+        },
+        {
+          "dmxRange": [138, 188],
+          "type": "Effect",
+          "effectPreset": "ColorJump"
+        },
+        {
+          "dmxRange": [189, 239],
+          "type": "Effect",
+          "effectPreset": "ColorFade"
+        },
+        {
+          "dmxRange": [240, 255],
+          "type": "Effect",
+          "effectPreset": "ColorJump",
+          "soundControlled": true
+        }
+      ]
+    },
+    "Shutter / Strobe": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 4],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Closed"
+        },
+        {
+          "dmxRange": [5, 250],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        },
+        {
+          "dmxRange": [251, 255],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open"
+        }
+      ]
+    },
+    "Pan Continuous Movement": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 7],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [8, 127],
+          "type": "PanContinuous",
+          "speedStart": "slow CW",
+          "speedEnd": "fast CW"
+        },
+        {
+          "dmxRange": [128, 255],
+          "type": "PanContinuous",
+          "speedStart": "fast CCW",
+          "speedEnd": "slow CCW"
+        }
+      ]
+    },
+    "Pan Movement Speed": {
+      "capability": {
+        "type": "EffectSpeed",
+        "speedStart": "slow",
+        "speedEnd": "fast"
+      }
+    },
+    "Tilt Movement Macro": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 7],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [8, 255],
+          "type": "Effect",
+          "effectName": "Tilt movement forth and back",
+          "speedStart": "slow",
+          "speedEnd": "fast"
+        }
+      ]
+    },
+    "Color Change / Fade Speed": {
+      "capability": {
+        "type": "EffectSpeed",
+        "speedStart": "slow",
+        "speedEnd": "fast"
+      }
+    },
+    "Pan/Tilt Programs": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 7],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [8, 32],
+          "type": "Effect",
+          "effectName": "Program 1"
+        },
+        {
+          "dmxRange": [33, 58],
+          "type": "Effect",
+          "effectName": "Program 1"
+        },
+        {
+          "dmxRange": [59, 84],
+          "type": "Effect",
+          "effectName": "Program 2"
+        },
+        {
+          "dmxRange": [85, 110],
+          "type": "Effect",
+          "effectName": "Program 3"
+        },
+        {
+          "dmxRange": [111, 136],
+          "type": "Effect",
+          "effectName": "Program 4"
+        },
+        {
+          "dmxRange": [137, 162],
+          "type": "Effect",
+          "effectName": "Program 5"
+        },
+        {
+          "dmxRange": [163, 188],
+          "type": "Effect",
+          "effectName": "Program 6"
+        },
+        {
+          "dmxRange": [189, 214],
+          "type": "Effect",
+          "effectName": "Program 7"
+        },
+        {
+          "dmxRange": [215, 240],
+          "type": "Effect",
+          "effectName": "Program 8"
+        },
+        {
+          "dmxRange": [241, 255],
+          "type": "Effect",
+          "effectName": "Sound Active",
+          "soundControlled": true
+        }
+      ]
+    },
+    "Pan/Tilt Program Speed": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 50],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [51, 100],
+          "type": "Maintenance",
+          "comment": "Set High Speed Mode",
+          "hold": "10s"
+        },
+        {
+          "dmxRange": [101, 150],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [151, 200],
+          "type": "Maintenance",
+          "comment": "Set Low Speed Mode",
+          "hold": "10s"
+        },
+        {
+          "dmxRange": [201, 250],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [251, 255],
+          "type": "Maintenance",
+          "comment": "Reset",
+          "hold": "10s"
+        }
+      ]
+    }
+  },
+  "modes": [
+    {
+      "name": "5-channel",
+      "shortName": "5ch",
+      "channels": [
+        "Pan",
+        "Tilt",
+        "Color Macro",
+        "Color Change / Fade Speed",
+        "Pan/Tilt Programs"
+      ]
+    },
+    {
+      "name": "17-channel",
+      "shortName": "17ch",
+      "channels": [
+        "Pan",
+        "Pan fine",
+        "Tilt",
+        "Tilt fine",
+        "Red",
+        "Green",
+        "Blue",
+        "White",
+        "Color Macro",
+        "Master Dimmer",
+        "Shutter / Strobe",
+        "Pan Continuous Movement",
+        "Pan Movement Speed",
+        "Tilt Movement Macro",
+        "Color Change / Fade Speed",
+        "Pan/Tilt Programs",
+        "Pan/Tilt Program Speed"
+      ]
+    }
+  ]
+}

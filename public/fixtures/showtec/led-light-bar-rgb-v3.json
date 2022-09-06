@@ -1,0 +1,459 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "LED Light Bar RGB V3",
+  "shortName": "LEDLightBar",
+  "categories": ["Pixel Bar", "Color Changer"],
+  "meta": {
+    "authors": ["Flo Edelmann", "Felix Edelmann"],
+    "createDate": "2017-01-20",
+    "lastModifyDate": "2018-08-24"
+  },
+  "comment": "Ordercode 42202",
+  "links": {
+    "manual": [
+      "https://www.highlite.com/media/attachments/MANUAL/42202_MANUAL_GB_V3.pdf"
+    ]
+  },
+  "physical": {
+    "dimensions": [1070, 65, 88],
+    "weight": 1.68,
+    "power": 70,
+    "DMXconnector": "3-pin",
+    "bulb": {
+      "type": "LED"
+    },
+    "lens": {
+      "name": "Other",
+      "degreesMinMax": [40, 40]
+    },
+    "matrixPixels": {
+      "dimensions": [250, 60, 0],
+      "spacing": [0, 0, 0]
+    }
+  },
+  "matrix": {
+    "pixelKeys": [
+      [
+        ["1/4", "2/4", "3/4", "4/4"]
+      ]
+    ],
+    "pixelGroups": {
+      "1/2": ["1/4", "2/4"],
+      "2/2": ["3/4", "4/4"]
+    }
+  },
+  "availableChannels": {
+    "Red": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Red"
+      }
+    },
+    "Green": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Green"
+      }
+    },
+    "Blue": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Blue"
+      }
+    },
+    "Dimmer": {
+      "capability": {
+        "type": "Intensity"
+      }
+    },
+    "Strobe1": {
+      "name": "Strobe",
+      "capability": {
+        "type": "ShutterStrobe",
+        "shutterEffect": "Strobe",
+        "speedStart": "0Hz",
+        "speedEnd": "20Hz",
+        "helpWanted": "Does this capability really range from DMX value 0 to 255? How to disable strobe?"
+      }
+    },
+    "Strobe2": {
+      "name": "Strobe",
+      "capabilities": [
+        {
+          "dmxRange": [0, 9],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [10, 255],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "0Hz",
+          "speedEnd": "20Hz"
+        }
+      ]
+    },
+    "Color Programs": {
+      "defaultValue": 0,
+      "capabilities": [
+        {
+          "dmxRange": [0, 9],
+          "type": "NoFunction",
+          "switchChannels": {
+            "Program Speed / Mic Sensitivity": "Program Speed"
+          }
+        },
+        {
+          "dmxRange": [10, 19],
+          "type": "ColorPreset",
+          "colors": ["#ff0000"],
+          "comment": "Red",
+          "switchChannels": {
+            "Program Speed / Mic Sensitivity": "Program Speed"
+          }
+        },
+        {
+          "dmxRange": [20, 29],
+          "type": "ColorPreset",
+          "colors": ["#ffff00"],
+          "comment": "Yellow",
+          "switchChannels": {
+            "Program Speed / Mic Sensitivity": "Program Speed"
+          }
+        },
+        {
+          "dmxRange": [30, 39],
+          "type": "ColorPreset",
+          "colors": ["#00ff00"],
+          "comment": "Green",
+          "switchChannels": {
+            "Program Speed / Mic Sensitivity": "Program Speed"
+          }
+        },
+        {
+          "dmxRange": [40, 49],
+          "type": "ColorPreset",
+          "colors": ["#00ffff"],
+          "comment": "Cyan",
+          "switchChannels": {
+            "Program Speed / Mic Sensitivity": "Program Speed"
+          }
+        },
+        {
+          "dmxRange": [50, 59],
+          "type": "ColorPreset",
+          "colors": ["#0000ff"],
+          "comment": "Blue",
+          "switchChannels": {
+            "Program Speed / Mic Sensitivity": "Program Speed"
+          }
+        },
+        {
+          "dmxRange": [60, 69],
+          "type": "ColorPreset",
+          "colors": ["#ff00ff"],
+          "comment": "Purple",
+          "switchChannels": {
+            "Program Speed / Mic Sensitivity": "Program Speed"
+          }
+        },
+        {
+          "dmxRange": [70, 79],
+          "type": "ColorPreset",
+          "colors": ["#ffffff"],
+          "comment": "White",
+          "switchChannels": {
+            "Program Speed / Mic Sensitivity": "Program Speed"
+          }
+        },
+        {
+          "dmxRange": [80, 89],
+          "type": "Effect",
+          "effectName": "Program 1",
+          "switchChannels": {
+            "Program Speed / Mic Sensitivity": "Program Speed"
+          }
+        },
+        {
+          "dmxRange": [90, 99],
+          "type": "Effect",
+          "effectName": "Program 2",
+          "switchChannels": {
+            "Program Speed / Mic Sensitivity": "Program Speed"
+          }
+        },
+        {
+          "dmxRange": [100, 109],
+          "type": "Effect",
+          "effectName": "Program 3",
+          "switchChannels": {
+            "Program Speed / Mic Sensitivity": "Program Speed"
+          }
+        },
+        {
+          "dmxRange": [110, 119],
+          "type": "Effect",
+          "effectName": "Program 4",
+          "switchChannels": {
+            "Program Speed / Mic Sensitivity": "Program Speed"
+          }
+        },
+        {
+          "dmxRange": [120, 129],
+          "type": "Effect",
+          "effectName": "Program 5",
+          "switchChannels": {
+            "Program Speed / Mic Sensitivity": "Program Speed"
+          }
+        },
+        {
+          "dmxRange": [130, 139],
+          "type": "Effect",
+          "effectName": "Program 6",
+          "switchChannels": {
+            "Program Speed / Mic Sensitivity": "Program Speed"
+          }
+        },
+        {
+          "dmxRange": [140, 149],
+          "type": "Effect",
+          "effectName": "Program 7",
+          "switchChannels": {
+            "Program Speed / Mic Sensitivity": "Program Speed"
+          }
+        },
+        {
+          "dmxRange": [150, 159],
+          "type": "Effect",
+          "effectName": "Program 8",
+          "switchChannels": {
+            "Program Speed / Mic Sensitivity": "Program Speed"
+          }
+        },
+        {
+          "dmxRange": [160, 169],
+          "type": "Effect",
+          "effectName": "Program 9",
+          "switchChannels": {
+            "Program Speed / Mic Sensitivity": "Program Speed"
+          }
+        },
+        {
+          "dmxRange": [170, 179],
+          "type": "Effect",
+          "effectName": "Program 10",
+          "switchChannels": {
+            "Program Speed / Mic Sensitivity": "Program Speed"
+          }
+        },
+        {
+          "dmxRange": [180, 189],
+          "type": "Effect",
+          "effectName": "Program 11",
+          "switchChannels": {
+            "Program Speed / Mic Sensitivity": "Program Speed"
+          }
+        },
+        {
+          "dmxRange": [190, 199],
+          "type": "Effect",
+          "effectName": "Program 12",
+          "switchChannels": {
+            "Program Speed / Mic Sensitivity": "Program Speed"
+          }
+        },
+        {
+          "dmxRange": [200, 209],
+          "type": "Effect",
+          "effectName": "Program 13",
+          "switchChannels": {
+            "Program Speed / Mic Sensitivity": "Program Speed"
+          }
+        },
+        {
+          "dmxRange": [210, 219],
+          "type": "Effect",
+          "effectName": "Program 14",
+          "switchChannels": {
+            "Program Speed / Mic Sensitivity": "Program Speed"
+          }
+        },
+        {
+          "dmxRange": [220, 229],
+          "type": "Effect",
+          "effectName": "Program 15",
+          "switchChannels": {
+            "Program Speed / Mic Sensitivity": "Program Speed"
+          }
+        },
+        {
+          "dmxRange": [230, 239],
+          "type": "Effect",
+          "effectName": "Program 16",
+          "switchChannels": {
+            "Program Speed / Mic Sensitivity": "Program Speed"
+          }
+        },
+        {
+          "dmxRange": [240, 255],
+          "type": "Effect",
+          "effectName": "Sound control",
+          "soundControlled": true,
+          "switchChannels": {
+            "Program Speed / Mic Sensitivity": "Mic Sensitivity"
+          }
+        }
+      ]
+    },
+    "Program Speed": {
+      "capability": {
+        "type": "EffectSpeed",
+        "speedStart": "slow",
+        "speedEnd": "fast"
+      }
+    },
+    "Mic Sensitivity": {
+      "capability": {
+        "type": "SoundSensitivity",
+        "soundSensitivityStart": "low",
+        "soundSensitivityEnd": "high"
+      }
+    },
+    "Operation Mode": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 9],
+          "type": "Effect",
+          "effectName": "RGB Mode"
+        },
+        {
+          "dmxRange": [10, 249],
+          "type": "Effect",
+          "effectName": "Auto Program"
+        },
+        {
+          "dmxRange": [250, 255],
+          "type": "Effect",
+          "effectName": "Sound control",
+          "soundControlled": true
+        }
+      ]
+    }
+  },
+  "templateChannels": {
+    "Red $pixelKey": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Red"
+      }
+    },
+    "Green $pixelKey": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Green"
+      }
+    },
+    "Blue $pixelKey": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Blue"
+      }
+    }
+  },
+  "modes": [
+    {
+      "name": "P1 (3 channels)",
+      "shortName": "P1",
+      "channels": [
+        "Red",
+        "Green",
+        "Blue"
+      ]
+    },
+    {
+      "name": "P2 (4 channels)",
+      "shortName": "P2",
+      "channels": [
+        "Red",
+        "Green",
+        "Blue",
+        "Dimmer"
+      ]
+    },
+    {
+      "name": "P3 (8 channels)",
+      "shortName": "P3",
+      "channels": [
+        {
+          "insert": "matrixChannels",
+          "repeatFor": ["1/2", "2/2"],
+          "channelOrder": "perPixel",
+          "templateChannels": [
+            "Red $pixelKey",
+            "Green $pixelKey",
+            "Blue $pixelKey"
+          ]
+        },
+        "Strobe1",
+        "Dimmer"
+      ]
+    },
+    {
+      "name": "P4 (14 channels)",
+      "shortName": "P4",
+      "channels": [
+        {
+          "insert": "matrixChannels",
+          "repeatFor": "eachPixelXYZ",
+          "channelOrder": "perPixel",
+          "templateChannels": [
+            "Red $pixelKey",
+            "Green $pixelKey",
+            "Blue $pixelKey"
+          ]
+        },
+        "Strobe1",
+        "Dimmer"
+      ]
+    },
+    {
+      "name": "P5 (2 channels)",
+      "shortName": "P5",
+      "channels": [
+        "Color Programs",
+        "Program Speed / Mic Sensitivity"
+      ]
+    },
+    {
+      "name": "P6 (15 channels)",
+      "shortName": "P6",
+      "channels": [
+        "Operation Mode",
+        "Dimmer",
+        "Strobe2",
+        {
+          "insert": "matrixChannels",
+          "repeatFor": "eachPixelXYZ",
+          "channelOrder": "perPixel",
+          "templateChannels": [
+            "Red $pixelKey",
+            "Green $pixelKey",
+            "Blue $pixelKey"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "P7 (7 channels)",
+      "shortName": "P7",
+      "channels": [
+        "Red",
+        "Green",
+        "Blue",
+        "Color Programs",
+        "Program Speed / Mic Sensitivity",
+        "Strobe1",
+        "Dimmer"
+      ]
+    }
+  ]
+}

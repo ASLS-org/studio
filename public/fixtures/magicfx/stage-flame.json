@@ -1,0 +1,72 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "Stage Flame",
+  "shortName": "MFXStageFlame",
+  "categories": ["Effect"],
+  "meta": {
+    "authors": ["Alejo Cervera"],
+    "createDate": "2018-06-13",
+    "lastModifyDate": "2018-08-21"
+  },
+  "links": {
+    "manual": [
+      "https://www.magicfx.eu/app/uploads/2020/01/MAGICFX_STAGE-FLAME_MANUAL.pdf"
+    ],
+    "productPage": [
+      "https://www.magicfx.eu/product/magicfx-stage-flame/"
+    ],
+    "video": [
+      "https://www.youtube.com/watch?v=YLeYRexsTmc",
+      "https://www.youtube.com/watch?v=HvRzNTf07aY"
+    ]
+  },
+  "physical": {
+    "dimensions": [310, 210, 360],
+    "weight": 11.5,
+    "power": 100,
+    "DMXconnector": "3-pin"
+  },
+  "availableChannels": {
+    "Safety": {
+      "defaultValue": 0,
+      "precedence": "LTP",
+      "capabilities": [
+        {
+          "dmxRange": [0, 139],
+          "type": "Maintenance",
+          "comment": "Safety ON"
+        },
+        {
+          "dmxRange": [140, 153],
+          "type": "Maintenance",
+          "comment": "Safety OFF"
+        },
+        {
+          "dmxRange": [154, 255],
+          "type": "Maintenance",
+          "comment": "Safety ON"
+        }
+      ]
+    },
+    "Flame": {
+      "defaultValue": 0,
+      "highlightValue": 255,
+      "precedence": "HTP",
+      "capability": {
+        "type": "EffectParameter",
+        "parameterStart": "off",
+        "parameterEnd": "high",
+        "comment": "Flame Intensity"
+      }
+    }
+  },
+  "modes": [
+    {
+      "name": "Default",
+      "channels": [
+        "Safety",
+        "Flame"
+      ]
+    }
+  ]
+}

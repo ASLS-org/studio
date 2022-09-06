@@ -1,0 +1,374 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "PAT 252",
+  "categories": ["Scanner", "Color Changer"],
+  "meta": {
+    "authors": ["MIE", "Mikael"],
+    "createDate": "2018-11-23",
+    "lastModifyDate": "2018-11-23",
+    "importPlugin": {
+      "plugin": "qlcplus_4.11.2",
+      "date": "2018-11-23",
+      "comment": "created by Q Light Controller Plus (version 4.11.2)"
+    }
+  },
+  "links": {
+    "manual": [
+      "https://www.levenly.com/photo/maxi/nicols_pat_252_dmx_fiche_technique.jpg"
+    ],
+    "video": [
+      "https://www.youtube.com/watch?v=YbxBEFb9ACk"
+    ]
+  },
+  "physical": {
+    "dimensions": [155, 500, 200],
+    "weight": 11,
+    "power": 350,
+    "DMXconnector": "3-pin",
+    "bulb": {
+      "type": "ELC 250W"
+    },
+    "lens": {
+      "name": "Other"
+    }
+  },
+  "wheels": {
+    "Gobo Wheel": {
+      "slots": [
+        {
+          "type": "Open"
+        },
+        {
+          "type": "Gobo"
+        },
+        {
+          "type": "Gobo"
+        },
+        {
+          "type": "Gobo"
+        },
+        {
+          "type": "Gobo"
+        },
+        {
+          "type": "Gobo"
+        },
+        {
+          "type": "Gobo"
+        },
+        {
+          "type": "Gobo"
+        },
+        {
+          "type": "Gobo"
+        },
+        {
+          "type": "Gobo"
+        },
+        {
+          "type": "Gobo"
+        },
+        {
+          "type": "Gobo"
+        },
+        {
+          "type": "Gobo"
+        },
+        {
+          "type": "Gobo"
+        },
+        {
+          "type": "Gobo"
+        }
+      ]
+    },
+    "Color Wheel": {
+      "slots": [
+        {
+          "type": "Open"
+        },
+        {
+          "type": "Color",
+          "name": "Green",
+          "colors": ["#58b848"]
+        },
+        {
+          "type": "Color",
+          "name": "Orange 306",
+          "colors": ["#f46f34"]
+        },
+        {
+          "type": "Color",
+          "name": "Light blue",
+          "colors": ["#95d8e0"]
+        },
+        {
+          "type": "Color",
+          "name": "Y52-Yellow",
+          "colors": ["#e8ea7c"]
+        },
+        {
+          "type": "Color",
+          "name": "Red",
+          "colors": ["#ef332d"]
+        },
+        {
+          "type": "Color",
+          "name": "Purple",
+          "colors": ["#73479a"]
+        },
+        {
+          "type": "Color",
+          "name": "Pink",
+          "colors": ["#f097c0"]
+        },
+        {
+          "type": "Color",
+          "name": "Light green",
+          "colors": ["#39b773"]
+        },
+        {
+          "type": "Color",
+          "name": "Blue",
+          "colors": ["#1857a7"]
+        },
+        {
+          "type": "Color",
+          "name": "Yellow",
+          "colors": ["#e6e74d"]
+        },
+        {
+          "type": "Color",
+          "name": "Magenta",
+          "colors": ["#a65a9d"]
+        }
+      ]
+    }
+  },
+  "availableChannels": {
+    "Shutter": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 16],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open"
+        },
+        {
+          "dmxRange": [17, 92],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "slow",
+          "speedEnd": "fast",
+          "comment": "Gobo"
+        },
+        {
+          "dmxRange": [93, 136],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "slow",
+          "speedEnd": "fast",
+          "comment": "Color"
+        },
+        {
+          "dmxRange": [137, 196],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "slow",
+          "speedEnd": "fast",
+          "comment": "Gobo + Color"
+        },
+        {
+          "dmxRange": [197, 255],
+          "type": "WheelShake",
+          "wheel": "Gobo Wheel"
+        }
+      ]
+    },
+    "Gobo Wheel": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 7],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Closed"
+        },
+        {
+          "dmxRange": [8, 15],
+          "type": "WheelSlot",
+          "slotNumber": 1
+        },
+        {
+          "dmxRange": [16, 23],
+          "type": "WheelSlot",
+          "slotNumber": 2
+        },
+        {
+          "dmxRange": [24, 31],
+          "type": "WheelSlot",
+          "slotNumber": 3
+        },
+        {
+          "dmxRange": [32, 39],
+          "type": "WheelSlot",
+          "slotNumber": 4
+        },
+        {
+          "dmxRange": [40, 47],
+          "type": "WheelSlot",
+          "slotNumber": 5
+        },
+        {
+          "dmxRange": [48, 55],
+          "type": "WheelSlot",
+          "slotNumber": 6
+        },
+        {
+          "dmxRange": [56, 63],
+          "type": "WheelSlot",
+          "slotNumber": 7
+        },
+        {
+          "dmxRange": [64, 71],
+          "type": "WheelSlot",
+          "slotNumber": 8
+        },
+        {
+          "dmxRange": [72, 79],
+          "type": "WheelSlot",
+          "slotNumber": 9
+        },
+        {
+          "dmxRange": [80, 87],
+          "type": "WheelSlot",
+          "slotNumber": 10
+        },
+        {
+          "dmxRange": [88, 95],
+          "type": "WheelSlot",
+          "slotNumber": 11
+        },
+        {
+          "dmxRange": [96, 103],
+          "type": "WheelSlot",
+          "slotNumber": 12
+        },
+        {
+          "dmxRange": [104, 111],
+          "type": "WheelSlot",
+          "slotNumber": 13
+        },
+        {
+          "dmxRange": [112, 119],
+          "type": "WheelSlot",
+          "slotNumber": 14
+        },
+        {
+          "dmxRange": [120, 127],
+          "type": "WheelSlot",
+          "slotNumber": 15
+        },
+        {
+          "dmxRange": [128, 255],
+          "type": "WheelRotation",
+          "speedStart": "slow CW",
+          "speedEnd": "fast CW"
+        }
+      ]
+    },
+    "Color Wheel": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 11],
+          "type": "WheelSlot",
+          "slotNumber": 1
+        },
+        {
+          "dmxRange": [12, 22],
+          "type": "WheelSlot",
+          "slotNumber": 2
+        },
+        {
+          "dmxRange": [23, 33],
+          "type": "WheelSlot",
+          "slotNumber": 3
+        },
+        {
+          "dmxRange": [34, 44],
+          "type": "WheelSlot",
+          "slotNumber": 4
+        },
+        {
+          "dmxRange": [45, 55],
+          "type": "WheelSlot",
+          "slotNumber": 5
+        },
+        {
+          "dmxRange": [56, 66],
+          "type": "WheelSlot",
+          "slotNumber": 6
+        },
+        {
+          "dmxRange": [67, 77],
+          "type": "WheelSlot",
+          "slotNumber": 7
+        },
+        {
+          "dmxRange": [78, 88],
+          "type": "WheelSlot",
+          "slotNumber": 8
+        },
+        {
+          "dmxRange": [89, 99],
+          "type": "WheelSlot",
+          "slotNumber": 9
+        },
+        {
+          "dmxRange": [100, 110],
+          "type": "WheelSlot",
+          "slotNumber": 10
+        },
+        {
+          "dmxRange": [111, 121],
+          "type": "WheelSlot",
+          "slotNumber": 11
+        },
+        {
+          "dmxRange": [122, 128],
+          "type": "WheelSlot",
+          "slotNumber": 12
+        },
+        {
+          "dmxRange": [129, 255],
+          "type": "WheelRotation",
+          "speedStart": "slow CW",
+          "speedEnd": "fast CW"
+        }
+      ]
+    },
+    "Pan": {
+      "capability": {
+        "type": "Pan",
+        "angleStart": "0deg",
+        "angleEnd": "180deg"
+      }
+    },
+    "Tilt": {
+      "capability": {
+        "type": "Tilt",
+        "angleStart": "0deg",
+        "angleEnd": "60deg"
+      }
+    }
+  },
+  "modes": [
+    {
+      "name": "Default",
+      "channels": [
+        "Shutter",
+        "Gobo Wheel",
+        "Color Wheel",
+        "Pan",
+        "Tilt"
+      ]
+    }
+  ]
+}

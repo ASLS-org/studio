@@ -1,0 +1,570 @@
+{
+  "$schema": "https://raw.githubusercontent.com/OpenLightingProject/open-fixture-library/master/schemas/fixture.json",
+  "name": "Rush MH 2 Wash",
+  "shortName": "MartinRushMH2",
+  "categories": ["Moving Head", "Color Changer"],
+  "meta": {
+    "authors": ["novasfronteiras.co"],
+    "createDate": "2017-08-07",
+    "lastModifyDate": "2018-09-04"
+  },
+  "comment": "Rush MH 2 Wash:\n- DMX, music trig and auto trig operation\n- 17° one-tenth peak angle\n- Extremely fast and agile\n- Electronic dimming and strobe\n- 3 & 5 pin XLR",
+  "links": {
+    "manual": [
+      "https://www.martin.com/files/files/productdocuments/11_MANUALS/999/UM_RUSHMH2Wash_EN_G.pdf"
+    ],
+    "video": [
+      "https://www.youtube.com/watch?v=hJ8CK0FpmNA",
+      "https://www.youtube.com/watch?v=YQTK6GbHbSg"
+    ]
+  },
+  "physical": {
+    "dimensions": [258, 305, 156],
+    "weight": 5.7,
+    "power": 125,
+    "DMXconnector": "3-pin and 5-pin",
+    "bulb": {
+      "type": "7 x 10 W RGBW Cree MC-E LEDs"
+    }
+  },
+  "availableChannels": {
+    "Electronic Shutter Effect": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 19],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Closed"
+        },
+        {
+          "dmxRange": [20, 49],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open"
+        },
+        {
+          "dmxRange": [50, 64],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "fast",
+          "speedEnd": "slow"
+        },
+        {
+          "dmxRange": [65, 69],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open",
+          "menuClick": "hidden"
+        },
+        {
+          "dmxRange": [70, 84],
+          "type": "ShutterStrobe",
+          "shutterEffect": "RampUp",
+          "speedStart": "fast",
+          "speedEnd": "slow"
+        },
+        {
+          "dmxRange": [85, 89],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open",
+          "menuClick": "hidden"
+        },
+        {
+          "dmxRange": [90, 104],
+          "type": "ShutterStrobe",
+          "shutterEffect": "RampDown",
+          "speedStart": "fast",
+          "speedEnd": "slow"
+        },
+        {
+          "dmxRange": [105, 109],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open",
+          "menuClick": "hidden"
+        },
+        {
+          "dmxRange": [110, 124],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Strobe",
+          "speedStart": "fast",
+          "speedEnd": "slow",
+          "randomTiming": true
+        },
+        {
+          "dmxRange": [125, 129],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open",
+          "menuClick": "hidden"
+        },
+        {
+          "dmxRange": [130, 144],
+          "type": "ShutterStrobe",
+          "shutterEffect": "RampUp",
+          "speedStart": "fast",
+          "speedEnd": "slow",
+          "randomTiming": true
+        },
+        {
+          "dmxRange": [145, 149],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open",
+          "menuClick": "hidden"
+        },
+        {
+          "dmxRange": [150, 164],
+          "type": "ShutterStrobe",
+          "shutterEffect": "RampDown",
+          "speedStart": "fast",
+          "speedEnd": "slow",
+          "randomTiming": true
+        },
+        {
+          "dmxRange": [165, 169],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open",
+          "menuClick": "hidden"
+        },
+        {
+          "dmxRange": [170, 184],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Burst",
+          "speedStart": "fast",
+          "speedEnd": "slow",
+          "comment": "burst pulse"
+        },
+        {
+          "dmxRange": [185, 189],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open",
+          "menuClick": "hidden"
+        },
+        {
+          "dmxRange": [190, 204],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Burst",
+          "speedStart": "fast",
+          "speedEnd": "slow",
+          "randomTiming": true,
+          "comment": "burst pulse"
+        },
+        {
+          "dmxRange": [205, 209],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open",
+          "menuClick": "hidden"
+        },
+        {
+          "dmxRange": [210, 224],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Pulse",
+          "speedStart": "fast",
+          "speedEnd": "slow",
+          "comment": "sine wave"
+        },
+        {
+          "dmxRange": [225, 229],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open",
+          "menuClick": "hidden"
+        },
+        {
+          "dmxRange": [230, 244],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Burst",
+          "speedStart": "fast",
+          "speedEnd": "slow"
+        },
+        {
+          "dmxRange": [245, 255],
+          "type": "ShutterStrobe",
+          "shutterEffect": "Open",
+          "menuClick": "hidden"
+        }
+      ]
+    },
+    "Dimmer": {
+      "capability": {
+        "type": "Intensity"
+      }
+    },
+    "Pan": {
+      "fineChannelAliases": ["Pan fine"],
+      "defaultValue": "50%",
+      "capability": {
+        "type": "Pan",
+        "angleStart": "0deg",
+        "angleEnd": "540deg"
+      }
+    },
+    "Tilt": {
+      "fineChannelAliases": ["Tilt fine"],
+      "defaultValue": "50%",
+      "capability": {
+        "type": "Tilt",
+        "angleStart": "0deg",
+        "angleEnd": "180deg"
+      }
+    },
+    "Fixture Control Settings": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 9],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [10, 14],
+          "type": "Maintenance",
+          "comment": "Reset entire fixture"
+        },
+        {
+          "dmxRange": [15, 94],
+          "type": "NoFunction",
+          "menuClick": "hidden"
+        },
+        {
+          "dmxRange": [95, 99],
+          "type": "Maintenance",
+          "comment": "Enable blackout during P/T movement"
+        },
+        {
+          "dmxRange": [100, 104],
+          "type": "NoFunction",
+          "menuClick": "hidden"
+        },
+        {
+          "dmxRange": [105, 109],
+          "type": "Maintenance",
+          "comment": "Disable blackout during P/T movement"
+        },
+        {
+          "dmxRange": [110, 114],
+          "type": "Maintenance",
+          "comment": "Fast dimming, unrestricted effects speed"
+        },
+        {
+          "dmxRange": [115, 119],
+          "type": "NoFunction",
+          "menuClick": "hidden"
+        },
+        {
+          "dmxRange": [120, 124],
+          "type": "Maintenance",
+          "comment": "Smooth dimming, slightly reduced effects speed"
+        },
+        {
+          "dmxRange": [125, 249],
+          "type": "Maintenance",
+          "comment": "Illuminate display"
+        },
+        {
+          "dmxRange": [250, 255],
+          "type": "Maintenance",
+          "comment": "Stand-alone"
+        }
+      ]
+    },
+    "Color Wheel Effect": {
+      "capabilities": [
+        {
+          "dmxRange": [0, 9],
+          "type": "NoFunction"
+        },
+        {
+          "dmxRange": [10, 14],
+          "type": "ColorPreset",
+          "colors": ["#ffb4a5"],
+          "comment": "LEE 790 - Moroccan pink"
+        },
+        {
+          "dmxRange": [15, 19],
+          "type": "ColorPreset",
+          "colors": ["#ff92a3"],
+          "comment": "LEE 157 - Pink"
+        },
+        {
+          "dmxRange": [20, 24],
+          "type": "ColorPreset",
+          "colors": ["#ff3787"],
+          "comment": "LEE 332 - Special rose pink"
+        },
+        {
+          "dmxRange": [25, 29],
+          "type": "ColorPreset",
+          "colors": ["#ff64c8"],
+          "comment": "LEE 328 - Follies pink"
+        },
+        {
+          "dmxRange": [30, 34],
+          "type": "ColorPreset",
+          "colors": ["#cd6ed7"],
+          "comment": "LEE 345 - Fuchsia pink"
+        },
+        {
+          "dmxRange": [35, 39],
+          "type": "ColorPreset",
+          "colors": ["#be8cf0"],
+          "comment": "LEE 194 - Surprise pink"
+        },
+        {
+          "dmxRange": [40, 44],
+          "type": "ColorPreset",
+          "colors": ["#5000aa"],
+          "comment": "LEE 181 - Congo blue"
+        },
+        {
+          "dmxRange": [45, 49],
+          "type": "ColorPreset",
+          "colors": ["#0000b4"],
+          "comment": "LEE 071 - Tokyo blue"
+        },
+        {
+          "dmxRange": [50, 54],
+          "type": "ColorPreset",
+          "colors": ["#005fbe"],
+          "comment": "LEE 120 - Deep blue"
+        },
+        {
+          "dmxRange": [55, 59],
+          "type": "ColorPreset",
+          "colors": ["#3c8cd2"],
+          "comment": "LEE 079 - Just blue"
+        },
+        {
+          "dmxRange": [60, 64],
+          "type": "ColorPreset",
+          "colors": ["#00a0dc"],
+          "comment": "LEE 132 - Medium blue"
+        },
+        {
+          "dmxRange": [65, 69],
+          "type": "ColorPreset",
+          "colors": ["#91bef5"],
+          "comment": "LEE 200 - Double CT blue"
+        },
+        {
+          "dmxRange": [70, 74],
+          "type": "ColorPreset",
+          "colors": ["#7dd2f5"],
+          "comment": "LEE 161 - Slate blue"
+        },
+        {
+          "dmxRange": [75, 79],
+          "type": "ColorPreset",
+          "colors": ["#c3e1fa"],
+          "comment": "LEE 201 - Full CT blue"
+        },
+        {
+          "dmxRange": [80, 84],
+          "type": "ColorPreset",
+          "colors": ["#d7f0ff"],
+          "comment": "LEE 202 - Half CT blue"
+        },
+        {
+          "dmxRange": [85, 89],
+          "type": "ColorPreset",
+          "colors": ["#b4faf5"],
+          "comment": "LEE 117 - Steel blue"
+        },
+        {
+          "dmxRange": [90, 94],
+          "type": "ColorPreset",
+          "colors": ["#61e8e3"],
+          "comment": "LEE 353 - Lighter blue"
+        },
+        {
+          "dmxRange": [95, 99],
+          "type": "ColorPreset",
+          "colors": ["#00e1eb"],
+          "comment": "LEE 118 - Light blue"
+        },
+        {
+          "dmxRange": [100, 104],
+          "type": "ColorPreset",
+          "colors": ["#00c8b9"],
+          "comment": "LEE 116 - Medium blue green"
+        },
+        {
+          "dmxRange": [105, 109],
+          "type": "ColorPreset",
+          "colors": ["#00dc78"],
+          "comment": "LEE 124 - Dark green"
+        },
+        {
+          "dmxRange": [110, 114],
+          "type": "ColorPreset",
+          "colors": ["#4bc300"],
+          "comment": "LEE 139 - Primary green"
+        },
+        {
+          "dmxRange": [115, 119],
+          "type": "ColorPreset",
+          "colors": ["#5adc5a"],
+          "comment": "LEE 089 - Moss green"
+        },
+        {
+          "dmxRange": [120, 124],
+          "type": "ColorPreset",
+          "colors": ["#78fa6e"],
+          "comment": "LEE 122 - Fern green"
+        },
+        {
+          "dmxRange": [125, 129],
+          "type": "ColorPreset",
+          "colors": ["#aaff00"],
+          "comment": "LEE 738 - JAS green"
+        },
+        {
+          "dmxRange": [130, 134],
+          "type": "ColorPreset",
+          "colors": ["#dcff64"],
+          "comment": "LEE 088 - Lime green"
+        },
+        {
+          "dmxRange": [135, 139],
+          "type": "ColorPreset",
+          "colors": ["#f5ff00"],
+          "comment": "LEE 100 - Spring yellow"
+        },
+        {
+          "dmxRange": [140, 144],
+          "type": "ColorPreset",
+          "colors": ["#ffdc00"],
+          "comment": "LEE 104 - Deep amber"
+        },
+        {
+          "dmxRange": [145, 149],
+          "type": "ColorPreset",
+          "colors": ["#ffbe00"],
+          "comment": "LEE 179 - Chrome orange"
+        },
+        {
+          "dmxRange": [150, 154],
+          "type": "ColorPreset",
+          "colors": ["#ffa000"],
+          "comment": "LEE 105 - Orange"
+        },
+        {
+          "dmxRange": [155, 159],
+          "type": "ColorPreset",
+          "colors": ["#ff8c32"],
+          "comment": "LEE 021 - Gold amber"
+        },
+        {
+          "dmxRange": [160, 164],
+          "type": "ColorPreset",
+          "colors": ["#ff7600"],
+          "comment": "LEE 778 - Millennium gold"
+        },
+        {
+          "dmxRange": [165, 169],
+          "type": "ColorPreset",
+          "colors": ["#ff5f00"],
+          "comment": "LEE 135 - Deep golden amber"
+        },
+        {
+          "dmxRange": [170, 174],
+          "type": "ColorPreset",
+          "colors": ["#ff3200"],
+          "comment": "LEE 164 - Flame red"
+        },
+        {
+          "dmxRange": [175, 179],
+          "type": "NoFunction",
+          "menuClick": "hidden"
+        },
+        {
+          "dmxRange": [180, 201],
+          "type": "Effect",
+          "effectPreset": "ColorJump",
+          "speedStart": "fast",
+          "speedEnd": "slow"
+        },
+        {
+          "dmxRange": [202, 207],
+          "type": "Effect",
+          "effectPreset": "ColorJump",
+          "speed": "stop"
+        },
+        {
+          "dmxRange": [208, 229],
+          "type": "Effect",
+          "effectPreset": "ColorJump",
+          "speedStart": "slow reverse",
+          "speedEnd": "fast reverse"
+        },
+        {
+          "dmxRange": [230, 234],
+          "type": "NoFunction",
+          "menuClick": "hidden"
+        },
+        {
+          "dmxRange": [235, 239],
+          "type": "Effect",
+          "effectPreset": "ColorJump",
+          "speed": "fast",
+          "comment": "random color"
+        },
+        {
+          "dmxRange": [240, 244],
+          "type": "Effect",
+          "effectPreset": "ColorJump",
+          "speed": "50%",
+          "comment": "random color"
+        },
+        {
+          "dmxRange": [245, 249],
+          "type": "Effect",
+          "effectPreset": "ColorJump",
+          "speed": "slow",
+          "comment": "random color"
+        },
+        {
+          "dmxRange": [250, 255],
+          "type": "NoFunction",
+          "menuClick": "hidden"
+        }
+      ]
+    },
+    "Red": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Red"
+      }
+    },
+    "Green": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Green"
+      }
+    },
+    "Blue": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "Blue"
+      }
+    },
+    "White": {
+      "capability": {
+        "type": "ColorIntensity",
+        "color": "White"
+      }
+    }
+  },
+  "modes": [
+    {
+      "name": "Standard",
+      "shortName": "std",
+      "channels": [
+        "Electronic Shutter Effect",
+        "Dimmer",
+        "Pan",
+        "Pan fine",
+        "Tilt",
+        "Tilt fine",
+        "Fixture Control Settings",
+        "Color Wheel Effect",
+        "Red",
+        "Green",
+        "Blue",
+        "White"
+      ]
+    }
+  ]
+}

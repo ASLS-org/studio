@@ -1,0 +1,9 @@
+{
+  "visualizer": {
+    "models": {
+      "scenography": {
+        "beam": "moving_head_lowpoly.glb"
+      }
+    }
+  }
+}
