@@ -76,3 +76,10 @@ $ npm run build
 ```
 
 Built files will be located over the local `./dist` folder located at project root.
+
+# Getting Started
+
+Please refer to [ASLS Studio's manual](https://studio.asls.timekadel.com) for an in-depth guide on how to use this tool. 
+
+> **Warning:**
+Please note that this is an early alpha version. Documentation is still in progress. It will be updated following the next releases.
