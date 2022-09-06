@@ -12,7 +12,7 @@ hero:
       link: /introduction/
     - theme: alt
       text: Developer Resources
-      link: /dev/
+      link: "https://dev.studio.asls.timekadel.com"
 features:
   - icon: 🌎
     title: One show file to rule them all
