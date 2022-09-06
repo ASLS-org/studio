@@ -98,13 +98,3 @@ I/O are not editable in this version of thge software
 :::
 
 <img style="border-radius:5px" src="/interface/toolbar_nav_preferences_io.png" alt="Inputs/Ouputs" width="300"/>
-
-## About Menu
-
-<br>
-
-# Show Status
-
-## Save State
-
-## BPM
