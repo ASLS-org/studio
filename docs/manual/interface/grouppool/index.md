@@ -1,5 +1,5 @@
 # Group Pool
-Groups are used to create, manage and distribute cues over a set of given fixtures. Each group's set of fixtures cues and settings can be accessed and modified through the [group modifier](/manual/modifiers/group/). 
+Groups are used to create, manage and distribute cues over a set of given fixtures. Each group's set of fixtures cues and settings can be accessed and modified through the [group modifier](/modifiers/group/). 
 
 <Video src="/interface/group_pool.webm"/>
 
@@ -9,18 +9,18 @@ New groups may be created by clicking the group pool's header **New** button.
 
 <img style="border-radius:5px" src="/interface/group-pool_new.png" alt="new group button" width="300"/>
 
-A popup prompting for fixture selection, group name and color definition will be displayed. Groups may be created without any fixture association. A group's fixture list and settings may be edited later through the [group's modifier](/manual/modifiers/group/) section.
+A popup prompting for fixture selection, group name and color definition will be displayed. Groups may be created without any fixture association. A group's fixture list and settings may be edited later through the [group's modifier](/modifiers/group/) section.
 
 <Video src="/interface/group_pool_add_popup.webm"/>
 
 
 ## Editing Groups
 
-Group's setting can be edited directly from the group modifier. A group's modifier is displayed by clicking anywhere on the group that you wish to edit in the [group pool](#group-pool). For further information regarding group modification please refer to the [Group modifier](/manual/modifiers/group/) section.
+Group's setting can be edited directly from the group modifier. A group's modifier is displayed by clicking anywhere on the group that you wish to edit in the [group pool](#group-pool). For further information regarding group modification please refer to the [Group modifier](/modifiers/group/) section.
 
 ### Chase pool
 
-Sets of cues may be dispatched and arranged in chases which will be responsible for triggering multiple predefined cues over time. Each individual group may store an indefinite amount of chases. For further information relative to chases please see the [chase modifier](section). 
+Sets of cues may be dispatched and arranged in chases which will be responsible for triggering multiple predefined cues over time. Each individual group may store an indefinite amount of chases. For further information relative to chases please see the [chase modifier](/modifiers/chase/) section. 
 
 <Video src="/interface/group_pool_chasepool.webm"/>
 
@@ -56,7 +56,7 @@ A selected chase may be deleted by pressing the <kbd>`del`</kbd> or <kbd>`backsp
 ## Deleting Groups
 
 ## Master
-The master container can be used to trigger rows of cues of same index. It is useful to put in place complex [scenes](/manual/workflow/creating-scenes) and [effects](/manual/workflow/creating-effects) live. It also comes with a master dimmer and a toggleable on/off output that affects each individual group within the [pool](#group-pool).
+The master container can be used to trigger rows of cues of same index. It is useful to put in place complex [scenes](/workflow/scenes/) and [effects](/workflow/effects/) live. It also comes with a master dimmer and a toggleable on/off output that affects each individual group within the [pool](#group-pool).
 ### Cue Triggers
 ### Master Dimmer Knob
 ### Disbale Mode

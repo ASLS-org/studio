@@ -2,7 +2,7 @@
 
 # Universe Modifier
 
-Universes can be setup and modified through the Universe [Modifier](/manual/interface/modifiers/). This modifier comes with a set of widgets that allow for fixture [patching](#fixture-pool), [setup](#settings) and [positioning](#position). It also comes with a set of widgets which purpose is to edit a seleced fixture's channel on the fly. 
+Universes can be setup and modified through the Universe [Modifier](/interface/modifier/). This modifier comes with a set of widgets that allow for fixture [patching](#fixture-pool), [setup](#settings) and [positioning](#position). It also comes with a set of widgets which purpose is to edit a seleced fixture's channel on the fly. 
 
 <Video src="/interface/modifier_universe_4.webm"/>
 
@@ -22,11 +22,11 @@ The [Universe Settings](#universe-settings) widgets offers a way to setup and cu
 
 ## Fixture Pool
 
-Similarly to The [patch bay](/manual/interface/patchbay), the fixture pool widget contains holds a reference to the list of the displayed universe's patched fixtures. 
+Similarly to The [patch bay](/interface/patchbay/), the fixture pool widget contains holds a reference to the list of the displayed universe's patched fixtures. 
 
 ### Adding Fixtures
 
-The add button allows for new fixtures to be patchied allong the universe's fixture list. For further information please see [Patching Fixtures](/manual/workflow/patch/) under the workflow section.
+The add button allows for new fixtures to be patchied allong the universe's fixture list. For further information please see [Patching Fixtures](/workflow/patching/) under the workflow section.
 
 <img style="border-radius:5px" src="/interface/patch_bay_add_fixture.png" alt="patch bay" width="300"/>
 
@@ -65,7 +65,7 @@ A selected fixture's [Settings](#fixture-settings) can be modified by modifying 
 
 ## Fixture Position Tool
 
-While a fixture can be positionned through the [visualizer's tranform controls](/manual/interface/visualizer/#transform-controls) feature, it's position may be fine-tuned by using the [universe modifier's](#universe-modifier) position tool widget. Fixture's position in space can be specified with cm accuracy while rotation in every axes can be specified in steps of 1 degrees.
+While a fixture can be positionned through the [visualizer's tranform controls](/interface/visualizer/#transform-controls) feature, it's position may be fine-tuned by using the [universe modifier's](#universe-modifier) position tool widget. Fixture's position in space can be specified with cm accuracy while rotation in every axes can be specified in steps of 1 degrees.
 
 
 ## Fixture Channels
@@ -74,11 +74,11 @@ A selected fixture's [channels](#fixture-channels) can be modified on the fly by
 <Video src="/interface/modifier_universe_fixture_channels_widget.webm"/>
 
 
-> **Note** Fixture channels modified using the [Universe Modifier](#universe-modifier) can only be manipulated live. Set values cannot be stored nor exported. Please refer to the [Group Modier](/manual/modifiers/group) in order to learn how to create registerable cues.
+> **Note** Fixture channels modified using the [Universe Modifier](#universe-modifier) can only be manipulated live. Set values cannot be stored nor exported. Please refer to the [Group Modier](/modifiers/group/) in order to learn how to create registerable cues.
 
 ### Supported Channel Types
 
-All channel types are virtually supported. However, some might not have been implemented yet for visualization. Thus meaning that values will be sent through but wont be emulated in the [visualizer](/manual/interface/visualizer).
+All channel types are virtually supported. However, some might not have been implemented yet for visualization. Thus meaning that values will be sent through but wont be emulated in the [visualizer](/interface/visualizer/).
 
 | Channel Type         | Description                       | Visualizer | Notes                      |
 | -------------------- | --------------------------------- | :--------: | -------------------------- |

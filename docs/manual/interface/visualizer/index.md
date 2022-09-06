@@ -1,6 +1,6 @@
 # Visualizer
 
-ASLS's WebGL based visualizer enables users to visualize and monitor fixtures activity in a 3D environment. It also enables users to interact with fixtures in order to [position](controls) them through simple and intuitive draggable interfaces.
+ASLS's WebGL based visualizer enables users to visualize and monitor fixtures activity in a 3D environment. It also enables users to interact with fixtures in order to [position](#Transform-Controls) them through simple and intuitive draggable interfaces.
 
 > **_NOTE:_** Currently implemented visualizable fixtures only  include moving heads. Regarding visualizing capabilities, the 3D engine is currently capable of emulating most fixture channels capabilities **EXCEPT:** *Gobos, Multi-Color wheel slots, Multi-bulbs (rendered as single bulb), blading system and any non-standard capabilities*.
 
@@ -35,7 +35,7 @@ Discrete mode <kbd>`(H)`</kbd> simply hides the transformation controls to only 
 
 ## Settings
 
-The visualizer is highly cutomizable and allows users to interact with its features live. Please refer to the [Toolbar Preferences](/manual/interface/toolbar/#preferences-menu) section for further information opn howw to access visualizer preferences.
+The visualizer is highly cutomizable and allows users to interact with its features live. Please refer to the [Toolbar Preferences](/interface/toolbar/#preferences-menu) section for further information opn howw to access visualizer preferences.
 
 ### Global Scene Illumination
 

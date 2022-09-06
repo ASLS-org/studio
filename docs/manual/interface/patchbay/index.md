@@ -1,15 +1,15 @@
 # Patch Bay
 
-Placed on the left-hand side of the interface, the patch bay is used to navigate through the show [fixtures](/manual/workflow/patch) and [universes](/manual/workflow/universes/) quickly. Fixtures are ordered in groups of DMX universes.
+Placed on the left-hand side of the interface, the patch bay is used to navigate through the show fixtures and universes quickly. Fixtures are ordered in groups of DMX universes.
 
-Each individual DMX universe is listed under the menu's header. Selecting a universe will reveal the list of patched fixtures as well as the universe's editing tool under the [modifier](/manual/interface/modifiers/) section.
+Each individual DMX universe is listed under the menu's header. Selecting a universe will reveal the list of patched fixtures as well as the universe's editing tool under the [modifier](/interface/modifier/) section.
 
 
 <Video src="/interface/patch_bay.webm"/>
 
 ## Adding Fixtures
 
-The patch button allows for universe creation and fixture patching. For further information please see [Patching Fixtures](/manual/workflow/patch/) under the workflow section.
+The patch button allows for universe creation and fixture patching. For further information please see [Patching Fixtures](/workflow/patching/) under the workflow section.
 
 <img style="border-radius:5px" src="/interface/patch_bay_add_fixture.png" alt="patch bay" width="300"/>
 

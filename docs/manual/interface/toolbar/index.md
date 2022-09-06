@@ -23,12 +23,12 @@ Only one show file may be locally saved at any given time. Please remember to ex
 
 ### Load Showfile
 
-A previously exported showfile may be restored by using the [Load Showfile](#load-showfile) submenu. Current version of ASLS Studio allows for [JSON](https://www.json.org/json-en.html) formated [ASLS standard](todo) showfiles and [QLC+](https://www.qlcplus.org/) showfiles.
+A previously exported showfile may be restored by using the [Load Showfile](#load-showfile) submenu. Current version of ASLS Studio allows for [JSON](https://www.json.org/json-en.html) formated [ASLS standard]() showfiles and [QLC+](https://www.qlcplus.org/) showfiles.
 
 <img style="border-radius:5px" src="/interface/toolbar_nav_file_load.png" alt="load showfile" width="300"/>
 
 ::: warning 
-While supported, QLC+ showfiles do not contain any information relative to fixture position in 3D space and [fixture groups](workflow/group) (as designed by ASLS Studio). Moreover, fixture library might differ from one software to another thus resulting in conflicts during import process.
+While supported, QLC+ showfiles do not contain any information relative to fixture position in 3D space and [fixture groups](/workflow/grouping/) (as designed by ASLS Studio). Moreover, fixture library might differ from one software to another thus resulting in conflicts during import process.
 :::
 
 ### Save Showfile Locally
@@ -77,7 +77,7 @@ Show preferences may be adjusted from the [preferences](#preferences-menu) menu.
 
 ### Visualizer 
 
-You may want to edit some of the [visualizer's](/manual/interface/visualizer/) properties, either for aesthetic reasons or due to performance issue. You can do so through the `preferences > visualizer` submenu or simply by hitting the <kbd>`Ctrl+Shift+V`</kbd> shortcut keys. Please refer to the [Visualizer Settings](/manual/interface/visualizer/#settings) section for further information regarding the list of the visualizer's editable preferences
+You may want to edit some of the [visualizer's](/interface/visualizer/) properties, either for aesthetic reasons or due to performance issue. You can do so through the `preferences > visualizer` submenu or simply by hitting the <kbd>`Ctrl+Shift+V`</kbd> shortcut keys. Please refer to the [Visualizer Settings](/interface/visualizer/#settings) section for further information regarding the list of the visualizer's editable preferences
 
 <img style="border-radius:5px" src="/interface/toolbar_nav_preferences_visualizer.png" alt="visdualizer preferences" width="300"/>
 <br>

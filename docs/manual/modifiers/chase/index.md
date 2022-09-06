@@ -1,5 +1,5 @@
 # Chase Modifier
-Chases are collections of group predefined [cues](/manual/modifiers/group) (effect and scenes) which can be arranged to be triggered sequentially or in parallel over time. They can be triggered to run a single time (one shot) or in a loop. Chases can be quantized at will to guarantee on-sync trigger.
+Chases are collections of group predefined [cues](/modifiers/group/) (effect and scenes) which can be arranged to be triggered sequentially or in parallel over time. They can be triggered to run a single time (one shot) or in a loop. Chases can be quantized at will to guarantee on-sync trigger.
 
 The chase modifier allows for quick and easy chases definition through a timeline-based cue definition.  
 

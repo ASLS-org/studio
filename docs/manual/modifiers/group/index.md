@@ -1,6 +1,6 @@
 # Group Modifier
 
-Groups are used to create and manage and distribute cues over a set of given fixtures. The group modifier comes with a set of widgets that allow for [cue definitions](#creating-cues) such as [scenes](#scenes) and [effects](#effects). Fixtures that are patched in a [group](/manual/interface/gropuppool) may come from different universes, thus allowing for cues to be distributed over the show's ntire set of fixtures. 
+Groups are used to create and manage and distribute cues over a set of given fixtures. The group modifier comes with a set of widgets that allow for [cue definitions](#creating-cues) such as [scenes](#scenes) and [effects](#effects). Fixtures that are patched in a [group](/interface/grouppool/) may come from different universes, thus allowing for cues to be distributed over the show's ntire set of fixtures. 
 
 <Video src="/interface/modifier_group.webm"/>
 
@@ -13,7 +13,7 @@ Groups are used to create and manage and distribute cues over a set of given fix
 
 ## Fixture Pool
 
-Similarly to The [patch bay](/manual/interface/patchbay), the fixture pool widget holds a reference to the list of fixtures patched in a group. 
+Similarly to The [patch bay](/interface/patchbay/), the fixture pool widget holds a reference to the list of fixtures patched in a group. 
 
 ### Adding Fixtures
 
@@ -58,10 +58,10 @@ The cue creation popup allows for cue type selection ([scene](#scenes) or [effec
 
 
 #### Scenes
-Scenes are cues which allow the control of one or many fixture's channels by providing each with a set of preset values which will be set (gradually or not) on scene cue. For further information regarding scene definition and management please refer to the [creating scenes](/manual/workflow/creaing-scenes) workflow section.
+Scenes are cues which allow the control of one or many fixture's channels by providing each with a set of preset values which will be set (gradually or not) on scene cue. For further information regarding scene definition and management please refer to the [creating scenes](/workflow/scenes/) workflow section.
 
 #### Effects
-Effect are cues which allow for parametric modulation of a fixture's channel over time. For further information regarding effect definition and management please refer to the [creating effects](/manual/workflow/creaing-effects) workflow section.
+Effect are cues which allow for parametric modulation of a fixture's channel over time. For further information regarding effect definition and management please refer to the [creating effects](/workflow/effects/) workflow section.
 
 ### Editing Cues
 
@@ -83,7 +83,7 @@ A selected cue may be deleted by pressing the <kbd>`Del`</kbd> or <kbd>`Backspac
 
 ## Cue Settings
 
-Every cue type comes with a similar set of features that can be edited through the [cue settings](#cue-settings) widget. These features define the cue's triggering and playing behavior, both when manually played through the cuepool widget's [running cues](#running-cues) feature or automatically played in group [chases](/manual/modifier/chase/).
+Every cue type comes with a similar set of features that can be edited through the [cue settings](#cue-settings) widget. These features define the cue's triggering and playing behavior, both when manually played through the cuepool widget's [running cues](#running-cues) feature or automatically played in group [chases](/modifiers/chase/).
 
 <Video src="/interface/modifier_group_cue-settings_widget.webm"/>
 
