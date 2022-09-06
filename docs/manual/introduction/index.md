@@ -10,7 +10,7 @@ The current distribution of ASLS Studio is in alpha status. Listed features are 
 
 ## Motivation
 
-Part of ASLS (Autonomous Stage Lighting Systems) development, it was originally created to offer ways to program ASLS DMX nodes on the fly through a simple web-browser. Following the end of the project, it was decided to release the project as an open-source, free to use platform for anyone to enjoy. 
+Part of [ASLS](https://asls.timekadel.com) (Autonomous Stage Lighting Systems) development, it was originally created to offer ways to program ASLS DMX nodes on the fly through a simple web-browser. Following the end of the project, it was decided to release the project as an open-source, free to use platform for anyone to enjoy. 
 
 ## Features
 

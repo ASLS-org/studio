@@ -15,15 +15,15 @@ export default {
       },
       {
         text: 'Developer Resources',
-        link: '/dev/'
+        link: 'https://dev.studio.asls.timekadel.com'
       },
       {
         text: 'Live Example',
-        link: 'https://github.com/...'
+        link: 'https://demo.studio.asls.timekadel.com'
       },
       {
         text: 'Download',
-        link: 'https://github.com/...'
+        link: 'https://github.com/ASLS-org/studio'
       },
     ],
     sidebar: {
@@ -36,9 +36,6 @@ export default {
         }, {
           text: 'Installation',
           link: '/introduction/installation'
-        }, {
-          text: 'Overview',
-          link: '/introduction/overview'
         }, {
           text: 'License',
           link: '/introduction/license'
