@@ -36,7 +36,7 @@ $ git clone https://github.com/timekadel/asls/asls_studio
 
 Get to the project's root.
 ```
-$ cd ASLS_STUDIO
+$ cd studio
 ```
 
 Install package dependencies.

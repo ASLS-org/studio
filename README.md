@@ -50,7 +50,7 @@ $ git clone https://github.com/ASLS-org/studio.git
 
 Get to the project's root.
 ```
-$ cd ASLS_STUDIO
+$ cd studio
 ```
 
 Install package dependencies.
