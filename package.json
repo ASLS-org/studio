@@ -9,7 +9,7 @@
     "docs:manual:serve": "vitepress dev ./docs/manual --port 6065",
     "docs:manual:build": "vitepress build ./docs/manual",
     "docs:dev:ui:serve": "start-storybook -c ./docs/developer/ui/.storybook",
-    "docs:dev:ui:build": "build-storybook",
+    "docs:dev:ui:build": "build-storybook -c ./docs/developer/ui/.storybook",
     "docs:dev:core:serve": "docma --config ./docs/developer/core/docma.json && docma serve ./docs/developer/core/dist",
     "docs:dev:core:build": "docma --config ./docs/developer/core/docma.json",
     "docs:serve": "npm run docs:manual:serve & npm run docs:dev:ui:serve & npm run docs:dev:core:serve",
