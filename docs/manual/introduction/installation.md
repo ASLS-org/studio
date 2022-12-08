@@ -1,7 +1,7 @@
 
 # Installation
 
-The alpha version of ASLS Studio is presently available to download through it's [repository](https://github.com/timekadel/asls/asls_studio). An executable version of the software should be released during beta state.
+The alpha version of ASLS Studio is presently available to download through it's [repository](https://github.com/ASLS-org/studio). An executable version of the software should be released during beta state.
 This section will help you download and setup ASLS Studio on your machine.
 
 ::: warning
@@ -31,7 +31,7 @@ In order for ASLS Studio to run on your machine, please make sure that you meet 
 Browse to the path of your choice and run the following command from a terminal:
 
 ```
-$ git clone https://github.com/timekadel/asls/asls_studio
+$ git clone https://github.com/ASLS-org/studio
 ```
 
 Get to the project's root.

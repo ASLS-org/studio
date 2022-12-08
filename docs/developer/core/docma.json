@@ -48,11 +48,6 @@
         "animations": true,
         "menu": [
           {
-            "label": "UI Documentation",
-            "iconClass": "fas fa-book-open",
-            "href": "?content=demos"
-          },
-          {
             "label": "User Guide",
             "iconClass": "fas fa-book",
             "href": "https://studio.asls.timekadel.com/introduction/",
