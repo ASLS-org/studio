@@ -156,22 +156,6 @@ export default {
                 this.displayVisualizerPopup();
               },
             },
-            {
-              name: "Fixture Library",
-              shortcut: "Ctrl+L",
-              icon: "movinghead",
-              callback: () => {
-                this.displayFixtureLibraryPopup();
-              },
-            },
-            {
-              name: "Input/Outputs",
-              shortcut: "Ctrl+I",
-              icon: "connections",
-              callback: () => {
-                this.displayIOPopup();
-              },
-            },
           ],
         },
         {
@@ -179,10 +163,10 @@ export default {
           selected: false,
           items: [
             {
-              name: "Help",
+              name: "Manual",
               icon: "help",
               callback: () => {
-                alert(1);
+                window.open("https://studio.asls.timekadel.com/","_blank")
               },
             },
             {
@@ -203,7 +187,7 @@ export default {
               name: "Contact",
               icon: "contact",
               callback: () => {
-                this.displayLicensePopup();
+                window.open("https://github.com/timekadel","_blank")
               },
             },
           ],
@@ -233,7 +217,7 @@ export default {
     /**
      * Load showfile from native file loader
      *
-       * @public
+     * @public
      * @async
      */
     async loadFile() {
@@ -268,7 +252,7 @@ export default {
     /**
      * Persists showfile locally
      *
-       * @public
+     * @public
      */
     saveLocal() {
       this.$show.persistLocally();
@@ -276,7 +260,7 @@ export default {
     /**
      * Keydown event handler
      *
-       * @public
+     * @public
      * @param {Object} e keydown event
      */
     handleKeydownEvent(e) {
@@ -289,7 +273,7 @@ export default {
     /**
      * Display visualizer popup
      *
-       * @public
+     * @public
      */
     displayVisualizerPopup() {
       this.visualizerPopupState = true;
@@ -297,7 +281,7 @@ export default {
     /**
      * Display new project popup
      *
-       * @public
+     * @public
      */
     displayNewProjectPopup() {
       this.newProjectPopupState = true;
@@ -305,7 +289,7 @@ export default {
     /**
      * Display license popup
      *
-       * @public
+     * @public
      */
     displayLicensePopup() {
       this.licensePopupState = true;
@@ -313,7 +297,7 @@ export default {
     /**
      * Display credits popup
      *
-       * @public
+     * @public
      */
     displayCreditsPopup() {
       this.creditsPopupState = true;
