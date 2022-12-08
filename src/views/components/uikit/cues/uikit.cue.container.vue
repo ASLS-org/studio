@@ -47,12 +47,13 @@
           </div>
         </template>
       </div>
-      <div class="uikit_cue_container_empty_cue" style="margin-top: 50px; border-top: 1px solid var(--primary-dark)">
+      <!-- <div class="uikit_cue_container_empty_cue" style="margin-top: 50px; border-top: 1px solid var(--primary-dark)">
         <div @click="stopAll" class="uikit_cue_container_empty_cue_btn">
           <uk-icon class="uikit_cue_container_empty_cue_btn_icon" name="stop" />
         </div>
-      </div>
+      </div> -->
       <uk-flex col :gap="8" class="uikit_cue_container_body_modifiers">
+        <!-- <uk-spacer/> -->
         <uk-flex reverse col center-both class="uikit_vuemeter" :gap="4">
           <!-- TODO: Create VUemeter component ? -->
           <div
