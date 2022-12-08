@@ -3,10 +3,10 @@
     <toolbar />
     <uk-flex class="top_fragments">
       <uk-flex class="top_fragment_left">
-        <patch-bay/>
-        <group-pool/>
+        <patch-bay />
+        <group-pool />
       </uk-flex>
-      <visualizer/>
+      <visualizer />
     </uk-flex>
     <modifier />
     <popup-splash :loader="loader" v-model="loader.state" />
@@ -25,6 +25,8 @@ import Modifier from "./fragments/modifiers/modifier.fragment.vue";
 
 import PopupSplash from "./_popups/popup.splash.vue";
 import ErrorPopup from "./_popups/popup.error.vue";
+
+import DemoShowFile from "./demo.json";
 
 export default {
   name: "AppActivity",
@@ -64,15 +66,19 @@ export default {
     /**
      * Setup App. Loads show from local storage or creates new
      * show project if no local data is available
-     * 
-       * @public
+     *
+     * @public
      */
     async setup() {
       this.loader = {
         message: "Loading show data",
         percentage: 0,
       };
-      await this.$show.loadFromLocalStorage();
+      if (screen.availHeight > screen.availWidth || screen.availWidth < 1280) {
+        alert("ASLS Studio is thought to be run on desktop environment. It seems like your screen resolution or orientation does not match the criteria for ASLS studio to be run on your environment.");
+        location.replace("https://studio.asls.timekadel.com");
+      }
+      await this.$show.loadFromData(DemoShowFile);
       this.$router
         .push("/universe/0")
         .then(() => {
@@ -117,17 +123,17 @@ export default {
 </style>
 
 <style scoped>
-.app_activity{
+.app_activity {
   position: relative;
-  height:100%;
+  height: 100%;
   width: 100%;
 }
 .top_fragments {
-  max-height: calc(100% - 260px)!important;
-  min-height: calc(100% - 260px)!important;
+  max-height: calc(100% - 260px) !important;
+  min-height: calc(100% - 260px) !important;
   z-index: 10;
 }
-.top_fragment_left{
+.top_fragment_left {
   flex: 1;
 }
 .visualizer {
