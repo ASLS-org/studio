@@ -1,105 +1,76 @@
 {
   "jsdoc": {
-      "debug": 5,
-      "sort": "kind" ,
-      "hierarchy": true
+    "debug": 5,
+    "sort": "kind",
+    "hierarchy": true
   },
-  "src": [
-      "./src/models/**/*.js"
-  ],
+  "src": ["./src/models/**/*.js"],
   "dest": "./docs/developer/core/dist",
+  "assets": {
+    "/img": ["./docs/developer/core/assets/img/*.*"]
+  },
   "template": {
     "path": "zebra",
     "options": {
-        "title": {
-            "label": "Core Dcomentation",
-            "href": "/base/"
-        },
-        "logo": {
-            "dark": "img/dark-logo.png",
-            "light": "img/light-logo.png"
-        },
-        "sidebar": {
-            "enabled": true,
-            "outline": "tree",
-            "collapsed": false,
-            "toolbar": true,
-            "itemsFolded": false,
-            "itemsOverflow": "crop",
-            "badges": true,
-            "search": true,
-            "animations": true
-        },
-        "symbols": {
-            "autoLink": true,
-            "params": "list",
-            "enums": "list",
-            "props": "list",
-            "meta": false
-        },
-        "contentView": {
-            "bookmarks": "h1,h2,h3",
-            "faLibs": "all"
-        },
-        "navbar": {
-            "enabled": true,
-            "dark": false,
-            "animations": true,
-            "menu": [
-                {
-                    "label": "Core Documentation",
-                    "iconClass": "fas fa-books",
-                    "items": [
-                      {
-                          "label": "DMX Engine",
-                          "href": "/dmx_engine"
-
-                      },
-                      { "separator": true },
-                      {
-                          "label": "Visualizer Engine",
-                          "href": "/visualizer_engine"
-                      }
-                  ]
-                },
-                {
-                  "label": "UI Documentation",
-                  "iconClass": "fas fa-browser",
-                  "href": "?content=demos"
-                },
-                {
-                  "label": "User Guide",
-                  "iconClass": "fas fa-book",
-                  "href": "?content=demos"
-                },
-                {
-                    "label": "Demos",
-                    "iconClass": "fas fa-mouse-laptop-code",
-                    "href": "?content=demos"
-                },
-                {
-                    "label": "Download",
-                    "iconClass": "fas fa-cloud-download-alt",
-                    "items": [
-                        {
-                            "label": "v0.5.0-pre",
-                            "href": "https://github.com/user/repo/archive/v0.7.0-pre.zip"
-                        },
-                        { "separator": true },
-                        {
-                            "label": "v1.0.0",
-                            "href": "https://github.com/user/repo/archive/v1.0.0.zip"
-                        }
-                    ]
-                },
-                {
-                    "label": "GitHub",
-                    "iconClass": "fab fa-github",
-                    "href": "https://github.com/user/repo",
-                    "target": "_blank"
-                }
-            ]
-        }
+      "title": {
+        "label": "Core Dcomentation",
+        "href": "/base/"
+      },
+      "logo": {
+        "dark": "img/asls.logo.blue.only.png",
+        "light": "img/asls.logo.blue.only.png"
+      },
+      "sidebar": {
+        "enabled": true,
+        "outline": "tree",
+        "collapsed": false,
+        "toolbar": true,
+        "itemsFolded": false,
+        "itemsOverflow": "crop",
+        "badges": true,
+        "search": true,
+        "animations": true
+      },
+      "symbols": {
+        "autoLink": true,
+        "params": "list",
+        "enums": "list",
+        "props": "list",
+        "meta": false
+      },
+      "contentView": {
+        "bookmarks": "h1,h2,h3",
+        "faLibs": "all"
+      },
+      "navbar": {
+        "enabled": true,
+        "dark": false,
+        "animations": true,
+        "menu": [
+          {
+            "label": "UI Documentation",
+            "iconClass": "fas fa-book-open",
+            "href": "?content=demos"
+          },
+          {
+            "label": "User Guide",
+            "iconClass": "fas fa-book",
+            "href": "https://studio.asls.timekadel.com/introduction/",
+            "target": "_blank"
+          },
+          {
+            "label": "Demo",
+            "iconClass": "fas fa-laptop",
+            "href": "https://demo.studio.asls.timekadel.com"
+          },
+          {
+            "label": "GitHub",
+            "iconClass": "fab fa-github",
+            "href": "https://github.com/ASLS-org/studio",
+            "target": "_blank"
+          }
+        ]
+      }
     }
   }
 }
