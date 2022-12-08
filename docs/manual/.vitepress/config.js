@@ -94,26 +94,6 @@ export default {
           text: 'Triggering Cues',
           link: '/workflow/triggering/'
         }]
-      }, {
-        text: 'Import/Export',
-        collapsible: true,
-        items: [{
-          text: 'Fixture',
-          link: '/workflow/show'
-        }, {
-          text: 'Showfile',
-          link: '/workflow/patch'
-        }]
-      }, {
-        text: 'Collaborate',
-        collapsible: true,
-        items: [{
-          text: 'Report Issues',
-          link: '/collab/issues'
-        }, {
-          text: 'Request Features',
-          link: '/collab/requests'
-        }]
       }],
     },
     footer: {
