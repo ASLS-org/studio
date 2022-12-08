@@ -56,7 +56,8 @@
           {
             "label": "Demo",
             "iconClass": "fas fa-laptop",
-            "href": "https://demo.studio.asls.timekadel.com"
+            "href": "https://demo.studio.asls.timekadel.com",
+            "target": "_blank"
           },
           {
             "label": "GitHub",
