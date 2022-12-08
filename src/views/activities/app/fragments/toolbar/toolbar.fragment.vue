@@ -109,7 +109,7 @@ export default {
               shortcut: "Ctrl+S",
               icon: "save",
               callback: () => {
-                this.saveLocal();
+                alert("Local saves have been disabled in this demo. You may however opt to export your show data externally and load it afterward.")
               },
             },
             {
