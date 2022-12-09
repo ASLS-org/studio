@@ -32,7 +32,28 @@ const WS_MSG_TYPES = {
   WebRTC_OFFER: "__WRTC_OFR",
   WebRTC_ICE: "__WRTC_ICE",
 }
-
+/**
+ * WebRTC remoteHost states enumeration
+ * 
+ * @constant REMOTE_HOST_STATES
+ * @enum {Number}
+ */
+const REMOTE_HOST_STATES = {
+  UNBOUND: 0,
+  CONNECTING: 1,
+  BOUND: 2
+}
+/**
+ * WebRTC remoteHost default values
+ * 
+ * @constant REMOTE_HOST_STATES
+ * @enum {Number}
+ */
+ const REMOTE_HOST_DEFAULT = {
+  URL: "localhost",
+  PORT: 5214,
+  STATE: REMOTE_HOST_STATES.UNBOUND
+}
 
 /**
  * @class LocalCom
@@ -115,12 +136,29 @@ class WebRTC extends EventEmitter {
     if (!WebRTCInstance) {
       super();
       this.ws = null;
+      this.remoteHost = {
+        url: REMOTE_HOST_DEFAULT.URL,
+        port: REMOTE_HOST_DEFAULT.PORT,
+        state: REMOTE_HOST_DEFAULT.STATE
+      }
       this.init();
-      // this.waitForWsHandshake();
-      this.tunnelLocally();
+      // this.tunnelLocally();
+      this.waitForWsHandshake();
       WebRTCInstance = this;
     }
     return WebRTCInstance;
+  }
+
+  /**
+   * Binds a remote host for communication over WEBRTC
+   * For our specific purpuse, handshake is done over websocket
+   * 
+   * @public
+   */
+  bindRemoteHost(remoteHostConfig) {
+    this.remoteHost.url = remoteHostConfig.url;
+    this.remoteHost.port = remoteHostConfig.port;
+    this.waitForWsHandshake();
   }
 
   /**
@@ -186,7 +224,7 @@ class WebRTC extends EventEmitter {
               if (this.peer.signalingState != "stable") {
                 let answer = await this.peer.createAnswer();
                 await this.peer.setLocalDescription(answer);
-                LocalComInstance.send(WS_MSG_TYPES.WebRTC_OFFER, this.peer.localDescription)
+                LocalComInstance.send(WS_MSG_TYPES.WebRTC_OFFER, this.peer.localDescription);
               }
             }
           } catch (err) {
@@ -211,19 +249,33 @@ class WebRTC extends EventEmitter {
    * @public
    */
   waitForWsHandshake() {
-    this.ws = new WebSocket(`ws://127.0.0.1:5214/ws`);
+    this.ws = new WebSocket(`ws://${this.remoteHost.url}:${this.remoteHost.port}/ws`);
     console.log("connecting again...")
     this.ws.onopen = () => {
       this.initDMXDataChannel(localDecription => this.ws.send(JSON.stringify({
         type: WS_MSG_TYPES.WebRTC_OFFER,
         data: localDecription
       })))
-      this.ws.onmessage = (msg) => {
+      this.ws.onmessage = async (msg) => {
         msg = JSON.parse(msg.data)
         switch (msg.type) {
           case WS_MSG_TYPES.WebRTC_OFFER:
             try {
               this.peer.setRemoteDescription(new RTCSessionDescription(msg.data));
+              // if (this.peer.signalingState != "stable") {
+              //   let answer = await this.peer.createAnswer();
+              //   await this.peer.setLocalDescription(answer);
+              //   LocalComInstance.send(WS_MSG_TYPES.WebRTC_OFFER, this.peer.localDescription);
+              //   console.log("ok")
+              // }
+            } catch (err) {
+              console.log(err);
+            }
+            break;
+          case WS_MSG_TYPES.WebRTC_ICE:
+            try {
+              if (msg.data)
+                await this.peer.addIceCandidate(new RTCIceCandidate(msg.data));
             } catch (err) {
               console.log(err);
             }
@@ -287,7 +339,7 @@ class WebRTC extends EventEmitter {
    *
    * @public
    */
-  
+
   forwardOpenMessage() {
     this.emit("open");
   }
