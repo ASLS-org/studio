@@ -49,7 +49,7 @@ const REMOTE_HOST_STATES = {
  * @constant REMOTE_HOST_STATES
  * @enum {Number}
  */
- const REMOTE_HOST_DEFAULT = {
+const REMOTE_HOST_DEFAULT = {
   URL: "localhost",
   PORT: 5214,
   STATE: REMOTE_HOST_STATES.UNBOUND
@@ -171,6 +171,7 @@ class WebRTC extends EventEmitter {
     this.DMXDataChannel = this.peer.createDataChannel(DATA_CHANNEL_NAME);
     this.DMXDataChannel.onmessage = this.DMXDataChannelMsgHandler.bind(this);
     this.DMXDataChannel.onopen = this.forwardOpenMessage.bind(this);
+    this.DMXDataChannel.onclose = this.handleClosure.bind(this)
   }
 
   /**
@@ -249,7 +250,11 @@ class WebRTC extends EventEmitter {
    * @public
    */
   waitForWsHandshake() {
+    try{
     this.ws = new WebSocket(`ws://${this.remoteHost.url}:${this.remoteHost.port}/ws`);
+    }catch(err){
+      console.log(err)
+    }
     console.log("connecting again...")
     this.ws.onopen = () => {
       this.initDMXDataChannel(localDecription => this.ws.send(JSON.stringify({
@@ -298,7 +303,6 @@ class WebRTC extends EventEmitter {
         this.waitForWsHandshake()
       }, WS_POLL_INTERVAL)
     }
-    this.ws.onerror = () => {}
   }
 
   /**
@@ -331,7 +335,9 @@ class WebRTC extends EventEmitter {
    * @public
    */
   broadcastUniverseData(data) {
-    this.DMXDataChannel.send(JSON.stringify(data));
+    if (this.DMXDataChannel.readyState === "open") {
+      this.DMXDataChannel.send(JSON.stringify(data));
+    }
   }
 
   /**
@@ -342,6 +348,17 @@ class WebRTC extends EventEmitter {
 
   forwardOpenMessage() {
     this.emit("open");
+    this.remoteHost.state = REMOTE_HOST_STATES.BOUND;
+  }
+
+  /**
+   * Handles DMXdatachannel closure
+   * 
+   * @public
+   */
+  handleClosure(){
+    this.emit("closed");
+    this.remoteHost.state = REMOTE_HOST_STATES.UNBOUND;
   }
 
 }
