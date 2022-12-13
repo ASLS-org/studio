@@ -16,6 +16,7 @@
     <credits-popup v-model="creditsPopupState" />
     <newshow-popup v-model="newProjectPopupState" />
     <saveas-popup v-model="saveasPopupState" />
+    <connections-popup v-model="ConnectionsPopupState"/>
   </uk-flex>
 </template>
 
@@ -26,6 +27,8 @@ import LicensePopup from "./_popups/popup.license.vue";
 import CreditsPopup from "./_popups/popup.credits.vue";
 import NewshowPopup from "./_popups/popup.newshow.vue";
 import SaveasPopup from "./_popups/popup.saveas.vue";
+import ConnectionsPopup from "./_popups/popup.connections.vue";
+
 
 export default {
   name: "toolbarFragment",
@@ -35,6 +38,7 @@ export default {
     CreditsPopup,
     NewshowPopup,
     SaveasPopup,
+    ConnectionsPopup
   },
   data() {
     return {
@@ -80,6 +84,10 @@ export default {
        * Save as popup state
        */
       saveasPopupState: false,
+      /**
+       * I/O popup state
+       */
+      ConnectionsPopupState: false,
       /**
        * Toolbarmenu configuration object
        */
@@ -156,6 +164,14 @@ export default {
                 this.displayVisualizerPopup();
               },
             },
+            {
+              name: "Outputs",
+              shortcut: "Ctrl+Shift+o",
+              icon: "zoom",
+              callback: () => {
+                this.ConnectionsPopupState = true;
+              },
+            },
           ],
         },
         {
@@ -166,7 +182,7 @@ export default {
               name: "Manual",
               icon: "help",
               callback: () => {
-                window.open("https://studio.asls.timekadel.com/","_blank")
+                window.open("https://studio.asls.timekadel.com/", "_blank");
               },
             },
             {
@@ -187,7 +203,7 @@ export default {
               name: "Contact",
               icon: "contact",
               callback: () => {
-                window.open("https://github.com/timekadel","_blank")
+                window.open("https://github.com/timekadel", "_blank");
               },
             },
           ],

@@ -31,6 +31,8 @@ const LOCALCOM_MSG_PREFIX = "__LCMSG"
 const WS_MSG_TYPES = {
   WebRTC_OFFER: "__WRTC_OFR",
   WebRTC_ICE: "__WRTC_ICE",
+  OUTPUTS_LIST: "__OUTPUTS_LIST",
+  OUTPUTS_SET: "__OUTPUTS__SET"
 }
 /**
  * WebRTC remoteHost states enumeration
@@ -141,6 +143,7 @@ class WebRTC extends EventEmitter {
         port: REMOTE_HOST_DEFAULT.PORT,
         state: REMOTE_HOST_DEFAULT.STATE
       }
+      this.ifaces = [];
       this.init();
       // this.tunnelLocally();
       this.waitForWsHandshake();
@@ -159,6 +162,15 @@ class WebRTC extends EventEmitter {
     this.remoteHost.url = remoteHostConfig.url;
     this.remoteHost.port = remoteHostConfig.port;
     this.waitForWsHandshake();
+  }
+
+  setOutputs(outputs){
+    if(this.remoteHost.state === REMOTE_HOST_STATES.BOUND){
+      this.ws.send(JSON.stringify({
+        type: WS_MSG_TYPES.OUTPUTS_SET,
+        data: outputs
+      }))
+    }
   }
 
   /**
@@ -250,9 +262,9 @@ class WebRTC extends EventEmitter {
    * @public
    */
   waitForWsHandshake() {
-    try{
-    this.ws = new WebSocket(`ws://${this.remoteHost.url}:${this.remoteHost.port}/ws`);
-    }catch(err){
+    try {
+      this.ws = new WebSocket(`ws://${this.remoteHost.url}:${this.remoteHost.port}/ws`);
+    } catch (err) {
       console.log(err)
     }
     console.log("connecting again...")
@@ -267,23 +279,25 @@ class WebRTC extends EventEmitter {
           case WS_MSG_TYPES.WebRTC_OFFER:
             try {
               this.peer.setRemoteDescription(new RTCSessionDescription(msg.data));
-              // if (this.peer.signalingState != "stable") {
-              //   let answer = await this.peer.createAnswer();
-              //   await this.peer.setLocalDescription(answer);
-              //   LocalComInstance.send(WS_MSG_TYPES.WebRTC_OFFER, this.peer.localDescription);
-              //   console.log("ok")
-              // }
+              this.ws.send(JSON.stringify({
+                type: WS_MSG_TYPES.OUTPUTS_LIST,
+              }));
             } catch (err) {
               console.log(err);
             }
             break;
           case WS_MSG_TYPES.WebRTC_ICE:
             try {
-              if (msg.data)
+              if (msg.data) {
                 await this.peer.addIceCandidate(new RTCIceCandidate(msg.data));
+              }
             } catch (err) {
               console.log(err);
             }
+            break;
+          case WS_MSG_TYPES.OUTPUTS_LIST:
+            this.ifaces = msg.data;
+            this.emit("config-update")
             break;
         }
       }
@@ -356,7 +370,7 @@ class WebRTC extends EventEmitter {
    * 
    * @public
    */
-  handleClosure(){
+  handleClosure() {
     this.emit("closed");
     this.remoteHost.state = REMOTE_HOST_STATES.UNBOUND;
   }

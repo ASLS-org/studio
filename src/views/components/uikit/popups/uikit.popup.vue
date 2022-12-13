@@ -1,20 +1,3 @@
-<!--
-  ASLS (Autonomous Stage Lighting Systems) Studio, Web-based Show-control programming and emulation software.
-  Copyright (C) 2021 Timé Kadel
-
-  This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <https://www.gnu.org/licenses/>.
--->
 <template>
   <Transition name="bounce">
     <uk-flex col class="popup" v-if="displayed">
@@ -124,16 +107,16 @@ export default {
     /**
      * Custom validation button text
      */
-    validateTxt:{
+    validateTxt: {
       type: String,
-      default: "ok"
+      default: "ok",
     },
     /**
      * Custom cancellation button text
      */
-    cancelTxt:{
+    cancelTxt: {
       type: String,
-      default: "cancel"
+      default: "cancel",
     },
   },
   data() {
@@ -148,7 +131,7 @@ export default {
     /**
      * Update popup based on provided properties
      *
-       */
+     */
     update() {
       let body = document.body;
       this.displayed = this.value;
@@ -166,7 +149,7 @@ export default {
     /**
      * Close the popup
      *
-       */
+     */
     close() {
       this.displayed = false;
       /**
@@ -194,7 +177,7 @@ export default {
     /**
      * On popup validation
      *
-       */
+     */
     submit() {
       if (this.valid) {
         /**
@@ -206,17 +189,18 @@ export default {
     /**
      * Prepare popup dragging procedure
      *
-       */
+     */
     startDrag() {
       if (this.movable) {
         window.addEventListener("mousemove", this.drag);
         window.addEventListener("mouseup", this.stopDrag);
+        this.posX = this.$el.getBoundingClientRect().left;
       }
     },
     /**
      * Drag popup element
      *
-       * @param {Object} e mousemove event
+     * @param {Object} e mousemove event
      */
     drag(e) {
       let box = this.$el.getBoundingClientRect();
@@ -226,7 +210,7 @@ export default {
     /**
      * End popup dragging procedure
      *
-       */
+     */
     stopDrag() {
       window.removeEventListener("mousemove", this.drag);
       window.removeEventListener("mouseup", this.stopDrag);
@@ -234,7 +218,7 @@ export default {
     /**
      * Handles Escape and enter keypresses.
      *
-       * @param {Object} e mousemove event
+     * @param {Object} e mousemove event
      */
     handleKeydown(e) {
       if (!this.noValidation) {
