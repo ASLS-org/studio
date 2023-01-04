@@ -1,6 +1,9 @@
 export default {
   title: "ASLS Studio",
   description: "Open-source, web-based DMX lighting control software.",
+  head:[
+    ['link', { rel: "icon", type: "image/png", sizes: "32x32", href: "/asls-logo.png"}],
+  ],
   themeConfig: {
     siteTitle: "ASLS Studio",
     algolia: {
@@ -8,7 +11,7 @@ export default {
       indexName: 'ASLS',
       appId: '1L7RJIJ77A'
     },
-    logo: '/asls.logo.blue.only.png',
+    logo: '/asls-logo.png',
     nav: [{
         text: 'User Manual',
         link: '/introduction/'

@@ -13,12 +13,12 @@
     "path": "zebra",
     "options": {
       "title": {
-        "label": "Core Dcomentation",
+        "label": "ASLS Studio - Core",
         "href": "/base/"
       },
       "logo": {
-        "dark": "img/asls.logo.blue.only.png",
-        "light": "img/asls.logo.blue.only.png"
+        "dark": "img/asls-logo.png",
+        "light": "img/asls-logo.png"
       },
       "sidebar": {
         "enabled": true,
