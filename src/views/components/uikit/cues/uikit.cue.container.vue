@@ -135,7 +135,7 @@ export default {
     /**
      * Propagtes scroll value to parent element
      *
-       * @param {Object} e Scroll event
+     * @param {Object} e Scroll event
      */
     propagateScroll(e) {
       let scrollValue = e.target.scrollTop;
@@ -149,7 +149,7 @@ export default {
     /**
      * Handles chase selection by re-routing user to selected chase
      *
-       * @param {Object} chase Handle to the chase to be displayed
+     * @param {Object} chase Handle to the chase to be displayed
      */
     selectChase(chase) {
       this.selectedChaseId = chase.id;
@@ -158,7 +158,7 @@ export default {
     /**
      * Handles chase creation
      *
-       * @param {Object} gridIndex the grid cell index on which the chase should be created.
+     * @param {Object} gridIndex the grid cell index on which the chase should be created.
      */
     addChase(gridIndex) {
       if (!this.master) {
@@ -179,7 +179,7 @@ export default {
     /**
      * Triggers chase.
      *
-       * @param {Object} chase Handle to the chase to be triggered
+     * @param {Object} chase Handle to the chase to be triggered
      */
     cueChase(chase) {
       this.group.cueChase(chase);
@@ -187,7 +187,7 @@ export default {
     /**
      * Handles chase deletion
      *
-       * @param {Object} chase Handle to the chase to be deleted
+     * @param {Object} chase Handle to the chase to be deleted
      */
     deleteChase(chase) {
       this.group.deleteChase(chase);
@@ -197,7 +197,7 @@ export default {
     /**
      * Toggles chase's state ON/OFF
      *
-       * @param {Object} chase Handle to the chase to be triggered
+     * @param {Object} chase Handle to the chase to be triggered
      */
     toggle(chase) {
       if (chase) {
@@ -207,25 +207,28 @@ export default {
     /**
      * Toggles whole master row of chases state ON/OFF
      *
-       * @param {Number} rowIndex Index of the row to be toggled
+     * @param {Number} rowIndex Index of the row to be toggled
      */
     toggleRow(rowIndex) {
       if (this.master) {
+        this.$show.master.onEnd = () => {
+          this.masterPlayingRow = -1;
+        };
         this.masterPlayingRow = this.$show.master.cueRow(rowIndex);
       }
     },
     /**
      * Stops all the group's chase simultaneously
-     * 
-       * @public
+     *
+     * @public
      */
-    stopAll(){
+    stopAll() {
       this.group.stopAllChases();
     },
     /**
      * Prepare chase's element dragging.
      *
-       */
+     */
     startDragChase(e, chase) {
       document.body.style.cursor = "move";
       let chaseEl = e.target.parentElement;
@@ -247,7 +250,7 @@ export default {
     /**
      * Re-compute chase's Y position accordingly to mouse move
      *
-       * @param {Object} e mousemove event
+     * @param {Object} e mousemove event
      */
     dragChase(e, ctx) {
       let tick = Math.min(Math.max(Math.floor((e.clientY - ctx.startY) / 26), 0), this.poolsize - 1);
@@ -258,7 +261,7 @@ export default {
     /**
      * Ends chase element dragging procedure.
      *
-       */
+     */
     stopDragChase() {
       document.body.style.cursor = "unset";
       window.removeEventListener("mousemove", this.dragChase);
@@ -271,7 +274,7 @@ export default {
         this.selectedChaseId = this.selected ? this.$route.params.chaseId : null;
       }
     },
-    "$route.params.chaseId"(){
+    "$route.params.chaseId"() {
       if (!this.master) {
         this.selectedChaseId = this.selected ? this.$route.params.chaseId : null;
       }
@@ -357,9 +360,9 @@ export default {
   justify-content: center;
   width: 25px;
   height: 100%;
-  cursor: pointer
+  cursor: pointer;
 }
-.uikit_cue_container_empty_cue_btn:hover .uikit_cue_container_empty_cue_btn_icon{
+.uikit_cue_container_empty_cue_btn:hover .uikit_cue_container_empty_cue_btn_icon {
   fill: var(--secondary-light);
 }
 .uikit_cue_container_empty_cue_btn_icon {
@@ -368,7 +371,7 @@ export default {
   width: 12px;
   fill: var(--secondary-darker);
   border: 1px solid var(--primary-light);
-  transition: fill .1s;
+  transition: fill 0.1s;
 }
 .uikit_cue_container_body_modifiers {
   padding: 8px 0px;

@@ -68,6 +68,7 @@ class Chase extends Proxify {
     super();
     this.id = data.id;
     this.quantize = 4;
+    this.onEnd = ()=>{};
     this.name = data.name || `Chase ${this.id}`;
     this.gridIndex = data.gridIndex;
     this.color = data.color;
@@ -219,6 +220,7 @@ class Chase extends Proxify {
     } else if (this.animationId != null) {
       this.elapsed = 0;
       Live.remove(this.animationId);
+      this.onEnd();
       this.animationId = null;
       this.deltaStart = null;
     }
