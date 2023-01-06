@@ -34,7 +34,6 @@ import CreditsPopup from "./_popups/popup.credits.vue";
 import NewshowPopup from "./_popups/popup.newshow.vue";
 import SaveasPopup from "./_popups/popup.saveas.vue";
 import ConnectionsPopup from "./_popups/popup.connections.vue";
-import BpmPopup from "./_popups/popup.bpm.vue"
 
 export default {
   name: "toolbarFragment",
@@ -45,7 +44,6 @@ export default {
     NewshowPopup,
     SaveasPopup,
     ConnectionsPopup,
-    BpmPopup,
   },
   data() {
     return {
