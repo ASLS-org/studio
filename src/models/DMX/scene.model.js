@@ -252,17 +252,18 @@ class Scene extends Cue {
    */
   constructor(sceneData) {
     super(sceneData)
-    this.fadeIn = new Fade(Object.assign({
-      direction: 0,
-      duration: sceneData.duration
-    }, sceneData.fadeIn));
-    this.fadeOut = new Fade(Object.assign({
-      direction: 1,
-      duration: sceneData.duration
-    }, sceneData.fadeOut));
     this.direction = SCENE_DIRECTIONS.IN;
     this.fixtures = sceneData.fixtures;
     this.fixtureValues = sceneData.fixtureValues
+    this.fadeIn = new Fade(Object.assign({
+      direction: 0,
+      // duration: sceneData.duration
+    }, sceneData.fadeIn));
+    this.fadeOut = new Fade(Object.assign({
+      direction: 1,
+      // duration: sceneData.duration
+    }, sceneData.fadeOut));
+    this.duration = sceneData.duration
     return this.proxify(['time', 'deltaStart', 'animationId', 'state', '_state', 'DMXActivity']);
   }
 
@@ -312,6 +313,7 @@ class Scene extends Cue {
     super.duration = duration
     if (this.fadeIn) {
       this.fadeIn.duration = this.duration;
+      this.fadeOut.duration = this.duration;
     }
   }
 
@@ -456,7 +458,7 @@ class Scene extends Cue {
       this.state = 1;
     }
     let fade = this.direction == SCENE_DIRECTIONS.IN ? this.fadeIn : this.fadeOut;
-    let fadeFactor = time < fade.duration ? fade.getValue(time) : 1;
+    let fadeFactor = time < fade.durationMS ? fade.getValue(time) : 1;
     this.fixtureValues.forEach(fixtureValue => {
       Object.keys(fixtureValue.quickChannelsAccessors).forEach(channelType => {
         let channels = fixtureValue.quickChannelsAccessors[channelType];
@@ -472,7 +474,7 @@ class Scene extends Cue {
         })
       })
     })
-    if (time >= this.duration) {
+    if (time >= this.durationMS) {
       //this.direction = !this.direction;
       this.state = this.direction;
     }
