@@ -33,6 +33,21 @@ require('three/examples/js/utils/BufferGeometryUtils.js');
 
 
 /**
+ * Default visualizer preferences values
+ * 
+ * @constant
+ * @type {String}
+ * @default
+ */
+const DEFAULT_PREFERENCES = {
+  FOGGING_STATE: true,
+  FOGGING_DENSITY: 0,
+  GLOBAL_FOGGING_TURBULENCES: 0,
+  GLOBAL_BRIGHTNESS: 50
+}
+
+
+/**
  * @class
  * @classdesc WebGL Visualizer instance
  */
@@ -72,12 +87,26 @@ class Visualizer {
   }
 
   /**
+   * Visualizer preferences
+   * 
+   * @type {Object}
+   */
+  set preferences(preferences) {
+    if (preferences) {
+      this.globalBrightness = preferences.globalBrightness;
+      this.globalFoggingDensity = preferences.globalFoggingDensity;
+      this.globalFoggingState = preferences.globalFoggingState;
+      this.globalFoggingTurbulences = preferences.globalFoggingTurbulences;
+    }
+  }
+
+  /**
    * Global scene fogging state
    * 
    * @type {Boolean}
    */
   set globalFoggingState(value) {
-    MovingHead.fogState = value;
+    MovingHead.fogState = value ? value : DEFAULT_PREFERENCES.GLOBAL_FOGGING_STATE;
   }
 
   /**
@@ -86,7 +115,7 @@ class Visualizer {
    * @type {Number}
    */
   set globalFoggingDensity(value) {
-    MovingHead.fogDensity = value/100;
+    MovingHead.fogDensity = value ? value / 100 : DEFAULT_PREFERENCES.GLOBAL_FOGGING_DENSITY;
 
   }
 
@@ -96,7 +125,7 @@ class Visualizer {
    * @type {Number}
    */
   set globalFoggingTurbulences(value) {
-    MovingHead.fogTurbulence = value/50;
+    MovingHead.fogTurbulence = value ? value / 50 : DEFAULT_PREFERENCES.GLOBAL_FOGGING_TURBULENCES;
   }
 
   /**
@@ -105,7 +134,7 @@ class Visualizer {
    * @type {Number}
    */
   set globalBrightness(value) {
-    this._globalBrightness = value / 100;
+    this._globalBrightness = value ? value / 100 : DEFAULT_PREFERENCES.GLOBAL_BRIGHTNESS;
     if (this.globalLightHandle) {
       this.globalLightHandle.intensity = this._globalBrightness;
     }
@@ -116,18 +145,18 @@ class Visualizer {
   }
 
   get globalFoggingDensity() {
-    return MovingHead.fogDensity*100;
+    return MovingHead.fogDensity * 100;
   }
 
   get globalFoggingTurbulences() {
-    return MovingHead.fogTurbulence*50;
+    return MovingHead.fogTurbulence * 50;
   }
 
   get globalBrightness() {
     return this._globalBrightness * 100;
   }
 
-  get showData(){
+  get showData() {
     return {
       globalFoggingState: this.globalFoggingState,
       globalFoggingDensity: this.globalFoggingDensity,
