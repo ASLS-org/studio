@@ -22,7 +22,6 @@
     <newshow-popup v-model="newProjectPopupState" />
     <saveas-popup v-model="saveasPopupState" />
     <connections-popup v-model="connectionsPopupState" />
-    <bpm-popup v-model="bpmPopupState"/>
   </uk-flex>
 </template>
 
