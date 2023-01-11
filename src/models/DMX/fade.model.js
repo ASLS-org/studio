@@ -197,7 +197,6 @@ class Fade extends Proxify {
   }
 
   get durationMS(){
-    console.log(this.duration*Live.barDuration)
     return this.duration * Live.barDuration;
   }
 
