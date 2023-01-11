@@ -84,6 +84,7 @@ class Visualizer {
     Controls.init(this.camera, this.domElement, this.controls);
     this.startRender();
     this.main();
+    this.resize();
   }
 
   /**
