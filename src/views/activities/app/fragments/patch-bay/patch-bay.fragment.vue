@@ -3,7 +3,7 @@
     <div class="patch_bay_header">
       <h3>Patch Bay</h3>
       <span style="flex: 1" />
-      <uk-button @click.native="displayPatchPopup" icon="patch" style="margin-right: 8px" label="patch" />
+      <!-- <uk-button @click.native="displayPatchPopup" icon="patch" style="margin-right: 8px" label="patch" /> -->
     </div>
     <uk-list deletable @unfold="displayUniverse" @select="displayFixture" colored class="patch_bay_universe_list" filterable :items="pool.listable" />
   </div>
