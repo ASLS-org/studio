@@ -130,7 +130,7 @@ class Show extends EventEmitter {
   }
 
   set name(name) {
-    this._name = name;
+    this._name = name.replace(".json","");
   }
 
   set state(state) {
@@ -310,7 +310,7 @@ class Show extends EventEmitter {
     let extension = Show._getShowFileType(filename);
     let showData = await Show._parseShowData(data, extension);
     await this.loadFromData(showData);
-    this.name = filename;
+    this.name = filename
   }
 
   async loadFromData(showData) {
