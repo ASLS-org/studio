@@ -133,10 +133,11 @@ export default {
      *
      */
     update() {
+      window.removeEventListener("keydown", this.handleKeydown);
       let body = document.body;
       this.displayed = this.value;
       if (this.displayed) {
-        window.addEventListener("keydown", this.handleKeydown.bind(this));
+        window.addEventListener("keydown", this.handleKeydown);
       }
       if (this.displayed && this.backdrop) {
         this.backdropEl = document.createElement("div");

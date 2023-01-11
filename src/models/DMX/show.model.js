@@ -54,7 +54,7 @@ class Show extends EventEmitter {
     this.universePool = new UniversePool();
     this.groupPool = new GroupPool();
     this.master = new Master(this.groupPool);
-    this.bpm = Live.bpm
+    // this.bpm = Live.bpm
     this.running = false;
     this.slave = false;
     this.outputs = [];
@@ -125,16 +125,24 @@ class Show extends EventEmitter {
       universes: this.universePool.universes.map(u => u.showData),
       groups: this.groupPool.groups.map(g => g.showData),
       visualizer: this.visualizerHandle.showData,
-      selectedOutputs: this.selectedOutputs
+      selectedOutputs: this.selectedOutputs,
     }
   }
 
   set name(name) {
-    this._name = name;
+    this._name = name.replace(".json","");
   }
 
   set state(state) {
     Live.state = state
+  }
+
+  get bpm(){
+    return Live.bpm;
+  }
+
+  set bpm(bpm){
+    Live.bpm = bpm;
   }
 
   undo() {
@@ -302,7 +310,7 @@ class Show extends EventEmitter {
     let extension = Show._getShowFileType(filename);
     let showData = await Show._parseShowData(data, extension);
     await this.loadFromData(showData);
-    this.name = filename;
+    this.name = filename
   }
 
   async loadFromData(showData) {
@@ -310,6 +318,10 @@ class Show extends EventEmitter {
     this.loading.message = "Clearing Show Data";
     this.loading.percentage = 20;
     this.clearShowData();
+
+    this.loading.message = "Setting preferences";
+    this.loading.percentage = 30;
+    this.visualizerHandle.preferences = showData.visualizer
 
     this.loading.message = "Preloading fixture library";
     this.loading.percentage = 40;

@@ -36,8 +36,8 @@ export default {
   methods: {
     /**
      * Opens visualizer in a popup window
-     * 
-       * @public
+     *
+     * @public
      */
     popout() {
       this.hide();
@@ -47,8 +47,8 @@ export default {
     },
     /**
      * Toggles visualizer's visibility state on/off
-     * 
-       * @public
+     *
+     * @public
      */
     toggleVisibility() {
       if (this.hidden) {
@@ -56,11 +56,13 @@ export default {
       } else {
         this.hide();
       }
+      //Dirty trick but it should do for now.
+      EventBus.$emit("visualizer_visibility", !this.hidden);
     },
     /**
      * Toggles visualizer's visibility state off
-     * 
-       * @public
+     *
+     * @public
      */
     hide() {
       this.hidden = true;
@@ -68,8 +70,8 @@ export default {
     },
     /**
      * Toggles visualizer's visibility state on
-     * 
-       * @public
+     *
+     * @public
      */
     show() {
       this.hidden = false;
@@ -109,7 +111,7 @@ export default {
   width: 100% !important;
   outline: none;
   border-left: var(--primary-dark);
-  cursor: grab!important;
+  cursor: grab !important;
 }
 .visualizer.hidden {
   width: unset !important;

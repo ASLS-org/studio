@@ -4,8 +4,13 @@
     <uk-spacer />
     <p>{{ this.saveState ? "" : "*" }} {{ project }}</p>
     <uk-spacer />
-    <uk-flex center-both class="bpm_container">
-      <h3>BPM: {{ bpm.toFixed(2) }}</h3>
+    <uk-flex center-both class="state_container" @click.native="playPauseShow()">
+      <div class="play_state_icon" :class="liveState.text" :style="{ animationDuration: 60000 / bpm + 'ms' }" />
+      <h3>{{ liveState.text }}</h3>
+    </uk-flex>
+    <uk-flex @click.native="()=>{}" center-both class="bpm_container">
+      <h3>BPM: </h3>
+      <uk-num-input style="margin-left:8px;width:60px;" @input="bpm=$show.bpm" v-model="$show.bpm"/>
       <div class="colored_dot" :style="{ animationDuration: 60000 / bpm + 'ms' }" />
     </uk-flex>
     <uk-flex center-both @click.native="bpm = $show.tapTempo()" class="tap_container">
@@ -16,7 +21,7 @@
     <credits-popup v-model="creditsPopupState" />
     <newshow-popup v-model="newProjectPopupState" />
     <saveas-popup v-model="saveasPopupState" />
-    <connections-popup v-model="ConnectionsPopupState"/>
+    <connections-popup v-model="connectionsPopupState" />
   </uk-flex>
 </template>
 
@@ -29,7 +34,6 @@ import NewshowPopup from "./_popups/popup.newshow.vue";
 import SaveasPopup from "./_popups/popup.saveas.vue";
 import ConnectionsPopup from "./_popups/popup.connections.vue";
 
-
 export default {
   name: "toolbarFragment",
   components: {
@@ -38,7 +42,7 @@ export default {
     CreditsPopup,
     NewshowPopup,
     SaveasPopup,
-    ConnectionsPopup
+    ConnectionsPopup,
   },
   data() {
     return {
@@ -87,7 +91,7 @@ export default {
       /**
        * I/O popup state
        */
-      ConnectionsPopupState: false,
+      bpmPopupState: false,
       /**
        * Toolbarmenu configuration object
        */
@@ -169,7 +173,7 @@ export default {
               shortcut: "Ctrl+Shift+o",
               icon: "zoom",
               callback: () => {
-                this.ConnectionsPopupState = true;
+                this.connectionsPopupState = true;
               },
             },
           ],
@@ -318,6 +322,39 @@ export default {
     displayCreditsPopup() {
       this.creditsPopupState = true;
     },
+    /**
+     * Display BPM popup
+     *
+     * @public
+     */
+    displayBPMPopup() {
+      this.bpmPopupState = true;
+    },
+  },
+  computed: {
+    liveState() {
+      switch (this.state) {
+        case 0:
+          return {
+            text: "stopped",
+            color: "red",
+            icon: "stop",
+          };
+        case 1:
+          return {
+            text: "playing",
+            color: "green",
+            icon: "play",
+          };
+        case 2:
+          return {
+            text: "paused",
+            color: "yellow",
+            icon: "pause",
+          };
+      }
+      return {};
+    },
   },
   mounted() {
     this.$show.on("saveState", (state) => {
@@ -330,9 +367,12 @@ export default {
     });
   },
   watch: {
-    "$show.name"() {
-      alert(1);
-    },
+    "$show.bpm":{
+      deep: true,
+      handler(){
+        alert(33)
+      }
+    }
   },
 };
 </script>
@@ -347,18 +387,16 @@ export default {
 }
 .header_menu,
 .bpm_container,
-.tap_container {
+.tap_container,
+.state_container {
   height: 100%;
   padding: 0 16px;
-  border-right: 1px solid var(--primary-dark);
-}
-.tap_container:active {
-  background: var(--secondary-dark) !important;
-}
-.bpm_container {
   border-left: 1px solid var(--primary-dark);
 }
-.tap_container:hover {
+.tap_container:active, .state_container:active, .bpm_container:active {
+  background: var(--secondary-dark) !important;
+}
+.bpm_container:hover, .tap_container:hover, .state_container:hover {
   background: var(--secondary-darker);
   cursor: pointer;
 }
@@ -370,8 +408,27 @@ export default {
   margin-left: 8px;
   animation-name: softblink;
   animation-iteration-count: infinite;
-  animation-direction: alternate;
+  animation-direction: alternate; 
 }
+.play_state_icon {
+  height: 10px;
+  width: 10px;
+  margin-right: 8px;
+}
+.play_state_icon.playing {
+  background: transparent;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 10px solid #2fbb6e;
+}
+.play_state_icon.stopped {
+  background: #ce2d5e;
+  border-radius: 2px;
+}
+.play_state_icon.paused {
+  background-size: 10px;
+  background: linear-gradient(90deg ,#d3a526 0px, #d3a526 3px, transparent 3px, transparent 7px,#d3a526 7px, #d3a526 10px);
+} 
 .header_state_btn {
   margin-right: 8px;
   fill: var(--secondary-lighter);
