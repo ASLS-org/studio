@@ -1,0 +1,3 @@
+[submodule "src/server"]
+	path = src/server
+	url = https://github.com/ASLS-org/asls-server.git
