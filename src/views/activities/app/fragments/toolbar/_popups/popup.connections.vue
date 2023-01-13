@@ -63,7 +63,7 @@ export default {
           id: i,
           name: `${output.name} - ${output.cidr.split("/")[0]}`,
           more: "Artnet",
-          active: this.$show.selectedOutputs.some((v) => v.name === output.name),
+          active: this.$show.selectedOutputs.length ? this.$show.selectedOutputs.some((v) => v.name === output.name) : false,
         });
       });
     },
