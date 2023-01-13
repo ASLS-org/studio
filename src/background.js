@@ -11,6 +11,8 @@ import {
 import installExtension, {
   VUEJS_DEVTOOLS
 } from 'electron-devtools-installer'
+import server from "./server/index.js"
+console.log(server)
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
 const path = require('path')
