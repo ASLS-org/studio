@@ -59,6 +59,7 @@
 /** App's main containers initialisation **/
 * {
   user-select: none;
+  outline: none;
 }
 
 input {
