@@ -3,6 +3,7 @@
     <uk-txt-input
       :disabled="disabled"
       :outlined="false"
+      auto-update
       v-if="filterable"
       class="uikit_list_searchbox"
       :placeholder="'Search items'"
