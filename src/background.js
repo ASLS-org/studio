@@ -17,7 +17,7 @@ const path = require('path')
 
 var nodeConsole = require('console');
 var myConsole = new nodeConsole.Console(process.stdout, process.stderr);
-myConsole.log(path.join(__dirname, "../public/docs/images/asls.logo.blue.only.png"));
+myConsole.log(path.join(__dirname, "../public/docs/images/asls-logo.png"));
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([{
@@ -43,7 +43,7 @@ async function createWindow() {
     minWidth: MIN_WINDOW_DIMENTIONS.WIDTH,
     minHeight: MIN_WINDOW_DIMENTIONS.HEIGHT,
     //icon: path.join(__static + '/docs/images/asls.logo.blue.png'),
-    icon: path.join(__dirname, "../public/docs/images/asls.logo.blue.only.png"),
+    icon: path.join(__dirname, "../public/images/asls-logo.png"),
     autoHideMenuBar: true,
     webPreferences: {
       // Use pluginOptions.nodeIntegration, leave this alone
