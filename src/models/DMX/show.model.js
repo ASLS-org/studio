@@ -145,6 +145,14 @@ class Show extends EventEmitter {
     Live.bpm = bpm;
   }
 
+  set selectedOutputs(data=[]){
+    this._selectedOutputs = data;
+  }
+
+  get selectedOutputs(){
+    return this._selectedOutputs;
+  }
+
   undo() {
     ProxifySingleton.undo();
   }
@@ -166,17 +174,6 @@ class Show extends EventEmitter {
   setOutputs(outputs){
     WebRTC.setOutputs(outputs)
     this.selectedOutputs = outputs;
-    console.log(this.selectedOutputs)
-    // this.outputs = WebRTC.ifaces;
-    /*.map((output, i) => {
-      console.log(this.selectedOutputs.some(v=>v.name===output.name))
-      return Object.assign(output,{
-        id: i,
-        name: `${output.name} - ${output.cidr.split("/")[0]}`,
-        more: "Artnet",
-        toggled: this.selectedOutputs.some(v=>v.name===output.name)
-      });
-    });*/
   }
 
   /*syncShowData(msg) {
