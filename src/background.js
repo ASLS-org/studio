@@ -11,15 +11,13 @@ import {
 import installExtension, {
   VUEJS_DEVTOOLS
 } from 'electron-devtools-installer'
-import server from "./server/index.js"
-console.log(server)
+require("./server");
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
 const path = require('path')
 
 var nodeConsole = require('console');
 var myConsole = new nodeConsole.Console(process.stdout, process.stderr);
-myConsole.log(path.join(__dirname, "../public/docs/images/asls-logo.png"));
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([{
@@ -92,7 +90,7 @@ app.on('ready', async () => {
     try {
       await installExtension(VUEJS_DEVTOOLS)
     } catch (e) {
-      console.error('Vue Devtools failed to install:', e.toString())
+      myConsole.error('Vue Devtools failed to install:', e.toString())
     }
   }
   createWindow()
