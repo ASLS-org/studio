@@ -3,18 +3,24 @@
     <div :class="{ disabled }" class="label" v-if="label">
       {{ label }}
     </div>
-    <div class="uikit_num_input_textbox_wrapper" :style="{borderColor: !disabled ? color : ''}">
+    <div class="uikit_num_input_textbox_wrapper" :style="{ borderColor: !disabled ? color : '' }">
       <input
         class="uikit_num_input_textbox"
         @keydown.up="incrementValue"
         @keydown.down="decrementValue"
         @keydown.stop
+        @blur="updateValue"
+        @keydown.enter="updateValue"
         :disabled="disabled"
         :placeholder="placeholder"
+        @input="
+          (v) => {
+            if (autoUpdate) updateValue(v);
+          }
+        "
         v-model="content"
-        v-on:input="updateValue"
       />
-      <span class="uikit_num_input_button"  :style="{backgroundColor: !disabled ? color : ''}">
+      <span class="uikit_num_input_button" :style="{ backgroundColor: !disabled ? color : '' }">
         <span class="uikit_num_input_button_section" @click="incrementValue()">
           <uk-icon class="uikit_num_input_button_icon" name="arrow_up" />
         </span>
@@ -70,7 +76,7 @@ export default {
      */
     value: {
       type: Number,
-      default: 0
+      default: 0,
     },
     /**
      * Whether or not the input should be disabeld
@@ -81,8 +87,16 @@ export default {
      */
     color: {
       type: String,
-      default: "var(--secondary-dark)"
-    }
+      default: "var(--secondary-dark)",
+    },
+    /**
+     * Whether value should be automatically updated on each keystroke or not
+     * value is updated on input blur or keydown "enter" otherwise
+     */
+    autoUpdate: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     return {
@@ -95,8 +109,8 @@ export default {
   methods: {
     /**
      * Increments actual value by one precision unit.
-     * 
-       */
+     *
+     */
     incrementValue() {
       let increment = parseFloat(this.content) + parseFloat(Math.pow(10, -this.precision));
       if (increment <= this.max && !this.disabled) {
@@ -106,8 +120,8 @@ export default {
     },
     /**
      * Decrements value actual value by one precision unit.
-     * 
-       */
+     *
+     */
     decrementValue() {
       let decrement = parseFloat(this.content) - parseFloat(Math.pow(10, -this.precision));
       if (decrement >= this.min && !this.disabled) {
@@ -117,8 +131,8 @@ export default {
     },
     /**
      * Updates input value
-     * 
-       * @param {Boolean} doEmit whether or not to emit changes back to parent element.  
+     *
+     * @param {Boolean} doEmit whether or not to emit changes back to parent element.
      */
     updateValue(doEmit = true) {
       var val = parseFloat(this.content).toFixed(this.precision);
@@ -157,7 +171,6 @@ export default {
 </script>
 
 <style scoped>
-
 .uikit_num_input {
   display: flex;
   flex-direction: column;

@@ -191,11 +191,12 @@ export default {
      * Prepare popup dragging procedure
      *
      */
-    startDrag() {
+    startDrag(e) {
       if (this.movable) {
         window.addEventListener("mousemove", this.drag);
         window.addEventListener("mouseup", this.stopDrag);
-        this.posX = this.$el.getBoundingClientRect().left;
+        let bb = this.$el.getBoundingClientRect();
+        this.offsetX = bb.left - e.clientX + bb.width/2;
       }
     },
     /**
@@ -205,7 +206,7 @@ export default {
      */
     drag(e) {
       let box = this.$el.getBoundingClientRect();
-      this.$el.style.left = Math.min(Math.max(e.clientX, box.width / 2), window.innerWidth - box.width / 2) + "px";
+      this.$el.style.left = Math.min(Math.max(e.clientX + this.offsetX, box.width / 2), window.innerWidth - box.width / 2) + "px";
       this.$el.style.top = Math.min(Math.max(e.clientY + box.height / 2 - 15, box.height / 2), window.innerHeight - box.height / 2) + "px";
     },
     /**
