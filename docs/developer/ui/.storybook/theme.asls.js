@@ -13,7 +13,7 @@ import { create } from '@storybook/theming';
 export default create({
   base: 'dark',
   brandTitle: 'ASLS Studio storybook',
-  brandUrl: 'https://asls.studio.timekadel.com',
+  brandUrl: 'https://demo.studio.asls.timekadel.com',
   brandImage: '/images/asls.logo.white.png',
   brandTarget: '_self',
 

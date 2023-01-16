@@ -54,9 +54,11 @@ class Show extends EventEmitter {
     this.universePool = new UniversePool();
     this.groupPool = new GroupPool();
     this.master = new Master(this.groupPool);
-    this.bpm = Live.bpm
+    // this.bpm = Live.bpm
     this.running = false;
     this.slave = false;
+    this.outputs = [];
+    this.selectedOutputs = [];
     this.loading = {
       state: true,
       message: "Preparing Environment",
@@ -72,7 +74,17 @@ class Show extends EventEmitter {
     WebRTC.on("open", () => {
       Live.add(this.dumpShowData.bind(this))
     })
-    WebRTC.on("universeData", this.syncShowData.bind(this))
+    WebRTC.on("config-update", () => {
+      this.outputs = WebRTC.ifaces/*.map((output, i) => {
+        return Object.assign(output,{
+          id: i,
+          name: `${output.name} - ${output.cidr.split("/")[0]}`,
+          more: "Artnet",
+          toggled: this.selectedOutputs.name === output.name
+        });
+      });*/
+    });
+    // WebRTC.on("universeData", this.syncShowData.bind(this))
     this.universePool.addRaw();
     this.preloadFixtureList();
   }
@@ -112,16 +124,33 @@ class Show extends EventEmitter {
       fixtures: this.fixturePool.fixtures.map(f => f.showData),
       universes: this.universePool.universes.map(u => u.showData),
       groups: this.groupPool.groups.map(g => g.showData),
-      visualizer: this.visualizerHandle.showData
+      visualizer: this.visualizerHandle.showData,
+      selectedOutputs: this.selectedOutputs,
     }
   }
 
   set name(name) {
-    this._name = name;
+    this._name = name.replace(".json","");
   }
 
   set state(state) {
     Live.state = state
+  }
+
+  get bpm(){
+    return Live.bpm;
+  }
+
+  set bpm(bpm){
+    Live.bpm = bpm;
+  }
+
+  set selectedOutputs(data=[]){
+    this._selectedOutputs = data;
+  }
+
+  get selectedOutputs(){
+    return this._selectedOutputs;
   }
 
   undo() {
@@ -142,7 +171,12 @@ class Show extends EventEmitter {
     this.emit("saveState", this.isSaved)
   }
 
-  syncShowData(msg) {
+  setOutputs(outputs){
+    WebRTC.setOutputs(outputs)
+    this.selectedOutputs = outputs;
+  }
+
+  /*syncShowData(msg) {
     if (this.slave) {
       let data = JSON.parse(msg.data);
       if (this.universePool.universes[data.universe]) {
@@ -150,7 +184,7 @@ class Show extends EventEmitter {
         this.running = !this.running
       }
     }
-  }
+  }*/
 
   dumpShowData() {
     if (!this.slave) {
@@ -162,9 +196,9 @@ class Show extends EventEmitter {
 
   async prepareUniverses(showData) {
 
-    showData.universes.forEach(universeData=>{
+    showData.universes.forEach(universeData => {
       let universe = this.universePool.addRaw(universeData);
-      universeData.fixtures.forEach(fixtureData=>{
+      universeData.fixtures.forEach(fixtureData => {
         let fixture = this.fixturePool.getFromId(fixtureData.id);
         universe.patchFixture(fixture);
       })
@@ -264,7 +298,7 @@ class Show extends EventEmitter {
     let ls_showdata = localStorage.getItem(LOCALSTORAGE_SHOWFILE_KEY)
     if (ls_showdata != null) {
       await this.loadFromData(JSON.parse(ls_showdata));
-    }else{
+    } else {
       await this.setupNewProject();
     }
   }
@@ -273,7 +307,7 @@ class Show extends EventEmitter {
     let extension = Show._getShowFileType(filename);
     let showData = await Show._parseShowData(data, extension);
     await this.loadFromData(showData);
-    this.name = filename;
+    this.name = filename
   }
 
   async loadFromData(showData) {
@@ -281,6 +315,10 @@ class Show extends EventEmitter {
     this.loading.message = "Clearing Show Data";
     this.loading.percentage = 20;
     this.clearShowData();
+
+    this.loading.message = "Setting preferences";
+    this.loading.percentage = 30;
+    this.visualizerHandle.preferences = showData.visualizer
 
     this.loading.message = "Preloading fixture library";
     this.loading.percentage = 40;
@@ -303,6 +341,7 @@ class Show extends EventEmitter {
     this.loading.message = "Finalizing";
     this.loading.percentage = 95;
     this.name = showData.name
+    this.selectedOutputs = showData.selectedOutputs
     this.ready = true;
     this.isSaved = true;
   }

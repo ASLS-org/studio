@@ -5,6 +5,7 @@
  * @classdesc Show master model definition. Master holds a reference to
  * each individual show group. Master features include grouped chase triggering,
  * Global group master output definition and much more. 
+ * Could extend event emitter but callback function for end should work just fine.
  */
 class Master {
 
@@ -15,8 +16,9 @@ class Master {
    * a master instance that would be property of Show.
    */
   constructor(groupPoolHandle) {
-    this.groupPool = groupPoolHandle
+    this.groupPool = groupPoolHandle;
     this.playingRow = -1;
+    this.onEnd = ()=>{};
   }
 
   cueRow(rowIndex) {
@@ -25,11 +27,19 @@ class Master {
     this.groupPool.groups.forEach(group => {
       group.chasePool.chases.forEach(chase => {
         chase.cue(false);
+        chase.onEnd = ()=>{};
+        // chaseCount++;
       })
       try{
         let chase = group.chasePool.getFromId(rowIndex);
         chaseCount++;
         chase.cue(state)
+        chase.onEnd = ()=>{
+          chaseCount--;
+          if(chaseCount == 0){
+            this.onEnd();
+          }
+        }
         // eslint-disable-next-line
       }catch(err){}
     })

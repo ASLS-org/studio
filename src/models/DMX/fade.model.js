@@ -1,6 +1,7 @@
 import {
   Proxify
 } from '@/models/utils/proxyfy.utils.model.js'
+import Live from './live.model'
 
 /**
  * Fade bezier curve preset control point values
@@ -147,7 +148,7 @@ class Fade extends Proxify {
    * @type {Number}
    */
   get timePercent() {
-    return this.time / this.duration
+    return this.time / this.durationMS
   }
 
   /**
@@ -195,6 +196,10 @@ class Fade extends Proxify {
     return this._direction;
   }
 
+  get durationMS(){
+    return this.duration * Live.barDuration;
+  }
+
   /**
    * Returns fade's percented value at any given time
    *
@@ -202,7 +207,7 @@ class Fade extends Proxify {
    * @return {Number} Percented value over time
    */
   getValue(time) {
-    this.t = time / this.duration;
+    this.t = time / this.durationMS;
     this.getX();
     let val = (
       Math.pow(1 - this.t, 3) * 0 +

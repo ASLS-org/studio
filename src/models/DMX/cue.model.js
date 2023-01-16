@@ -170,6 +170,10 @@ class Cue extends Proxify{
     return this._duration || DEFAULT_CUE_DATA.DURATION;
   }
 
+  get durationMS(){
+    return this.duration * Live.barDuration;
+  }
+
   get relative() {
     return this._relative || DEFAULT_CUE_DATA.RELATIVE;
   }
@@ -239,7 +243,7 @@ class Cue extends Proxify{
       this.deltaStart = t;
     }
     this.time = t - this.deltaStart
-    if (this.time > this.duration && this.loopStyle != CUE_LOOP_STYLES.LOOP) {
+    if (this.time > this.durationMS && this.loopStyle != CUE_LOOP_STYLES.LOOP) {
       if (this.animationId != null) {
         Live.remove(this.animationId)
         this.animationId = null;

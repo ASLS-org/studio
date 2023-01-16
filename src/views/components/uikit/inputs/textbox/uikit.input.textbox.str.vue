@@ -6,12 +6,18 @@
     <div class="uikit_txt_input_textbox_wrapper" tabindex="0" :class="{ disabled: disabled || readonly, outlined }">
       <input
         @keydown.stop
+        @keydown.enter="updateValue"
+        @blur="updateValue"
         class="uikit_txt_input_textbox"
         :disabled="disabled || readonly"
         type="text"
         v-model="content"
-        v-on:input="updateValue"
         :placeholder="placeholder"
+        @input="
+          (v) => {
+            if (autoUpdate) updateValue(v);
+          }
+        "
       />
     </div>
   </div>
@@ -55,6 +61,14 @@ export default {
       type: Boolean,
       default: true,
     },
+    /**
+     * Whether value should be automatically updated on each keystroke or not
+     * value is updated on input blur or keydown "enter" otherwise
+     */
+    autoUpdate: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     return {
@@ -68,7 +82,7 @@ export default {
     /**
      * Updates input value
      *
-       */
+     */
     updateValue() {
       /**
        * Input value changed
@@ -87,7 +101,6 @@ export default {
 </script>
 
 <style scoped>
-
 .uikit_txtinput {
   display: flex;
   flex-direction: column;

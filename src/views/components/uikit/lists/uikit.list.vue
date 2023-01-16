@@ -3,6 +3,7 @@
     <uk-txt-input
       :disabled="disabled"
       :outlined="false"
+      auto-update
       v-if="filterable"
       class="uikit_list_searchbox"
       :placeholder="'Search items'"
@@ -218,7 +219,7 @@ export default {
     /**
      * Update the component two level tree list
      *
-       * @param {Array} items items to be displayed within the list
+     * @param {Array} items items to be displayed within the list
      */
     updateTree(items) {
       this._tree = [];
@@ -230,7 +231,7 @@ export default {
         } else {
           this._tree.push({
             value: item,
-            unfolded: this.tree[index] ? this.tree[index].unfolded : false,
+            unfolded: this.tree[index] ? this.tree[index].value.unfold : false,
             highlighted: this.tree[index] ? this.tree[index].highlighted : false,
             toggled: item.active,
             selected: this.tree[index] ? this.tree[index].selected : false,
@@ -255,7 +256,7 @@ export default {
     /**
      * Reveal sublist from unfoldable item
      *
-       * @param {Object} item the tree item to be unfolded
+     * @param {Object} item the tree item to be unfolded
      */
     unfold(item) {
       item.unfolded = !item.unfolded;
@@ -269,7 +270,7 @@ export default {
     /**
      * Handler for list focus-in
      *
-       */
+     */
     handleFocusIn() {
       this.hasFocus = true;
       /**
@@ -283,7 +284,7 @@ export default {
     /**
      * Handler for list focus-out
      *
-       * @param {Object} e focusout event
+     * @param {Object} e focusout event
      */
     handleFocusOut(e) {
       let keepFocus = false;
@@ -314,7 +315,7 @@ export default {
      * Clear all highlighted items from the highlightedItems list
      * and reset item styling to their parent one
      *
-       */
+     */
     clearHighlighted(focusOut = false) {
       if (!this.noHighlight) {
         this.highlightedItems.forEach((item) => {
@@ -335,7 +336,7 @@ export default {
     },
     /**
      * Deletion popup validation handler
-       */
+     */
     async handleDeletion() {
       /**
        * Item(s) deletion event
@@ -349,7 +350,7 @@ export default {
     /**
      * Displays deletion popup
      *
-       */
+     */
     displayDeletionPopup() {
       if ((this.selectedItem || this.highlightedItems.length) && this.deletable) {
         this.deletePopupState = true;
@@ -363,7 +364,7 @@ export default {
     /**
      * Keydown event listener.
      *
-       * @param {Event} e keydown event
+     * @param {Event} e keydown event
      */
     keydownListener(e) {
       const key = e.key;
@@ -480,7 +481,7 @@ export default {
      * Selects active item whenever simple click is involved.
      * Adds item to highlighted list when ctrl key is pressed.
      *
-       * @param {Event} e click event
+     * @param {Event} e click event
      * @param {Object} item tree (sub)item involved in the selection
      */
     selectItem(e = {}, item, childs) {
@@ -501,7 +502,7 @@ export default {
      * Handles dragging routine start
      *
      * @todo This whole dragging routine was made on the rush. It should be tested and improved.
-       * @param {Event} e startdrag event
+     * @param {Event} e startdrag event
      * @param {Number} index index of the dragged list item
      */
     startDrag(e, index) {
@@ -523,7 +524,7 @@ export default {
      * Handles drag enter on droppable element.
      * regenerates item list according to new dragged item index offset
      *
-       * @param {Event} e dragenter event
+     * @param {Event} e dragenter event
      * @param {Number} index index of the hovered element
      */
     dragEnter(e, index) {
@@ -545,7 +546,7 @@ export default {
      * Handles drag leave on droppable element.
      * resets droppable hovered item styling
      *
-       * @param {Event} e dragenter event
+     * @param {Event} e dragenter event
      */
     dragOut(e) {
       if (e.target.classList) {
@@ -560,7 +561,7 @@ export default {
     /**
      * Handles drop
      *
-       * @param {Event} e drop event
+     * @param {Event} e drop event
      * @param {Number} index index of the dropped list item
      */
     drop(e) {
@@ -608,7 +609,7 @@ export default {
     /**
      * Filters tree items/subitems on their name using provided search string
      *
-       * @returns {Array} array of filtered tree items and subitems
+     * @returns {Array} array of filtered tree items and subitems
      */
     filteredItems() {
       let items = this.tree;
@@ -647,10 +648,14 @@ export default {
   mounted() {
     this.selectedItem = [];
     this.updateTree(this.items);
+    console.log(this.tree);
     if (this.autoSelectFirst && this.tree[0]) {
       this.selectItem(undefined, this.tree[0]);
       this.clearHighlighted(true);
     }
+    this.tree.forEach((i) => {
+      if (i.value.unfold) i.unfolded = true;
+    });
   },
   watch: {
     items(items, oldItems) {
@@ -663,6 +668,9 @@ export default {
           this.selectItem(undefined, this.tree[0]);
         }
       }
+      this.tree.forEach((i) => {
+        if (i.value.unfold) i.unfolded = true;
+      });
     },
     preventUnfocus() {
       this.unfocusElBlacklist.push(...this.preventUnfocus);
@@ -677,7 +685,7 @@ export default {
       let item = this.tree[parseInt(index)];
       if (item) {
         this.selectItem(undefined, item);
-        this.clearHighlighted(true)
+        this.clearHighlighted(true);
       }
     },
   },

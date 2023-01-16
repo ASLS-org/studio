@@ -5,15 +5,14 @@
       <uk-spacer />
       <uk-button @click.native="displayGroupPopup" icon="new" style="margin-right: 8px" label="new" />
     </uk-flex>
-    <uk-flex class="group_pool_body">
-      <div tabindex="0" @focus="handleFocus(true)" @focusout="handleFocus(false)" class="group_pool_groups">
+    <uk-flex class="group_pool_body" resizable>
+      <div tabindex="0" @focus="handleFocus(true)" @focusout="handleFocus(false)" :class="{ expand }" class="group_pool_groups">
         <uk-cue-container
           @poolsize="updatePoolSize"
           @scrolled="updateScroll"
           :scroll-to="scrollValue"
           :poolsize="poolsize"
           :selected="selIndex === index"
-          
           @click.native="select(index)"
           v-for="(group, index) in groups"
           :group="group"
@@ -34,6 +33,8 @@
 
 <script>
 import GroupPopup from "./_popups/popup.group.vue";
+//Dirty trick but it should do for now.
+import EventBus from "@/plugins/eventbus";
 const DEFAULT_POOL_SIZE = 10;
 
 export default {
@@ -75,13 +76,17 @@ export default {
        * Group deletion popup display state
        */
       deletePopupDsiplayState: false,
+      /**
+       * Group pool container expansion styling states
+       */
+      expand: false,
     };
   },
   methods: {
     /**
      * Selects a group from the pool
      *
-       * @public
+     * @public
      * @param {Number} index index of the pool's group to be selected/displayed in the group modifier.
      */
     select(index) {
@@ -92,7 +97,7 @@ export default {
     /**
      * Displays the group creation popup
      *
-       * @public
+     * @public
      */
     displayGroupPopup() {
       this.groupPopupDisplayState = true;
@@ -100,7 +105,7 @@ export default {
     /**
      * Deletes a group from the pool
      *
-       * @public
+     * @public
      */
     deleteGroup() {
       this.deletePopupDsiplayState = false;
@@ -118,7 +123,7 @@ export default {
     /**
      * Update global pool's chase slots length based on currently used slots amount.
      *
-       * @public
+     * @public
      */
     updatePoolSize() {
       this.poolsize = Math.max(...this.pool.groups.map((group) => group.chasePool.chases.length + DEFAULT_POOL_SIZE), DEFAULT_POOL_SIZE);
@@ -126,7 +131,7 @@ export default {
     /**
      * Update scroll value in order to synchronise each group's chase pool scrolling position.
      *
-       * @public
+     * @public
      * @param {Number} scroll Chase pool scrolling offset
      * @todo Maybe throttle the scroll events ?
      */
@@ -136,7 +141,7 @@ export default {
     /**
      * Handle component focus event
      *
-       * @public
+     * @public
      * @param {Bool} state focus state
      */
     handleFocus(state) {
@@ -148,7 +153,7 @@ export default {
     /**
      * Keydown handler
      *
-       * @public
+     * @public
      * @param {Object} e keydown event
      */
     keydownHandler(e) {
@@ -159,6 +164,12 @@ export default {
         }
       }
     },
+  },
+  mounted() {
+    //Dirty trick but it should do for now.
+    EventBus.$on("visualizer_visibility", (visibility) => {
+      this.expand = !visibility;
+    });
   },
 };
 </script>
@@ -188,6 +199,9 @@ export default {
   max-width: 480px;
   overflow: hidden;
   overflow-x: auto;
+}
+.group_pool_groups.expand {
+  max-width: calc(100vw - 359px);
 }
 .group_pool_master {
   width: 0px;

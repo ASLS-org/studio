@@ -1077,9 +1077,9 @@ class FX extends Cue {
    * @todo memoisation could be an option too ? It might be memory expensive though ?
    */
   update(t) {
-    this.time = t % this.duration;
+    this.time = t % this.durationMS;
     this.DMXActivity = 0;
-    let percent = (t % this.duration) / this.duration
+    let percent = (t % this.durationMS) / this.durationMS
     this.channels.forEach(channel => {
       channel.update(percent);
       this.DMXActivity += channel.DMXData;

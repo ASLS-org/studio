@@ -1,92 +1,96 @@
 <template>
-  <uk-popup @input="update()" v-model="state" :header="headerData">
-    <div style="display: flex; flex-direction: column; padding: 16px; min-width: 340px">
-      <div style="display: flex">
-        <uk-txt-input style="flex: 1; margin-right: 16px" label="DMX2WS Server IP" v-model="artnet.ip" />
-        <uk-num-input class="field" label="Port" v-model="artnet.port" />
-      </div>
+  <uk-popup
+    @submit="
+      updateOutputs();
+      close();
+    "
+    :movable="true"
+    backdrop
+    @input="update()"
+    v-model="state"
+    :header="headerData"
+  >
+    <div class="body">
+      <uk-list toggleable @toggle="selectIface" :items="outputs" />
+      <uk-button style="margin: 16px" :square="true" label="refresh" @click.native="updateOutputs" />
     </div>
   </uk-popup>
 </template>
 
 <script>
-// import icons from "../icons/uikit.icons";
+
+import PopupMixin from "@/views/mixins/popup.mixin.js";
 
 export default {
   name: "ukPopupConnections",
+  mixins: [PopupMixin],
   props: {
     value: Boolean,
   },
   data() {
     return {
-      headerData: { title: "Conection settings" },
-      state: this.value,
-      artnet: {
-        ip: this.$show.artnetServerUrl,
-        port: 5214,
+      /**
+       * Popup header data
+       */
+      headerData: {
+        title: "Outputs",
       },
+      outputs: [],
+      state: this.value,
     };
   },
   methods: {
     update() {
       this.$emit("input", this.state);
+      if(this.state){
+        this.updateOutputs()
+      }
     },
-    close() {
-      this.state = false;
-      this.update();
-    },
-    selectFixtures(fixtures) {
-      this.selectedFixtures = fixtures;
-    },
-  },
-  computed: {
-    fixtureChoices() {
-      return (
-        this.fxt.map((fixture) => {
-          return {
-            name: fixture.name,
-            callback: () => {},
-            selected: false,
-          };
-        }) || [{ name: "test" }]
+    // close() {
+    //   this.state = false;
+    // },
+    selectIface(outputs) {
+      this.$show.setOutputs(
+        outputs.map((o) => {
+          return this.$show.outputs[o.id];
+        })
       );
     },
+    updateOutputs() {
+      this.outputs = this.$show.outputs.map((output, i) => {
+        let oDeepCpy = JSON.parse(JSON.stringify(output));
+        return Object.assign(oDeepCpy, {
+          id: i,
+          name: `${output.name} - ${output.cidr.split("/")[0]}`,
+          more: "Artnet",
+          active: this.$show.selectedOutputs.length ? this.$show.selectedOutputs.some((v) => v.name === output.name) : false,
+        });
+      });
+    },
   },
-  watch: {
-    value(state) {
-      this.state = state;
-    },
-    fixtures(fixtures) {
-      console.log(fixtures);
-    },
+  mounted() {
+    this.updateOutputs();
   },
 };
 </script>
 
 <style scoped>
-
-.function_popup {
-  display: flex;
-  flex-direction: row !important;
-  height: 100%;
-}
-.fixture_list {
-  height: 100;
-  width: 300px;
-  border-right: 1px solid var(--primary-dark);
-}
-.field {
+.body {
   display: flex;
   flex-direction: column;
-  margin-bottom: 8px;
-  margin-right: 8px;
-  width: 55px;
+  width: 300px;
+  height: 300px;
+  padding: 0px !important;
 }
-.field_label {
+.subtitle {
+  font-family: Roboto-Regular;
   margin-bottom: 8px;
+  color: var(--secondary-lighter-alt);
 }
-.function_button {
-  margin-top: 8px;
-  margin-left: 8px;
+.title_icon {
+  fill: var(--secondary-lighter);
+}
+h4 {
+  margin-bottom: 4px;
 }
 </style>

@@ -31,8 +31,31 @@ const LOCALCOM_MSG_PREFIX = "__LCMSG"
 const WS_MSG_TYPES = {
   WebRTC_OFFER: "__WRTC_OFR",
   WebRTC_ICE: "__WRTC_ICE",
+  OUTPUTS_LIST: "__OUTPUTS_LIST",
+  OUTPUTS_SET: "__OUTPUTS__SET"
 }
-
+/**
+ * WebRTC remoteHost states enumeration
+ * 
+ * @constant REMOTE_HOST_STATES
+ * @enum {Number}
+ */
+const REMOTE_HOST_STATES = {
+  UNBOUND: 0,
+  CONNECTING: 1,
+  BOUND: 2
+}
+/**
+ * WebRTC remoteHost default values
+ * 
+ * @constant REMOTE_HOST_STATES
+ * @enum {Number}
+ */
+const REMOTE_HOST_DEFAULT = {
+  URL: "localhost",
+  PORT: 5214,
+  STATE: REMOTE_HOST_STATES.UNBOUND
+}
 
 /**
  * @class LocalCom
@@ -115,12 +138,39 @@ class WebRTC extends EventEmitter {
     if (!WebRTCInstance) {
       super();
       this.ws = null;
+      this.remoteHost = {
+        url: REMOTE_HOST_DEFAULT.URL,
+        port: REMOTE_HOST_DEFAULT.PORT,
+        state: REMOTE_HOST_DEFAULT.STATE
+      }
+      this.ifaces = [];
       this.init();
-      // this.waitForWsHandshake();
-      this.tunnelLocally();
+      // this.tunnelLocally();
+      this.waitForWsHandshake();
       WebRTCInstance = this;
     }
     return WebRTCInstance;
+  }
+
+  /**
+   * Binds a remote host for communication over WEBRTC
+   * For our specific purpuse, handshake is done over websocket
+   * 
+   * @public
+   */
+  bindRemoteHost(remoteHostConfig) {
+    this.remoteHost.url = remoteHostConfig.url;
+    this.remoteHost.port = remoteHostConfig.port;
+    this.waitForWsHandshake();
+  }
+
+  setOutputs(outputs){
+    if(this.remoteHost.state === REMOTE_HOST_STATES.BOUND){
+      this.ws.send(JSON.stringify({
+        type: WS_MSG_TYPES.OUTPUTS_SET,
+        data: outputs
+      }))
+    }
   }
 
   /**
@@ -133,6 +183,7 @@ class WebRTC extends EventEmitter {
     this.DMXDataChannel = this.peer.createDataChannel(DATA_CHANNEL_NAME);
     this.DMXDataChannel.onmessage = this.DMXDataChannelMsgHandler.bind(this);
     this.DMXDataChannel.onopen = this.forwardOpenMessage.bind(this);
+    this.DMXDataChannel.onclose = this.handleClosure.bind(this)
   }
 
   /**
@@ -186,7 +237,7 @@ class WebRTC extends EventEmitter {
               if (this.peer.signalingState != "stable") {
                 let answer = await this.peer.createAnswer();
                 await this.peer.setLocalDescription(answer);
-                LocalComInstance.send(WS_MSG_TYPES.WebRTC_OFFER, this.peer.localDescription)
+                LocalComInstance.send(WS_MSG_TYPES.WebRTC_OFFER, this.peer.localDescription);
               }
             }
           } catch (err) {
@@ -211,22 +262,42 @@ class WebRTC extends EventEmitter {
    * @public
    */
   waitForWsHandshake() {
-    this.ws = new WebSocket(`ws://127.0.0.1:5214/ws`);
+    try {
+      this.ws = new WebSocket(`ws://${this.remoteHost.url}:${this.remoteHost.port}/ws`);
+    } catch (err) {
+      console.log(err)
+    }
     console.log("connecting again...")
     this.ws.onopen = () => {
       this.initDMXDataChannel(localDecription => this.ws.send(JSON.stringify({
         type: WS_MSG_TYPES.WebRTC_OFFER,
         data: localDecription
       })))
-      this.ws.onmessage = (msg) => {
+      this.ws.onmessage = async (msg) => {
         msg = JSON.parse(msg.data)
         switch (msg.type) {
           case WS_MSG_TYPES.WebRTC_OFFER:
             try {
               this.peer.setRemoteDescription(new RTCSessionDescription(msg.data));
+              this.ws.send(JSON.stringify({
+                type: WS_MSG_TYPES.OUTPUTS_LIST,
+              }));
             } catch (err) {
               console.log(err);
             }
+            break;
+          case WS_MSG_TYPES.WebRTC_ICE:
+            try {
+              if (msg.data) {
+                await this.peer.addIceCandidate(new RTCIceCandidate(msg.data));
+              }
+            } catch (err) {
+              console.log(err);
+            }
+            break;
+          case WS_MSG_TYPES.OUTPUTS_LIST:
+            this.ifaces = msg.data;
+            this.emit("config-update")
             break;
         }
       }
@@ -246,7 +317,6 @@ class WebRTC extends EventEmitter {
         this.waitForWsHandshake()
       }, WS_POLL_INTERVAL)
     }
-    this.ws.onerror = () => {}
   }
 
   /**
@@ -279,7 +349,9 @@ class WebRTC extends EventEmitter {
    * @public
    */
   broadcastUniverseData(data) {
-    this.DMXDataChannel.send(JSON.stringify(data));
+    if (this.DMXDataChannel.readyState === "open") {
+      this.DMXDataChannel.send(JSON.stringify(data));
+    }
   }
 
   /**
@@ -287,9 +359,20 @@ class WebRTC extends EventEmitter {
    *
    * @public
    */
-  
+
   forwardOpenMessage() {
     this.emit("open");
+    this.remoteHost.state = REMOTE_HOST_STATES.BOUND;
+  }
+
+  /**
+   * Handles DMXdatachannel closure
+   * 
+   * @public
+   */
+  handleClosure() {
+    this.emit("closed");
+    this.remoteHost.state = REMOTE_HOST_STATES.UNBOUND;
   }
 
 }

@@ -148,7 +148,7 @@
 </template>
 
 <script>
-import PopupMixin from "@/views/mixins/popup.mixin.js"
+import PopupMixin from "@/views/mixins/popup.mixin.js";
 
 const NO_FIXTURE_STR = "No fixture model selected";
 const DEFAULT_FIXTURE_AMOUNT = 1;
@@ -174,7 +174,7 @@ export default {
   data() {
     return {
       headerData: { title: "Patch fixture" },
-      fixtures: this.prepareFixtures(this.fixtures),
+      fixtures: [],
       fixture: JSON.parse(JSON.stringify(DEFAULT_FIXTURE_DATA)),
       amount: DEFAULT_FIXTURE_AMOUNT,
       positionOffsets: { x: 0, y: 0, z: 0 },
@@ -187,7 +187,7 @@ export default {
   },
   methods: {
     init() {
-      this.fixtures = this.prepareFixtures(this.fixtures);
+      this.fixtures = this.prepareFixtures();
       this.fixture = JSON.parse(JSON.stringify(DEFAULT_FIXTURE_DATA));
       this.amount = DEFAULT_FIXTURE_AMOUNT;
       this.positionOffsets = { x: 0, y: 0, z: 0 };
@@ -227,7 +227,7 @@ export default {
             return fixtures;
           } catch (err) {
             this.loading = false;
-            throw(err);
+            throw err;
           }
         } else {
           this.loading = false;
@@ -300,11 +300,20 @@ export default {
       }
     },
   },
+  mounted() {
+    this.prepareFixtures();
+  },
+  watch: {
+    state(state) {
+      if (state) {
+        this.init();
+      }
+    },
+  },
 };
 </script>
 
 <style scoped>
-
 .patch_popup {
   height: 100%;
 }
