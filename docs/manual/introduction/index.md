@@ -1,6 +1,6 @@
 # What is ASLS Studio
 
-[ASLS Studio](https://asls.studio.timekadel.com) is an open-source, web-based, DMX lighting control software and visualizer.
+[ASLS Studio](https://demo.studio.asls.timekadel.com) is an open-source, web-based, DMX lighting control software and visualizer.
 
 <Video src="/animated.webm"/>
 
