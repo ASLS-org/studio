@@ -7,7 +7,7 @@
 </template>
 
 <script>
-import PopupMixin from "@/views/mixins/popup.mixin.js"
+import PopupMixin from "@/views/mixins/popup.mixin.js";
 
 export default {
   name: "ukPopupGroupPatch",
@@ -39,13 +39,13 @@ export default {
   },
   methods: {
     /**
-     * Prepare popup. Fetch available fixture list by comparing available show fixtures
+     * Init popup. Fetch available fixture list by comparing available show fixtures
      * with fixtures that are already present in the group. fixtures that are already present are excluded
      * from the selection.
-     * 
-       * @public
+     *
+     * @public
      */
-    prepare() {
+    init() {
       this.availableFixtures = [];
       this.selectedFixtures = [];
       this.availableFixtures = this.$show.universePool.listable.map((universe) => {
@@ -65,35 +65,49 @@ export default {
       });
     },
     /**
+     * Deinit popup and environment. unselects and unhighlights all selected fixtures.
+     * @public
+     */
+    deinit() {
+      if (this.selectedFixtures.length) {
+        this.selectedFixtures[0].highlightSingle(false, true);
+      }
+    },
+    /**
      * Select fixture instances to be added into the group
-     * 
-       * @public
+     *
+     * @public
      * @param {Array} fixtures array of fixture definition objects
      */
     selectFixtures(fixtures) {
       this.selectedFixtures = fixtures.map((fixture, index) => {
-        let fxt = this.$show.fixturePool.getFromId(fixture.id);        index ? fxt.highlight(true, true) : fxt.highlightSingle(true, true);
+        let fxt = this.$show.fixturePool.getFromId(fixture.id);
+        index ? fxt.highlight(true, true) : fxt.highlightSingle(true, true);
         return fxt;
       });
     },
     /**
      * Add selected fixtures to the group
-     * 
-       * @public
+     *
+     * @public
      */
     addFixturesToGroup() {
       this.selectedFixtures.forEach((fixture) => {
         this.group.addFixture(fixture);
       });
       this.close();
-    }
+    },
   },
   mounted() {
-    this.prepare();
+    this.init();
   },
   watch: {
-    group() {
-      this.prepare();
+    state(state) {
+      if (state) {
+        this.init();
+      } else {
+        this.deinit();
+      }
     },
   },
 };
