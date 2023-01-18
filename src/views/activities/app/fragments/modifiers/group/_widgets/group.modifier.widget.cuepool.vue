@@ -154,7 +154,7 @@ export default {
      * @returns {Object} css background linear-gradient value
      */
     computeCueLoader(cue) {
-      let perc = (cue.time / cue.duration) * 100 * cue.state;
+      let perc = (cue.time / cue.durationMS) * 100 * cue.state;
       return {
         background: `linear-gradient(90deg ,var(--secondary-light) 0% ,var(--secondary-light) ${perc}% ,transparent ${perc}%,transparent 100% )`,
       };
