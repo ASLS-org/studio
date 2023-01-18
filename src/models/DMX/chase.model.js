@@ -68,7 +68,7 @@ class Chase extends Proxify {
     super();
     this.id = data.id;
     this.quantize = 4;
-    this.onEnd = ()=>{};
+    this.onEnd = () => {};
     this.name = data.name || `Chase ${this.id}`;
     this.gridIndex = data.gridIndex;
     this.color = data.color;
@@ -219,7 +219,10 @@ class Chase extends Proxify {
       this.animationId = Live.add(this.update.bind(this), this.quantize);
     } else if (this.animationId != null) {
       this.elapsed = 0;
-      this.cues.forEach(cueItemPool => {cueItemPool.cue.state = 0})
+      this.cues.forEach(cueItemPool => {
+        cueItemPool.cue.state = 0;
+        cueItemPool.cue.cue(false)
+      })
       Live.remove(this.animationId);
       this.onEnd();
       this.animationId = null;
@@ -255,10 +258,10 @@ class Chase extends Proxify {
       cueItemPool.items.forEach(item => {
         console.log(item)
         if (t >= item.tick * this.tickDuration && t <= (item.tick + item.length) * this.tickDuration) {
+          cueItemPool.cue.state = 1;
           cueItemPool.cue.update(t - (item.tick * this.tickDuration));
-        }else{
-          // item.state = 0;
-          // cueItemPool.cue.state = 0;
+        } else {
+          cueItemPool.cue.state = 0;
         }
       })
     })
@@ -281,7 +284,9 @@ class Chase extends Proxify {
    * @param {Object} cue
    */
   addCue(data) {
-    data = data instanceof Cue ? {cue: data} : data
+    data = data instanceof Cue ? {
+      cue: data
+    } : data
     let cueItemPool = this.cues.find(cueItemPool => cueItemPool.cue.id === data.cue.id)
     if (!cueItemPool) {
       cueItemPool = new CueItemPool(data);
