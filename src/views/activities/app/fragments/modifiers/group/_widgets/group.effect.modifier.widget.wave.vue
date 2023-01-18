@@ -90,10 +90,7 @@ export default {
       let w = this.canvas.width;
       let h = this.canvas.height;
       let t = this.channel.time;
-      // let d = this.channel.duration;
-      // let phase = this.channel.direction === 0 ? fixture.phase : -fixture.phase;
       let xOffset = (w * (t + ((fixture.phase / this.channel.frequency) * (180 / Math.PI)) / 360)) % w;
-      // let phase = fixture.phase * (180 / Math.PI);
       let yOffset = (1 - fixture.value / 255) * h;
       return {
         left: xOffset - 6 + "px",
@@ -132,8 +129,6 @@ export default {
           this.context.lineTo(t * width, this.canvas.height - yVal);
         }
         this.context.stroke();
-        // }else{
-        //   this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
       }
     },
   },
