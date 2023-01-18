@@ -254,10 +254,17 @@ class Chase extends Proxify {
       }
     }
     this.elapsed = t;
+    /**
+     * TODO: Check this whole routine, it does not seem efficient.
+     * Also, setting cue state to 1 for scenes when cue item is running seems to
+     * break a lot of things. Have a look into it.
+     */
     this.cues.forEach(cueItemPool => {
       cueItemPool.items.forEach(item => {
         if (t >= item.tick * this.tickDuration && t <= (item.tick + item.length) * this.tickDuration) {
-          cueItemPool.cue.state = 1;
+          if (cueItemPool.cue.type == 1) {
+            cueItemPool.cue.state = 1;
+          }
           cueItemPool.cue.update(t - (item.tick * this.tickDuration));
         } else {
           cueItemPool.cue.state = 0;
