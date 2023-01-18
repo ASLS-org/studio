@@ -257,10 +257,15 @@ class Fixture extends Proxify {
    * @type {Number}
    */
   set posX(xVal) {
-    Controls.detach(this);
-    this._position.x = xVal
-    this._3DModel.position = this.position;
-    Controls.attach(this);
+    if (!isNaN(xVal)) {
+      Controls.detach(this);
+      this._position.x = xVal
+      this._3DModel.position = this.position;
+      Controls.attach(this);
+    }else{
+      this._position.x = this.position.x
+    }
+
 
   }
 
@@ -270,10 +275,14 @@ class Fixture extends Proxify {
    * @type {Number}
    */
   set posY(yVal) {
-    Controls.detach(this);
-    this._position.y = yVal
-    this._3DModel.position = this.position;
-    Controls.attach(this);
+    if (!isNaN(yVal)) {
+      Controls.detach(this);
+      this._position.y = yVal
+      this._3DModel.position = this.position;
+      Controls.attach(this);
+    }else{
+      this._position.y = this.position.y
+    }
 
   }
 
@@ -283,10 +292,14 @@ class Fixture extends Proxify {
    * @type {Number}
    */
   set posZ(zVal) {
-    Controls.detach(this);
-    this._position.z = zVal
-    this._3DModel.position = this.position;
-    Controls.attach(this);
+    if (!isNaN(zVal)) {
+      Controls.detach(this);
+      this._position.z = zVal
+      this._3DModel.position = this.position;
+      Controls.attach(this);
+    }else{
+      this._position.z = this.position.z
+    }
 
   }
 
@@ -967,7 +980,7 @@ class Fixture extends Proxify {
       if (state && centerControls) {
         Controls.detachAll();
         Controls.attach(this);
-      }else if(!state){
+      } else if (!state) {
         Controls.detachAll();
         Controls.setFocus(false);
       }
