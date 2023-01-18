@@ -164,7 +164,7 @@ export default {
   background-color: var(--primary-dark-alt);
   background-image: linear-gradient(to right, var(--primary-dark) 0, var(--primary-dark) 1px, transparent 1px, transparent 100%),
     linear-gradient(to bottom, var(--primary-dark) 0, var(--primary-dark) 1px, transparent 1px, transparent 100%);
-  background-size: 18.9px 18.2px;
+  background-size: 19px 19px;
   cursor: pointer;
 }
 .pan_tilt:before,
@@ -172,13 +172,14 @@ export default {
   position: absolute;
   content: "";
   height: 100%;
-  width: 1px;
-  background: var(--secondary-light);
+  width: 0px;
+  border-top: 1px solid var(--secondary-light);
+  border-right: 1px solid var(--secondary-light);
   left: 50%;
 }
 .pan_tilt:after {
   top: 50%;
-  height: 1px;
+  height: 0px;
   width: 100%;
   left: 0px;
 }
