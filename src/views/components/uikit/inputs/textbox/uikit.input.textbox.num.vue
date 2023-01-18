@@ -136,6 +136,7 @@ export default {
      */
     updateValue(doEmit = true) {
       var val = parseFloat(this.content).toFixed(this.precision);
+      this.content = val;
       if (val < this.min || isNaN(val)) {
         this.content = parseFloat(this.min >= 0 ? this.min : 0).toFixed(this.precision);
       } else if (val > this.max) {

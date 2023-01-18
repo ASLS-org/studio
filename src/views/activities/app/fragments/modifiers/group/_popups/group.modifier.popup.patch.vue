@@ -80,6 +80,12 @@ export default {
      * @param {Array} fixtures array of fixture definition objects
      */
     selectFixtures(fixtures) {
+      /**
+       * Force clearing selected fixtures appearance on toggled data change
+       */
+      if (this.selectedFixtures.length) {
+        this.selectedFixtures[0].highlightSingle(false, true);
+      }
       this.selectedFixtures = fixtures.map((fixture, index) => {
         let fxt = this.$show.fixturePool.getFromId(fixture.id);
         index ? fxt.highlight(true, true) : fxt.highlightSingle(true, true);

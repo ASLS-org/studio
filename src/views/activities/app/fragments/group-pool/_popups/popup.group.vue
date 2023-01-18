@@ -2,15 +2,7 @@
   <uk-popup @submit="create()" @input="update()" v-model="state" :header="headerData">
     <uk-flex class="group_popup">
       <uk-flex>
-        <uk-list
-          class="fixture_list"
-          :items="universes.listable"
-          colored
-          toggleable
-          filterable
-          noHighlight
-          @toggle="setFixtureList"
-        />
+        <uk-list class="fixture_list" :items="universes" colored toggleable filterable noHighlight @toggle="setFixtureList" />
       </uk-flex>
       <uk-flex col>
         <uk-flex style="padding: 10px" col :gap="8">
@@ -24,7 +16,7 @@
 
 <script>
 import colorMixin from "@/views/mixins/color.mixin";
-import PopupMixin from "@/views/mixins/popup.mixin.js"
+import PopupMixin from "@/views/mixins/popup.mixin.js";
 
 export default {
   name: "ukPopupGroup",
@@ -46,18 +38,36 @@ export default {
       /**
        * Handle to show universe pool
        */
-      universes: this.$show.universePool,
+      universes: JSON.parse(JSON.stringify(this.$show.universePool.listable)),
       /**
        * List of fixtures selected for grouping
        */
-      fixtures: [],
+      selectedFixtures: [],
     };
   },
   methods: {
     /**
+     * Init popup. Automatically fetches default group name and color.
+     *
+     * @public
+     */
+    init() {
+      /**
+       * Deeply copying listable universe data.
+       * Item list would be refreshed  and untoggled on any change operation otherwise
+       * @toodo Check this weird behavior. It seems like their is a very weird issue in list reactivity/component dependency ?
+       * Anyway, it should do the job for now.
+       */
+      this.universes = JSON.parse(JSON.stringify(this.$show.universePool.listable));
+      let groupId = this.$show.groupPool.genGroupId();
+      this.name = `Group ${groupId}`;
+      this.color = this.getColorFromIndex(groupId);
+      this.selectedFixtures = [];
+    },
+    /**
      * Associates a color to the group
-     * 
-       * @public
+     *
+     * @public
      * @param {Number} colorIndex uikit color index
      */
     setGroupColor(colorIndex) {
@@ -65,49 +75,62 @@ export default {
     },
     /**
      * Fetch and the list of fixtures selected for grouping
-     * 
-       * @public
+     *
+     * @public
      * @param {Array} fixturesData array of fixture objects
      */
-    setFixtureList(fixturesData){
-      this.fixtures = fixturesData.map((fixture, index)=>{
+    setFixtureList(fixturesData) {
+      /**
+       * Force clearing selected fixtures appearance on toggled data change
+       */
+      if (this.selectedFixtures.length) {
+        this.selectedFixtures[0].highlightSingle(false, true);
+      }
+      this.selectedFixtures = fixturesData.map((fixture, index) => {
         let fxt = this.$show.fixturePool.getFromId(fixture.id);
-        index == 0 ? fxt.highlightSingle(true) : fxt.highlight(true);
+        index ? fxt.highlight(true, true) : fxt.highlightSingle(true, true);
         return fxt;
-      })
+      });
     },
     /**
      * Create new group
-     * 
-       * @public
+     *
+     * @public
      */
     create() {
       let group = this.$show.groupPool.addRaw({
         color: this.color,
-        name: this.name
-      })
-      this.fixtures.forEach(fixture=>{
+        name: this.name,
+      });
+      this.selectedFixtures.forEach((fixture) => {
         group.addFixture(fixture);
-      })
+      });
       this.$emit("create", group);
       this.close();
-    }
+    },
+    /**
+     * Deinit popup and environment. unselects and unhighlights all selected fixtures.
+     * @public
+     */
+    deinit() {
+      if (this.selectedFixtures.length) {
+        this.selectedFixtures[0].highlightSingle(false, true);
+      }
+    },
   },
   watch: {
     value(state) {
-      this.universe = this.$show.universePool;
-      let groupId = this.$show.groupPool.genGroupId()
-      this.name = `Group ${groupId}`;
-      this.color = this.getColorFromIndex(groupId);
-      this.fixtures = [];
-      this.state = state;
-    }
+      if (state) {
+        this.init();
+      } else {
+        this.deinit();
+      }
+    },
   },
 };
 </script>
 
 <style scoped>
-
 .group_popup {
   display: flex;
   flex-direction: row !important;
@@ -130,8 +153,8 @@ export default {
 .field_label {
   margin-bottom: 8px;
 }
-.form_validation{
-  width:100%;
+.form_validation {
+  width: 100%;
   padding: 8px;
   border-top: 1px solid var(--primary-dark);
 }
