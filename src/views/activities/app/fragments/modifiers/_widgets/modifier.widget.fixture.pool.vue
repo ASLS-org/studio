@@ -8,7 +8,7 @@
       auto-select-first
       :auto-select="autoSelect"
       v-if="pool"
-      :items="pool.listable"
+      :items="poolListable"
       :preventUnfocus="preventUnfocus"
       @select="selectFixture"
       @delete="deleteFixtures"
@@ -34,6 +34,10 @@ export default {
      * Handle to fixture pool
      */
     pool: Object,
+    /**
+     * 
+     */
+    // poolListable: Array,
     /**
      * Action description object
      */
@@ -120,6 +124,11 @@ export default {
     reorderFixtures(reorderData) {
       this.pool.moveItem(reorderData.original, reorderData.final);
     },
+  },
+  computed:{
+    poolListable(){
+      return JSON.parse(JSON.stringify(this.pool.listable))
+    }
   },
   mounted() {
     let visualizerEl = document.getElementById("visualizer");
