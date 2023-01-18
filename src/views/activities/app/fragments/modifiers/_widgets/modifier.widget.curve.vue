@@ -238,7 +238,7 @@ export default {
   background-color: var(--primary-dark-alt);
   background-image: linear-gradient(to right, var(--primary-dark) 0, var(--primary-dark) 1px, transparent 1px, transparent 100%),
     linear-gradient(to bottom, var(--primary-dark) 0, var(--primary-dark) 1px, transparent 1px, transparent 100%);
-  background-size: 19px 18.5px;
+  background-size: 19px 19px;
 }
 .widget_curve_modifier_canvas {
   width: 190px !important;
