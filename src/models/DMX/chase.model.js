@@ -219,6 +219,7 @@ class Chase extends Proxify {
       this.animationId = Live.add(this.update.bind(this), this.quantize);
     } else if (this.animationId != null) {
       this.elapsed = 0;
+      this.cues.forEach(cueItemPool => {cueItemPool.cue.state = 0})
       Live.remove(this.animationId);
       this.onEnd();
       this.animationId = null;
@@ -251,13 +252,13 @@ class Chase extends Proxify {
     }
     this.elapsed = t;
     this.cues.forEach(cueItemPool => {
-      // cueItemPool.cue.state = 0;
       cueItemPool.items.forEach(item => {
+        console.log(item)
         if (t >= item.tick * this.tickDuration && t <= (item.tick + item.length) * this.tickDuration) {
-          // cueItemPool.cue.state = 1;
           cueItemPool.cue.update(t - (item.tick * this.tickDuration));
         }else{
-          cueItemPool.cue.state = 0;
+          // item.state = 0;
+          // cueItemPool.cue.state = 0;
         }
       })
     })
