@@ -628,15 +628,15 @@ class FXChannel extends Proxify {
     activeFixtures.forEach((fixture, index) => {
       switch (this.direction) {
         case FX_CHANNEL_DIRECTIONS.LTR:
-          fixture.phase = (this.fixturePhaseStop - this.fixturePhaseStart) * (index / activeFixtures.length) * (Math.PI / 180);
+          fixture.phase = (this.fixturePhaseStop - this.fixturePhaseStart) * (index / activeFixtures.length) * (Math.PI / 180) + this.fixturePhaseStart * (Math.PI / 180);
           break;
         case FX_CHANNEL_DIRECTIONS.RTL:
-          fixture.phase = -(this.fixturePhaseStop - this.fixturePhaseStart) * (index / activeFixtures.length) * (Math.PI / 180);
+          fixture.phase = -(this.fixturePhaseStop - this.fixturePhaseStart) * (index / activeFixtures.length) * (Math.PI / 180) + this.fixturePhaseStart * (Math.PI / 180);
           break;
         case FX_CHANNEL_DIRECTIONS.SYM:
           fixture.phase = (index < (activeFixtures.length - 1) / 2 ?
-            (this.fixturePhaseStop - this.fixturePhaseStart) * index * (Math.PI / 180) :
-            (this.fixturePhaseStop - this.fixturePhaseStart) * ((activeFixtures.length - 1) - index) * (Math.PI / 180))
+            (this.fixturePhaseStop - this.fixturePhaseStart) * index * (Math.PI / 180) + this.fixturePhaseStart * (Math.PI / 180) :
+            (this.fixturePhaseStop - this.fixturePhaseStart) * ((activeFixtures.length - 1) - index) * (Math.PI / 180)) + this.fixturePhaseStart * (Math.PI / 180)
           // fixture.phase = (this.fixturePhaseStop - this.fixturePhaseStart) * (index / activeFixtures.length) * (Math.PI / 180) - ((this.fixturePhaseStop - this.fixturePhaseStart)) * (Math.PI / 180) * 0.5 
           // fixture.phase = (this.fixturePhaseStop - this.fixturePhaseStart) * ((index % (activeFixtures.length - 1) / 2) / ((activeFixtures.length - 1) / 2)) * (Math.PI / 180) * (index < (activeFixtures.length - 1)/2 ? 1 : -1);
           // fixture.phase = (this.fixturePhaseStop/2 - this.fixturePhaseStart) * (index / activeFixtures.length) * (Math.PI / 180) * index <= activeFixtures.length - 1 ? 1 : -1;
@@ -776,7 +776,7 @@ class FXChannel extends Proxify {
         //     default:
         //       phase = fixture.phase;
         //   }
-        this.fixtures[index].value = this.getValue(this.time, fixture.phase);
+        this.fixtures[index].value = this.getValue(this.time, fixture.phase) || 0;
         this.DMXData += this.fixtures[0].value;
         if (!COLOR_CHANNELS.includes(this.type)) {
           fixture.handle.setQuickAccessor({
