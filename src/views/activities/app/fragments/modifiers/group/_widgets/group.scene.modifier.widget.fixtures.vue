@@ -12,6 +12,7 @@
       class="scene_fixtures_list"
       @highlight="selectMultipleFixtures"
       @select="selectFixture"
+      @focused="setFocus"
       :items="scene.listableFixtures ? scene.listableFixtures : []"
       filterable
     />
@@ -42,36 +43,49 @@ export default {
   methods: {
     /**
      * Selects a fixture from the scene fixture list
-     * 
-       * @public
-     * @param {Object} fixtureData fixture data object 
+     *
+     * @public
+     * @param {Object} fixtureData fixture data object
      */
     selectFixture(fixtureData) {
-      this.selectedFixtureValue = [];
+      this.selectedFixtureValues = [];
       if (fixtureData) {
-        let fixtureValue = this.scene.getFixtureValueFromId(fixtureData.id);
-        if (fixtureValue) {
-          fixtureValue.fixture.highlightSingle(true);
-          this.$emit("select", [fixtureValue]);
+        this.selectedFixtureValues.push(this.scene.getFixtureValueFromId(fixtureData.id));
+        if (this.selectedFixtureValues.length) {
+          this.selectedFixtureValues[0].fixture.highlightSingle(true, true);
+          this.$emit("select", this.selectedFixtureValues);
         }
       }
     },
     /**
+     * Forwards list focus event
+     *
+     * @public
+     * @param {Boolean} state List focusing state
+     */
+    setFocus(state) {
+      if (!state) {
+        if (this.selectedFixtureValues && this.selectedFixtureValues.length) {
+          this.selectedFixtureValues[0].fixture.highlightSingle(false, true);
+        }
+      }
+      this.$emit("focused", state);
+    },
+    /**
      * Selects multiple fixtures from the scene fixture list
-     * 
-       * @public
-     * @param {Array} fixtureList list of fixture data object 
+     *
+     * @public
+     * @param {Array} fixtureList list of fixture data object
      */
     selectMultipleFixtures(fixtureList) {
-      if (fixtureList.length>1) {
-        this.$emit(
-          "select",
-          fixtureList.map((fixtureData, index) => {
-            let fixtureValue = this.scene.getFixtureValueFromId(fixtureData.id);
-            index == 0 ? fixtureValue.fixture.highlightSingle(true) : fixtureValue.fixture.highlight(true);
-            return fixtureValue;
-          })
-        );
+      if (fixtureList.length > 1) {
+        this.scene.getFixtureValueFromId(fixtureList[0].id).fixture.highlightSingle(false, true);
+        this.selectedFixtureValues = fixtureList.map((fixtureData, index) => {
+          let fixtureValue = this.scene.getFixtureValueFromId(fixtureData.id);
+          index == 0 ? fixtureValue.fixture.highlightSingle(true, true) : fixtureValue.fixture.highlight(true, true);
+          return fixtureValue;
+        });
+        this.$emit("select", this.selectedFixtureValues);
       }
     },
   },
