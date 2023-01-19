@@ -99,6 +99,7 @@ class Fade extends Proxify {
     this.type = data.type;
     this.direction = data.direction
     this.relative = false;
+    this.value = 0;
     this.t = 0;
     this.x = 0;
     this.y = 0;
