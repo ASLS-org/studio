@@ -29,7 +29,9 @@
         <canvas width="380" height="189" class="widget_wave_modifier_canvas" id="waveModifier" />
         <template v-for="(fixture, index) in channel.fixtures">
           <template v-if="channel && channel.fixtures.length">
-            <div v-if="fixture.active" class="dot" :style="getTickPosition(fixture)" :key="index" />
+            <div v-if="fixture.active" class="dot" :style="getTickPosition(fixture)" :key="index" >
+              <div class="fixture-label">F{{index}}</div>
+            </div>
           </template>
         </template>
       </div>
@@ -158,11 +160,6 @@ export default {
 </script>
 
 <style scoped>
-.widget_wave {
-  /* width: 631px;
-  min-width: 631px !important;
-  max-width: 631px !important; */
-}
 .widget_wave_body {
   height: 100%;
   width: 100%;
@@ -173,8 +170,6 @@ export default {
 .widget_wave_modifier {
   position: relative;
   top: -1px;
-  /* min-width: 628px;
-  max-width: 628px; */
   width: 380px;
   max-width: 380px;
   height: 100%;
@@ -194,12 +189,25 @@ export default {
   position: absolute;
   width: 12px;
   height: 12px;
-  left: 100px;
-  bottom: 100px;
   background: #1e45b9;
   border-radius: 50%;
-  opacity: 1;
   cursor: pointer;
+  border: 2px solid rgba(255,255,255,.2)
+}
+.dot .fixture-label {
+  font-family: roboto;
+  font-size: 12px;
+  color: var(--secondary-lighter);
+  text-align: center;
+  position: absolute;
+  top: -25px;
+  left: 50%;
+  transform: translate(-50%,0%);
+  background: inherit;
+  padding: 1px 5px;
+  border-radius: 2px;
+  opacity: inherit;
+  opacity: .8;
 }
 .dot:nth-child(even) {
   background: #bb2d98;
