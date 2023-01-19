@@ -159,9 +159,9 @@ export default {
 
 <style scoped>
 .widget_wave {
-  width: 631px;
+  /* width: 631px;
   min-width: 631px !important;
-  max-width: 631px !important;
+  max-width: 631px !important; */
 }
 .widget_wave_body {
   height: 100%;
@@ -173,8 +173,10 @@ export default {
 .widget_wave_modifier {
   position: relative;
   top: -1px;
-  min-width: 628px;
-  max-width: 628px;
+  /* min-width: 628px;
+  max-width: 628px; */
+  width: 380px;
+  max-width: 380px;
   height: 100%;
   background-color: var(--primary-dark-alt);
   background-image: linear-gradient(to right, var(--primary-dark) 0, var(--primary-dark) 1px, transparent 1px, transparent 100%),
@@ -185,6 +187,7 @@ export default {
 .widget_wave_modifier_canvas {
   position: relative;
   width: 380px !important;
+  max-width: 380px;
   height: 100% !important;
 }
 .dot {
