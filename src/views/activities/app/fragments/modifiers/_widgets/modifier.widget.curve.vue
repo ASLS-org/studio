@@ -269,6 +269,11 @@ export default {
   padding: 1px 5px;
   border-radius: 2px;
   opacity: inherit;
+  content: "CP2";
+}
+.widget_curve_cp:nth-child(2):after {
+  background: #bb2d98;
+  content: "CP1";
 }
 .widget_curve_cp:nth-child(2) {
   background: #bb2d98;
