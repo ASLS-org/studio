@@ -53,6 +53,9 @@ async function createWindow() {
     }
   })
 
+  win.maximize()
+
+
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode
     await win.loadURL(process.env.WEBPACK_DEV_SERVER_URL)
@@ -60,10 +63,11 @@ async function createWindow() {
   } else {
     createProtocol('app')
     // Load the index.html when not in development
-    win.maximize();
+    // win.maximize();
     win.loadURL('app://./index.html')
-    // win.show();
+    win.show();
   }
+
 }
 
 // Quit when all windows are closed.
