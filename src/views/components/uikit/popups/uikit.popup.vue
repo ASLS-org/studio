@@ -22,7 +22,6 @@
 <style scoped>
 .bounce-enter-active {
   animation: bounce-in 0.2s;
-  transform-origin: top;
 }
 .bounce-leave-active {
   animation: bounce-in 0.1s reverse;
@@ -30,12 +29,15 @@
 @keyframes bounce-in {
   0% {
     scale: 1;
+    opacity: 0;
   }
   50% {
-    scale: 1.05;
+    scale: 1.02;
+    opacity: .8;
   }
   100% {
     scale: 1;
+    opacity: 1
   }
 }
 </style>
@@ -278,6 +280,7 @@ export default {
   box-shadow: -2px 2px 20px 2px black;
   z-index: 200;
   height: auto;
+  transform-origin: 50% 50%;
 }
 .header {
   min-height: 30px;
