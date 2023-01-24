@@ -22,7 +22,8 @@ import AnimationManager from './animation_manager';
 import Controls from './controls'
 import MovingHead from './moving_head'
 
-require('three-orbitcontrols')
+// require('three-orbitcontrols')
+require('./orbitcontrol.zup.patch')
 require('three/examples/js/shaders/CopyShader');
 require('three/examples/js/postprocessing/EffectComposer');
 require('three/examples/js/postprocessing/RenderPass');
@@ -278,7 +279,7 @@ class Visualizer {
    */
   prepareControls() {
     this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.minDistance = 5;
+    this.controls.screenSpacePannning = false
     this.controls.minDistance = 5;
     this.controls.maxDistance = 100;
     this.controls.maxPolarAngle = Math.PI / 2.1;
