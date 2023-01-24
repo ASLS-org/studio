@@ -13,7 +13,6 @@
       <div class="uikit_list_item parent" v-for="(treeItem, index) in filteredItems" :key="index">
         <div class="uikit_list_item_unfoldable" v-if="treeItem.value.unfold">
           <uk-list-item :colored="colored" :index="index" :item="treeItem" @click.native="unfold(treeItem)" />
-          <Transition name="fade">
             <span v-if="treeItem.unfolded">
               <template v-if="treeItem.value.unfold && treeItem.value.unfold.length">
                 <uk-list-item
@@ -41,7 +40,6 @@
                 :key="index"
               />
             </span>
-          </Transition>
         </div>
         <uk-list-item
           v-else
@@ -92,16 +90,6 @@
   </div>
 </template>
 <style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: all 0.25s;
-  max-height: 800px;
-}
-.fade-enter,
-.fade-leave-to {
-  opacity: 0;
-  max-height: 0px;
-}
 </style>
 <script>
 export default {
