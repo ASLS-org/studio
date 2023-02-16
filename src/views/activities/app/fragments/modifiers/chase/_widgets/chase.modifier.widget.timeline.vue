@@ -1,69 +1,91 @@
 <template>
   <uk-widget :disabled="!pool.cues.length" class="widget_pool_timeline" :header="header">
-    <uk-flex class="widget_pool_timeline_grid_wrapper">
-      <uk-flex col class="widget_pool_timeline_grid" ref="grid">
-        <uk-flex
-          class="widget_pool_timeline_grid_label_wrapper"
-          :style="computeRowStyle()"
-          @dblclick.native="resetZoom"
-          @mousedown.native="startZoom"
-          @mouseup.native="stopZoom"
-        >
-          <div v-show="pool.cues.length" class="widget_pool_timeline_picker" :style="computeTickStyle()" ref="picker" />
-          <uk-flex center-both class="widget_pool_timeline_fold_btn">
-            <uk-button square v-model="folded" toggleable label="fold cues" icon="hide" style="width: 100%; height: 100%" />
-          </uk-flex>
-          <div class="widget_pool_timeline_grid_label" :style="computeRowStyle()" />
+    <uk-flex col class="widget_pool_timeline_grid_wrapper">
+      <div class="widget_pool_timeline_fold_btn">
+        <uk-button style="width: 100%; height: 100%" square v-model="folded" toggleable label="fold cues" icon="hide" />
+      </div>
+      <uk-flex class="widget_pool_timeline_grid_wrapper">
+        <uk-flex col class="widget_pool_timeline_items">
           <div
-            :style="{ left: `${cellWidth * 16 * (bar - 1)}px` }"
-            class="widget_pool_timeline_grid_label_bar"
-            v-for="bar in pool.duration * 4"
-            :key="bar"
-          >
-            {{ Math.ceil((bar - 1 + 1) / 4) }}.{{ (bar - 1) % 4 }}
-          </div>
-        </uk-flex>
-        <template v-if="pool.cues.length">
-          <uk-flex
-            @dblclick.native="(e) => addCueItem(e, cueItemPool)"
-            :style="computeRowStyle()"
-            class="widget_pool_timeline_grid_row"
             v-for="(cueItemPool, cueIndex) in pool.cues"
             v-show="!folded || (folded && cueItemPool.items.length)"
             :key="cueIndex"
+            :style="{ borderColor: cueItemPool.cue.color }"
+            class="widget_pool_timeline_item"
+            :class="{ even: !(cueIndex % 2) }"
           >
-            <div :style="{ borderColor: cueItemPool.cue.color }" class="widget_pool_timeline_item" :class="{ even: !(cueIndex % 2) }">
-              <uk-icon :name="cueItemPool.cue.type ? 'waveform' : 'mixer'" class="widget_pool_timeline_item_icon" />
-              <h4 class="widget_pool_timeline_item_text">{{ cueItemPool.name }}</h4>
-            </div>
-            <div style="width: calc(100% + 130px); height: 100%; position: relative">
-              <div class="widget_pool_timeline_grid_bar" :style="computeBarStyle()" />
-              <div
-                @dblclick.stop
-                :ref="`cue-${cueIndex}-${itemIndex}`"
-                v-for="(cueItem, itemIndex) in cueItemPool.items"
-                :key="itemIndex"
-                class="widget_pool_timeline_item_cue"
-                :style="computeCueStyling(cueItem)"
-              >
-                <div
-                  @contextmenu.prevent="deleteCue(cueItemPool, cueItem)"
-                  class="widget_pool_timeline_item_cue_body"
-                  @mousedown="(e) => startDragCue(e, `cue-${cueIndex}-${itemIndex}`, cueItem, cueItemPool.items)"
-                  @mouseup="(e) => stopDragCue(e, `cue-${cueIndex}-${itemIndex}`, cueItem, cueItemPool.items)"
-                >
-                  <uk-icon :name="cueItemPool.cue.type ? 'waveform' : 'mixer'" class="widget_pool_timeline_item_icon" />
-                  <h4 class="widget_pool_timeline_item_cue_text">{{ cueItem.name }}</h4>
-                </div>
-                <div
-                  class="widget_pool_timeline_item_cue_resize"
-                  @mousedown="(e) => startResizeCue(e, `cue-${cueIndex}-${itemIndex}`, cueItem, cueItemPool.items)"
-                  @mouseup="(e) => stopResizeCue(e, `cue-${cueIndex}-${itemIndex}`, cueItem, cueItemPool.items)"
-                />
-              </div>
+            <uk-icon :name="cueItemPool.cue.type ? 'waveform' : 'mixer'" class="widget_pool_timeline_item_icon" />
+            <h4 class="widget_pool_timeline_item_text">{{ cueItemPool.name }}</h4>
+          </div>
+        </uk-flex>
+        <div class="widget_pool_timeline_duration_floater">
+          <div class="widget_pool_timeline_duration_overflow_overlay" :style="computeDurationOverflowOverlayStyle()" />
+          <div class="widget_pool_timeline_cursor" :style="computeCursorStyle()" />
+        </div>
+        <uk-flex style="height: fit-content; min-height: 100%" col>
+          <uk-flex
+            class="widget_pool_timeline_grid_label_wrapper"
+            :style="computeRowStyle()"
+            @dblclick.native="resetZoom"
+            @mousedown.native="startZoom"
+            @mouseup.native="stopZoom"
+          >
+            <div
+              class="widget_pool_timeline_grid_label"
+              @dblclick.native="resetZoom"
+              @mousedown.native="startZoom"
+              @mouseup.native="stopZoom"
+              :style="computeRowStyle()"
+            />
+            <div
+              :style="{ left: `${cellWidth * 16 * (bar - 1)}px` }"
+              class="widget_pool_timeline_grid_label_bar"
+              v-for="bar in pool.actualDuration * 4"
+              :key="bar"
+            >
+              {{ Math.ceil((bar - 1 + 1) / 4) }}.{{ (bar - 1) % 4 }}
             </div>
           </uk-flex>
-        </template>
+          <uk-flex col ref="grid" style="flex: 1">
+            <!-- <div class="widget_pool_timeline_duration_overflow_overlay" :style="computeDurationOverflowOverlayStyle()" />
+            <div class="widget_pool_timeline_cursor" :style="computeCursorStyle()" /> -->
+            <uk-flex
+              @dblclick.native="(e) => addCueItem(e, cueItemPool)"
+              :style="computeRowStyle()"
+              class="widget_pool_timeline_grid_row"
+              v-for="(cueItemPool, cueIndex) in pool.cues"
+              v-show="!folded || (folded && cueItemPool.items.length)"
+              :key="cueIndex"
+              ref="grid"
+            >
+              <div style="width: 100%; position: relative; min-height: 1%">
+                <div
+                  @dblclick.stop
+                  :ref="`cue-${cueIndex}-${itemIndex}`"
+                  v-for="(cueItem, itemIndex) in cueItemPool.items"
+                  :key="itemIndex"
+                  class="widget_pool_timeline_item_cue"
+                  :style="computeCueStyle(cueItem)"
+                >
+                  <div
+                    @contextmenu.prevent="deleteCueItem(cueItemPool, cueItem)"
+                    class="widget_pool_timeline_item_cue_body"
+                    @mousedown="(e) => startDragCue(e, `cue-${cueIndex}-${itemIndex}`, cueItem, cueItemPool.items)"
+                    @mouseup="(e) => stopDragCue(e, `cue-${cueIndex}-${itemIndex}`, cueItem, cueItemPool.items)"
+                  >
+                    <uk-icon :name="cueItemPool.cue.type ? 'waveform' : 'mixer'" class="widget_pool_timeline_item_icon" />
+                    <h4 class="widget_pool_timeline_item_cue_text">{{ cueItem.name }}</h4>
+                  </div>
+                  <div
+                    class="widget_pool_timeline_item_cue_resize"
+                    @mousedown="(e) => startResizeCue(e, `cue-${cueIndex}-${itemIndex}`, cueItem, cueItemPool.items)"
+                    @mouseup="(e) => stopResizeCue(e, `cue-${cueIndex}-${itemIndex}`, cueItem, cueItemPool.items)"
+                  />
+                </div>
+              </div>
+            </uk-flex>
+          </uk-flex>
+        </uk-flex>
       </uk-flex>
     </uk-flex>
   </uk-widget>
@@ -106,11 +128,6 @@ export default {
        */
       zoomStart: 0,
       /**
-       * String used for filtering cues
-       * @todo implement cue search
-       */
-      searchString: "",
-      /**
        * Reference to the chase's ellapsed time
        */
       elapsed: this.pool.elapsedPerc,
@@ -128,11 +145,11 @@ export default {
     /**
      * Computes a cue item's position, width and color
      *
-       * @public
+     * @public
      * @param {Object} cue handle to cue item
      * @returns {Object} css left position, width and background color
      */
-    computeCueStyling(cue) {
+    computeCueStyle(cue) {
       return {
         left: `${cue.tick * this.cellWidth}px`,
         width: `${cue.length * this.cellWidth - 1}px`,
@@ -142,18 +159,18 @@ export default {
     /**
      * Computes row width and cell grid size based on duratio and zoom amount
      *
-       * @public
+     * @public
      * @returns {Object} css background size and width
      */
     computeRowStyle() {
       let minCellWidth = 10;
       let cellWidth = minCellWidth + this.zoom * minCellWidth;
-      let containerWidth = cellWidth * this.pool.barSubDiv * this.pool.duration + 130;
+      let containerWidth = cellWidth * this.pool.barSubDiv * this.pool.actualDuration + 0;
       if (this.$el && containerWidth < this.$el.offsetWidth) {
-        minCellWidth = this.$el.offsetWidth / (this.pool.barSubDiv * this.pool.duration);
+        minCellWidth = (this.$el.offsetWidth - 0) / (this.pool.barSubDiv * this.pool.actualDuration);
       }
       this.cellWidth = Math.round(Math.max(cellWidth, minCellWidth));
-      containerWidth = this.cellWidth * this.pool.barSubDiv * this.pool.duration + 130;
+      containerWidth = this.cellWidth * this.pool.barSubDiv * this.pool.actualDuration + 0;
       this.containerWidth = containerWidth;
       return {
         backgroundSize: `${this.cellWidth}px`,
@@ -163,7 +180,7 @@ export default {
     /**
      * Computes timeline's row cell width styling
      *
-       * @public
+     * @public
      */
     computeBarStyle() {
       return {
@@ -171,21 +188,31 @@ export default {
       };
     },
     /**
-     * Computes timeline's picker position
+     * Computes timeline's cursor position
      *
-       * @todo rename this so it's clearer ?
      * @public
      * @returns {Object} css left position styling
      */
-    computeTickStyle() {
+    computeCursorStyle() {
       return {
-        left: this.pool.elapsedPerc * (this.pool.duration * this.cellWidth * this.pool.barSubDiv) + 130 + "px",
+        left: this.pool.elapsedPerc * (this.pool.duration * this.cellWidth * this.pool.barSubDiv) + 0 + "px",
+      };
+    },
+    /**
+     * Computes duration overflow overlay width and position
+     *
+     * @public
+     */
+    computeDurationOverflowOverlayStyle() {
+      return {
+        left: `${this.cellWidth * 16 * (this.pool.duration * 4) + 0}px`,
+        width: `${this.cellWidth * 16 * (this.pool.actualDuration - this.pool.duration) * 4}px`,
       };
     },
     /**
      * Resets timeline zoom value to zero
      *
-       * @public
+     * @public
      */
     resetZoom() {
       this.zoom = 0;
@@ -193,20 +220,23 @@ export default {
     /**
      * Initiates zooming procedure
      *
-       * @public
+     * @public
      * @param {Object} e mousedown event
      */
     startZoom(e) {
+      if (e.detail == 2) {
+        this.resetZoom();
+      }
+      this.$utils.setCapture(e.currentTarget, "row-resize");
       this.moveStart = e.clientY;
       this.zoomStart = this.zoom;
       window.addEventListener("mousemove", this.handleZoom);
       window.addEventListener("mouseup", this.stopZoom);
-      document.body.style.cursor = "none";
     },
     /**
      * Handles zooming procedure
      *
-       * @public
+     * @public
      * @param {Object} e mousemove event
      */
     handleZoom(e) {
@@ -215,27 +245,26 @@ export default {
     /**
      * Terminates zooming procedure
      *
-       * @public
+     * @public
      */
     stopZoom() {
       window.removeEventListener("mousemove", this.handleZoom);
       window.removeEventListener("mouseup", this.stopZoom);
-      document.body.style.cursor = "default";
     },
     /**
      * Deletes a cue item from the selected chase's cue item pool
      *
-       * @public
+     * @public
      * @param {Object} cueItemPool handle to cue item pool
      * @param {Object} cueItem handle to cue item to be deleted
      */
-    deleteCue(cueItemPool, cueItem) {
+    deleteCueItem(cueItemPool, cueItem) {
       cueItemPool.delete(cueItem);
     },
     /**
      * Adds a cue item to the selected chase's cue item pool
      *
-       * @public
+     * @public
      * @param {Object} e click event
      * @param {Object} cueItemPool handle to cue item pool
      */
@@ -243,23 +272,26 @@ export default {
       let gridEl = this.$refs.grid.$el;
       let gridElBox = gridEl.getBoundingClientRect();
       let leftOffset = gridEl.scrollLeft - gridElBox.left;
-      let tick = Math.floor((e.clientX + leftOffset - 130) / this.cellWidth);
+      let tick = Math.floor((e.clientX + leftOffset) / this.cellWidth);
+      let tickDuration = cueItemPool.cue.duration * this.pool.barSubDiv;
+      tickDuration = this.doesCollide(tick, tickDuration, cueItemPool.items);
       cueItemPool.addRaw({
         tickStart: tick,
-        tickDuration: 4,
+        tickDuration: tickDuration,
         subDiv: this.pool.barSubDiv,
       });
     },
     /**
      * Cue resizing procedure initialisation
      *
-       * @public
+     * @public
      * @param {Object} e mousedown event
      * @param {String} ref cue reference string
      * @param {Object} handle handle to cue instance to be resized
      * @param {Array} neighbours list of cue items adjacent to the cue item being resized (also contains reference to resized cue item)
      */
     startResizeCue(e, ref, handle, neighbours) {
+      this.$utils.setCapture(e.currentTarget, "col-resize");
       let cueEl = this.$refs[ref][0];
       if (cueEl) {
         var ctx = {
@@ -279,7 +311,7 @@ export default {
     /**
      * Cue resizing procedure
      *
-       * @public
+     * @public
      * @param {Object} e mousemove event
      * @param {Object} ctx context object holding references necessary for resize operation
      * @param {Object} ctx.el handle to corresponding cue HTML element
@@ -290,14 +322,13 @@ export default {
      */
     resizeCue(e, ctx) {
       let moveOffset = e.clientX - ctx.moveStart;
-      let maxLength = this.pool.duration * this.pool.barSubDiv - ctx.cue.tick;
-      let length = Math.min(Math.floor(moveOffset / ctx.snapWidth), maxLength);
+      let length = Math.floor(moveOffset / ctx.snapWidth);
       ctx.cue.length = Math.max(this.computeCueResizeCollision(length, ctx.cue, ctx.neighbours) || length, 0);
     },
     /**
      * Terminates resizing procedure
      *
-       * @public
+     * @public
      */
     stopResizeCue() {
       window.removeEventListener("mousemove", this.resizeCue);
@@ -305,13 +336,14 @@ export default {
     /**
      * Cue dragging procedure initialisation
      *
-       * @public
+     * @public
      * @param {Object} e mousedown event
      * @param {String} ref cue reference string
      * @param {Object} handle handle to cue instance to be resized
      * @param {Array} neighbours list of cue items adjacent to the cue item being resized (also contains reference to resized cue item)
      */
     startDragCue(e, ref, handle, neighbours) {
+      // this.$utils.setCapture(e.currentTarget, "grab");
       let cueEl = this.$refs[ref][0];
       var ctx = {
         el: cueEl,
@@ -329,7 +361,7 @@ export default {
     /**
      * Cue dragging procedure
      *
-       * @public
+     * @public
      * @todo It seems to work fine, however, a recursion problem seems to be occuring when dealing with many neighbours
      * @param {Object} e mousemove event
      * @param {Object} ctx context object holding references necessary for drag operation
@@ -341,15 +373,14 @@ export default {
      */
     dragCue(e, ctx) {
       let moveOffset = e.clientX - ctx.startX;
-      let maxTick = this.pool.duration * this.pool.barSubDiv;
-      let tick = Math.min(Math.floor(moveOffset / ctx.snapWidth), maxTick - ctx.cue.length);
+      let tick = Math.floor(moveOffset / ctx.snapWidth);
       tick = Math.max(this.computeCuePositionCollision(tick, ctx.cue.length, ctx.cue, ctx.neighbours), 0);
       ctx.cue.tick = Math.max(this.computeCuePositionCollision(tick, ctx.cue.length, ctx.cue, ctx.neighbours) || tick, 0);
     },
     /**
      * Terminates dragging procedure
      *
-       * @public
+     * @public
      */
     stopDragCue() {
       window.removeEventListener("mousemove", this.drag);
@@ -358,7 +389,7 @@ export default {
      * Computes cue items position collisions recursively and returns currently available tick position.
      * Tick value will be locked to current value in case of collision.
      *
-       * @public
+     * @public
      * @param {Number} tick tick number to which the cue item should be moved
      * @param {Number} length width of the cue item being moved
      * @param {Number} cue handle to cue item instance being moved
@@ -386,7 +417,7 @@ export default {
      * Computes cue items position collisions recursively and returns currently available tick position.
      * Tick value will be locked to current value in case of collision.
      *
-       * @public
+     * @public
      * @param {Number} length width of the cue item being resized
      * @param {Number} cue handle to cue item instance being resized
      * @param {Object} neighbours list of cue items adjacent to the cue item being resized (also contains reference to resized cue item)
@@ -395,6 +426,24 @@ export default {
     computeCueResizeCollision(length, cue, neighbours) {
       let max = Math.min(...neighbours.filter((nCue) => nCue.tick >= cue.tick + cue.length).map((c) => c.tick - cue.tick));
       return Math.min(length, max);
+    },
+    /**
+     * Determines whether or not a cue item at position "tick" of a length "length" collides with any neightbouring cue item.
+     *
+     * @public
+     * @param {Number} tick cue item's starting tick position
+     * @param {Number} length cue item's length in ticks
+     * @param {Object} neighbours list of cue items adjacent to the cue item being resized (also contains reference to resized cue item)
+     * @returns {Boolean} Whether the cue item is colliding or not
+     */
+    doesCollide(tick, length, neighbours) {
+      for (let i = 0; i < neighbours.length; i++) {
+        let neighbour = neighbours[i];
+        if (neighbour.tick < tick + length && tick <= neighbour.tick + neighbour.length) {
+          return neighbour.tick - tick;
+        }
+      }
+      return length;
     },
   },
   mounted() {
@@ -410,6 +459,10 @@ export default {
       this.resetZoom();
       this.computeRowStyle();
     },
+    "pool.actualDuration"() {
+      this.resetZoom();
+      this.computeRowStyle();
+    },
   },
 };
 </script>
@@ -417,27 +470,36 @@ export default {
 <style scoped>
 .widget_pool_timeline {
   width: 100%;
+  position: relative;
 }
 .widget_pool_timeline_grid_wrapper {
   position: relative;
   height: 100%;
   width: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: auto;
+  background: var(--primary-light);
+}
+.widget_pool_timeline_grid_wrapper:nth-child(1){
+  overflow: hidden;
 }
 .widget_pool_timeline_items {
   display: flex;
-  background: var(--secondary-darker);
+  z-index: 10;
+  background: var(--primary-light);
   min-width: 130px;
   max-width: 130px;
-  overflow: hidden;
-  height: 100%;
   flex-direction: column;
+  border-right: 1px solid var(--primary-dark);
+  position: sticky;
+  left: 0px;
+  padding-top: 25px;
+  height: fit-content;
+  min-height: 100%;
 }
 .widget_pool_timeline_item {
   display: flex;
   align-items: center;
-  height: 100%;
+  flex: 1;
   background: var(--primary-light);
   box-sizing: border-box;
   padding: 0 8px;
@@ -447,10 +509,12 @@ export default {
   overflow: hidden;
   min-width: 130px;
   max-width: 130px;
+  min-height: 32px;
   position: sticky;
   left: 0px;
   z-index: 10;
   border-right: 1px solid var(--primary-dark) !important;
+  border-bottom: 1px solid var(--primary-dark) !important;
 }
 .disabled .widget_pool_timeline_item {
   border-left-color: var(--secondary-light);
@@ -472,17 +536,17 @@ export default {
   background: var(--primary-light);
   width: 100%;
   height: 100%;
-  overflow: auto;
 }
-.widget_pool_timeline_picker {
+.widget_pool_timeline_cursor {
   width: 2px;
   background: rgba(227, 26, 26, 0.7);
-  z-index: 20;
+  z-index: 0;
   position: absolute;
-  height: 168px;
-  margin-top: 15px;
+  height: 176px;
+  margin-top: 12px;
+  z-index: 30;
 }
-.widget_pool_timeline_picker:before {
+.widget_pool_timeline_cursor:before {
   position: absolute;
   content: "";
   width: 10px;
@@ -493,31 +557,27 @@ export default {
   margin-left: -4px;
   cursor: pointer;
 }
-.widget_pool_timeline_picker:active:before {
+.widget_pool_timeline_cursor:active:before {
   cursor: move !important;
 }
 .widget_pool_timeline_grid_row {
-  position: sticky;
-  top: 0px;
-  min-height: 30px;
   border-bottom: 1px solid var(--primary-dark);
   background: var(--secondary-darker);
   background-image: linear-gradient(to right, var(--primary-dark) 0, var(--primary-dark) 1px, transparent 1px, transparent 100%) !important;
   background-size: 10px 100%;
-  background-position: 130px !important;
+  background-position: 0px !important;
   min-width: 100%;
+  min-height: 32px;
+  flex: 1;
 }
 .widget_pool_timeline_grid_label {
   position: absolute;
   min-height: 12px !important;
   height: 12px;
   top: 12px;
-  background-position: 130px !important;
+  background-position: 0px !important;
   background-image: linear-gradient(to right, var(--secondary-dark) 0, var(--secondary-dark) 1px, transparent 1px, transparent 100%) !important;
   z-index: 0;
-}
-.widget_pool_timeline_grid_row {
-  height: 100%;
 }
 .widget_pool_timeline_grid_row:nth-child(odd) {
   background: var(--primary-light-alt);
@@ -553,11 +613,6 @@ export default {
   flex: 1;
   background: var(--primary-lighter-alt);
   border-left: 1px solid var(--primary-dark);
-}
-.widget_pool_timeline_grid_column_simple {
-  width: 100%;
-  min-width: 100px;
-  height: 100%;
 }
 .widget_pool_timeline_grid_row:nth-child(odd) .widget_pool_timeline_grid_column {
   border-left: 1px solid var(--primary-light);
@@ -605,9 +660,10 @@ export default {
 }
 .widget_pool_timeline_grid_bar {
   position: absolute;
+  display: none;
   height: 100%;
   background-image: linear-gradient(to right, var(--secondary-light) 0, var(--secondary-light) 1px, transparent 1px, transparent 100%) !important;
-  z-index: 0;
+  z-index: 100;
   width: 100%;
   pointer-events: none;
 }
@@ -616,18 +672,24 @@ export default {
   color: var(--secondary-lighter);
   font-size: 12px;
   position: absolute;
-  height: 100%;
+  height: 189px;
   padding: 2px 8px;
   border-left: 1px solid var(--secondary-light);
-  margin-left: 130px;
+  z-index: -1;
+  pointer-events: none;
 }
 .widget_pool_timeline_fold_btn {
   min-width: 130px;
   max-width: 130px;
-  position: sticky;
+  height: 25px;
+  position: absolute;
+  opacity: 1 !important;
+  top: 0px;
   left: 0px;
   z-index: 10;
   background: var(--primary-lighter-alt);
+  border-bottom: 1px solid var(--primary-dark);
+  border-right: 1px solid var(--primary-dark);
 }
 .widget_pool_timeline_grid_label_wrapper {
   position: sticky;
@@ -639,5 +701,38 @@ export default {
   cursor: -moz-zoom-in;
   cursor: -webkit-zoom-in;
   cursor: zoom-in;
+}
+.widget_pool_timeline_grid_label_wrapper:active {
+  cursor: row-resize;
+}
+.widget_pool_timeline_duration_overflow_overlay:before {
+  position: absolute;
+  content: "";
+  width: 10px;
+  height: 10px;
+  z-index: 10;
+  transform: rotate(45deg);
+  background: rgba(231, 231, 231, 0.281);
+  margin-left: -6px;
+  top: 2px;
+  cursor: pointer;
+}
+.widget_pool_timeline_duration_overflow_overlay {
+  height: 100%;
+  background: #0c0e0a7c;
+  mix-blend-mode: hard-light;
+  position: absolute;
+  top: 0px;
+  z-index: 30;
+  cursor: unset !important;
+  pointer-events: none;
+  border-left: 1px dashed rgba(231, 231, 231, 0.281);
+}
+.widget_pool_timeline_duration_floater{
+  position: sticky;
+  top:0px;
+  height: 100%;
+  width: 100%;
+  z-index: 5;
 }
 </style>

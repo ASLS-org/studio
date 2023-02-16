@@ -1,5 +1,5 @@
 'use strict'
-import {Proxify} from '../utils/proxyfy.utils.model';
+import {Proxify} from '../utils/proxify.utils';
 import Fixture from './fixture.model'
 
 /**

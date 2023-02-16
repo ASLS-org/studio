@@ -2,7 +2,7 @@
 
 import Live from './live.model'
 import ukColors from '@/views/components/uikit/colors/uikit.colors.js'
-import {Proxify} from '@/models/utils/proxyfy.utils.model.js'
+import {Proxify} from '../utils/proxify.utils.js'
 
 /**
  * Cue types enumeration

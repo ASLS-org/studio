@@ -2,7 +2,7 @@
 
 import {
   Proxify
-} from '@/models/utils/proxyfy.utils.model.js'
+} from '../utils/proxify.utils.js'
 import Live from './live.model';
 import CueItemPool from './cue.item.pool.model';
 import ukColors from '@/views/components/uikit/colors/uikit.colors.js'
@@ -77,6 +77,7 @@ class Chase extends Proxify {
     this.elapsed = 0;
     this._cues = [];
     this.state = CHASE_STATES.STOPPED;
+    // this.actualDuration = 0;
     this.proxify(['elapsed', 'animationId', 'deltaStart']);
     this.cues = data.cues;
     this.deltaStart = null;
@@ -99,6 +100,7 @@ class Chase extends Proxify {
    */
   set duration(duration) {
     this._duration = duration != null ? duration : DEFAULT_CHASE_DATA.DURATION;
+    // this.actualDuration = Math.ceil(Math.max(...this.cues.map(cue => cue.duration), this.duration * this.barSubDiv) / this.barSubDiv);
   }
 
   /**
@@ -137,6 +139,10 @@ class Chase extends Proxify {
 
   get cues() {
     return this._cues || [];
+  }
+
+  get actualDuration(){
+    return Math.ceil(Math.max(...this.cues.map(cue => cue.duration), (this.duration+1) * this.barSubDiv) / this.barSubDiv);
   }
 
   /**
@@ -242,11 +248,9 @@ class Chase extends Proxify {
     }
     let t = time - this.deltaStart;
     if (t >= this.durationMSec) {
-      let drift = (time - this.deltaStart) - this.durationMSec;
       switch (this.trigger) {
         case CHASE_TRIGGER_STYLES.LOOP:
-          this.deltaStart = time - drift;
-          t = time - this.deltaStart;
+          this.deltaStart = time;
           break;
         case CHASE_TRIGGER_STYLES.ONE_SHOT:
           this.cue(false);
@@ -290,9 +294,11 @@ class Chase extends Proxify {
    * @param {Object} cue
    */
   addCue(data) {
-    data = data instanceof Cue ? {
-      cue: data
-    } : data
+    if (data instanceof Cue) {
+      data = {
+        cue: data
+      }
+    }
     let cueItemPool = this.cues.find(cueItemPool => cueItemPool.cue.id === data.cue.id)
     if (!cueItemPool) {
       cueItemPool = new CueItemPool(data);
@@ -310,6 +316,7 @@ class Chase extends Proxify {
     let cueItemPoolIndex = this.cues.findIndex(cueItemPool => cueItemPool.cue.id === cueItemData.id);
     this.cues[cueItemPoolIndex].clearAll();
     this.cues.spliceAndStackUndo(cueItemPoolIndex, 1);
+    // this.actualDuration = Math.ceil(Math.max(...this.cues.map(cue => cue.duration), this.duration * this.barSubDiv) / this.barSubDiv);
   }
 
   /**

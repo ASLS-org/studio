@@ -636,7 +636,6 @@ export default {
   mounted() {
     this.selectedItem = [];
     this.updateTree(this.items);
-    console.log(this.tree);
     if (this.autoSelectFirst && this.tree[0]) {
       this.selectItem(undefined, this.tree[0]);
       this.clearHighlighted(true);

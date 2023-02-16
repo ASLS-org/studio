@@ -13,8 +13,8 @@
     </uk-flex>
     <div class="widget_curve_modifier">
       <canvas width="190" height="189" class="widget_curve_modifier_canvas" ref="curveModifier" />
-      <div @mousedown="startDragCp(0)" @mouseup="stopDragCp()" :style="cp1Style" class="widget_curve_cp" id="cp1" ref="cp1" />
-      <div @mousedown="startDragCp(1)" @mouseup="stopDragCp()" :style="cp2Style" class="widget_curve_cp" id="cp2" ref="cp2" />
+      <div @mousedown="(e)=>{startDragCp(e, 0)}" @mouseup="stopDragCp" :style="cp1Style" class="widget_curve_cp" id="cp1" ref="cp1" />
+      <div @mousedown="(e)=>{startDragCp(e, 1)}" @mouseup="stopDragCp" :style="cp2Style" class="widget_curve_cp" id="cp2" ref="cp2" />
       <div :style="cp3Style" class="widget_curve_picker" />
     </div>
   </uk-widget>
@@ -110,7 +110,8 @@ export default {
        * @public
      * @param {Number} controlPointId control point ID
      */
-    startDragCp(controlPointId) {
+    startDragCp(e, controlPointId) {
+      this.$utils.setCapture(e.currentTarget, "move");
       this.dragListener = (dragEvent) => {
         this.dragCp(dragEvent, controlPointId);
       };

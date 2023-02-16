@@ -1,6 +1,6 @@
 'use strict'
 
-import {Proxify} from '@/models/utils/proxyfy.utils.model.js'
+import {Proxify} from '../utils/proxify.utils.js'
 import Effect from './effect.model'
 import Scene from './scene.model'
 

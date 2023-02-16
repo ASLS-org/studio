@@ -85,6 +85,7 @@ export default {
       });
     },
     startDrag(e) {
+      this.$utils.setCapture(e.currentTarget, "move");
       this.dragging = true;
       var self = this;
       window.addEventListener("mousemove", self.drag);

@@ -3,6 +3,7 @@ import router from './plugins/router';
 import App from './App.vue';
 import axios from 'axios';
 import uikit from '@/views/components/uikit'
+import utils from '@/views/utils'
 import EventBus from '@/plugins/eventbus'
 import '@/assets/styles/global.css'
 import '@/assets/styles/fonts.css'
@@ -21,7 +22,8 @@ function registerComponents(components) {
 
 try {
   Vue.prototype.$show = ShowSingleton;
-  Vue.prototype.$http = axios
+  Vue.prototype.$http = axios;
+  Vue.prototype.$utils = utils;
   Vue.config.productionTip = false
   Vue.config.errorHandler = (err) => {
     console.log(err);
