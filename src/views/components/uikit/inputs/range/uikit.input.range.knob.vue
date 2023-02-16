@@ -1,14 +1,11 @@
 <template>
-  <div @dblclick="value = max" class="uikit_knob_wrapper" :class="{ disabled: disabled }">
+  <div class="uikit_knob_wrapper" :class="{ disabled: disabled }">
     <h4 v-if="label" class="uikit_knob_label">{{ label }}</h4>
     <div class="uikit_knob" @mousedown="startDrag" @mouseup="stopDrag">
       <svg style="position: absolute; height: 100%; width: 100%">
         <path ref="outline" fill="none" stroke="var(--primary-dark)" stroke-width="4" />
         <path ref="fill" fill="none" :stroke="color" stroke-width="4" />
       </svg>
-      <!-- <svg class="perc" :style="outlineStyling">
-        <circle cx="23" cy="23" r="21" />
-      </svg> -->
       <div ref="knob" class="uikit_knob_inside" :style="insideStyling">
         <span style="flex: 1" />
         <span class="uikit_knob_inside_tick" />
@@ -30,7 +27,10 @@ export default {
     /**
      * Actual knob value
      */
-    value: Number,
+    value: {
+      type: Number,
+      default: 0,
+    },
     /**
      * The knob's minimum value
      */
@@ -92,14 +92,13 @@ export default {
      */
     insideStyling() {
       return {
-        transform: `rotate(${Math.min(Math.max(Math.floor((this.value / this.max) * 360), 30), 330)}deg)`,
+        transform: `rotate(${Math.floor((this.value / this.max) * 300 + 30)}deg)`,
       };
     },
   },
   methods: {
     polarToCartesian(centerX, centerY, radius, angleInDegrees) {
-      var angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
-
+      let angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
       return {
         x: centerX + radius * Math.cos(angleInRadians),
         y: centerY + radius * Math.sin(angleInRadians),
@@ -107,20 +106,21 @@ export default {
     },
 
     describeArc(x, y, radius, startAngle, endAngle) {
-      var start = this.polarToCartesian(x, y, radius, endAngle);
-      var end = this.polarToCartesian(x, y, radius, startAngle);
-
-      var largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
-
-      var d = ["M", start.x, start.y, "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y].join(" ");
-
+      let start = this.polarToCartesian(x, y, radius, endAngle);
+      let end = this.polarToCartesian(x, y, radius, startAngle);
+      let largeArcFlag = endAngle - startAngle <= 180 ? "0" : "1";
+      let d = ["M", start.x, start.y, "A", radius, radius, 0, largeArcFlag, 0, end.x, end.y].join(" ");
       return d;
     },
     /**
      * Prepare knob's dragging.
      *
      */
-    startDrag() {
+    startDrag(e) {
+      if (e.detail == 2) {
+        this.$emit("input", 0);
+      }
+      this.$utils.setCapture(e.currentTarget, "row-resize");
       this.prev = this.value;
       window.addEventListener("mousemove", this.drag);
       window.addEventListener("mouseup", this.stopDrag);
@@ -137,14 +137,13 @@ export default {
         let posY = e.clientY;
         let d = offsetY - posY;
         let value = Math.round(Math.max(Math.min(d + this.prev, this.max), this.min));
-        this.value = value;
         this.$refs.fill.setAttribute("d", this.describeArc(25, 25, 23, -150, (value / this.max) * 300 - 150));
         /**
          * Knob's value changed
          *
          * @property {Number} val the Knob's actul value
          */
-        this.$emit("input", this.value);
+        this.$emit("input", value);
       }
     },
     /**
@@ -158,8 +157,6 @@ export default {
   mounted() {
     this.$refs.outline.setAttribute("d", this.describeArc(25, 25, 23, -150, 150));
     this.$refs.fill.setAttribute("d", this.describeArc(25, 25, 23, -150, (this.value / this.max) * 300 - 150));
-
-    // this.$refs.fill.setAttribute("d", this.describeArc(23, 23, 21, -150, 15));
   },
   watch: {
     value(val) {
@@ -188,7 +185,6 @@ export default {
   border-radius: 50%;
   align-items: center;
   justify-content: center;
-  /* background: var(--primary-dark); */
   cursor: pointer;
 }
 .uikit_knob_inside {
@@ -197,7 +193,6 @@ export default {
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  /* background: linear-gradient(180deg, #161913 0%, #343434 100%); */
   background: linear-gradient(180deg, var(--primary-light), var(--secondary-dark) 100%);
   border: 3px solid var(--primary-lighter-alt);
   align-items: center;

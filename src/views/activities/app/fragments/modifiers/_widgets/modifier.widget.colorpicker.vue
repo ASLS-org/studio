@@ -248,6 +248,7 @@ export default {
       this.setFromRgb(255 - c, 255 - m, 255 - y);
     },
     startDrag(e) {
+      this.$utils.setCapture(e.currentTarget, "move");
       this.dragging = true;
       var self = this;
       var preview = this.$refs.preview;
