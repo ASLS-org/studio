@@ -13,7 +13,7 @@ const DEFAULT_CUE_FADEIN = 0;
  */
 const DEFAULT_CUE_FADEOUT = 0;
 
-import {Proxify} from '@/models/utils/proxyfy.utils.model.js'
+import {Proxify} from '../utils/proxify.utils.js'
 
 
 /**
@@ -139,6 +139,10 @@ class CueItem extends Proxify {
 
   get tick(){
     return this._tickStart;
+  }
+
+  get tickDuration(){
+    return this._tickDuration;
   }
 
   /**

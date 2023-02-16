@@ -1,6 +1,6 @@
 'use strict'
 
-import {Proxify} from '@/models/utils/proxyfy.utils.model.js'
+import {Proxify} from '../utils/proxify.utils.js'
 import CueItem from './cue.item.model'
 
 
@@ -21,6 +21,7 @@ class CueItemPool extends Proxify  {
     super();
     this.cue = data.cue;
     this._items = [];
+    // this.duration = 0;
     this.proxify()
     this.items = data.items || [];//[];
     return this;
@@ -41,6 +42,10 @@ class CueItemPool extends Proxify  {
 
   get items(){
     return this._items || [];
+  }
+
+  get duration(){
+    return Math.max(...this.items.map(item=>item.tickDuration+item.tick),0)
   }
 
   /**
@@ -104,6 +109,7 @@ class CueItemPool extends Proxify  {
    */
   addExisting(cueItem){
     this.items.pushAndStackUndo(cueItem);
+    this.duration = Math.max(this.duration, cueItem.tickDuration+cueItem.tick)
   }
 
 
@@ -119,6 +125,7 @@ class CueItemPool extends Proxify  {
     let cueItem = new CueItem(Object.assign(cueItemData, {cue: this.cue}));
     cueItem.id = cueItemData.id != undefined ? cueItemData.id : this.genCueItemId();
     this.items.pushAndStackUndo(cueItem);
+    this.items.sort((a,b)=>a.tick - b.tick)
     return cueItem;
   }
 
