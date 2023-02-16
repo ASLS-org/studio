@@ -32,7 +32,7 @@
     />
     <pan-tilt-widget
       ref="panTiltPicker"
-      v-show="selectedFixture&& selectedFixture.hasPan && selectedFixture.hasTilt"
+      v-show="selectedFixture && selectedFixture.hasPan && selectedFixture.hasTilt"
       @input="setFixturePanTilt"
       :panTilt="selectedFixture ? selectedFixture.panTilt : undefined"
     />
@@ -100,7 +100,7 @@ export default {
     /**
      * Fetches universe data using route universe ID parameter
      *
-       * @public
+     * @public
      */
     fetchUniverseData() {
       try {
@@ -111,13 +111,13 @@ export default {
       try {
         this.selectedFixture = this.universe.fixturePool.getFromId(this.$route.query.fixtureId || 0);
       } catch (err) {
-        this.selectedFixture = null// {};
+        this.selectedFixture = null; // {};
       }
     },
     /**
      * Display the patch popup
      *
-       * @public
+     * @public
      */
     displayPatchPopup() {
       this.patchPopupDisplayState = true;
@@ -125,7 +125,7 @@ export default {
     /**
      * Selects a universe's fixture.
      *
-       * @public
+     * @public
      * @param {Number} fixtureId unique ID of the fixture to be displayed
      */
     selectFixture(fixtureId) {
@@ -138,7 +138,7 @@ export default {
             });
           }
         } catch (err) {
-          this.selectedFixture = null//{};
+          this.selectedFixture = null; //{};
         }
       }
     },
@@ -152,7 +152,7 @@ export default {
     /**
      * Sets the selected fixture channel value
      *
-       * @public
+     * @public
      * @param {Object} channel the channel to be update
      */
     setChannel(channel) {
@@ -161,7 +161,7 @@ export default {
     /**
      * Sets the selected fixture color intensity value
      *
-       * @public
+     * @public
      * @param {Array} color an array containing [R,G,B] values.
      */
     setFixtureColor(color) {
@@ -172,7 +172,7 @@ export default {
     /**
      * Sets the selected fixture pan & tilt values
      *
-       * @public
+     * @public
      * @param {Object} panTilt a panTilt object containing pan(fine)/tilt(fine) values
      * @param {Number} panTilt.pan the fixture's new pan value
      * @param {Number} panTilt.panFine the fixture's new pan fine value
@@ -187,7 +187,7 @@ export default {
     /**
      * Deletes one or many fixtures from the universe's fixture list.
      *
-       * @public
+     * @public
      * @param {Array} selectedFixtures Array of universe fixture objetcs to be deleted.
      */
     deleteFixtures(selectedFixtures) {
@@ -197,7 +197,7 @@ export default {
       if (this.universe.fixturePool.fixtures.length) {
         this.selectedFixture = this.universe.fixturePool.fixtures[0];
       } else {
-        this.selectedFixture = null//{};
+        this.selectedFixture = null; //{};
       }
       // this.selectedFixtureIndex = -1;
       this.selectedFixtureIndex = 0;
