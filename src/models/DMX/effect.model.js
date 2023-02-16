@@ -2,7 +2,7 @@
 
 import {
   Proxify
-} from '../utils/proxyfy.utils.model';
+} from '../utils/proxify.utils';
 import Cue from './cue.model.js';
 import UkColors from '@/views/components/uikit/colors/uikit.colors'
 

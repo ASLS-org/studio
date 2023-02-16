@@ -186,6 +186,11 @@ export default {
     };
   },
   methods: {
+    /**
+     * Initialise popup variables
+     * 
+     * @public
+     */
     init() {
       this.fixtures = this.prepareFixtures();
       this.fixture = JSON.parse(JSON.stringify(DEFAULT_FIXTURE_DATA));
@@ -196,6 +201,11 @@ export default {
       this.state = this.value;
       this.patchError = false;
     },
+    /**
+     * Patch selected fixture using provided form parameters.
+     * 
+     * @public
+     */
     patchFixtures() {
       if (this.fixture.loaded && !this.patchError) {
         this.loading = true;
@@ -235,6 +245,12 @@ export default {
         }
       }
     },
+    /**
+     * Loads selected fixture configuration file
+     * 
+     * @public
+     * @async
+     */
     async loadFixture(item) {
       let manufacturer = item.manufacturer;
       let fixture = item.fixture;
@@ -252,6 +268,11 @@ export default {
       this.patchError = false;
       this.autoPatch();
     },
+    /**
+     * Checks that provided patch configuration is valid
+     * 
+     * @public
+     */
     checkPatch() {
       let chCount = this.fixture.modes[this.fixture.mode].channels.length;
       if (this.universe.canPatchMany(this.chStart, chCount, this.amount)) {
@@ -263,6 +284,11 @@ export default {
         return false;
       }
     },
+    /**
+     * Automatically patches fixture within available universe address space.
+     * 
+     * @public
+     */
     autoPatch() {
       let chCount = this.fixture.modes[this.fixture.mode].channels.length;
       let chStart = this.universe.findChStartAutoPatch(chCount, this.amount);
@@ -274,6 +300,12 @@ export default {
         this.patchError = true;
       }
     },
+    /**
+     * Prepare fixture list
+     * 
+     * @todo this shouldn't be called in a watcher. it might (and does) waste event loop time.
+     * @public
+     */
     prepareFixtures() {
       return this.$show.rawOFLFixtures.map((manufacturer) => {
         return {
@@ -301,7 +333,7 @@ export default {
     },
   },
   mounted() {
-    this.prepareFixtures();
+    this.init();
   },
   watch: {
     state(state) {

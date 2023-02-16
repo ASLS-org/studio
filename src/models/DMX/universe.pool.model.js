@@ -29,7 +29,7 @@ class UniversePool{
         id: universe.id,
         name: universe.name,
         color: universe.color,
-        unfold: universe.fixturePool.listable
+        unfold: universe.fixturePool.listable,
       };
     })
   }

@@ -158,6 +158,7 @@ class Proxify {
             }, () => {
               self[key].splice(index, count);
             })
+            console.log(self[key])
             return self[key].splice(index, count);
           }
         }

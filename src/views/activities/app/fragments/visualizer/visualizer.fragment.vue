@@ -111,7 +111,7 @@ export default {
   width: 100% !important;
   outline: none;
   border-left: var(--primary-dark);
-  cursor: grab !important;
+  cursor: grab;
 }
 .visualizer.hidden {
   width: unset !important;

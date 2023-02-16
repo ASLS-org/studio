@@ -32,14 +32,14 @@
           <div
             v-for="(chase, chaseIndex) in chases"
             :key="'B' + chaseIndex"
-            @mousedown.stop="(e) => startDragChase(e, chase)"
+            @mousedown="(e) => startDragChase(e, chase)"
             @mouseup="(e) => stopDragChase(e, chase)"
             @click.stop="selectChase(chase)"
             class="uikit_chase"
             :style="{ background: chase.color, top: `${chase.id * 26}px` }"
             :class="{ playing: chase.state, selected: selectedChaseId == chase.id }"
           >
-            <div @click.stop="toggle(chase)" class="uikit_chase_btn">
+            <div @mousedown.stop @mouseup.stop @click="toggle(chase)" class="uikit_chase_btn">
               <uk-icon class="uikit_chase_icon" :name="chase.state ? 'stop' : 'play'" />
             </div>
             <div class="uikit_chase_loader" :style="{ width: chase.elapsedPerc * 100 + '%' }" />
@@ -65,7 +65,6 @@
           />
         </uk-flex>
         <uk-knob
-          @click.native.stop
           label=""
           :color="group.color || 'var(--secondary-lighter)'"
           :disabled="false"
@@ -223,8 +222,9 @@ export default {
      *
      */
     startDragChase(e, chase) {
-      document.body.style.cursor = "move";
-      let chaseEl = e.target.parentElement;
+      this.selectChase(chase);
+      let chaseEl = e.currentTarget;
+      this.$utils.setCapture(chaseEl, "grab");
       var viewportOffset = chaseEl.getBoundingClientRect();
       let ctx = {
         chase: chase,
@@ -237,7 +237,6 @@ export default {
       window.addEventListener("mousemove", dragChase);
       window.addEventListener("mouseup", () => {
         window.removeEventListener("mousemove", dragChase);
-        document.body.style.cursor = "unset";
       });
     },
     /**
@@ -246,17 +245,17 @@ export default {
      * @param {Object} e mousemove event
      */
     dragChase(e, ctx) {
-      let tick = Math.min(Math.max(Math.floor((e.clientY - ctx.startY) / 26), 0), this.poolsize - 1);
+      let tick = Math.min(Math.max(Math.floor((e.clientY - ctx.startY + 13) / 26), 0), this.poolsize - 1);
       tick = this.chases.find((chase) => chase.id === tick) ? ctx.chase.id : tick;
       ctx.chaseEl.style.top = tick * 26 + "px";
       ctx.chase.id = tick;
+      this.selectChase(ctx.chase);
     },
     /**
      * Ends chase element dragging procedure.
      *
      */
     stopDragChase() {
-      document.body.style.cursor = "unset";
       window.removeEventListener("mousemove", this.dragChase);
     },
   },
@@ -353,7 +352,6 @@ export default {
   justify-content: center;
   width: 25px;
   height: 100%;
-  cursor: pointer;
 }
 .uikit_cue_container_empty_cue_btn:hover .uikit_cue_container_empty_cue_btn_icon {
   fill: var(--secondary-light);
@@ -383,6 +381,7 @@ export default {
   border: 1px solid var(--secondary-light);
   background: var(--secondary-darker);
   opacity: 0.8;
+  cursor: pointer;
 }
 .uikit_chase.master {
   border: none !important;
@@ -398,7 +397,7 @@ export default {
   border-color: rgba(255, 255, 255, 0.4);
 }
 .uikit_chase:active {
-  cursor: move !important;
+  cursor: grab !important;
 }
 .uikit_chase_btn {
   display: flex;
@@ -428,7 +427,6 @@ export default {
   padding: 0 8px;
   width: 100%;
   height: 100%;
-  cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

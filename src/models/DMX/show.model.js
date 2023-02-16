@@ -9,7 +9,7 @@ import {
 } from 'xml2js'
 import {
   ProxifySingleton
-} from '../utils/proxyfy.utils.model';
+} from '../utils/proxify.utils';
 
 import Master from './master.model'
 import GroupPool from './group.pool.model'
@@ -38,6 +38,7 @@ var fixtureDataCache = {};
  * TODO: Refactor and document.
  *
  * @class Show
+ * @todo Refactor whole class. it's messy
  * @extends {EventEmitter}
  */
 class Show extends EventEmitter {
@@ -75,14 +76,15 @@ class Show extends EventEmitter {
       Live.add(this.dumpShowData.bind(this))
     })
     WebRTC.on("config-update", () => {
-      this.outputs = WebRTC.ifaces/*.map((output, i) => {
-        return Object.assign(output,{
-          id: i,
-          name: `${output.name} - ${output.cidr.split("/")[0]}`,
-          more: "Artnet",
-          toggled: this.selectedOutputs.name === output.name
-        });
-      });*/
+      this.outputs = WebRTC.ifaces
+      /*.map((output, i) => {
+              return Object.assign(output,{
+                id: i,
+                name: `${output.name} - ${output.cidr.split("/")[0]}`,
+                more: "Artnet",
+                toggled: this.selectedOutputs.name === output.name
+              });
+            });*/
     });
     // WebRTC.on("universeData", this.syncShowData.bind(this))
     this.universePool.addRaw();
@@ -130,26 +132,28 @@ class Show extends EventEmitter {
   }
 
   set name(name) {
-    this._name = name.replace(".json","");
+    if (name) {
+      this._name = name.replace(".json", "");
+    }
   }
 
   set state(state) {
     Live.state = state
   }
 
-  get bpm(){
+  get bpm() {
     return Live.bpm;
   }
 
-  set bpm(bpm){
+  set bpm(bpm) {
     Live.bpm = bpm;
   }
 
-  set selectedOutputs(data=[]){
+  set selectedOutputs(data = []) {
     this._selectedOutputs = data;
   }
 
-  get selectedOutputs(){
+  get selectedOutputs() {
     return this._selectedOutputs;
   }
 
@@ -171,7 +175,7 @@ class Show extends EventEmitter {
     this.emit("saveState", this.isSaved)
   }
 
-  setOutputs(outputs){
+  setOutputs(outputs) {
     WebRTC.setOutputs(outputs)
     this.selectedOutputs = outputs;
   }

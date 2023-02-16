@@ -1,7 +1,7 @@
 'use strict'
 import {
   Proxify
-} from '../utils/proxyfy.utils.model';
+} from '../utils/proxify.utils';
 import Channel from './channel.model';
 import MovingHead from '../../plugins/visualizer/moving_head'
 import Controls from '../../plugins/visualizer/controls'

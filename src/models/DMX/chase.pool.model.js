@@ -2,7 +2,7 @@
 
 import {
   Proxify
-} from '@/models/utils/proxyfy.utils.model.js'
+} from '../utils/proxify.utils.js'
 import Chase from './chase.model'
 
 /**
