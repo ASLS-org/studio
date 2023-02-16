@@ -5,8 +5,6 @@ import SceneManager from './scene_manager'
 import {
   TransformControls
 } from 'three/examples/jsm/controls/TransformControls'
-// import Fade from '../../models/DMX/fade.model'
-// import Live from '../../models/DMX/live.model'
 
 /**
  * Global position vector handle

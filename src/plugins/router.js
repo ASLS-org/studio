@@ -3,7 +3,7 @@ import VueRouter from 'vue-router'
 import ShowSingleton from '@/singletons/show.singleton'
 import {
   ProxifySingleton
-} from '@/models/utils/proxyfy.utils.model';
+} from '@/models/utils/proxify.utils';
 
 
 const AppActivity = () => import('@/views/activities/app/app.activity')
