@@ -4,7 +4,7 @@
       <div class="widget_pool_timeline_fold_btn">
         <uk-button style="width: 100%; height: 100%" square v-model="folded" toggleable label="fold cues" icon="hide" />
       </div>
-      <uk-flex class="widget_pool_timeline_grid_wrapper">
+      <uk-flex class="widget_pool_timeline_grid_wrapper" ref="scrollable">
         <uk-flex col class="widget_pool_timeline_items">
           <div
             v-for="(cueItemPool, cueIndex) in pool.cues"
@@ -32,9 +32,9 @@
           >
             <div
               class="widget_pool_timeline_grid_label"
-              @dblclick.native="resetZoom"
-              @mousedown.native="startZoom"
-              @mouseup.native="stopZoom"
+              @dblclick="resetZoom"
+              @mousedown="startZoom"
+              @mouseup="stopZoom"
               :style="computeRowStyle()"
             />
             <div
@@ -96,7 +96,7 @@
  * @todo Document this
  */
 export default {
-  name: "chsaeModifierWidgetpoolTimeline",
+  name: "chaseModifierWidgetpoolTimeline",
   props: {
     /**
      * Handle to chase pool
@@ -463,6 +463,12 @@ export default {
       this.resetZoom();
       this.computeRowStyle();
     },
+    pool() {
+      this.$refs.scrollable.$el.scroll(0, 0);
+    },
+    folded() {
+      this.$refs.scrollable.$el.scroll(0, 0);
+    },
   },
 };
 </script>
@@ -479,7 +485,7 @@ export default {
   overflow: auto;
   background: var(--primary-light);
 }
-.widget_pool_timeline_grid_wrapper:nth-child(1){
+.widget_pool_timeline_grid_wrapper:nth-child(1) {
   overflow: hidden;
 }
 .widget_pool_timeline_items {
@@ -728,9 +734,9 @@ export default {
   pointer-events: none;
   border-left: 1px dashed rgba(231, 231, 231, 0.281);
 }
-.widget_pool_timeline_duration_floater{
+.widget_pool_timeline_duration_floater {
   position: sticky;
-  top:0px;
+  top: 0px;
   height: 100%;
   width: 100%;
   z-index: 5;
