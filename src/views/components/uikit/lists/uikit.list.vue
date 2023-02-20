@@ -211,8 +211,6 @@ export default {
      */
     updateTree(items) {
       this._tree = [];
-      // this.toggledItems = [];
-      // this.highlightedItems = [];
       items.forEach((item, index) => {
         if (this._tree[index]) {
           this._tree[index].value = item;
@@ -224,9 +222,6 @@ export default {
             toggled: item.active,
             selected: this.tree[index] ? this.tree[index].selected : false,
           });
-          // if (item.active) {
-          //   this.toggledItems.push(this._tree[index]);
-          // }
         }
         if (item.unfold) {
           this._tree[index].value.unfold = this._tree[index].value.unfold.map((subItem) => {
@@ -375,12 +370,6 @@ export default {
             return [];
           }
         });
-        // if (item.toggled) {
-        //   this.toggledItems.push(item);
-        // } else {
-        //   let index = this.toggledItems.findIndex((toggledItem) => toggledItem.value == item.value);
-        //   this.toggledItems.splice(index, 1);
-        // }
         /**
          * Item selection event
          *
@@ -418,7 +407,6 @@ export default {
        * @property {Object} this.selectedItem.value reference to selected tree item object's value
        */
       this.$emit("select", this.selectedItem.value);
-      //}
     },
     handleMultiSelection(item) {
       item.highlighted = !item.highlighted;
@@ -527,7 +515,6 @@ export default {
         for (let i = 0; i < childs.length; i++) {
           childs[i].style.visibility = "hidden";
         }
-        // this.updateTree(this.items);
       }
     },
     /**
