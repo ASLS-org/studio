@@ -56,7 +56,6 @@
               v-for="(cueItemPool, cueIndex) in pool.cues"
               v-show="!folded || (folded && cueItemPool.items.length)"
               :key="cueIndex"
-              ref="grid"
             >
               <div style="width: 100%; position: relative; min-height: 1%">
                 <div
