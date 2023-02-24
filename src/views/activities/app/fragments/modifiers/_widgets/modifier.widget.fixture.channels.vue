@@ -93,7 +93,6 @@ export default {
   flex-direction: row;
   width: 100%;
   height: 100%;
-  min-width: 300px !important;
   overflow-x: hidden;
   white-space: nowrap;
   box-sizing: content-box;
