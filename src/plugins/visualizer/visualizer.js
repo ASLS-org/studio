@@ -131,7 +131,7 @@ class Visualizer {
   set globalBrightness(value) {
     this._globalBrightness = value ? value / 100 : DEFAULT_PREFERENCES.GLOBAL_BRIGHTNESS;
     if (this.globalLightHandle) {
-      this.globalLightHandle.intensity = this._globalBrightness;
+      this.globalLightHandle.intensity = this._globalBrightness*1.5;
     }
   }
 
