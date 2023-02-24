@@ -1,5 +1,5 @@
 <template>
-  <uk-widget dockable class="modifier_widget_cue_settings" style="min-width: 220px" v-if="cue" :header="header">
+  <uk-widget dockable class="modifier_widget_cue_settings" v-if="cue" :header="header">
     <uk-flex class="modifier_widget_cue_settings_body" :gap="16">
       <uk-flex col style="flex: 1" :gap="8">
         <uk-txt-input label="Name" v-model="cue.name" />
@@ -64,6 +64,8 @@ export default {
 
 .modifier_widget_cue_settings {
   width: 220px;
+  min-width: 220px;
+  max-width: 220px;
 }
 .modifier_widget_cue_settings_body {
   padding: 10px;
