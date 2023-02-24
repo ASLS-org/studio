@@ -1,5 +1,5 @@
 <template>
-  <uk-widget class="cuepool_widget" :header="header">
+  <uk-widget class="cuepool_widget" dockable :header="header">
     <uk-flex col class="body">
       <uk-txt-input placeholder="Search Cues" class="searchbox" :outlined="false" v-model="searchString" />
       <uk-flex style="height: calc(100% - 25px)" class="body">
@@ -78,13 +78,6 @@
       </uk-flex>
     </uk-flex>
     <popup-cue-pool @add="addCue" :cueId="selectedCue" :group="group" v-model="cuePopupDisplayState" />
-    <!-- <uk-popup @submit="handleDeletion" :header="{ title: 'Delete cue ?' }" v-model="deletePopupState">
-      <uk-flex col style="max-width: 350px">
-        <p v-if="selectedCue != null" style="padding: 16px">
-          "{{ this.group.cuePool.getFromId(selectedCue).name || "Unnamed Cue" }}" will be permanently removed from the group. Do you wish to continue ?
-        </p>
-      </uk-flex>
-    </uk-popup> -->
   </uk-widget>
 </template>
 
