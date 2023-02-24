@@ -39,7 +39,7 @@
             :style="{ background: chase.color, top: `${chase.id * 26}px` }"
             :class="{ playing: chase.state, selected: selectedChaseId == chase.id }"
           >
-            <div @mousedown.stop @mouseup.stop @click="toggle(chase)" class="uikit_chase_btn">
+            <div @mousedown.stop @mouseup.stop @click.stop="toggle(chase)" class="uikit_chase_btn">
               <uk-icon class="uikit_chase_icon" :name="chase.state ? 'stop' : 'play'" />
             </div>
             <div class="uikit_chase_loader" :style="{ width: chase.elapsedPerc * 100 + '%' }" />

@@ -110,6 +110,7 @@ export default {
 }
 .widget.docked {
   min-width: 30px !important;
+  max-width: 30px !important;
 }
 .docked .widget_action {
   margin: unset !important;

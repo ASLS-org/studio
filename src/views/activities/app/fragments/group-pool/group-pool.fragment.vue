@@ -55,7 +55,7 @@ export default {
       /**
        * Global chase pool size
        */
-      poolsize: 10,
+      poolsize: DEFAULT_POOL_SIZE,
       /**
        * Global chase pool scroll value
        */
@@ -170,6 +170,11 @@ export default {
     EventBus.$on("visualizer_visibility", (visibility) => {
       this.expand = !visibility;
     });
+  },
+  watch: {
+    groups() {
+      this.updatePoolSize();
+    },
   },
 };
 </script>
