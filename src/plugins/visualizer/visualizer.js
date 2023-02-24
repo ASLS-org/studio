@@ -22,15 +22,8 @@ import AnimationManager from './animation_manager';
 import Controls from './controls'
 import MovingHead from './moving_head'
 
-// require('three-orbitcontrols')
 require('./orbitcontrol.zup.patch')
-require('three/examples/js/shaders/CopyShader');
-require('three/examples/js/postprocessing/EffectComposer');
-require('three/examples/js/postprocessing/RenderPass');
-require('three/examples/js/postprocessing/ShaderPass');
-require('three/examples/js/shaders/FXAAShader');
-require('three/examples/js/shaders/LuminosityHighPassShader');
-require('three/examples/js/utils/BufferGeometryUtils.js');
+require('./grid');
 
 
 /**
@@ -200,9 +193,9 @@ class Visualizer {
    */
   async main() {
 
-    let axesHelper = new THREE.AxesHelper(5);
     this.globalLightHandle = new THREE.DirectionalLight('white', this._globalBrightness);
-    this.globalLightHandle.position.set(10, 2, 20);
+    this.globalLightHandle.castShadow = false;
+    this.globalLightHandle.position.set(10, 10, 10);
 
     MovingHead.prepareInstanciation(this.camera, SceneManager);
 
@@ -211,25 +204,43 @@ class Visualizer {
     })
 
     // Floor
-    var loader = new THREE.TextureLoader()
-    var texture = await loader.loadAsync('/visualizer/textures/environment/checkerboard_default.jpg')
+    const loader = new THREE.TextureLoader()
+    const texture = await loader.loadAsync('/visualizer/textures/environment/checkerboard_default.jpg')
 
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
     texture.repeat.set(8, 8);
 
-    var floor_geometry = new THREE.PlaneBufferGeometry(50, 50, 1, 1);
-    var checkerMaterial = new THREE.MeshStandardMaterial({
+    const gridHelper = new THREE.InfiniteGridHelper(5, 100, new THREE.Color("white"), 100)
+    gridHelper.rotateX(Math.PI / 2.0);
+    gridHelper.position.setZ(-.3)
+    SceneManager.add(gridHelper)
+
+    const axesHelper = new THREE.AxesHelper(2);
+
+    const checkerMaterial = new THREE.MeshStandardMaterial({
       map: texture,
       polygonOffset: true,
       polygonOffsetUnits: 2,
       polygonOffsetFactor: 1,
       depthWrite: true,
       depthTest: true,
-      fog: true,
+      fog: false,
     })
 
-    let floor = new THREE.Mesh(floor_geometry, checkerMaterial);
+    const sideMaterial = new THREE.MeshStandardMaterial()
+
+    const floorMaterial = [];
+
+    floorMaterial.push(sideMaterial);
+    floorMaterial.push(sideMaterial);
+    floorMaterial.push(sideMaterial);
+    floorMaterial.push(sideMaterial);
+    floorMaterial.push(checkerMaterial);
+
+    const floor_geometry = new THREE.BoxGeometry(50, 50, .5, 1, 1, 1);
+    const floor = new THREE.Mesh(floor_geometry, floorMaterial);
+    floor.position.setZ(-.25)
 
     SceneManager.add(this.globalLightHandle, floor, axesHelper);
   }
@@ -251,7 +262,7 @@ class Visualizer {
     this.renderer.setPixelRatio(window.devicePixelRatio);
     this.renderer.forwardRendering = false;
     this.renderer.toneMappingExposure = Math.pow(1.0, 2.0);
-    var globalPlane = new THREE.Plane(new THREE.Vector3(0, 0, 0.1), 0.1);
+    var globalPlane = new THREE.Plane(new THREE.Vector3(0, 0, 0.5), 0.5);
     this.renderer.clippingPlanes = [globalPlane];
   }
 
