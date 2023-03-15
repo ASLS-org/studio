@@ -9,6 +9,7 @@
       deletable: deletable,
       focused: focused,
       disabled: value.disabled || disabled,
+      empty: empty,
       tall: tall,
       noSelect: noSelect,
     }"
@@ -25,7 +26,6 @@
 </template>
 
 <script>
-
 export default {
   name: "ukListItem",
   props: {
@@ -65,6 +65,10 @@ export default {
      * Whether item selected styling should be disabled whatsoever
      */
     noSelect: Boolean,
+    /**
+     * Whether the item is an empty placehoder
+     */
+    empty: Boolean,
   },
   data() {
     return {
@@ -106,7 +110,6 @@ export default {
 </script>
 
 <style scoped>
-
 .uikit_list_item {
   display: flex;
   flex-direction: row;
@@ -118,7 +121,7 @@ export default {
   width: 100%;
   background: var(--primary-light);
   opacity: 0.9;
-  transition: background-color .1s;
+  transition: background-color 0.1s;
 }
 .tall {
   height: 40px !important;
@@ -199,5 +202,9 @@ export default {
 .disabled:hover {
   background: unset;
   cursor: unset;
+}
+.empty {
+  background: var(--primary-light) repeating-linear-gradient(45deg, #1619130a, #1619130a 10px, #0c0e0a38 10px, #0c0e0a38 20px);
+  text-transform: uppercase!important;
 }
 </style>
