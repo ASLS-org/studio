@@ -33,11 +33,11 @@
   }
   50% {
     scale: 1.02;
-    opacity: .8;
+    opacity: 0.8;
   }
   100% {
     scale: 1;
-    opacity: 1
+    opacity: 1;
   }
 }
 </style>
@@ -80,6 +80,13 @@ export default {
     movable: {
       type: Boolean,
       default: true,
+    },
+    /**
+     * Whether the popup's backdrop is opaque or not
+     */
+    opaque: {
+      type: Boolean,
+      default: false,
     },
     /**
      * Whether the popup is cancelable or not
@@ -143,10 +150,22 @@ export default {
       }
       if (this.displayed && this.backdrop) {
         this.backdropEl = document.createElement("div");
-        this.backdropEl.className = "backdrop";
+        this.backdropEl.className = "backdrop" + (this.opaque ? " opaque" : "");
         body.appendChild(this.backdropEl);
+        if (this.opaque) {
+          let app = document.getElementById("app");
+          if (app) {
+            app.classList.add("blurred-sm");
+          }
+        }
       } else if (this.backdrop && this.backdropEl) {
         body.removeChild(this.backdropEl);
+        if (this.opaque) {
+          let app = document.getElementById("app");
+          if (app) {
+            app.classList.remove("blurred-sm");
+          }
+        }
       }
     },
     /**
@@ -198,7 +217,7 @@ export default {
         window.addEventListener("mousemove", this.drag);
         window.addEventListener("mouseup", this.stopDrag);
         let bb = this.$el.getBoundingClientRect();
-        this.offsetX = bb.left - e.clientX + bb.width/2;
+        this.offsetX = bb.left - e.clientX + bb.width / 2;
       }
     },
     /**
@@ -246,6 +265,12 @@ export default {
     if (this.backdrop && this.backdropEl) {
       body.removeChild(this.backdropEl);
     }
+    if (this.opaque) {
+      let app = document.getElementById("app");
+      if (app) {
+        app.classList.remove("blurred-sm");
+      }
+    }
   },
   watch: {
     value() {
@@ -265,6 +290,9 @@ export default {
   background: rgba(0, 0, 0, 0.5);
   z-index: 100;
 }
+/* .backdrop.opaque {
+  background: rgba(0, 0, 0, 0.5);
+} */
 </style>
 
 <style scoped>
