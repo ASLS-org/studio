@@ -193,15 +193,6 @@ class Fixture extends Proxify {
    *********************************************/
 
 
-  /**
-   * Fixture's name
-   * 
-   * @type {String}
-   */
-  /*set name(name) {
-    this._name = name;
-  }*/
-
   set model(model) {
     this._model = model.replace(".json", '')
   }
@@ -209,10 +200,6 @@ class Fixture extends Proxify {
   get model() {
     return this._model
   }
-
-  /* get name() {
-     return this._name;
-   }*/
 
   get listable() {
     return {
@@ -262,7 +249,7 @@ class Fixture extends Proxify {
       this._position.x = xVal
       this._3DModel.position = this.position;
       Controls.attach(this);
-    }else{
+    } else {
       this._position.x = this.position.x
     }
 
@@ -280,7 +267,7 @@ class Fixture extends Proxify {
       this._position.y = yVal
       this._3DModel.position = this.position;
       Controls.attach(this);
-    }else{
+    } else {
       this._position.y = this.position.y
     }
 
@@ -297,7 +284,7 @@ class Fixture extends Proxify {
       this._position.z = zVal
       this._3DModel.position = this.position;
       Controls.attach(this);
-    }else{
+    } else {
       this._position.z = this.position.z
     }
 
@@ -436,9 +423,13 @@ class Fixture extends Proxify {
    * @type {Number}
    */
   set modeIndex(modeIndex) {
+    this.channels = [];
+    this.quickChannelsAccessors = {}
     this.modeName = this.modeNames[modeIndex]
+    // this.parseFromOFLData();
     this.prepareChannels();
     this.setupFineChannels();
+    this.setupQuickAccessors();
   }
 
   /**
@@ -450,72 +441,6 @@ class Fixture extends Proxify {
     channels.forEach((channel, index) => {
       this.setChannel(index, channel.value);
     })
-  }
-
-  /**
-   * Fixture's dimmer channel value (0-255)
-   * 
-   * @type {Number}
-   */
-  set dimmer(dimmerVal) {
-    if (this.hasDimmer) {
-      this.setChannel(this.dimmerChannels[0].id - 1, dimmerVal);
-    }
-  }
-
-  /**
-   * Fixture's zoom channel value (0-255)
-   * 
-   * @type {Number}
-   */
-  set zoom(zoomVal) {
-    if (this.hasZoom) {
-      this.setChannel(this.zoomChannels[0].id - 1, zoomVal);
-    }
-  }
-
-  /**
-   * Fixture's pan channel value (0-255)
-   * 
-   * @type {Number}
-   */
-  set pan(panVal) {
-    if (this.hasPan) {
-      this.setChannel(this.panChannels[0].id - 1, panVal);
-    }
-  }
-
-  /**
-   * Fixture's pan fine channel value (0-255)
-   * 
-   * @type {Number}
-   */
-  set panFine(panFineVal) {
-    if (this.hasPan && this.panChannels[0].fineChannels.length > 0) {
-      this.setChannel(this.panChannels[0].fineChannels[0].id - 1, panFineVal);
-    }
-  }
-
-  /**
-   * Fixture's tilt channel value (0-255)
-   * 
-   * @type {Number}
-   */
-  set tilt(tiltVal) {
-    if (this.hasTilt) {
-      this.setChannel(this.tiltChannels[0].id - 1, tiltVal);
-    }
-  }
-
-  /**
-   * Fixture's pan fine channel value (0-255)
-   * 
-   * @type {Number}
-   */
-  set tiltFine(tiltFineVal) {
-    if (this.hasTilt && this.tiltChannels[0].fineChannels.length > 0) {
-      this.setChannel(this.tiltChannels[0].fineChannels[0].id - 1, tiltFineVal);
-    }
   }
 
   /**
@@ -598,15 +523,7 @@ class Fixture extends Proxify {
    * @readonly
    */
   get hasDimmer() {
-    return this.dimmerChannels.length;
-  }
-
-  get dimmer() {
-    if (this.hasDimmer) {
-      return this.dimmerChannels[0].value.DMX
-    } else {
-      return 0
-    }
+    return this.quickChannelsAccessors.Dimmer != undefined;
   }
 
   /**
@@ -616,15 +533,7 @@ class Fixture extends Proxify {
    * @readonly
    */
   get hasZoom() {
-    return this.zoomChannels.length;
-  }
-
-  get zoom() {
-    if (this.hasZoom) {
-      return this.zoomChannels[0].value.DMX
-    } else {
-      return 0
-    }
+    return this.quickChannelsAccessors.Zoom != undefined;
   }
 
   /**
@@ -637,22 +546,6 @@ class Fixture extends Proxify {
     return this.quickChannelsAccessors.Pan != undefined;
   }
 
-  get pan() {
-    if (this.hasPan) {
-      return this.panChannels[0].value.DMX
-    } else {
-      return 0
-    }
-  }
-
-  get panFine() {
-    if (this.hasPan && this.panChannels[0].fineChannels.length > 0) {
-      return this.panChannels[0].fineChannels[0].value.DMX
-    } else {
-      return 0
-    }
-  }
-
   /**
    * Whether the fixture has tilt capabilities or not
    * 
@@ -661,22 +554,6 @@ class Fixture extends Proxify {
    */
   get hasTilt() {
     return this.quickChannelsAccessors.Tilt != undefined;
-  }
-
-  get tilt() {
-    if (this.hasTilt) {
-      return this.tiltChannels[0].value.DMX
-    } else {
-      return 0
-    }
-  }
-
-  get tiltFine() {
-    if (this.hasTilt && this.tiltChannels[0].fineChannels.length > 0) {
-      return this.tiltChannels[0].fineChannels[0].value.DMX
-    } else {
-      return 0
-    }
   }
 
   get panTilt() {
@@ -820,22 +697,15 @@ class Fixture extends Proxify {
    * @todo Implement other fixure categories
    */
   parseFromOFLData() {
-    try {
-      this.category = this.OFLData.categories[0] //We're only interested in the first category asset ATM.
-      this.wheels = this.OFLData.wheels; //Isolating and setting fixture's wheels configuration from OFL data
-      this.bulb = this.OFLData.physical.bulb; //Isolating and setting fixture's bulb configuration from OFL data
-      this._name = this.OFLData.name; //Isolating and setting fixture's default name from OFL data
-      this.modes = this.OFLData.modes; //Isolating and setting fixture's modes configuration from OFL data
-      this.prepareChannels(); //Prepare fixture's channels
-      this.setupFineChannels();
-      this.setupQuickAccessors();
-      this.prepare3DModelInstance();
-    } catch (err) {
-      throw {
-        errCode: -10,
-        msg: "An error occured while parsing the showfile..."
-      }
-    }
+    this.category = this.OFLData.categories[0] //We're only interested in the first category asset ATM.
+    this.wheels = this.OFLData.wheels; //Isolating and setting fixture's wheels configuration from OFL data
+    this.bulb = this.OFLData.physical.bulb; //Isolating and setting fixture's bulb configuration from OFL data
+    this._name = this.OFLData.name; //Isolating and setting fixture's default name from OFL data
+    this.modes = this.OFLData.modes; //Isolating and setting fixture's modes configuration from OFL data
+    this.prepareChannels(); //Prepare fixture's channels
+    this.setupFineChannels();
+    this.setupQuickAccessors();
+    this.prepare3DModelInstance();
   }
 
   /**
@@ -866,8 +736,9 @@ class Fixture extends Proxify {
         this._3DModel = movingHead //Binding moving head instance to this fixture instance
         break;
       }
-      default: //Do nothing for every other fixture types.
-        break;
+      default: { //Do nothing for every other fixture types.
+        throw new Error("This fixture type is not supported yet.")
+      }
     }
   }
 
@@ -877,20 +748,16 @@ class Fixture extends Proxify {
    * @public
    */
   prepareChannels() {
+    const OFLData = JSON.parse(JSON.stringify(this.OFLData))
     this.channels = [];
-    this.dimmerChannels = [];
-    this.zoomChannels = [];
-    this.panChannels = [];
-    this.tiltChannels = [];
-    this.colorChannels = {};
     let channelId = 0; //Initialising channel index to 0
-    this.mode = this.OFLData.modes[this.modeIndex] || this.OFLData.modes[0]; //Parsing and setting fixture channel mode
+    this.mode = OFLData.modes[this.modeIndex] || OFLData.modes[0]; //Parsing and setting fixture channel mode
     this.mode.channels.forEach(channel => { //Looping through channel modes
       if (channel && typeof channel === 'string') { //Making sure the OFL mode data contains a channel value
         let split = channel.split(FINE_CHANNEL_SPLIT_PATERN) //Looking for and parsing fine channel aliases
         let channelName = split[0]; //Getting channel name from split result
         let isFine = split.length > 1 //Checking if split result contains a result for fine alias
-        let channelData = this.OFLData.availableChannels[channelName]; //Isolating channel data
+        let channelData = OFLData.availableChannels[channelName]; //Isolating channel data
         if (channelData && channelData.capability && isFine) { //Checking if the channel has a fine alias
           channelData.capability.type = `${channelName}${FINE_CHANNEL_TERMINOLOGY}` //Setting fine terminology to channel's capability type
         }
@@ -902,11 +769,6 @@ class Fixture extends Proxify {
           isFine: isFine //Setting fine flag
         })
         this.channels.push(chn); //Instanciating channel in the fixture's channel pool
-        /* if (this.quickChannelsAccessors[chn.type]) {
-           this.quickChannelsAccessors[chn.type].push(chn);
-         } else {
-           this.quickChannelsAccessors[chn.type] = [chn]
-         }*/
       } else { //In case the OFL channel configuration is emty/undefined
         let chn = new Channel({ //Instanciating a new empty channel
           type: "Unset",

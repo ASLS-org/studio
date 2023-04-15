@@ -76,6 +76,19 @@ body {
   display: flex;
 }
 
+/** Global filter definitions **/
+.blurred-sm{
+  filter: blur(5px);
+}
+
+.blurred-md{
+  filter: blur(8px);
+}
+
+.blurred-xl{
+  filter: blur(10px);
+}
+
 /** Global Box Sizing Initialisation **/
 * {
   box-sizing: border-box;

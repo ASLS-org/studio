@@ -7893,6 +7893,11 @@
   dependencies:
     "assert-plus" "^1.0.0"
 
+"git-revision-webpack-plugin@^5.0.0":
+  "integrity" "sha512-RptQN/4UKcEPkCBmRy8kLPo5i8MnF8+XfAgFYN9gbwmKLTLx4YHsQw726H+C5+sIGDixDkmGL3IxPA2gKo+u4w=="
+  "resolved" "https://registry.npmjs.org/git-revision-webpack-plugin/-/git-revision-webpack-plugin-5.0.0.tgz"
+  "version" "5.0.0"
+
 "github-slugger@^1.0.0":
   "integrity" "sha512-w0dzqw/nt51xMVmlaV1+JRzN+oCa1KfcgGEWhxUG16wbdA+Xnt/yoFO8Z8x/V82ZcZ0wy6ln9QDup5avbhiDhQ=="
   "resolved" "https://registry.npmjs.org/github-slugger/-/github-slugger-1.4.0.tgz"

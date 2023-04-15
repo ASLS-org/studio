@@ -57,6 +57,7 @@
     "electron-rebuild": "^3.2.9",
     "eslint": "^6.7.2",
     "eslint-plugin-vue": "^6.1.2",
+    "git-revision-webpack-plugin": "^5.0.0",
     "vitepress": "^1.0.0-alpha.4",
     "vue-cli-plugin-electron-builder": "~2.1.1",
     "vue-loader": "^15.10.0",

@@ -32,8 +32,9 @@
               <uk-list-item
                 v-else
                 disabled
+                empty
                 class="uikit_sublist_body"
-                :item="{ value: { name: 'Nothing To Display', icon: 'close' } }"
+                :item="{ value: { name: 'Nothing To Display' } }"
                 :noHighlight="true"
                 :tall="tall"
                 :no-select="noSelect"
