@@ -1,9 +1,9 @@
 // Author: Fyrestar https://mevedia.com (https://github.com/Fyrestar/THREE.InfiniteGridHelper)
 var THREE = window.THREE = require('three');
 
-THREE.InfiniteGridHelper = function InfiniteGridHelper( size1, size2, color, distance, axes = 'xzy' ) {
+THREE.InfiniteGridHelper = function InfiniteGridHelper(size1, size2, color, distance, axes = 'xzy') {
 
-	color = color || new THREE.Color( 'white' );
+	color = color || new THREE.Color('white');
 	size1 = size1 || 10;
 	size2 = size2 || 100;
 
@@ -11,11 +11,11 @@ THREE.InfiniteGridHelper = function InfiniteGridHelper( size1, size2, color, dis
 
 
 
-	const planeAxes = axes.substr( 0, 2 );
+	const planeAxes = axes.substr(0, 2);
 
-	const geometry = new THREE.PlaneBufferGeometry( 2, 2, 1, 1 );
+	const geometry = new THREE.PlaneBufferGeometry(2, 2, 1, 1);
 
-	const material = new THREE.ShaderMaterial( {
+	const material = new THREE.ShaderMaterial({
 
 		side: THREE.DoubleSide,
 
@@ -99,10 +99,10 @@ THREE.InfiniteGridHelper = function InfiniteGridHelper( size1, size2, color, dis
 			derivatives: true
 		}
 
-	} );
+	});
 
 
-	THREE.Mesh.call( this, geometry, material );
+	THREE.Mesh.call(this, geometry, material);
 
 	this.frustumCulled = false;
 
@@ -114,14 +114,14 @@ THREE.InfiniteGridHelper.prototype = {
 	...THREE.EventDispatcher.prototype
 };
 
-if ( parseInt( THREE.REVISION ) > 126 ) {
+if (parseInt(THREE.REVISION) > 126) {
 
 	class InfiniteGridHelper extends THREE.Mesh {
 
-		constructor ( size1, size2, color, distance, axes = 'xzy' ) {
+		constructor(size1, size2, color, distance, axes = 'xzy') {
 
 
-			color = color || new THREE.Color( 'white' );
+			color = color || new THREE.Color('white');
 			size1 = size1 || 10;
 			size2 = size2 || 100;
 
@@ -129,11 +129,11 @@ if ( parseInt( THREE.REVISION ) > 126 ) {
 
 
 
-			const planeAxes = axes.substr( 0, 2 );
+			const planeAxes = axes.substr(0, 2);
 
-			const geometry = new THREE.PlaneBufferGeometry( 2, 2, 1, 1 );
+			const geometry = new THREE.PlaneBufferGeometry(2, 2, 1, 1);
 
-			const material = new THREE.ShaderMaterial( {
+			const material = new THREE.ShaderMaterial({
 
 				side: THREE.DoubleSide,
 
@@ -161,7 +161,7 @@ if ( parseInt( THREE.REVISION ) > 126 ) {
            void main() {
            
                 vec3 pos = position.${axes} * uDistance;
-                pos.${planeAxes} += cameraPosition.${planeAxes};
+                //pos.${planeAxes} += cameraPosition.${planeAxes};
                 
                 worldPosition = pos;
                 
@@ -197,14 +197,16 @@ if ( parseInt( THREE.REVISION ) > 126 ) {
            void main() {
            
                 
-                  float d = 1.0 - min(distance(cameraPosition.${planeAxes}, worldPosition.${planeAxes}) / uDistance, 1.0);
+                  float d = 1.0 - distance(worldPosition, vec3(0.0,0.0,0.0))/ uDistance;
                 
                   float g1 = getGrid(uSize1);
                   float g2 = getGrid(uSize2);
                   
                   
-                  gl_FragColor = vec4(uColor.rgb, mix(g2, g1, g1) * pow(d, 3.0));
+                  gl_FragColor = vec4(uColor.rgb, mix(g2, g1, g1) * 0.35*d);
                   gl_FragColor.a = mix(0.5 * gl_FragColor.a, gl_FragColor.a, g2);
+
+									//gl_FragColor = vec4(1.0,1.0,1.0,1.0);
                 
                   if ( gl_FragColor.a <= 0.0 ) discard;
                 
@@ -217,17 +219,17 @@ if ( parseInt( THREE.REVISION ) > 126 ) {
 					derivatives: true
 				}
 
-			} );
+			});
 
-			super( geometry, material );
+			super(geometry, material);
 
 			this.frustumCulled = false;
 
 		}
 
 	}
-	
-	Object.assign( InfiniteGridHelper.prototype, THREE.InfiniteGridHelper.prototype );
+
+	Object.assign(InfiniteGridHelper.prototype, THREE.InfiniteGridHelper.prototype);
 
 	THREE.InfiniteGridHelper = InfiniteGridHelper;
 
