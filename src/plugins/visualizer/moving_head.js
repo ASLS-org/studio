@@ -385,12 +385,12 @@ const SHUTTER_STROBE_FREQUENCIES_DEFAULT = {
   FAST: 10
 }
 
-var position_buffer_attribute = new THREE.InstancedBufferAttribute(new Float32Array(MAX_INSTANCES * 3), 3).setDynamic(true)
-var direction_buffer_attribute = new THREE.InstancedBufferAttribute(new Float32Array(MAX_INSTANCES * 3), 3).setDynamic(true)
-var intensity_buffer_attribute = new THREE.InstancedBufferAttribute(new Float32Array(MAX_INSTANCES), 1).setDynamic(true)
-var color_buffer_attribute = new THREE.InstancedBufferAttribute(new Float32Array(MAX_INSTANCES * 3), 3).setDynamic(true)
-var emissive_buffer_attribute = new THREE.InstancedBufferAttribute(new Float32Array(MAX_INSTANCES), 1).setDynamic(true)
-var angle_buffer_attribute = new THREE.InstancedBufferAttribute(new Float32Array(MAX_INSTANCES * 2), 2).setDynamic(true)
+var position_buffer_attribute = new THREE.InstancedBufferAttribute(new Float32Array(MAX_INSTANCES * 3), 3)
+var direction_buffer_attribute = new THREE.InstancedBufferAttribute(new Float32Array(MAX_INSTANCES * 3), 3)
+var intensity_buffer_attribute = new THREE.InstancedBufferAttribute(new Float32Array(MAX_INSTANCES), 1)
+var color_buffer_attribute = new THREE.InstancedBufferAttribute(new Float32Array(MAX_INSTANCES * 3), 3)
+var emissive_buffer_attribute = new THREE.InstancedBufferAttribute(new Float32Array(MAX_INSTANCES), 1)
+var angle_buffer_attribute = new THREE.InstancedBufferAttribute(new Float32Array(MAX_INSTANCES * 2), 2)
 
 var baseGeo = new THREE.InstancedBufferGeometry();
 var yokeGeo = new THREE.InstancedBufferGeometry();
@@ -873,7 +873,7 @@ class MovingHead {
     yokeMesh.count = instanceCount;
     headMesh.count = instanceCount;
     beamMesh.count = instanceCount;
-    capMesh.count = instanceCount;
+    // capMesh.count = instanceCount;
     boxHelperMesh.count = 0;
 
     scene_handle.add(this._dummy)
@@ -985,7 +985,7 @@ class MovingHead {
 
   static prepareBeamInstance() {
 
-    let beamGeometry = new THREE.CylinderBufferGeometry(
+    let beamGeometry = new THREE.CylinderGeometry(
       BEAM_TOP_RADIUS,
       BEAM_TOP_RADIUS,
       BEAM_LENGTH,
@@ -1079,7 +1079,7 @@ class MovingHead {
 
   static prepareCapInstance() {
 
-    let capGeometry = new THREE.CircleBufferGeometry(BEAM_TOP_RADIUS, 40);
+    let capGeometry = new THREE.CircleGeometry(BEAM_TOP_RADIUS, 40);
     let capMaterial = new THREE.MeshBasicMaterial({
       side: THREE.DoubleSide
     })
@@ -1098,7 +1098,7 @@ class MovingHead {
 
   static prepareBoxHelperInstance() {
 
-    let boxHelperGeometry = new THREE.BoxBufferGeometry(1, 1, 1);
+    let boxHelperGeometry = new THREE.BoxGeometry(1, 1, 1);
     let boxHelperMaterial = new THREE.MeshBasicMaterial({
       side: THREE.BackSide,
       wireframe: true,

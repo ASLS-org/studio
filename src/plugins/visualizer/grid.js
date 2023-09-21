@@ -13,7 +13,7 @@ THREE.InfiniteGridHelper = function InfiniteGridHelper(size1, size2, color, dist
 
 	const planeAxes = axes.substr(0, 2);
 
-	const geometry = new THREE.PlaneBufferGeometry(2, 2, 1, 1);
+	const geometry = new THREE.PlaneGeometry(2, 2, 1, 1);
 
 	const material = new THREE.ShaderMaterial({
 
@@ -131,7 +131,7 @@ if (parseInt(THREE.REVISION) > 126) {
 
 			const planeAxes = axes.substr(0, 2);
 
-			const geometry = new THREE.PlaneBufferGeometry(2, 2, 1, 1);
+			const geometry = new THREE.PlaneGeometry(2, 2, 1, 1);
 
 			const material = new THREE.ShaderMaterial({
 
