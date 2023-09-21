@@ -305,7 +305,6 @@ const MODEL_MATERIAL = new THREE.MeshStandardMaterial({
   flatShading: false,
   side: THREE.DoubleSide,
   clippingPlanes: true,
-
 });
 
 MODEL_MATERIAL.onBeforeCompile = shader => {
@@ -873,7 +872,7 @@ class MovingHead {
     yokeMesh.count = instanceCount;
     headMesh.count = instanceCount;
     beamMesh.count = instanceCount;
-    // capMesh.count = instanceCount;
+    capMesh.count = instanceCount;
     boxHelperMesh.count = 0;
 
     scene_handle.add(this._dummy)
@@ -945,7 +944,7 @@ class MovingHead {
 
   static prepareModelInstance() {
 
-    let model = ModelInstancer.models.visualizer.models.scenography.beam;
+    let model = ModelInstancer.models.visualizer.models.scenography.beam.scene.children[0];
     let base = model.children[0];
     let yoke = model.children[2];
     let head = model.children[1];
