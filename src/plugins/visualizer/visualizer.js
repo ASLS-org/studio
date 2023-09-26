@@ -131,7 +131,7 @@ class Visualizer {
   set globalBrightness(value) {
     this._globalBrightness = value ? value / 100 : DEFAULT_PREFERENCES.GLOBAL_BRIGHTNESS;
     if (this.globalLightHandle) {
-      this.globalLightHandle.intensity = this._globalBrightness*1.5;
+      this.globalLightHandle.intensity = this._globalBrightness * 0.25;
     }
   }
 
@@ -242,6 +242,8 @@ class Visualizer {
     const floor = new THREE.Mesh(floor_geometry, floorMaterial);
     floor.position.setZ(-.25)
 
+    this.globalLightHandle.target = floor;
+
     SceneManager.add(this.globalLightHandle, floor, axesHelper);
   }
 
@@ -260,8 +262,6 @@ class Visualizer {
     this.renderer.toneMapping = THREE.NoToneMapping;
     this.renderer.physicallyCorrectLights = true;
     this.renderer.setPixelRatio(window.devicePixelRatio);
-    this.renderer.forwardRendering = false;
-    this.renderer.toneMappingExposure = Math.pow(1.0, 2.0);
     var globalPlane = new THREE.Plane(new THREE.Vector3(0, 0, 0.5), 0.5);
     this.renderer.clippingPlanes = [globalPlane];
   }

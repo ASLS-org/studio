@@ -1,13 +1,20 @@
-var THREE = window.THREE = require('three');
-require('three/examples/js/loaders/GLTFLoader');
+import {
+	GLTFLoader
+} from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import axios from 'axios';
+
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderPath('libs/gltf/');
 
 /**
  * Global handler to GLTF loader
  * 
  * @constant loader
  */
-const loader = new THREE.GLTFLoader();
+const loader = new GLTFLoader()
+.setCrossOrigin('anonymous')
+.setDRACOLoader( dracoLoader  )
 
 /**
  * @class
@@ -64,6 +71,7 @@ class ModelInstancer {
 		}
 	}
 
+
 	/**
 	 * Parses and loads model instances recursively
 	 * 
@@ -74,15 +82,19 @@ class ModelInstancer {
 	 * @returns {Object} 3D models instances list
 	 */
 	async parseList(listData, url = "") {
-		for (let i = 0; i < Object.keys(listData).length; i++) {
+		let len = Object.keys(listData).length
+		for (let i = 0; i < len; i++) {
 			let model = Object.keys(listData)[i]
-			if (typeof listData[model] === 'object') {
-				url += `/${model}`
-				listData[model] = await this.parseList(listData[model], url)
+			if (typeof listData[model] === 'object' && !listData[model]._loaded) {
+				listData[model] = await this.parseList(listData[model], url + `/${model}`);
 			} else if (typeof listData[model] === 'string') {
-				url += `/${listData[model]}`
-				let gltf = await loader.loadAsync(`${url}`);
-				listData[model] = gltf.scene.children[0]
+				await new Promise(resolve=>{
+					loader.load(url + `/${listData[model]}`, (gltf) => {
+						listData[model] = gltf
+						listData[model]._loaded = true;
+						resolve()
+					})
+				})
 			} else {
 				throw new Error({
 					msg: "Syntax error in model_list.json"

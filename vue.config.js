@@ -1,6 +1,6 @@
-const {
+const 
   GitRevisionPlugin
-} = require('git-revision-webpack-plugin')
+ = require('git-revision-webpack-plugin')
 
 module.exports = {
   chainWebpack: (config) => {
@@ -18,10 +18,10 @@ module.exports = {
       .use('worker-loader')
       .loader('worker-loader')
     config.plugin('define').tap(args => {
-      const gitRevisionPlugin = new GitRevisionPlugin()
-      args[0]['process.env']['VUE_APP_VERSION'] = JSON.stringify(gitRevisionPlugin.version())
-      args[0]['process.env']['VUE_APP_BRANCH'] = JSON.stringify(gitRevisionPlugin.branch())
-      args[0]['process.env']['VUE_APP_COMMITDATE'] = JSON.stringify(gitRevisionPlugin.lastcommitdatetime())
+      // const gitRevisionPlugin = new GitRevisionPlugin()
+      // args[0]['process.env']['VUE_APP_VERSION'] = JSON.stringify(gitRevisionPlugin.version())
+      // args[0]['process.env']['VUE_APP_BRANCH'] = JSON.stringify(gitRevisionPlugin.branch())
+      // args[0]['process.env']['VUE_APP_COMMITDATE'] = JSON.stringify(gitRevisionPlugin.lastcommitdatetime())
       return args
     })
   },

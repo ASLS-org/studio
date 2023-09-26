@@ -70,7 +70,7 @@ const boundingBoxEdgesMaterial = new THREE.LineBasicMaterial({
  * 
  * @constant {Object} boundingBoxGeometry
  */
-const boundingBoxGeometry = new THREE.BoxBufferGeometry();
+const boundingBoxGeometry = new THREE.BoxGeometry();
 /**
  * Bounding box edges geometry
  * 
