@@ -47,12 +47,38 @@
     "eslint": "^6.7.2",
     "eslint-plugin-vue": "^6.1.2",
     "git-revision-webpack-plugin": "^3.0.6",
+    "semantic-release": "^22.0.5",
     "vitepress": "^1.0.0-alpha.4",
     "vue-loader": "^15.10.0",
     "vue-svg-loader": "^0.16.0",
     "vue-template-compiler": "^2.6.14",
     "webpack": "^4.46.0",
     "worker-loader": "^3.0.8"
+  },
+  "release": {
+    "branches": [
+      "master",
+      {
+        "name": "staging",
+        "prerelease": "rc"
+      }
+    ],
+    "dryRun": false,
+    "ci": true,
+    "plugins": [
+      "@semantic-release/commit-analyzer",
+      "@semantic-release/release-notes-generator",
+      [
+        "@semantic-release/github",
+        {
+          "successComment": false,
+          "failComment": false,
+          "failTitle": false,
+          "labels": false,
+          "releasedLabels": false
+        }
+      ]
+    ]
   },
   "eslintConfig": {
     "root": true,
