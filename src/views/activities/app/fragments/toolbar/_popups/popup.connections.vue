@@ -12,7 +12,7 @@
   >
     <div class="body">
       <uk-list toggleable @toggle="selectIface" :items="outputs" />
-      <uk-button style="margin: 16px" :square="true" label="refresh" @click.native="updateOutputs" />
+      <uk-button style="margin: 16px" :square="true" label="refresh" @click="updateOutputs" />
     </div>
   </uk-popup>
 </template>

@@ -4,16 +4,16 @@
     <uk-spacer />
     <p>{{ this.saveState ? "" : "*" }} {{ project }}</p>
     <uk-spacer />
-    <uk-flex center-both class="state_container" @click.native="playPauseShow()">
+    <uk-flex center-both class="state_container" @click="playPauseShow()">
       <div class="play_state_icon" :class="liveState.text" :style="{ animationDuration: 60000 / bpm + 'ms' }" />
       <h3>{{ liveState.text }}</h3>
     </uk-flex>
-    <uk-flex @click.native="()=>{}" center-both class="bpm_container">
+    <uk-flex @click="()=>{}" center-both class="bpm_container">
       <h3>BPM: </h3>
       <uk-num-input style="margin-left:8px;width:60px;" @input="bpm=$show.bpm" v-model="$show.bpm"/>
       <div class="colored_dot" :style="{ animationDuration: 60000 / bpm + 'ms' }" />
     </uk-flex>
-    <uk-flex center-both @click.native="bpm = $show.tapTempo()" class="tap_container">
+    <uk-flex center-both @click="bpm = $show.tapTempo()" class="tap_container">
       <h3>TAP</h3>
     </uk-flex>
     <visualizer-popup v-model="visualizerPopupState" />
@@ -259,9 +259,9 @@ export default {
                 this.$show.loading.state = false;
               });
             this.project = this.$show.name;
-            EventBus.$emit("show_loaded");
+            EventBus.emit("show_loaded");
           } catch (err) {
-            EventBus.$emit("app_error", err);
+            EventBus.emit("app_error", err);
           }
         }
         document.body.removeChild(el);
@@ -360,7 +360,7 @@ export default {
     this.$show.on("saveState", (state) => {
       this.saveState = state;
     });
-    EventBus.$on("app_ready", () => {
+    EventBus.on("app_ready", () => {
       this.project = this.$show.name;
       window.removeEventListener("keydown", this.handleKeydownEvent);
       window.addEventListener("keydown", this.handleKeydownEvent);

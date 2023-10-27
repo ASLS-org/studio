@@ -74,7 +74,7 @@ export default {
     /**
      * The actual numeral input value
      */
-    value: {
+    modelValue: {
       type: Number,
       default: 0,
     },
@@ -103,7 +103,7 @@ export default {
       /**
        * Numeral input's value (reactive)
        */
-      content: this.value.toFixed(this.precision),
+      content: this.modelValue.toFixed(this.precision),
     };
   },
   methods: {
@@ -142,19 +142,24 @@ export default {
       } else if (val > this.max) {
         this.content = parseFloat(this.max).toFixed(this.precision);
       }
+      console.log("nok")
       if (doEmit) {
         /**
          * Input value changed
          *
          * @property {Number} content Parsed and precision limited input value
          */
+        console.log("ok")
+        this.$emit("update:modelValue", parseFloat(Number(this.content).toFixed(this.precision)))
         this.$emit("input", parseFloat(Number(this.content).toFixed(this.precision)));
       }
     },
   },
+  emits:['update:modelValue','input'],
   beforeMount() {
     if (this.default != null) {
-      this.value = this.default;
+      // this.content = this.default;
+      this.updateValue();
     }
     if (this.label == null) {
       this.hasLabel = false;
@@ -163,7 +168,8 @@ export default {
     }
   },
   watch: {
-    value: function (value) {
+    modelValue: function (value) {
+      alert(1)
       this.content = parseFloat(value);
       this.updateValue(false);
     },

@@ -3,7 +3,7 @@
     <uk-flex col class="body">
       <uk-txt-input placeholder="Search Cues" class="searchbox" :outlined="false" v-model="searchString" />
       <uk-flex style="height: calc(100% - 25px)" class="body">
-        <uk-flex tabindex="0" @focus.native="handleFocus(true)" @focusout.native="handleFocus(false)" col class="body">
+        <uk-flex tabindex="0" @focus="handleFocus(true)" @focusout="handleFocus(false)" col class="body">
           <div ref="grid" class="grid" @scroll="updateScrollPreview">
             <div
               @dragenter="

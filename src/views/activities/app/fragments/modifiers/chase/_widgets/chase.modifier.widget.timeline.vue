@@ -26,9 +26,9 @@
           <uk-flex
             class="widget_pool_timeline_grid_label_wrapper"
             :style="computeRowStyle()"
-            @dblclick.native="resetZoom"
-            @mousedown.native="startZoom"
-            @mouseup.native="stopZoom"
+            @dblclick="resetZoom"
+            @mousedown="startZoom"
+            @mouseup="stopZoom"
           >
             <div
               class="widget_pool_timeline_grid_label"
@@ -50,7 +50,7 @@
             <!-- <div class="widget_pool_timeline_duration_overflow_overlay" :style="computeDurationOverflowOverlayStyle()" />
             <div class="widget_pool_timeline_cursor" :style="computeCursorStyle()" /> -->
             <uk-flex
-              @dblclick.native="(e) => addCueItem(e, cueItemPool)"
+              @dblclick="(e) => addCueItem(e, cueItemPool)"
               :style="computeRowStyle()"
               class="widget_pool_timeline_grid_row"
               v-for="(cueItemPool, cueIndex) in pool.cues"

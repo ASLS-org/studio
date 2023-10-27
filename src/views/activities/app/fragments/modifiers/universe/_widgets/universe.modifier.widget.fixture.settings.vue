@@ -2,8 +2,8 @@
   <uk-widget class="fixture_settings" dockable :header="header">
     <uk-flex v-if="fixture" :gap="8" col class="fixture_settings_body">
       <uk-flex :gap="8">
-        <uk-txt-input style="flex: 1" label="Name" v-model="fixture.name" />
-        <uk-num-input style="width: 70px" class="field" label="Address" v-model="fixture.chStart" />
+        <uk-txt-input style="flex: 1" label="Name" v-model.lazy="fixture.name" />
+        <uk-num-input style="width: 70px" class="field" label="Address" v-model.lazy="fixture.chStart" />
       </uk-flex>
       <uk-txt-input readonly label="Model" v-model="fixture.model" />
       <uk-select-input v-if="fixture.modeIndex != null" label="Mode" :value="0" v-model="fixture.modeIndex" :options="fixture.modeNames" />

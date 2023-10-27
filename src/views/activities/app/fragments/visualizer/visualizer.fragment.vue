@@ -3,9 +3,9 @@
     <uk-flex class="header" v-if="$route.name != 'Visualizer'">
       <h3>Visualizer</h3>
       <span style="flex: 1" />
-      <!-- <uk-button v-show="!hidden" @click.native="popout" icon="popout" style="margin-right: 8px" label="Popout" /> -->
-      <uk-button v-show="!hidden" @click.native="toggleVisibility" icon="hide" style="margin-right: 8px" label="Hide" />
-      <uk-icon v-show="hidden" @click.native="toggleVisibility" name="hide" style="fill: var(--secondary-lighter); cursor: pointer" />
+      <!-- <uk-button v-show="!hidden" @click="popout" icon="popout" style="margin-right: 8px" label="Popout" /> -->
+      <uk-button v-show="!hidden" @click="toggleVisibility" icon="hide" style="margin-right: 8px" label="Hide" />
+      <uk-icon v-show="hidden" @click="toggleVisibility" name="hide" style="fill: var(--secondary-lighter); cursor: pointer" />
     </uk-flex>
     <canvas v-show="!hidden" class="visualizer" id="visualizer" ref="visualizer" />
   </uk-flex>
@@ -57,7 +57,7 @@ export default {
         this.hide();
       }
       //Dirty trick but it should do for now.
-      EventBus.$emit("visualizer_visibility", !this.hidden);
+      EventBus.emit("visualizer_visibility", !this.hidden);
     },
     /**
      * Toggles visualizer's visibility state off
@@ -96,7 +96,7 @@ export default {
       setTimeout(() => {
         this.$show.visualizerHandle.resize();
       }, 500);
-      EventBus.$emit("visualizer_loaded", true);
+      EventBus.emit("visualizer_loaded", true);
     } catch (err) {
       console.log(err);
     }

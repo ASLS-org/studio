@@ -1,4 +1,4 @@
-import Vue from 'vue';
+import { createApp} from 'vue';
 import router from './plugins/router';
 import App from './App.vue';
 import axios from 'axios';
@@ -9,31 +9,29 @@ import '@/assets/styles/global.css'
 import '@/assets/styles/fonts.css'
 import ShowSingleton from '@/singletons/show.singleton'
 
-function registerComponents(components) {
+function registerComponents(components, app) {
   Object.keys(components).forEach(componentKey => {
     let component = components[componentKey]
     if (component.name) {
-      Vue.component(component.name, component)
+      app.component(component.name, component)
     } else {
-      registerComponents(component)
+      registerComponents(component, app)
     }
   })
 }
 
 try {
-  Vue.prototype.$show = ShowSingleton;
-  Vue.prototype.$http = axios;
-  Vue.prototype.$utils = utils;
-  Vue.config.productionTip = false
-  Vue.config.errorHandler = (err) => {
+  const app = createApp(App);
+  app.config.globalProperties.$show = ShowSingleton;
+  app.config.globalProperties.$http = axios;
+  app.config.globalProperties.$utils = utils;
+  app.config.errorHandler = (err) => {
     console.log(err);
-    EventBus.$emit("app_error", err);
+    EventBus.emit("app_error", err);
   }
-  registerComponents(uikit);
-  new Vue({
-    router,
-    render: h => h(App),
-  }).$mount('#app')
+  app.use(router)
+  app.mount('#app');
+  registerComponents(uikit, app);
 } catch (err) {
   console.log(err)
 }

@@ -96,7 +96,7 @@ export default {
     value: function (newValue) {
       this.content = newValue;
     },
-  },
+  }
 };
 </script>
 

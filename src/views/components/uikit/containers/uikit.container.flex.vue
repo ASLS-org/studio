@@ -1,5 +1,5 @@
 <template>
-  <div class="uikit_container_flex" :style="getStyle()" :class="{ row: row && !reverse, column: col && !reverse, 'row-reverse': row && reverse, 'column-reverse': col && reverse }">
+  <div @click="$emit('click')" class="uikit_container_flex" :style="getStyle()" :class="{ row: row && !reverse, column: col && !reverse, 'row-reverse': row && reverse, 'column-reverse': col && reverse }">
     <slot />
   </div>
 </template>

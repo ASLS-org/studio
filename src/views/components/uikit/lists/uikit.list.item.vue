@@ -1,5 +1,6 @@
 <template>
   <div
+    @click="$emit('click')"
     class="uikit_list_item"
     :class="{
       highlighted: highlighted && !noHighlight,

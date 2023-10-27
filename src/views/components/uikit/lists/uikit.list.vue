@@ -12,7 +12,7 @@
     <div tabindex="0" @focus="handleFocusIn" @focusout="handleFocusOut" v-if="filteredItems.length != 0" class="uikit_list_body">
       <div class="uikit_list_item parent" v-for="(treeItem, index) in filteredItems" :key="index">
         <div class="uikit_list_item_unfoldable" v-if="treeItem.value.unfold">
-          <uk-list-item :colored="colored" :index="index" :item="treeItem" @click.native="unfold(treeItem)" />
+          <uk-list-item :colored="colored" :index="index" :item="treeItem" @click="unfold(treeItem)" />
             <span v-if="treeItem.unfolded">
               <template v-if="treeItem.value.unfold && treeItem.value.unfold.length">
                 <uk-list-item
@@ -25,8 +25,8 @@
                   :no-select="noSelect"
                   v-for="(subTreeItem, index) in treeItem.value.unfold"
                   :key="index"
-                  @click.native="(e) => selectItem(e, subTreeItem, treeItem.value.unfold)"
-                  @toggle.native="toggleItem(subTreeItem)"
+                  @click="(e) => selectItem(e, subTreeItem, treeItem.value.unfold)"
+                  @toggle="toggleItem(subTreeItem)"
                 />
               </template>
               <uk-list-item
@@ -50,33 +50,33 @@
           :focused="hasFocus"
           :tall="tall"
           :no-select="noSelect"
-          @dragstart.native="
+          @dragstart="
             (e) => {
               startDrag(e, index);
             }
           "
-          @dragend.native.prevent="
+          @dragend.prevent="
             (e) => {
               stopDrag(e, index);
             }
           "
-          @dragover.native.prevent
-          @dragenter.native.prevent="
+          @dragover.prevent
+          @dragenter.prevent="
             (e) => {
               dragEnter(e, index);
             }
           "
-          @dragleave.native.prevent="
+          @dragleave.prevent="
             (e) => {
               dragOut(e, index);
             }
           "
-          @drop.native.prevent="
+          @drop.prevent="
             (e) => {
               drop(e, index);
             }
           "
-          @click.native="(e) => selectItem(e, treeItem, filteredItems)"
+          @click="(e) => selectItem(e, treeItem, filteredItems)"
           @toggle="toggleItem(treeItem)"
           :draggable="draggable"
         />

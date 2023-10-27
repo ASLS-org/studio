@@ -74,7 +74,7 @@ export default {
   right: 0;
   position: absolute;
   z-index: -1;
-  background-image: url("/images/diane-picchiottino-m1ONIaOCmSs-unsplash.jpg");
+  /* background-image: url("/images/diane-picchiottino-m1ONIaOCmSs-unsplash.jpg"); */
   height: 100%;
   width: 100%;
   background-position: center;

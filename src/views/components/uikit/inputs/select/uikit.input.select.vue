@@ -4,7 +4,7 @@
       {{ label }}
     </div>
     <div class="uikit_select_box" tabindex="0" @focusout="hide" ref="select_box" :class="{ disabled: disabled }">
-      <uk-flex class="uikit_select_textbox_wrapper" :class="{ selected: displayed }" @click.native="show()">
+      <uk-flex class="uikit_select_textbox_wrapper" :class="{ selected: displayed }" @click="show()">
         <uk-flex class="uikit_select_textbox" v-html="options[value]" />
         <span class="uikit_select_button">
           <uk-icon class="uikit_select_button_icon" name="arrow_down" />

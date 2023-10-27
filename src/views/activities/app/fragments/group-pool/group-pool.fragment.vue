@@ -3,7 +3,7 @@
     <uk-flex center-h class="group_pool_header">
       <h3>Group Pool</h3>
       <uk-spacer />
-      <uk-button @click.native="displayGroupPopup" icon="new" style="margin-right: 8px" label="new" />
+      <uk-button @click="displayGroupPopup" icon="new" style="margin-right: 8px" label="new" />
     </uk-flex>
     <uk-flex class="group_pool_body" resizable>
       <div tabindex="0" @focus="handleFocus(true)" @focusout="handleFocus(false)" :class="{ expand }" class="group_pool_groups">
@@ -13,7 +13,7 @@
           :scroll-to="scrollValue"
           :poolsize="poolsize"
           :selected="selIndex === index"
-          @click.native="select(index)"
+          @click="select(index)"
           v-for="(group, index) in groups"
           :group="group"
           :key="index"
@@ -167,7 +167,7 @@ export default {
   },
   mounted() {
     //Dirty trick but it should do for now.
-    EventBus.$on("visualizer_visibility", (visibility) => {
+    EventBus.on("visualizer_visibility", (visibility) => {
       this.expand = !visibility;
     });
   },

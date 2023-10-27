@@ -72,8 +72,8 @@
           :min="0"
           :max="255"
         />
-        <uk-button style="width: 85px" color="#2D6BA2" v-model="group.solo" @click.native.stop="" label="solo" toggleable />
-        <uk-button style="width: 85px" color="#A22D58" v-model="group.disabled" @click.native.stop="" label="disabled" toggleable />
+        <uk-button style="width: 85px" color="#2D6BA2" v-model="group.solo" @click.stop="" label="solo" toggleable />
+        <uk-button style="width: 85px" color="#A22D58" v-model="group.disabled" @click.stop="" label="disabled" toggleable />
       </uk-flex>
     </div>
   </div>

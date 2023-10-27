@@ -1,5 +1,6 @@
 <template>
-  <component class="icon" :is="svgData"/>
+<span></span>
+  <!-- <component class="icon" :is="svgData"/> -->
 </template>
 
 <script>

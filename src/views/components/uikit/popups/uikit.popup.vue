@@ -1,19 +1,19 @@
 <template>
   <Transition name="bounce">
-    <uk-flex col class="popup" v-if="displayed">
-      <uk-flex v-if="!noHeader" @mousedown.native="startDrag" @mouseup="stopDrag" class="header">
+    <uk-flex  col class="popup" v-if="displayed">
+      <uk-flex v-if="!noHeader" @mousedown="startDrag" @mouseup="stopDrag" class="header">
         <img v-if="header.icon" :src="header.icon" />
         <h3>{{ header.title }}</h3>
         <span style="flex: 1" />
-        <uk-icon @click.native="close()" class="popup_close_icon" name="close" />
+        <uk-icon @click="close()" class="popup_close_icon" name="close" />
       </uk-flex>
       <uk-flex class="body">
         <slot />
       </uk-flex>
       <uk-flex v-if="!noValidation" class="popup_validation" :gap="8">
         <uk-spacer />
-        <uk-button v-if="cancelable" @click.native="cancel()" :label="cancelTxt" />
-        <uk-button :disabled="!valid" @click.native="submit()" :label="validateTxt" />
+        <uk-button v-if="cancelable" @click="cancel()" :label="cancelTxt" />
+        <uk-button :disabled="!valid" v-on:click="submit()" :label="validateTxt" />
       </uk-flex>
     </uk-flex>
   </Transition>
