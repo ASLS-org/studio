@@ -12,7 +12,6 @@
           @scrolled="updateScroll"
           :scroll-to="scrollValue"
           :poolsize="poolsize"
-          :selected="selIndex === index"
           @click="select(index)"
           v-for="(group, index) in groups"
           :group="group"
@@ -39,6 +38,10 @@ const DEFAULT_POOL_SIZE = 10;
 
 export default {
   name: "groupPoolFragment",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   components: {
     GroupPopup,
   },
@@ -166,15 +169,14 @@ export default {
     },
   },
   mounted() {
+    this.groups = this.$show.groupPool.groups;
     //Dirty trick but it should do for now.
-    EventBus.on("visualizer_visibility", (visibility) => {
-      this.expand = !visibility;
+    // EventBus.on("visualizer_visibility", (visibility) => {
+    //   this.expand = !visibility;
+    // });
+    EventBus.on("show_loaded", () => {
+      this.pool = this.$show.groupPool;
     });
-  },
-  watch: {
-    groups() {
-      this.updatePoolSize();
-    },
   },
 };
 </script>
