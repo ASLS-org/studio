@@ -1,4 +1,4 @@
-import { createApp} from 'vue';
+import { createApp, reactive } from 'vue';
 import router from './plugins/router';
 import App from './App.vue';
 import axios from 'axios';
@@ -22,9 +22,9 @@ function registerComponents(components, app) {
 
 try {
   const app = createApp(App);
-  app.config.globalProperties.$show = ShowSingleton;
+  app.config.globalProperties.$show = reactive(ShowSingleton);
   app.config.globalProperties.$http = axios;
-  app.config.globalProperties.$utils = utils;
+  app.config.globalProperties.$utils = reactive(utils);
   app.config.errorHandler = (err) => {
     console.log(err);
     EventBus.emit("app_error", err);
