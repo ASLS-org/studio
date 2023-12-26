@@ -36,6 +36,10 @@ import ConnectionsPopup from "./_popups/popup.connections.vue";
 
 export default {
   name: "toolbarFragment",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   components: {
     VisualizerPopup,
     LicensePopup,
@@ -365,14 +369,6 @@ export default {
       window.removeEventListener("keydown", this.handleKeydownEvent);
       window.addEventListener("keydown", this.handleKeydownEvent);
     });
-  },
-  watch: {
-    "$show.bpm":{
-      deep: true,
-      handler(){
-        alert(33)
-      }
-    }
   },
 };
 </script>
