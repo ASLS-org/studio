@@ -35,9 +35,9 @@
               :style="computeCueStyle(cue)"
               class="grid_item"
               v-for="cue in cues"
-              :key="cue.name + cue.id"
+              :key="cue"
               :ref="`cue-${cue.id}`"
-              draggable
+              :draggable="true"
             >
               <div class="grid_item_overlay" :style="{ background: cue.color + '!important' }">
                 <div
@@ -86,6 +86,11 @@ import popupCuePool from "../_popups/group.modifier.popup.cuepool.vue";
 
 export default {
   name: "groupModifierWidgetCuepool",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
+  emits: ["select", "add"],
   components: {
     popupCuePool,
   },
@@ -297,7 +302,7 @@ export default {
       }
     },
   },
-  beforeDestroy() {
+  beforeUnmount() {
     window.removeEventListener("keydown", this.keydownHandler);
   },
   watch: {

@@ -2,7 +2,7 @@
   <uk-widget :header="header">
     <uk-flex :gap="8" col class="group_settings">
       <uk-txt-input label="Name" v-model="group.name" />
-      <uk-select-input @input="setGroupColor" label="Color" :value="getIndexFromColor(group.color)" :options="colorOptions" />
+      <uk-select-input @input="setGroupColor" label="Color" :modelValue="getIndexFromColor(group.color)" :options="colorOptions" />
     </uk-flex>
   </uk-widget>
 </template>
@@ -12,9 +12,19 @@ import colorMixin from "@/views/mixins/color.mixin";
 
 export default {
   name: "groupModifierWidgetSettings",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   mixins: [colorMixin],
   props: {
-    value: Object,
+    group: {
+      type: Object,
+      default: ()=>({
+        name: "undefined group",
+        color: undefined
+      })
+    }
   },
   data() {
     return {
@@ -26,10 +36,6 @@ export default {
         title: "Group Settings",
         icon: "wrench",
       },
-      /**
-       * Handle to group instance
-       */
-      group: this.value,
     };
   },
   methods: {
@@ -43,12 +49,7 @@ export default {
     setGroupColor(colorIndex) {
       this.group.color = this.getColorFromIndex(colorIndex);
     },
-  },
-  watch: {
-    value(value) {
-      this.group = value;
-    },
-  },
+  }
 };
 </script>
 

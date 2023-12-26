@@ -3,12 +3,12 @@
     <uk-flex class="modifier_widget_cue_settings_body" :gap="16">
       <uk-flex col style="flex: 1" :gap="8">
         <uk-txt-input label="Name" v-model="cue.name" />
-        <uk-select-input @input="setCueColor" label="Color" :value="getIndexFromColor(cue.color)" :options="colorOptions" />
-        <uk-select-input v-model="cue.loopStyle" label="Loop Style" :value="0" :options="['One Shot', 'Loop']" />
+        <uk-select-input @input="setCueColor" label="Color" :modelValue="getIndexFromColor(cue.color)" :options="colorOptions" />
+        <uk-select-input v-model="cue.loopStyle" label="Loop Style" :modelValue="0" :options="['One Shot', 'Loop']" />
       </uk-flex>
       <uk-flex style="flex: 1" col :gap="8">
-        <uk-select-input v-model="cue.triggerStyle" style="z-index: 100" label="Trigger Style" :value="0" :options="['Toggle', 'Temporary']" />
-        <uk-select-input v-model="cue.relative" style="z-index: 100" label="Start" :value="0" :options="['Absolute', 'Relative']" />
+        <uk-select-input v-model="cue.triggerStyle" style="z-index: 100" label="Trigger Style" :modelValue="0" :options="['Toggle', 'Temporary']" />
+        <uk-select-input v-model="cue.relative" style="z-index: 100" label="Start" :modelValue="0" :options="['Absolute', 'Relative']" />
         <uk-num-input label="Duration" v-model="cue.duration" />
       </uk-flex>
     </uk-flex>
@@ -20,9 +20,18 @@ import colorMixin from "@/views/mixins/color.mixin";
 
 export default {
   name: "groupModifierWidgetCueSettings",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   mixins: [colorMixin],
   props: {
-    value: Object,
+    cue: {
+      type: Object,
+      default: ()=>({
+
+      })
+    },
   },
   data() {
     return {
@@ -34,10 +43,6 @@ export default {
         title: "Cue Settings",
         icon: "wrench",
       },
-      /**
-       * Handle to cue instance
-       */
-      cue: this.value,
     };
   },
   methods: {
@@ -51,12 +56,7 @@ export default {
     setCueColor(colorIndex) {
       this.cue.color = this.getColorFromIndex(colorIndex);
     },
-  },
-  watch: {
-    value(value) {
-      this.cue = value;
-    },
-  },
+  }
 };
 </script>
 

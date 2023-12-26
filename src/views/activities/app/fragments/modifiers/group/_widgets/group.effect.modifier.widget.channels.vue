@@ -5,12 +5,12 @@
       class="modifier_widget_effect_channels_body"
       filterable
       deletable
-      :key="effect.id"
-      :items="effect.listableChannels"
+      :key="id"
+      :items="channels"
       @select="selectChannel"
       @delete="deleteChannel"
     />
-    <popup-fx-preset v-model="fxPopupDisplayState" :effect="effect" />
+    <popup-fx-preset v-model="fxPopupDisplayState" @change="updateEffect" :effect="effect" />
   </uk-widget>
 </template>
 
@@ -24,11 +24,22 @@ const POPUP_DISPLAY_STATES = {
 
 export default {
   name: "groupEffectModifierWidgetChannels",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
+  emits: ['select','delete'],
   components: {
     PopupFxPreset,
   },
   props: {
-    value: Object,
+    effect: {
+      type: Object,
+      default: ()=>({
+        id: 0,
+        listableChannels: []
+      })
+    }
   },
   data() {
     return {
@@ -39,10 +50,8 @@ export default {
         title: "Modulated Channels",
         icon: "mixer",
       },
-      /**
-       * Handle to effect instance
-       */
-      effect: this.value,
+      channels: this.effect.listableChannels || [],
+      id: this.effect.id || -1,
       /**
        * Effect preset popup display state
        */
@@ -50,10 +59,14 @@ export default {
     };
   },
   methods: {
+    updateEffect(effect){
+      this.channels = effect.listableChannels;
+      this.id = effect.id;
+    },
     /**
      * Display effect channel preset popup
      * 
-       * @public
+     * @public
      */
     displayPopup() {
       this.fxPopupDisplayState = POPUP_DISPLAY_STATES.ACTIVE;
@@ -78,12 +91,15 @@ export default {
       channels.forEach((channel) => {
         this.effect.deleteChannel(channel);
       });
+      this.channels = this.effect.listableChannels
       this.$emit("delete", channels);
     },
   },
   watch: {
-    value() {
-      this.effect = this.value;
+    effect:{
+      handler(effect) {
+        this.updateEffect(effect);
+      },
     },
   },
 };

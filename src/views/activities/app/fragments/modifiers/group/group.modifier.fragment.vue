@@ -1,6 +1,6 @@
 <template>
   <div class="group_modifier" v-show="group">
-    <group-settings-widget v-if="group" v-model="group" />
+    <group-settings-widget :group="group" />
     <fixture-pool-widget
       v-show="group"
       @delete="deleteFixtures"
@@ -8,9 +8,9 @@
       :action="{ icon: 'new', text: 'add', callback: displayFixturePopup }"
     />
     <widget-cuepool v-show="group" @select="selectCue" :group="group" />
-    <cue-settings-widget v-show="cue" v-model="cue" />
+    <cue-settings-widget v-show="cue" :cue="cue" />
     <scene-modifier :scene="cue" v-show="cue && cue.type === 0" />
-    <effect-modifier v-model="cue" v-if="cue && cue.type === 1" />
+    <effect-modifier :effect="cue" v-show="cue && cue.type === 1" />
     <popup-group-patch v-show="group" :group="group" v-model="fixturePopupDisplayState" />
   </div>
 </template>
@@ -29,6 +29,10 @@ import WidgetCuepool from "./_widgets/group.modifier.widget.cuepool.vue";
 
 export default {
   name: "groupModifierFragment",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   components: {
     PopupGroupPatch,
     GroupSettingsWidget,
