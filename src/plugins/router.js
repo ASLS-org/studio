@@ -58,7 +58,6 @@ const router = new createRouter({
 })
 
 router.beforeEach(async (from, to, next) => {
-  console.log(from, to, next)
   if (ShowSingleton.ready || to.name == 'Default' || from.name == "Visualizer" || to.name == "Visualizer") {
     return next()
   } else if (from.name != 'Default') {
