@@ -11,6 +11,10 @@ export default {
   props: {
     error: [Error, Object],
   },
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   data() {
     return {
       /**

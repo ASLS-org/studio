@@ -17,6 +17,10 @@ import EventBus from "@/plugins/eventbus";
 
 export default {
   name: "VisualizerFragment",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   data() {
     return {
       /**

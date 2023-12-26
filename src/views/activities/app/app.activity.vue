@@ -28,6 +28,10 @@ import ErrorPopup from "./_popups/popup.error.vue";
 
 export default {
   name: "AppActivity",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   components: {
     Toolbar,
     PatchBay,

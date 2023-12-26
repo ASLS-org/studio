@@ -7,6 +7,10 @@
 <script>
 export default {
   name: 'App',
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   components: {}
 }
 </script>
