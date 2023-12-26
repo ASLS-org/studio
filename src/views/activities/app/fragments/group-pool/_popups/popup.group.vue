@@ -7,7 +7,7 @@
       <uk-flex col>
         <uk-flex style="padding: 10px" col :gap="8">
           <uk-txt-input label="Name" v-model="name" />
-          <uk-select-input label="Color" @input="setGroupColor" :options="colorOptions" :value="getIndexFromColor(color)" />
+          <uk-select-input label="Color" @input="setGroupColor" :options="colorOptions" :modelValue="getIndexFromColor(color)" />
         </uk-flex>
       </uk-flex>
     </uk-flex>
@@ -20,6 +20,11 @@ import PopupMixin from "@/views/mixins/popup.mixin.js";
 
 export default {
   name: "ukPopupGroup",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
+  emits:['create'],
   mixins: [colorMixin, PopupMixin],
   data() {
     return {
@@ -38,7 +43,7 @@ export default {
       /**
        * Handle to show universe pool
        */
-      universes: JSON.parse(JSON.stringify(this.$show.universePool.listable)),
+      universes: this.$show.universePool.listable,//JSON.parse(JSON.stringify(this.$show.universePool.listable)),
       /**
        * List of fixtures selected for grouping
        */
@@ -58,7 +63,7 @@ export default {
        * @toodo Check this weird behavior. It seems like their is a very weird issue in list reactivity/component dependency ?
        * Anyway, it should do the job for now.
        */
-      this.universes = JSON.parse(JSON.stringify(this.$show.universePool.listable));
+      this.universes = this.$show.universePool.listable;
       let groupId = this.$show.groupPool.genGroupId();
       this.name = `Group ${groupId}`;
       this.color = this.getColorFromIndex(groupId);
@@ -119,7 +124,7 @@ export default {
     },
   },
   watch: {
-    value(state) {
+    modelValue(state) {
       if (state) {
         this.init();
       } else {

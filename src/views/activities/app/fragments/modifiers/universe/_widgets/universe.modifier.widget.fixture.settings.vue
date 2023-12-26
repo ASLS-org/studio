@@ -6,7 +6,7 @@
         <uk-num-input style="width: 70px" class="field" label="Address" v-model.lazy="fixture.chStart" />
       </uk-flex>
       <uk-txt-input readonly label="Model" v-model="fixture.model" />
-      <uk-select-input v-if="fixture.modeIndex != null" label="Mode" :value="0" v-model="fixture.modeIndex" :options="fixture.modeNames" />
+      <uk-select-input v-if="fixture.modeIndex != null" label="Mode" :modelValue="0" v-model="fixture.modeIndex" :options="fixture.modeNames" />
     </uk-flex>
   </uk-widget>
 </template>
@@ -14,6 +14,10 @@
 <script>
 export default {
   name: "universeModifierWidgetFixtureSettings",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   props: {
     /**
      * Handle to fixture instance

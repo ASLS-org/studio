@@ -47,6 +47,10 @@ export default {
   components: {
     SaveasPopup,
   },
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   mixins: [PopupMixin],
   props: {
     error: [Error, Object],
@@ -110,7 +114,7 @@ export default {
     },
   },
   watch: {
-    value(state) {
+    modelValue(state) {
       this.state = state;
       this.isSaved = false;
       this.name = "";

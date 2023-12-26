@@ -24,6 +24,10 @@ import PopupMixin from "@/views/mixins/popup.mixin.js";
 export default {
   name: "ukPopupConnections",
   mixins: [PopupMixin],
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   props: {
     value: Boolean,
   },
@@ -36,7 +40,6 @@ export default {
         title: "Outputs",
       },
       outputs: [],
-      state: this.value,
     };
   },
   methods: {

@@ -3,7 +3,7 @@
     <template v-if="universe && universe.fixturePool">
       <uk-flex :gap="8" col class="universe_settings">
         <uk-txt-input label="Name" v-model="universe.name" />
-        <uk-select-input label="Color" :value="getIndexFromColor(universe.color)" @input="setUniverseColor" :options="colorOptions" />
+        <uk-select-input label="Color" :modelValue="getIndexFromColor(universe.color)" @input="setUniverseColor" :options="colorOptions" />
         <uk-num-input style="width: 60px" label="ID" v-model="universe.id" />
       </uk-flex>
     </template>
@@ -16,9 +16,13 @@ import colorMixin from "@/views/mixins/color.mixin";
 
 export default {
   name: "universeModifierSettings",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   mixins: [colorMixin],
   props: {
-    value: Object,
+    modelValue: Object,
   },
   data() {
     return {
@@ -26,7 +30,7 @@ export default {
         title: "Universe Settings",
         icon: "wrench",
       },
-      universe: this.value,
+      universe: this.modelValue,
     };
   },
   methods: {
@@ -35,7 +39,7 @@ export default {
     },
   },
   watch: {
-    value(value) {
+    modelValue(value) {
       this.universe = value;
     },
 

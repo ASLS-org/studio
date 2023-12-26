@@ -13,6 +13,10 @@ import PopupMixin from "@/views/mixins/popup.mixin.js"
 export default {
   name: "popupCredits",
   mixins: [PopupMixin],
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   data() {
     return {
       /**
@@ -42,19 +46,19 @@ export default {
   width: auto;
   display: block;
 }
-::v-deep h1 {
+:deep(h1) {
   font-family: Roboto-Regular;
   font-size: 24px;
   color: var(--secondary-lighter);
 }
 
-::v-deep h2 {
+:deep(h2) {
   font-family: Roboto-Regular;
   font-size: 16px;
   color: var(--secondary-lighter);
 }
 
-::v-deep h3 {
+:deep(h3) {
   font-family: Roboto-Bold;
   text-transform: uppercase;
   font-size: 12px;
@@ -64,7 +68,7 @@ export default {
   font-weight: normal;
 }
 
-::v-deep h4 {
+:deep(h4) {
   font-family: Roboto-Bold;
   font-size: 12px;
   color: var(--secondary-lighter);
@@ -76,7 +80,7 @@ export default {
   text-overflow: ellipsis;
 }
 
-::v-deep p {
+:deep(p) {
   font-family: Roboto-Medium;
   font-style: normal;
   font-weight: normal;
@@ -89,7 +93,7 @@ export default {
   color: var(--secondary-lighter);
   margin: 0;
 }
-::v-deep a{
+:deep(a){
   font-family: Roboto-Medium;
   font-size: 12px;
   color: var(--accent-blue)
