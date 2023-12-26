@@ -5,6 +5,10 @@
 <script>
 export default {
   name: "ukSpacer",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
 };
 </script>
 

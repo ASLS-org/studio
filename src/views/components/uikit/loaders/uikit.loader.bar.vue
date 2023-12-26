@@ -5,6 +5,10 @@
 <script>
 export default {
   name: "ukLoaderBar",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   props: {
     value: Number,
     color: String,

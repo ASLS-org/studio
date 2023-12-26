@@ -5,7 +5,7 @@
     </div>
     <div class="uikit_select_box" tabindex="0" @focusout="hide" ref="select_box" :class="{ disabled: disabled }">
       <uk-flex class="uikit_select_textbox_wrapper" :class="{ selected: displayed }" @click="show()">
-        <uk-flex class="uikit_select_textbox" v-html="options[value]" />
+        <uk-flex class="uikit_select_textbox" v-html="options[modelValue]" />
         <span class="uikit_select_button">
           <uk-icon class="uikit_select_button_icon" name="arrow_down" />
         </span>
@@ -26,6 +26,11 @@
   */
 export default {
   name: "ukSelectInput",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
+  emits:['update:modelValue','input'],
   props: {
     /**
      * The gauge's text label value
@@ -38,7 +43,7 @@ export default {
     /**
      * The input's actual value
      */
-    value: Number,
+    modelValue: Number,
     /**
      * WHether or not the input is disabled
      */
@@ -49,7 +54,7 @@ export default {
       /**
        * Seleted item value (reactive)
        */
-      selected: parseInt(this.value),
+      selected: parseInt(this.modelValue),
       /**
        * Whether the option list is displayed or not
        */
@@ -74,6 +79,7 @@ export default {
          *
          * @property {Number} index index of the selected option within te option list
          */
+        this.$emit("update:modelValue", index);
         this.$emit("input", index);
         this.hide();
       }
@@ -109,7 +115,7 @@ export default {
     /**
      * Computes the option list styling.
      * 
-       */
+    */
     computeOptionListStyle() {
       let selectBoxEl = this.$refs.select_box;
       let optionListEl = this.$refs.options.$el;
@@ -125,6 +131,11 @@ export default {
       }
     },
   },
+  watch: {
+    modelValue: function(newValue) {
+     this.select(parseInt(newValue));
+    }
+  }
 };
 </script>
 

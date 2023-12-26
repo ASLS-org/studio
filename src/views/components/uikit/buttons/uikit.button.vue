@@ -16,6 +16,11 @@
  */
 export default {
   name: "ukButton",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
+  emits: ['update:modelValue','click'],
   props: {
     /**
      * Text to be displayed in the button.
@@ -72,6 +77,7 @@ export default {
        * @property {Boolean} toggled button's toggle state
        */
       this.$emit('click', this.toggled);
+      this.$emit('update:modelValue', this.toggled);
     }
   }
 };

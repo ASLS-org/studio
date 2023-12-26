@@ -33,6 +33,10 @@
  */
 export default {
   name: "ukTxtInput",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   props: {
     /**
      * The textual input's text label value
@@ -45,7 +49,7 @@ export default {
     /**
      * The actual textual input value
      */
-    value: String,
+    modelValue: String,
     /**
      * Whether or not the input should be disabled
      */
@@ -75,9 +79,10 @@ export default {
       /**
        * Textual input's value (reactive)
        */
-      content: this.value,
+      content: this.modelValue,
     };
   },
+  emits:['update:modelValue','input'],
   methods: {
     /**
      * Updates input value
@@ -89,11 +94,12 @@ export default {
        *
        * @property {String} content Textualinput value
        */
+       this.$emit("update:modelValue", this.content);
       this.$emit("input", this.content);
     },
   },
   watch: {
-    value: function (newValue) {
+    modelValue: function (newValue) {
       this.content = newValue;
     },
   }

@@ -18,6 +18,11 @@
 <script>
 export default {
   name: "ukChase",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
+  emits:['cue'],
   props: {
     /**
      * Handle to chase instance
@@ -98,7 +103,7 @@ export default {
     },
   },
   watch: {
-    value(value) {
+    modelValue(value) {
       this.chase = value;
     },
     "$route.params.chaseId"() {

@@ -50,6 +50,11 @@
  */
 export default {
   name: "ukPopup",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
+  emits:['update:modelValue','input'],
   props: {
     /**
      * Header definition object:
@@ -59,7 +64,10 @@ export default {
     /**
      * Popup's display state
      */
-    value: Boolean,
+    modelValue: {
+      type: Boolean,
+      default: false
+    },
     /**
      * Whether to disable the popup header or not
      */
@@ -133,7 +141,7 @@ export default {
       /**
        * The popup's display state (Reactive)
        */
-      displayed: this.value,
+      displayed: this.modelValue,
     };
   },
   methods: {
@@ -144,7 +152,7 @@ export default {
     update() {
       window.removeEventListener("keydown", this.handleKeydown);
       let body = document.body;
-      this.displayed = this.value;
+      this.displayed = this.modelValue;
       if (this.displayed) {
         window.addEventListener("keydown", this.handleKeydown);
       }
@@ -179,6 +187,7 @@ export default {
        *
        * @property {Boolean} displayed popup's current disaplay state
        */
+      this.$emit("update:modelValue", this.displayed);
       this.$emit("input", this.displayed);
       window.removeEventListener("keydown", this.handleKeydown);
     },
@@ -190,6 +199,7 @@ export default {
          *
          * @property {Boolean} displayed popup's current disaplay state
          */
+        this.$emit("update:modelValue", this.displayed);
         this.$emit("input", this.displayed);
         window.removeEventListener("keydown", this.handleKeydown);
       } else {
@@ -258,7 +268,7 @@ export default {
     body.appendChild(this.$el);
     this.update();
   },
-  beforeDestroy() {
+  beforeUnmount() {
     let body = document.body;
     body.removeChild(this.$el);
     window.removeEventListener("keydown", this.handleKeydown);
@@ -273,7 +283,7 @@ export default {
     }
   },
   watch: {
-    value() {
+    modelValue() {
       this.update();
     },
   },
@@ -290,9 +300,6 @@ export default {
   background: rgba(0, 0, 0, 0.5);
   z-index: 100;
 }
-/* .backdrop.opaque {
-  background: rgba(0, 0, 0, 0.5);
-} */
 </style>
 
 <style scoped>

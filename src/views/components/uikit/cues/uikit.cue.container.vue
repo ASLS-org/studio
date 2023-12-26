@@ -55,7 +55,7 @@
             style="
               height: 10px;
               width: 10px;
-              background: red;
+              /* background: red; */
               border-radius: 50%;
               box-shadow: inset 1px 1px 2px var(--primary-dark);
               transition: all 0.1s;
@@ -72,8 +72,8 @@
           :min="0"
           :max="255"
         />
-        <uk-button style="width: 85px" color="#2D6BA2" v-model="group.solo" @click.stop="" label="solo" toggleable />
-        <uk-button style="width: 85px" color="#A22D58" v-model="group.disabled" @click.stop="" label="disabled" toggleable />
+        <uk-button style="width: 85px" color="#2D6BA2" v-model="group.solo" @click="(e)=>{e.stopPropagation}" label="solo" toggleable />
+        <uk-button style="width: 85px" color="#A22D58" v-model="group.disabled" @click="(e)=>{e.stopPropagation}" label="disabled" toggleable />
       </uk-flex>
     </div>
   </div>
@@ -82,6 +82,11 @@
 <script>
 export default {
   name: "ukCueContainer",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
+  emits: ['scrolled', 'poolsize'],
   props: {
     /**
      * Handle to group instance
@@ -276,7 +281,7 @@ export default {
     },
     "group.DMXActivity"(val) {
       var n = Math.round(val).toString(2);
-      n = ("00000".substr(n.length) + n).slice(0, 5);
+      n = ("00000".substring(n.length) + n).slice(0, 5);
       this.binDisplay = n.split("").sort((a, b) => b - a);
     },
   },

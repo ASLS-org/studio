@@ -7,6 +7,11 @@
 <script>
 export default {
   name: "ukFlex",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
+  emits:['click'],
   props: {
     /**
      * Sets the flex container direction as row.

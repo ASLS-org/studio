@@ -25,7 +25,7 @@
                   :no-select="noSelect"
                   v-for="(subTreeItem, index) in treeItem.value.unfold"
                   :key="index"
-                  @click="(e) => selectItem(e, subTreeItem, treeItem.value.unfold)"
+                  @click="(e) => selectItem({caca: 'hello'}, subTreeItem, treeItem.value.unfold)"
                   @toggle="toggleItem(subTreeItem)"
                 />
               </template>
@@ -93,8 +93,16 @@
 <style scoped>
 </style>
 <script>
+/**
+ * This is a MESS. Sure, it does the work, but this should be refactored
+ */
 export default {
   name: "ukList",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
+  emits: ['unfold','focused','highlight','toggle','select','reorder'],
   props: {
     /**
      * Whether the list is disabled or not
@@ -398,6 +406,7 @@ export default {
         }
       });
       this.selectedItem = item;
+      this.selectedIndex = this.tree.indexOf(item)
       item.selected = true;
       if (!this.noHighlight && clearHighlighted) {
         this.clearHighlighted();
@@ -438,11 +447,10 @@ export default {
     handleGroupedSelection(item, childs) {
       if (!this.selectedItem) {
         this.handleSingleSelection(item, true);
-      } else if (childs.find((c) => c == item) && childs.find((c) => c == this.selectedItem) && item != this.selectedItem) {
-        let index1 = childs.findIndex((c) => c == item);
-        let index2 = childs.findIndex((c) => c == this.selectedItem);
-        let start = Math.min(index1, index2);
-        let stop = Math.max(index1, index2);
+      } else if (childs.some((c) => c == item) && item != this.selectedItem) {
+        let index = childs.findIndex((c) => c == item);
+        let start = Math.min(index, this.selectedIndex);
+        let stop = Math.max(index, this.selectedIndex);
         for (let i = start; i <= stop; i++) {
           let item = childs[i];
           item.highlighted = true;
@@ -486,8 +494,8 @@ export default {
       this.clearHighlighted();
       this.itms_cpy = JSON.parse(JSON.stringify(this.items));
       this.dragging = true;
-      this.selectedIndex = this.tree.indexOf(this.selectedItem);
-      if (this.selectedItem && this.tree[this.selectedIndex]) {
+      // this.selectedIndex = this.tree.indexOf(this.selectedItem);
+      if (this.selectedIndex && this.tree[this.selectedIndex]) {
         this.tree[this.selectedIndex].selected = false;
         this.selectedItem = null;
       }
@@ -617,7 +625,7 @@ export default {
       return items;
     },
   },
-  destroyed() {
+  unmounted() {
     window.removeEventListener("keydown", this.keydownListener);
     this.$emit("focused", false);
   },

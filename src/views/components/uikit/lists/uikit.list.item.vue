@@ -1,6 +1,6 @@
 <template>
   <div
-    @click="$emit('click')"
+    @click="(e)=>$emit('click',e)"
     class="uikit_list_item"
     :class="{
       highlighted: highlighted && !noHighlight,
@@ -29,6 +29,11 @@
 <script>
 export default {
   name: "ukListItem",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
+  emits: ['click'],
   props: {
     /**
      * Handle to the list item

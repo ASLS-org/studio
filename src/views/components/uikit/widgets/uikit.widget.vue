@@ -35,6 +35,10 @@
  */
 export default {
   name: "ukWidget",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   props: {
     /**
      * Header Definition object:

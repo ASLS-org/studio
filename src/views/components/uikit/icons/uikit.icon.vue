@@ -11,6 +11,10 @@
  */
 export default {
   name: "ukIcon",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   props: {
     /**
      * Name of the icon as declared within the image folder.

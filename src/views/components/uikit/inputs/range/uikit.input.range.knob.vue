@@ -23,11 +23,16 @@
  */
 export default {
   name: "ukKnob",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
+  emits:['update:modelValue','input'],
   props: {
     /**
      * Actual knob value
      */
-    value: {
+    modelValue: {
       type: Number,
       default: 0,
     },
@@ -78,10 +83,10 @@ export default {
       return !this.disabled
         ? {
             stroke: this.color,
-            strokeDasharray: `${(this.value / this.max) * 132} 999`,
+            strokeDasharray: `${(this.modelValue / this.max) * 132} 999`,
           }
         : {
-            strokeDasharray: `${(this.value / this.max) * 132} 999`,
+            strokeDasharray: `${(this.modelValue / this.max) * 132} 999`,
           };
     },
     /**
@@ -92,7 +97,7 @@ export default {
      */
     insideStyling() {
       return {
-        transform: `rotate(${Math.floor((this.value / this.max) * 300 + 30)}deg)`,
+        transform: `rotate(${Math.floor((this.modelValue / this.max) * 300 + 30)}deg)`,
       };
     },
   },
@@ -121,7 +126,7 @@ export default {
         this.$emit("input", 0);
       }
       this.$utils.setCapture(e.currentTarget, "row-resize");
-      this.prev = this.value;
+      this.prev = this.modelValue;
       window.addEventListener("mousemove", this.drag);
       window.addEventListener("mouseup", this.stopDrag);
     },
@@ -144,6 +149,7 @@ export default {
          * @property {Number} val the Knob's actul value
          */
         this.$emit("input", value);
+        this.$emit("update:modelValue", value);
       }
     },
     /**
@@ -156,11 +162,11 @@ export default {
   },
   mounted() {
     this.$refs.outline.setAttribute("d", this.describeArc(25, 25, 23, -150, 150));
-    this.$refs.fill.setAttribute("d", this.describeArc(25, 25, 23, -150, (this.value / this.max) * 300 - 150));
+    this.$refs.fill.setAttribute("d", this.describeArc(25, 25, 23, -150, (this.modelValue / this.max) * 300 - 150));
   },
   watch: {
-    value(val) {
-      this.value = val;
+    modelValue(val) {
+      // this.modelValue = val;
       this.$refs.fill.setAttribute("d", this.describeArc(25, 25, 23, -150, (val / this.max) * 300 - 150));
     },
   },
