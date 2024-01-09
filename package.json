@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve --skip-plugins @vue/cli-plugin-eslint",
+    "start": "vite",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint",
+    "lint": "eslint --ext .js,.vue --ignore-path .gitignore --fix src",
     "docs:build": "npm run docs:manual:build & npm run docs:dev:ui:build & npm run docs:dev:core:build",
     "docs:dev:core:build": "docma --config ./docs/developer/core/docma.json",
     "docs:dev:core:serve": "docma --config ./docs/developer/core/docma.json && docma serve ./docs/developer/core/dist",
@@ -18,7 +18,6 @@
   "dependencies": {
     "@vue/compat": "^3.3.0",
     "axios": "^0.26.1",
-    "core-js": "^3.6.4",
     "lodash": "^4.17.21",
     "mitt": "^3.0.1",
     "node-polyfill-webpack-plugin": "^2.0.1",
@@ -32,39 +31,28 @@
   "devDependencies": {
     "@babel/core": "^7.18.6",
     "@babel/eslint-parser": "^7.12.16",
-    "@vue/cli-plugin-babel": "~5.0.8",
-    "@vue/cli-plugin-eslint": "~5.0.8",
-    "@vue/cli-service": "^5.0.8",
+    "@vitejs/plugin-vue": "^5.0.0",
     "@vue/compiler-sfc": "^3.3.4",
     "babel-loader": "^8.2.5",
     "comment-parser": "^1.3.1",
     "css-loader": "^6.8.1",
     "docma": "^3.2.2",
-    "eslint": "^8.0.0",
-    "eslint-plugin-vue": "^8.0.3",
+    "eslint": "^8.56.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-import-resolver-alias": "^1.1.2",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-vue": "^9.19.2",
     "file-loader": "^6.2.0",
     "git-revision-webpack-plugin": "^3.0.6",
     "mini-css-extract-plugin": "^2.7.6",
     "semantic-release": "^22.0.5",
+    "vite": "^5.0.10",
+    "vite-svg-loader": "^5.1.0",
     "vitepress": "^1.0.0-alpha.4",
     "vue-loader": "^17.3.0",
     "webpack": "^5.89.0",
     "webpack-cli": "^5.1.4",
     "worker-loader": "^3.0.8"
-  },
-  "eslintConfig": {
-    "root": true,
-    "env": {
-      "node": true
-    },
-    "extends": [
-      "plugin:vue/essential",
-      "eslint:recommended"
-    ],
-    "parserOptions": {
-      "parser": "@babel/eslint-parser"
-    },
-    "rules": {}
   },
   "browserslist": [
     "> 1%",
