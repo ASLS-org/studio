@@ -1,6 +1,6 @@
 <template>
   <uk-flex>
-    <widget-FX-channels @select="selectFxChannel" v-model="effect" />
+    <widget-FX-channels @select="selectFxChannel" :effect="effect ? effect : undefined" />
     <uk-widget
       v-show="selectedFxChannel && selectedFxChannel.listableFixtures"
       :disabled="!selectedFxChannel"
@@ -10,7 +10,7 @@
     >
       <uk-list
         :disabled="!selectedFxChannel"
-        :key="effect.id"
+        :key="effect && effect.id"
         :items="fixtures"
         class="effect_fixtures_list"
         toggleable
@@ -21,7 +21,7 @@
         @toggle="setFixturesActivity"
       />
     </uk-widget>
-    <widget-wave v-show="selectedFxChannel" :key="effect.id" v-model="selectedFxChannel" />
+    <widget-wave v-show="selectedFxChannel" :key="effect && effect.id" :channel="selectedFxChannel" />
   </uk-flex>
 </template>
 
@@ -31,23 +31,36 @@ import WidgetFXChannels from "./_widgets/group.effect.modifier.widget.channels.v
 
 export default {
   name: "groupEffectModifierFragment",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   components: {
     WidgetWave,
     WidgetFXChannels,
   },
   props: {
-    value: Object,
+    /**
+     * Handle to group scene instance
+     */
+    effect: {
+      type: Object,
+      default: ()=>({
+        id: 0,
+        listableChannels: []
+      }),
+    },
   },
   data() {
     return {
       /**
        * Handle to group effect instance
        */
-      effect: this.value,
+      // effect: this.value,
       /**
        * Handle to currently selected channel
        */
-      selectedFxChannel: null,
+      selectedFxChannel: undefined,
       /**
        * Handle to selected effecct channel list of fixtures
        */
@@ -55,15 +68,6 @@ export default {
     };
   },
   methods: {
-    /**
-     * Updates effect value with v-model input property value
-     * 
-       * @public
-     * @todo stop using v-model, just like what was done for the scene modifier
-     */
-    initFxValues() {
-      this.effect = this.value;
-    },
     /**
      * Picks a channel from the effect's modulated channel list to be selected.
      * 
@@ -95,20 +99,14 @@ export default {
       this.selectedFxChannel.changeFixtureOrder(reorderData.original, reorderData.final)
     }
   },
-  mounted() {
-    this.initFxValues();
-  },
-  watch: {
-    value() {
-      this.initFxValues();
-    },
-    "effect.channels"() {
-      this.selectFxChannel(this.effect.channels[0] || null);
-    },
-    "effect.fixtures"(){
-      this.fixtures = this.selectedFxChannel.listableFixtures;
-    }
-  },
+  // watch: {
+  //   // "effect.channels"() {
+  //   //   this.selectFxChannel(this.effect.channels[0] || null);
+  //   // },
+  //   // "effect.fixtures"(){
+  //   //   this.fixtures = this.selectedFxChannel.listableFixtures;
+  //   // }
+  // },
 };
 </script>
 

@@ -4,8 +4,8 @@
       <uk-icon class="header_icon" v-if="header.icon" :name="header.icon" />
       <h3>{{ header.title }}</h3>
       <span style="flex: 1" />
-      <uk-button @click.native="action.callback" v-if="action" v-show="!docked" :label="action.text" :icon="action.icon" />
-      <uk-icon v-if="dockable" @click.native="docked = !disabled && !docked" class="widget_action" name="arrow_down" />
+      <uk-button @click="action.callback" v-if="action" v-show="!docked" :label="action.text" :icon="action.icon" />
+      <uk-icon v-if="dockable" @click="docked = !disabled && !docked" class="widget_action" name="arrow_down" />
     </div>
     <div v-show="!docked" class="body">
       <slot />
@@ -35,6 +35,10 @@
  */
 export default {
   name: "ukWidget",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   props: {
     /**
      * Header Definition object:

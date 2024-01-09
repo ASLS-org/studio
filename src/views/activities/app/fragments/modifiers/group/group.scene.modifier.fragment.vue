@@ -45,6 +45,10 @@ import WidgetSceneFixtures from "./_widgets/group.scene.modifier.widget.fixtures
 
 export default {
   name: "groupSceneModifierFragment",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   components: {
     WidgetCurve,
     WidgetFixtureChannels,

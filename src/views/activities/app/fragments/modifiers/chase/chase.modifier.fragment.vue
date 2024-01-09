@@ -6,7 +6,7 @@
           <uk-txt-input label="Name" v-model="chase.name" />
           <uk-num-input style="width: 70px" :min="1" :max="99" label="Duration" v-model="chase.duration" />
         </uk-flex>
-        <uk-select-input label="Color" :value="0" :options="colorOptions" />
+        <uk-select-input label="Color" :modelValue="0" :options="colorOptions" />
         <uk-flex :gap="8">
           <uk-select-input label="Quantize" v-model="chase.quantize" :options="quantizeOptions" />
           <uk-select-input class="field" label="Trigger" v-model="chase.trigger" :options="triggerOptions" />
@@ -23,6 +23,10 @@ import colorMixin from "@/views/mixins/color.mixin";
 
 export default {
   name: "chaseModifierFragment",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   components: {
     WidgetPoolTimeline,
   },
@@ -76,7 +80,7 @@ export default {
       }
     },
   },
-  beforeDestroy() {
+  beforeUnmount() {
     window.removeEventListener("keydown", this.keydownHandler);
   },
   mounted() {

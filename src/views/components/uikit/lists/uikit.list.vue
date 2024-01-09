@@ -12,7 +12,7 @@
     <div tabindex="0" @focus="handleFocusIn" @focusout="handleFocusOut" v-if="filteredItems.length != 0" class="uikit_list_body">
       <div class="uikit_list_item parent" v-for="(treeItem, index) in filteredItems" :key="index">
         <div class="uikit_list_item_unfoldable" v-if="treeItem.value.unfold">
-          <uk-list-item :colored="colored" :index="index" :item="treeItem" @click.native="unfold(treeItem)" />
+          <uk-list-item :colored="colored" :index="index" :item="treeItem" @click="unfold(treeItem)" />
             <span v-if="treeItem.unfolded">
               <template v-if="treeItem.value.unfold && treeItem.value.unfold.length">
                 <uk-list-item
@@ -25,8 +25,8 @@
                   :no-select="noSelect"
                   v-for="(subTreeItem, index) in treeItem.value.unfold"
                   :key="index"
-                  @click.native="(e) => selectItem(e, subTreeItem, treeItem.value.unfold)"
-                  @toggle.native="toggleItem(subTreeItem)"
+                  @click="(e) => selectItem({caca: 'hello'}, subTreeItem, treeItem.value.unfold)"
+                  @toggle="toggleItem(subTreeItem)"
                 />
               </template>
               <uk-list-item
@@ -50,33 +50,33 @@
           :focused="hasFocus"
           :tall="tall"
           :no-select="noSelect"
-          @dragstart.native="
+          @dragstart="
             (e) => {
               startDrag(e, index);
             }
           "
-          @dragend.native.prevent="
+          @dragend.prevent="
             (e) => {
               stopDrag(e, index);
             }
           "
-          @dragover.native.prevent
-          @dragenter.native.prevent="
+          @dragover.prevent
+          @dragenter.prevent="
             (e) => {
               dragEnter(e, index);
             }
           "
-          @dragleave.native.prevent="
+          @dragleave.prevent="
             (e) => {
               dragOut(e, index);
             }
           "
-          @drop.native.prevent="
+          @drop.prevent="
             (e) => {
               drop(e, index);
             }
           "
-          @click.native="(e) => selectItem(e, treeItem, filteredItems)"
+          @click="(e) => selectItem(e, treeItem, filteredItems)"
           @toggle="toggleItem(treeItem)"
           :draggable="draggable"
         />
@@ -93,8 +93,16 @@
 <style scoped>
 </style>
 <script>
+/**
+ * This is a MESS. Sure, it does the work, but this should be refactored
+ */
 export default {
   name: "ukList",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
+  emits: ['unfold','focused','highlight','toggle','select','reorder'],
   props: {
     /**
      * Whether the list is disabled or not
@@ -398,6 +406,7 @@ export default {
         }
       });
       this.selectedItem = item;
+      this.selectedIndex = this.tree.indexOf(item)
       item.selected = true;
       if (!this.noHighlight && clearHighlighted) {
         this.clearHighlighted();
@@ -438,11 +447,10 @@ export default {
     handleGroupedSelection(item, childs) {
       if (!this.selectedItem) {
         this.handleSingleSelection(item, true);
-      } else if (childs.find((c) => c == item) && childs.find((c) => c == this.selectedItem) && item != this.selectedItem) {
-        let index1 = childs.findIndex((c) => c == item);
-        let index2 = childs.findIndex((c) => c == this.selectedItem);
-        let start = Math.min(index1, index2);
-        let stop = Math.max(index1, index2);
+      } else if (childs.some((c) => c == item) && item != this.selectedItem) {
+        let index = childs.findIndex((c) => c == item);
+        let start = Math.min(index, this.selectedIndex);
+        let stop = Math.max(index, this.selectedIndex);
         for (let i = start; i <= stop; i++) {
           let item = childs[i];
           item.highlighted = true;
@@ -486,8 +494,8 @@ export default {
       this.clearHighlighted();
       this.itms_cpy = JSON.parse(JSON.stringify(this.items));
       this.dragging = true;
-      this.selectedIndex = this.tree.indexOf(this.selectedItem);
-      if (this.selectedItem && this.tree[this.selectedIndex]) {
+      // this.selectedIndex = this.tree.indexOf(this.selectedItem);
+      if (this.selectedIndex && this.tree[this.selectedIndex]) {
         this.tree[this.selectedIndex].selected = false;
         this.selectedItem = null;
       }
@@ -617,7 +625,7 @@ export default {
       return items;
     },
   },
-  destroyed() {
+  unmounted() {
     window.removeEventListener("keydown", this.keydownListener);
     this.$emit("focused", false);
   },

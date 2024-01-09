@@ -53,6 +53,10 @@ import PatchPopup from "./_popups/universe.modifier.popup.patch.vue";
 
 export default {
   name: "universeModifierFragment",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   components: {
     UniverseSettingsWidget,
     FixturePoolWidget,
@@ -121,6 +125,7 @@ export default {
      */
     displayPatchPopup() {
       this.patchPopupDisplayState = true;
+      console.log(this.patchPopupDisplayState)
     },
     /**
      * Selects a universe's fixture.
@@ -206,7 +211,7 @@ export default {
   mounted() {
     this.fetchUniverseData();
   },
-  beforeDestroy() {
+  beforeUnmount() {
     if (this.selectedFixture && this.selectedFixture.id) {
       this.selectedFixture.highlightSingle(false);
     }

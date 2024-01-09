@@ -3,7 +3,7 @@
     <uk-flex center-h class="group_pool_header">
       <h3>Group Pool</h3>
       <uk-spacer />
-      <uk-button @click.native="displayGroupPopup" icon="new" style="margin-right: 8px" label="new" />
+      <uk-button @click="displayGroupPopup" icon="new" style="margin-right: 8px" label="new" />
     </uk-flex>
     <uk-flex class="group_pool_body" resizable>
       <div tabindex="0" @focus="handleFocus(true)" @focusout="handleFocus(false)" :class="{ expand }" class="group_pool_groups">
@@ -12,8 +12,7 @@
           @scrolled="updateScroll"
           :scroll-to="scrollValue"
           :poolsize="poolsize"
-          :selected="selIndex === index"
-          @click.native="select(index)"
+          @click="select(index)"
           v-for="(group, index) in groups"
           :group="group"
           :key="index"
@@ -39,6 +38,10 @@ const DEFAULT_POOL_SIZE = 10;
 
 export default {
   name: "groupPoolFragment",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   components: {
     GroupPopup,
   },
@@ -166,15 +169,14 @@ export default {
     },
   },
   mounted() {
+    this.groups = this.$show.groupPool.groups;
     //Dirty trick but it should do for now.
-    EventBus.$on("visualizer_visibility", (visibility) => {
-      this.expand = !visibility;
+    // EventBus.on("visualizer_visibility", (visibility) => {
+    //   this.expand = !visibility;
+    // });
+    EventBus.on("show_loaded", () => {
+      this.pool = this.$show.groupPool;
     });
-  },
-  watch: {
-    groups() {
-      this.updatePoolSize();
-    },
   },
 };
 </script>

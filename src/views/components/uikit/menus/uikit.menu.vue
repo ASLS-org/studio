@@ -25,6 +25,10 @@ const SHORTCUT_KEYS_STR = {
 
 export default {
   name: "ukMenu",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   props: {
     menus: Array,
   },
@@ -132,9 +136,9 @@ export default {
               }
             };
             window.addEventListener("keydown", shortcuCallback);
-            this.$once("hook:destroy", () => {
-              window.removeEventListener("keydown", shortcuCallback);
-            });
+            // this.$once("@vue:destroy", () => {
+            //   window.removeEventListener("keydown", shortcuCallback);
+            // });
           }
           item.more = item.shortcut ? `(${item.shortcut})` : "";
           return item;
@@ -143,6 +147,9 @@ export default {
       });
     },
   },
+  beforeUnmount(){
+    // window.removeEventListener("keydown", shortcuCallback);
+  }
 };
 </script>
 

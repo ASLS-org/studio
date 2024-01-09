@@ -28,6 +28,10 @@ import ErrorPopup from "./_popups/popup.error.vue";
 
 export default {
   name: "AppActivity",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   components: {
     Toolbar,
     PatchBay,
@@ -80,15 +84,15 @@ export default {
           this.$router._appReayState = true;
           this.ready = true;
           // document.documentElement.setAttribute("data-theme", "light");
-          EventBus.$emit("app_ready");
+          EventBus.emit("app_ready");
         })
         .catch(() => {});
     },
   },
   async mounted() {
     this.$router._appReayState = false;
-    EventBus.$on("visualizer_loaded", this.setup);
-    EventBus.$on("app_error", (err) => {
+    EventBus.on("visualizer_loaded", this.setup);
+    EventBus.on("app_error", (err) => {
       this.loader.message = "An error occured while loading the app...";
       this.errPopup.error = err;
       this.errPopup.state = true;

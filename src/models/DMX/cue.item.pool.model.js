@@ -21,9 +21,8 @@ class CueItemPool extends Proxify  {
     super();
     this.cue = data.cue;
     this._items = [];
-    // this.duration = 0;
     this.proxify()
-    this.items = data.items || [];//[];
+    this.items = data.items || [];
     return this;
   }
 
@@ -124,8 +123,12 @@ class CueItemPool extends Proxify  {
   addRaw(cueItemData){
     let cueItem = new CueItem(Object.assign(cueItemData, {cue: this.cue}));
     cueItem.id = cueItemData.id != undefined ? cueItemData.id : this.genCueItemId();
-    this.items.pushAndStackUndo(cueItem);
-    this.items.sort((a,b)=>a.tick - b.tick)
+    // Quick and dirty reactivity patch due to vue3 not being reactive with pushAndStackUndo
+    this._items.push(cueItem);
+    this._items.pop()
+    this._items.pushAndStackUndo(cueItem);
+    // this._items.splice(0,1);
+    this._items.sort((a,b)=>a.tick - b.tick)
     return cueItem;
   }
 
@@ -138,6 +141,9 @@ class CueItemPool extends Proxify  {
   delete(cueItem){
     let cueItemIndex = this.items.findIndex(item=>item.id === cueItem.id);
     if(cueItemIndex > -1){
+      // Quick and dirty reactivity patch due to vue3 not being reactive with pushAndStackUndo
+      this._items.push(cueItem);
+      this._items.pop()
       this.items.spliceAndStackUndo(cueItemIndex, 1);
     }else{
       throw {

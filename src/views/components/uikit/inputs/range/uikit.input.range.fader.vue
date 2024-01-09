@@ -30,6 +30,11 @@
  */
 export default {
   name: "ukFader",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
+  emits:['update:modelValue','input'],
   props: {
     /**
      * The fader's text label value
@@ -54,7 +59,7 @@ export default {
     /**
      * Actual fader value
      */
-    value: Number,
+    modelValue: Number,
     /**
      * Whether alternative long styling should be applied
      */
@@ -76,7 +81,7 @@ export default {
       /**
        * The fader's value (reactive)
        */
-      content: this.value,
+      content: this.modelValue,
     };
   },
   methods: {
@@ -99,13 +104,15 @@ export default {
          *
          * @property {Number} content the fader's actual value
          */
+       this.$emit("update:modelValue", this.content);
+
         this.$emit("input", parseInt(this.content));
       }
     },
   },
   mounted() {
     if (this.default != null) {
-      this.value = this.default;
+      this.content = this.modelValue
     }
     if (this.label == null) {
       this.hasLabel = false;
@@ -115,7 +122,7 @@ export default {
     this.updateValue(false);
   },
   watch: {
-    value: function (val) {
+    modelValue: function (val) {
       this.content = val;
       this.updateValue(false);
     },

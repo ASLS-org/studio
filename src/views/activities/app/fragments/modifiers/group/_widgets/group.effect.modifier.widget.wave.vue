@@ -26,7 +26,7 @@
         </uk-flex>
       </uk-flex>
       <div class="widget_wave_modifier">
-        <canvas width="380" height="189" class="widget_wave_modifier_canvas" id="waveModifier" />
+        <canvas width="380" height="189" class="widget_wave_modifier_canvas" ref="waveModifier" />
         <template v-for="(fixture, index) in channel.fixtures">
           <template v-if="channel && channel.fixtures.length">
             <div v-if="fixture.active" class="dot" :style="getTickPosition(fixture)" :key="index" >
@@ -44,30 +44,34 @@ import colorMixin from "@/views/mixins/color.mixin";
 
 export default {
   name: "groupEffectModifierWidgetWave",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   mixins: [colorMixin],
   props: {
-    value: Object,
+    channel: {
+      type: Object,
+      default () {
+        return {
+          min: 0,
+          max: 0,
+          frequency: 0,
+          phase: 0,
+          waveform: 0,
+          waveOptions: ["No Channel Selected"],
+          direction: 0,
+          directionOptions: ["No Channel"],
+          fixturePhaseStart: 0,
+          fixturePhaseStop: 0,
+          fixtures: [],
+          getValue: () => {},
+        }
+      }
+    }
   },
   data() {
     return {
-      /**
-       * Handle to channel instance
-       * @todo implement a non v-model dependent component
-       */
-      channel: this.value || {
-        min: 0,
-        max: 0,
-        frequency: 0,
-        phase: 0,
-        waveform: 0,
-        waveOptions: ["No Channel Selected"],
-        direction: 0,
-        directionOptions: ["No Channel"],
-        fixturePhaseStart: 0,
-        fixturePhaseStop: 0,
-        fixtures: [],
-        getValue: () => {},
-      },
       /**
        * Canvas sizing object
        */
@@ -84,8 +88,7 @@ export default {
   methods: {
     /**
      * Get the XY position of a fixture's current channel value over time
-     * 
-       * @public
+     * @public
      * @param {Object} fixture hande to channel fixture instance
      */
     getTickPosition(fixture) {
@@ -102,18 +105,16 @@ export default {
     },
     /**
      * Prepare HTML canvas instance
-     * 
-       * @public
+     * @public
      */
     prepareCanvas() {
-      this.canvas = document.getElementById("waveModifier");
+      this.canvas = this.$refs.waveModifier;
       this.context = this.canvas.getContext("2d");
       this.update();
     },
     /**
      * Draw the channel's waveform
-     * 
-       * @public
+     * @public
      */
     update() {
       if (this.channel) {
@@ -136,25 +137,6 @@ export default {
   },
   mounted() {
     this.prepareCanvas();
-  },
-  watch: {
-    value(value) {
-      this.channel = value || {
-        min: 0,
-        max: 0,
-        frequency: 0,
-        phase: 0,
-        waveform: 0,
-        waveOptions: ["No Channel Selected"],
-        direction: 0,
-        directionOptions: ["No Channel"],
-        fixturePhaseStart: 0,
-        fixturePhaseStop: 0,
-        fixtures: [],
-        getValue: () => {},
-      };
-      this.update();
-    },
   },
 };
 </script>
@@ -195,7 +177,7 @@ export default {
   border: 2px solid rgba(255,255,255,.2)
 }
 .dot .fixture-label {
-  font-family: roboto;
+  font-family: Roboto-medium;
   font-size: 12px;
   color: var(--secondary-lighter);
   text-align: center;

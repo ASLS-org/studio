@@ -1,5 +1,4 @@
-import Vue from 'vue';
-import VueRouter from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import ShowSingleton from '@/singletons/show.singleton'
 import {
   ProxifySingleton
@@ -13,8 +12,6 @@ const VisualizerActivity = () => import('@/views/activities/visualizer/visualize
 const UniverseModifier = () => import('@/views/activities/app/fragments/modifiers/universe/universe.modifier.fragment.vue');
 const ChaseModifier = () => import('@/views/activities/app/fragments/modifiers/chase/chase.modifier.fragment.vue');
 const GroupModifier = () => import('@/views/activities/app/fragments/modifiers/group/group.modifier.fragment.vue');
-
-Vue.use(VueRouter);
 
 const routes = [{
     path: '/',
@@ -53,11 +50,10 @@ const routes = [{
     component: VisualizerActivity,
     name: 'Visualizer'
   }
-
 ]
 
-var router = new VueRouter({
-  mode: 'history',
+const router = new createRouter({
+  history: createWebHistory(),
   routes,
 })
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="uikit_container_flex" :style="getStyle()" :class="{ row: row && !reverse, column: col && !reverse, 'row-reverse': row && reverse, 'column-reverse': col && reverse }">
+  <div @click="$emit('click')" class="uikit_container_flex" :style="getStyle()" :class="{ row: row && !reverse, column: col && !reverse, 'row-reverse': row && reverse, 'column-reverse': col && reverse }">
     <slot />
   </div>
 </template>
@@ -7,6 +7,11 @@
 <script>
 export default {
   name: "ukFlex",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
+  emits:['click'],
   props: {
     /**
      * Sets the flex container direction as row.

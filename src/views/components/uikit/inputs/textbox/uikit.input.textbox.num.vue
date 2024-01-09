@@ -41,6 +41,10 @@
  */
 export default {
   name: "ukNumInput",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   props: {
     /**
      * The numeral input's text label value
@@ -74,7 +78,7 @@ export default {
     /**
      * The actual numeral input value
      */
-    value: {
+    modelValue: {
       type: Number,
       default: 0,
     },
@@ -103,7 +107,7 @@ export default {
       /**
        * Numeral input's value (reactive)
        */
-      content: this.value.toFixed(this.precision),
+      content: this.modelValue.toFixed(this.precision),
     };
   },
   methods: {
@@ -148,13 +152,15 @@ export default {
          *
          * @property {Number} content Parsed and precision limited input value
          */
+        this.$emit("update:modelValue", parseFloat(Number(this.content).toFixed(this.precision)))
         this.$emit("input", parseFloat(Number(this.content).toFixed(this.precision)));
       }
     },
   },
+  emits:['update:modelValue','input'],
   beforeMount() {
     if (this.default != null) {
-      this.value = this.default;
+      this.updateValue();
     }
     if (this.label == null) {
       this.hasLabel = false;
@@ -163,7 +169,7 @@ export default {
     }
   },
   watch: {
-    value: function (value) {
+    modelValue: function (value) {
       this.content = parseFloat(value);
       this.updateValue(false);
     },

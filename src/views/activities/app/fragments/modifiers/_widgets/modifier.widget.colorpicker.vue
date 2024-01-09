@@ -4,7 +4,7 @@
       <div class="graphical">
         <div class="picker">
           <div class="color_wheel">
-            <canvas class="hsl_conical_gradient" ref="wheel" @mousedown="startDrag($event)" @mouseup="stopDrag()" height="150px" width="150px" />
+            <canvas class="hsl_conical_gradient" ref="wheel" @mousedown="startDrag($event)" @mouseup="stopDrag()" height="150" width="150" />
             <div class="tick" ref="tick" />
             <div
               ref="preview"
@@ -141,7 +141,12 @@ import colorMixin from "@/views/mixins/color.mixin";
  */
 export default {
   name: "ukWidgetColorPicker",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   mixins: [colorMixin],
+  emits:['update:modelValue','input'],
   props: {
     rgbData: {
       type: Array,
@@ -334,20 +339,19 @@ export default {
   },
   mounted() {
     
-    var canvas = this.$refs.wheel;
-    var ctx = canvas.getContext("2d");
-    var radius = 150 / 2;
-    var toRad = (2 * Math.PI) / 360;
-    var step = 1 / radius;
-    var cx = radius;
-    var cy = radius;
+    const canvas = this.$refs.wheel;
+    const ctx = canvas.getContext("2d");
+    const radius = 150 / 2;
+    const toRad = (2 * Math.PI) / 360;
+    const step = 1 / radius;
+    const cx = radius;
+    const cy = radius;
 
     ctx.clearRect(0, 0, 150, 150);
-
-    for (var i = 0; i < 360; i += step) {
-      var rad = i * toRad + Math.PI;
-      var x = radius * Math.cos(rad);
-      var y = radius * Math.sin(rad);
+    for (let i = 0; i < 360; i += step) {
+      let rad = i * toRad + Math.PI;
+      let x = radius * Math.cos(rad);
+      let y = radius * Math.sin(rad);
       ctx.strokeStyle = `hsl(${i},100%,50%`;
       ctx.beginPath();
       ctx.moveTo(radius, radius);
@@ -414,6 +418,8 @@ export default {
   opacity: 0.7;
   border-radius: 50%;
   transform: rotate(90deg);
+  height: 150px;
+  width: 150px;
 }
 .tick {
   position: absolute;

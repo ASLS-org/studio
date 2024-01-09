@@ -168,6 +168,10 @@ const DEFAULT_FIXTURE_DATA = {
 export default {
   name: "ukPopupPatch",
   mixins: [PopupMixin],
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   props: {
     universe: Object,
   },
@@ -198,7 +202,6 @@ export default {
       this.positionOffsets = { x: 0, y: 0, z: 0 };
       this.rotationOffsets = { x: 0, y: 0, z: 0 };
       this.chStop = 0;
-      this.state = this.value;
       this.patchError = false;
     },
     /**

@@ -22,6 +22,11 @@
 <script>
 export default {
   name: "groupSceneModifierFixtures",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
+  emits:['select', 'focused'],
   props: {
     /**
      * Handle to scene instance

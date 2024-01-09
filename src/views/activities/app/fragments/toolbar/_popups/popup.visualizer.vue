@@ -17,7 +17,7 @@
           :min="0"
           :max="100"
           style="width: 100px"
-          :value="0"
+          :modelValue="0"
           :options="['disabled', 'enabled']"
         />
       </uk-flex>
@@ -57,7 +57,7 @@
           <p class="subtitle">Volumetrics emulation mode</p>
         </div>
         <uk-spacer />
-        <uk-select-input style="width: 100px" :value="0" :options="['high', 'medium', 'low', 'disabled']" />
+        <uk-select-input style="width: 100px" :modelValue="0" :options="['high', 'medium', 'low', 'disabled']" />
       </uk-flex>
       <uk-flex center-h>
         <div>
@@ -65,7 +65,7 @@
           <p class="subtitle">Light sources emulation settings</p>
         </div>
         <uk-spacer />
-        <uk-select-input style="width: 100px" :value="0" :options="['enabled', 'disabled']" />
+        <uk-select-input style="width: 100px" :modelValue="0" :options="['enabled', 'disabled']" />
       </uk-flex>
     </uk-flex>
   </uk-popup>
@@ -76,6 +76,10 @@ import PopupMixin from "@/views/mixins/popup.mixin.js";
 
 export default {
   name: "visualizerPopup",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   mixins: [PopupMixin],
   data() {
     return {

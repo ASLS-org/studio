@@ -12,6 +12,10 @@ import PopupMixin from "@/views/mixins/popup.mixin.js"
 
 export default {
   name: "popupError",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   mixins: [PopupMixin],
   props: {
     /**

@@ -23,11 +23,16 @@
  */
 export default {
   name: "ukCheckbox",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
+  emits:['update:modelValue','input'],
   props: {
     /**
      * The checkbox's value.
      */
-    value: Boolean,
+    modelValue: Boolean,
     /**
      * Whether the checkbox is disabled or not.
      */
@@ -42,7 +47,7 @@ export default {
       /**
        * Checkbox's activity value
        */
-      active: this.value,
+      active: this.modelValue,
     };
   },
   methods: {
@@ -59,11 +64,12 @@ export default {
          * @property {Boolean} active the checkbox's activity value
          */
         this.$emit("input", this.active);
+        this.$emit("update:modelValue", this.active);
       }
     },
   },
   watch: {
-    value(val) {
+    modelValue(val) {
       this.active = val;
     },
   },

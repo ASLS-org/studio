@@ -18,6 +18,10 @@
 <script>
 export default {
   name: "universeModifierWidgetPositionTool",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   props: {
     /**
      * Handle to fixture instance

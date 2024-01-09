@@ -29,6 +29,11 @@
  */
 export default {
   name: "ukGauge",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
+  emits:['update:modelValue','input'],
   props: {
     /**
      * The gauge's text label value
@@ -53,14 +58,14 @@ export default {
     /**
      * Actual gauge value
      */
-    value: Number,
+    modelValue: Number,
   },
   data() {
     return {
       /**
        * The gauge's value (reactive)
        */
-      content: this.value,
+      content: this.modelValue,
     };
   },
   methods: {
@@ -93,6 +98,7 @@ export default {
        *
        * @property {Number} content the gauge's actual value
        */
+      this.$emit("update:modelValue", parseInt(this.content));
       this.$emit("input", parseInt(this.content));
     },
   },
@@ -100,7 +106,7 @@ export default {
     this.$refs.track.style.background = this.background;
   },
   watch: {
-    value: function (newValue) {
+    modelValue: function (newValue) {
       this.content = newValue;
     },
     background: function (newVal) {

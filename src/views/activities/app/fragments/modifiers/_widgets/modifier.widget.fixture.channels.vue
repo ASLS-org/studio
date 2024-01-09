@@ -30,6 +30,11 @@
 <script>
 export default {
   name: "modifierWidgetFixtureChannels",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
+  emits: ['input'],
   props: {
     /**
      * Channels list

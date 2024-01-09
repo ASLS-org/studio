@@ -23,6 +23,11 @@
 <script>
 export default {
   name: "ModifierWidgetCurve",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
+  emits: ['input'],
   props: {
     /**
      * Handle to Fade instance
@@ -204,13 +209,6 @@ export default {
     this.prepareCanvas();
   },
   watch: {
-    value: {
-      deep: true,
-      handler(value) {
-        this.fade = value;
-        this.update();
-      },
-    },
     fade: {
       deep: true,
       handler() {
@@ -259,7 +257,7 @@ export default {
 }
 .widget_curve_cp:after {
   content: inherit;
-  font-family: roboto;
+  font-family: Roboto-medium;
   font-size: 12px;
   color: var(--secondary-lighter);
   text-align: center;

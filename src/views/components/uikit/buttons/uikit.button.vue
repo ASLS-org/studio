@@ -1,5 +1,5 @@
 <template>
-  <uk-flex @click.native="handleClick()" class="uikit_button" :style="{background: toggled && color ? color : 'var(--secondary-dark)' }" :class="{ disabled, toggled, toggleable, square }">
+  <uk-flex @click="handleClick" class="uikit_button" :style="{background: toggled && color ? color : 'var(--secondary-dark)' }" :class="{ disabled, toggled, toggleable, square }">
     <uk-icon class="uikit_button_icon" v-if="icon" :name="icon"/>
     <h4>{{ label }}</h4>
   </uk-flex>
@@ -16,6 +16,11 @@
  */
 export default {
   name: "ukButton",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
+  emits: ['update:modelValue','click'],
   props: {
     /**
      * Text to be displayed in the button.
@@ -36,7 +41,7 @@ export default {
     /**
      * The button's current value. Either true or false.
      */
-    value: Boolean,
+    modelValue: Boolean,
     /**
      * The button's color. Defaults to #4786B4.
      */
@@ -71,7 +76,8 @@ export default {
        *
        * @property {Boolean} toggled button's toggle state
        */
-      this.$emit('input', this.toggled);
+      this.$emit('click', this.toggled);
+      this.$emit('update:modelValue', this.toggled);
     }
   }
 };

@@ -2,7 +2,7 @@
   <uk-popup @submit="addCue()" @input="update()" v-model="state" :header="headerData">
     <uk-flex class="cue_popup" col :gap="8">
       <uk-select-input :options="options" label="Cue type" v-model="cue.type" />
-      <uk-select-input label="Color" @input="setCueColor" :options="colorOptions" :value="getIndexFromColor(cue.color)" />
+      <uk-select-input label="Color" @input="setCueColor" :options="colorOptions" :modelValue="getIndexFromColor(cue.color)" />
       <uk-txt-input label="Name" v-model="cue.name" />
     </uk-flex>
   </uk-popup>
@@ -14,6 +14,11 @@ import PopupMixin from "@/views/mixins/popup.mixin.js"
 
 export default {
   name: "popupCuePool",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
+  emits:['add'],
   mixins: [colorMixin, PopupMixin],
   props: {
     /**

@@ -18,6 +18,10 @@ import PopupMixin from "@/views/mixins/popup.mixin.js";
 
 export default {
   name: "ukPopupSplash",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   mixins: [PopupMixin],
   props: {
     /**
@@ -74,7 +78,7 @@ export default {
   right: 0;
   position: absolute;
   z-index: -1;
-  background-image: url("/images/diane-picchiottino-m1ONIaOCmSs-unsplash.jpg");
+  /* background-image: url("/images/diane-picchiottino-m1ONIaOCmSs-unsplash.jpg"); */
   height: 100%;
   width: 100%;
   background-position: center;

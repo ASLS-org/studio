@@ -11,6 +11,11 @@ import PopupMixin from "@/views/mixins/popup.mixin.js"
 
 export default {
   name: "popupFxPreset",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
+  emits: ['change'],
   mixins: [PopupMixin],
   props: {
     effect: Object,
@@ -45,6 +50,7 @@ export default {
     setupPreset(){
       if (this.selectedPreset) {
         this.effect.setupPreset(this.selectedPreset.pool, this.selectedPreset.id);
+        this.$emit('change', this.effect);
         this.close();
       }
     }

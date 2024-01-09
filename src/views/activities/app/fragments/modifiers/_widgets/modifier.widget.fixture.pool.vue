@@ -8,7 +8,7 @@
       auto-select-first
       :auto-select="autoSelect"
       v-if="pool"
-      :items="poolListable"
+      :items="pool.listable"
       :preventUnfocus="preventUnfocus"
       @select="selectFixture"
       @delete="deleteFixtures"
@@ -29,15 +29,16 @@
  */
 export default {
   name: "modifierWidgetFixturePool",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
+  emits:["select", "delete", "highlight", "focused"],
   props: {
     /**
      * Handle to fixture pool
      */
     pool: Object,
-    /**
-     * 
-     */
-    // poolListable: Array,
     /**
      * Action description object
      */
@@ -125,11 +126,6 @@ export default {
       this.pool.moveItem(reorderData.original, reorderData.final);
     },
   },
-  computed:{
-    poolListable(){
-      return JSON.parse(JSON.stringify(this.pool.listable))
-    }
-  },
   mounted() {
     let visualizerEl = document.getElementById("visualizer");
     this.preventUnfocus.push(...[visualizerEl]);
@@ -144,13 +140,5 @@ export default {
 .modifier_widget_fixture_pool_body {
   width: 100%;
   height: 100%;
-}
-.empty_text {
-  display: flex;
-  flex: 1;
-  flex-direction: row;
-  align-items: center;
-  color: var(--secondary-light);
-  justify-content: center;
 }
 </style>

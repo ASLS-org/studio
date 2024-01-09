@@ -12,7 +12,7 @@
   >
     <div class="body">
       <uk-list toggleable @toggle="selectIface" :items="outputs" />
-      <uk-button style="margin: 16px" :square="true" label="refresh" @click.native="updateOutputs" />
+      <uk-button style="margin: 16px" :square="true" label="refresh" @click="updateOutputs" />
     </div>
   </uk-popup>
 </template>
@@ -24,6 +24,10 @@ import PopupMixin from "@/views/mixins/popup.mixin.js";
 export default {
   name: "ukPopupConnections",
   mixins: [PopupMixin],
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   props: {
     value: Boolean,
   },
@@ -36,7 +40,6 @@ export default {
         title: "Outputs",
       },
       outputs: [],
-      state: this.value,
     };
   },
   methods: {

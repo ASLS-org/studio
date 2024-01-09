@@ -1,19 +1,19 @@
 <template>
   <Transition name="bounce">
-    <uk-flex col class="popup" v-if="displayed">
-      <uk-flex v-if="!noHeader" @mousedown.native="startDrag" @mouseup="stopDrag" class="header">
+    <uk-flex  col class="popup" v-if="displayed">
+      <uk-flex v-if="!noHeader" @mousedown="startDrag" @mouseup="stopDrag" class="header">
         <img v-if="header.icon" :src="header.icon" />
         <h3>{{ header.title }}</h3>
         <span style="flex: 1" />
-        <uk-icon @click.native="close()" class="popup_close_icon" name="close" />
+        <uk-icon @click="close()" class="popup_close_icon" name="close" />
       </uk-flex>
       <uk-flex class="body">
         <slot />
       </uk-flex>
       <uk-flex v-if="!noValidation" class="popup_validation" :gap="8">
         <uk-spacer />
-        <uk-button v-if="cancelable" @click.native="cancel()" :label="cancelTxt" />
-        <uk-button :disabled="!valid" @click.native="submit()" :label="validateTxt" />
+        <uk-button v-if="cancelable" @click="cancel()" :label="cancelTxt" />
+        <uk-button :disabled="!valid" v-on:click="submit()" :label="validateTxt" />
       </uk-flex>
     </uk-flex>
   </Transition>
@@ -50,6 +50,11 @@
  */
 export default {
   name: "ukPopup",
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
+  emits:['update:modelValue','input'],
   props: {
     /**
      * Header definition object:
@@ -59,7 +64,10 @@ export default {
     /**
      * Popup's display state
      */
-    value: Boolean,
+    modelValue: {
+      type: Boolean,
+      default: false
+    },
     /**
      * Whether to disable the popup header or not
      */
@@ -133,7 +141,7 @@ export default {
       /**
        * The popup's display state (Reactive)
        */
-      displayed: this.value,
+      displayed: this.modelValue,
     };
   },
   methods: {
@@ -144,7 +152,7 @@ export default {
     update() {
       window.removeEventListener("keydown", this.handleKeydown);
       let body = document.body;
-      this.displayed = this.value;
+      this.displayed = this.modelValue;
       if (this.displayed) {
         window.addEventListener("keydown", this.handleKeydown);
       }
@@ -179,6 +187,7 @@ export default {
        *
        * @property {Boolean} displayed popup's current disaplay state
        */
+      this.$emit("update:modelValue", this.displayed);
       this.$emit("input", this.displayed);
       window.removeEventListener("keydown", this.handleKeydown);
     },
@@ -190,6 +199,7 @@ export default {
          *
          * @property {Boolean} displayed popup's current disaplay state
          */
+        this.$emit("update:modelValue", this.displayed);
         this.$emit("input", this.displayed);
         window.removeEventListener("keydown", this.handleKeydown);
       } else {
@@ -258,7 +268,7 @@ export default {
     body.appendChild(this.$el);
     this.update();
   },
-  beforeDestroy() {
+  beforeUnmount() {
     let body = document.body;
     body.removeChild(this.$el);
     window.removeEventListener("keydown", this.handleKeydown);
@@ -273,7 +283,7 @@ export default {
     }
   },
   watch: {
-    value() {
+    modelValue() {
       this.update();
     },
   },
@@ -290,9 +300,6 @@ export default {
   background: rgba(0, 0, 0, 0.5);
   z-index: 100;
 }
-/* .backdrop.opaque {
-  background: rgba(0, 0, 0, 0.5);
-} */
 </style>
 
 <style scoped>
