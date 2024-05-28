@@ -1,19 +1,20 @@
+const documentStyle = getComputedStyle(document.documentElement);
 /*
- * Full color palette 
+ * Full color palette
  */
 export default {
-  Maroon: "#A22D58",
-  Pink: "#A22D8A",
-  Violet: "#782DA2",
-  Purple: "#5D2DA2",
-  DarkPurple: "#3D3B8E",
-  Blue: "#2D3FA2",
-  LightBlue: "#2D6BA2",
-  Teal: "#0E7A7D",
-  SeaGreen: "#288C54",
-  Green: "#1B8A3E",
-  LightGreen: "#6B983D",
-  Gold: "#BAA53B",
-  Orange: "#C6573D",
-  red: "#BA3B46",
-}
+  Maroon: documentStyle.getPropertyValue('--accent-maroon'),
+  Pink: documentStyle.getPropertyValue('--accent-pink'),
+  Violet: documentStyle.getPropertyValue('--accent-violet'),
+  Purple: documentStyle.getPropertyValue('--accent-purple'),
+  DarkPurple: documentStyle.getPropertyValue('--accent-dark-purple'),
+  Blue: documentStyle.getPropertyValue('--accent-blue'),
+  LightBlue: documentStyle.getPropertyValue('--accent-light-blue'),
+  Teal: documentStyle.getPropertyValue('--accent-teal'),
+  SeaGreen: documentStyle.getPropertyValue('--accent-sea-green'),
+  Green: documentStyle.getPropertyValue('--accent-green'),
+  LightGreen: documentStyle.getPropertyValue('--accent-light-green'),
+  Gold: documentStyle.getPropertyValue('--accent-gold'),
+  Orange: documentStyle.getPropertyValue('--accent-orange'),
+  Red: documentStyle.getPropertyValue('--accent-red'),
+};

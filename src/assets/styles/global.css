@@ -13,13 +13,12 @@
 
 /** Global Color Variables **/
 :root{
-  --primary-dark: #0C0E0A;
-  --primary-dark-alt: #131510;
-  --primary-light: #161913;
-  --primary-light-alt: #1c1f18;
-  --primary-lighter: #2e302b4d;
-  --primary-lighter-alt: #22251f;
-
+  --primary-dark: #0B0D0A;
+  --primary-dark-alt: #12140F;
+  --primary-light: #141A13;
+  --primary-light-alt: #181B16;
+  --primary-lighter: #2C2E2B;
+  --primary-lighter-alt: #1F221D;
   
   --test: #343434;
 
@@ -29,13 +28,23 @@
   --secondary-lighter-alt: #FFFFFFA3;
   --secondary-light-alt: #FFFFFF63;
   --secondary-light: #FFFFFF33;
-  --secondary-dark: #FFFFFF1A;
-  --secondary-darker: #FFFFFF0D;
-  
-  --accent-red: #B4475B;
-  --accent-yellow: #B2B447;
-  --accent-green: #49B447;
-  --accent-blue: #4786B4;
+  --secondary-dark: #FFFFFF14;  /* Lightened off-white */
+  --secondary-darker: #FFFFFF0C;  /* Further lightened off-white */
+
+  --accent-maroon: #D9416B;
+  --accent-pink: #E046A6;
+  --accent-violet: #A45BC9;
+  --accent-purple: #8F5BC9;
+  --accent-dark-purple: #7760B6;
+  --accent-blue: #5A71D3;
+  --accent-light-blue: #5A8CD3;
+  --accent-teal: #2EA1A3;
+  --accent-sea-green: #4DBE7A;
+  --accent-green: #38B553;
+  --accent-light-green: #94BF52;
+  --accent-gold: #E2C753;
+  --accent-orange: #E76D58;
+  --accent-red: #E25D6A;
 }
 
 [data-theme="light"] {
@@ -60,6 +69,7 @@
 * {
   user-select: none;
   outline: none;
+  overscroll-behavior: none;
 }
 
 input {
