@@ -1,5 +1,5 @@
-import setCapture from "./setcapture.utils";
+import setCapture from './setcapture.utils';
 
-export default{
+export default {
   setCapture,
-}
+};

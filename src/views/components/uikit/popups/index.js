@@ -1,4 +1,5 @@
-import popup from "./uikit.popup.vue";
+import popup from './uikit.popup.vue';
+
 export default {
-  popup
-}
+  popup,
+};

@@ -1,5 +1,5 @@
 export default {
-  emits:['update:modelValue','submit','close','input'],
+  emits: ['update:modelValue', 'submit', 'close', 'input'],
   props: {
     /**
      * Popup display state
@@ -16,8 +16,8 @@ export default {
      * Update popup display state
      */
     update() {
-      this.$emit("update:modelValue", this.state);
-      this.$emit("input", this.state);
+      this.$emit('update:modelValue', this.state);
+      this.$emit('input', this.state);
     },
     /**
      * Close popup
@@ -32,4 +32,4 @@ export default {
       this.state = state;
     },
   },
-}
+};
