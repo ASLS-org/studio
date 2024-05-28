@@ -27,7 +27,6 @@
 <script>
 import EventBus from '@/plugins/eventbus';
 
-import { nextTick } from 'vue';
 import Toolbar from './fragments/toolbar/toolbar.fragment.vue';
 import PatchBay from './fragments/patch-bay/patch-bay.fragment.vue';
 import GroupPool from './fragments/group-pool/group-pool.fragment.vue';
