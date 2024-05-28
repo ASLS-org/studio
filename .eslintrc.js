@@ -31,6 +31,7 @@ module.exports = {
           ['@', './src'],
           ['@root', './'],
         ],
+        extensions: ['.js', '.vue'],
       },
     },
   },
