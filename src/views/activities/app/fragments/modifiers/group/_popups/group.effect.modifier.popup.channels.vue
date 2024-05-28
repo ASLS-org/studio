@@ -1,33 +1,47 @@
 <template>
-  <uk-popup @submit="setupPreset" @input="update()" v-model="state" :header="headerData">
+  <uk-popup
+    v-model="state"
+    :header="headerData"
+    @submit="setupPreset"
+    @input="update()"
+  >
     <uk-flex class="popup_fx_preset">
-      <uk-list @select="selectPreset" class="preset_list" :items="effect.listablePresets" filterable selectable />
+      <uk-list
+        class="preset_list"
+        :items="effect.listablePresets"
+        filterable
+        selectable
+        @select="selectPreset"
+      />
     </uk-flex>
   </uk-popup>
 </template>
 
 <script>
-import PopupMixin from "@/views/mixins/popup.mixin.js"
+import PopupMixin from '@/views/mixins/popup.mixin';
 
 export default {
-  name: "popupFxPreset",
+  name: 'PopupFxPreset',
   compatConfig: {
     // or, for full vue 3 compat in this component:
     MODE: 3,
   },
-  emits: ['change'],
   mixins: [PopupMixin],
   props: {
-    effect: Object,
+    effect: {
+      type: Object,
+      default: null,
+    },
   },
+  emits: ['change'],
   data() {
     return {
       /**
        * Popup header dtata
        */
-      headerData: { title: "Add Modulated Channel" },
-      /** 
-       * Handle to seected preset 
+      headerData: { title: 'Add Modulated Channel' },
+      /**
+       * Handle to seected preset
        */
       selectedPreset: null,
     };
@@ -35,7 +49,7 @@ export default {
   methods: {
     /**
      * Select preset instance
-     * 
+     *
        * @public
      * @param {Object} preset preset definition object
      */
@@ -44,17 +58,17 @@ export default {
     },
     /**
      * Setup preset into the effect
-     * 
+     *
        * @public
      */
-    setupPreset(){
+    setupPreset() {
       if (this.selectedPreset) {
         this.effect.setupPreset(this.selectedPreset.pool, this.selectedPreset.id);
         this.$emit('change', this.effect);
         this.close();
       }
-    }
-  }
+    },
+  },
 };
 </script>
 

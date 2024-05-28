@@ -1,27 +1,47 @@
 <template>
-  <uk-widget dockable :header="headerData" :disabled="!channels || !channels.length" class="channels_widget">
+  <uk-widget
+    dockable
+    :header="headerData"
+    :disabled="!channels || !channels.length"
+    class="channels_widget"
+  >
     <div class="channels_list">
-      <div v-show="channels && channels.length > 0" class="channels_channel" v-for="(channel, index) in channels" :key="index">
+      <div
+        v-for="(channel, index) in channels"
+        v-show="channels && channels.length > 0"
+        :key="index"
+        class="channels_channel"
+      >
         <uk-num-input
-          @input="update(channel)"
+          v-model.lazy="channel.value"
           class="channel_value"
           :min="0"
           :max="255"
           :default="0"
-          v-model.lazy="channel.value"
           :disabled="!channel.active"
-        />
-        <uk-icon :class="{ disabled: !channel.active }" class="channel_icon" :name="getIcon(channel)" />
-        <uk-fader
-          :short="toggleable"
           @input="update(channel)"
+        />
+        <uk-icon
+          :class="{ disabled: !channel.active }"
+          class="channel_icon"
+          :name="getIcon(channel)"
+        />
+        <uk-fader
+          v-model.lazy="channel.value"
+          :short="toggleable"
           :min="0"
           :max="255"
           :label="`CH${index + 1}`"
-          v-model.lazy="channel.value"
           :disabled="!channel.active"
+          color="var(--accent-blue)"
+          @input="update(channel)"
         />
-        <uk-checkbox @input="update(channel)" v-if="toggleable" v-model.lazy="channel.active" class="channel_activity" />
+        <uk-checkbox
+          v-if="toggleable"
+          v-model.lazy="channel.active"
+          class="channel_activity"
+          @input="update(channel)"
+        />
       </div>
     </div>
   </uk-widget>
@@ -29,59 +49,59 @@
 
 <script>
 export default {
-  name: "modifierWidgetFixtureChannels",
+  name: 'ModifierWidgetFixtureChannels',
   compatConfig: {
     // or, for full vue 3 compat in this component:
     MODE: 3,
   },
-  emits: ['input'],
   props: {
     /**
      * Channels list
      */
     channels: {
       type: Array,
-      default: () => [],
+      default: () => [1, 2, 3, 4, 5],
     },
     /**
      * Whether the channels are toggleable or not (checkbox displayed)
      */
     toggleable: Boolean,
   },
+  emits: ['input'],
   data() {
     return {
       /**
        * Widget header data
        */
       headerData: {
-        title: "Channels",
-        icon: "mixer",
+        title: 'Channels',
+        icon: 'mixer',
       },
     };
   },
   methods: {
     /**
      * Update channel data
-     * 
+     *
        * @public
      * @param {Object} channel a channel description object
      */
     update(channel) {
-      this.$emit("input", channel);
+      this.$emit('input', channel);
     },
     /**
      * GetRetrieves icon that is associated to a specific channel type
-     * 
-       * @public
+     *
+     * @public
      * @param {Object} channel a channel description object
      * @returns {String} icon name
      */
     getIcon(channel) {
       switch (channel.type) {
-        case "Color":
-          return (channel.type + "intensity" + channel.color).toLowerCase().replace(" ", "");
+        case 'Color':
+          return (`${channel.type}intensity${channel.color}`).toLowerCase().replace(' ', '');
         default:
-          return channel.type.toLowerCase().replace(" ", "").replace("fine", "");
+          return channel.type.toLowerCase().replace(' ', '').replace('fine', '');
       }
     },
   },

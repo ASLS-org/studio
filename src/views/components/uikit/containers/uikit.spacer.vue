@@ -4,7 +4,7 @@
 
 <script>
 export default {
-  name: "ukSpacer",
+  name: 'UkSpacer',
   compatConfig: {
     // or, for full vue 3 compat in this component:
     MODE: 3,

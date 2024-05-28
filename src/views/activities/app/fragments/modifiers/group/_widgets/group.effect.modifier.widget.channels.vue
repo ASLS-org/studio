@@ -1,21 +1,30 @@
 <template>
-  <uk-widget class="modifier_widget_effect_channels" :header="header" :action="{ icon: 'new', text: 'add', callback: displayPopup }" dockable>
+  <uk-widget
+    class="modifier_widget_effect_channels"
+    :header="header"
+    :action="{ icon: 'new', text: 'add', callback: displayPopup }"
+    dockable
+  >
     <uk-list
+      :key="id"
       auto-select-first
       class="modifier_widget_effect_channels_body"
       filterable
       deletable
-      :key="id"
       :items="channels"
       @select="selectChannel"
       @delete="deleteChannel"
     />
-    <popup-fx-preset v-model="fxPopupDisplayState" @change="updateEffect" :effect="effect" />
+    <popup-fx-preset
+      v-model="fxPopupDisplayState"
+      :effect="effect"
+      @change="updateEffect"
+    />
   </uk-widget>
 </template>
 
 <script>
-import PopupFxPreset from "../_popups/group.effect.modifier.popup.channels.vue";
+import PopupFxPreset from '../_popups/group.effect.modifier.popup.channels.vue';
 
 const POPUP_DISPLAY_STATES = {
   HIDDEN: false,
@@ -23,32 +32,32 @@ const POPUP_DISPLAY_STATES = {
 };
 
 export default {
-  name: "groupEffectModifierWidgetChannels",
+  name: 'GroupEffectModifierWidgetChannels',
   compatConfig: {
     // or, for full vue 3 compat in this component:
     MODE: 3,
   },
-  emits: ['select','delete'],
   components: {
     PopupFxPreset,
   },
   props: {
     effect: {
       type: Object,
-      default: ()=>({
+      default: () => ({
         id: 0,
-        listableChannels: []
-      })
-    }
+        listableChannels: [],
+      }),
+    },
   },
+  emits: ['select', 'delete'],
   data() {
     return {
       /**
        * Widget header data
        */
       header: {
-        title: "Modulated Channels",
-        icon: "mixer",
+        title: 'Modulated Channels',
+        icon: 'mixer',
       },
       channels: this.effect.listableChannels || [],
       id: this.effect.id || -1,
@@ -58,14 +67,21 @@ export default {
       fxPopupDisplayState: POPUP_DISPLAY_STATES.HIDDEN,
     };
   },
+  watch: {
+    effect: {
+      handler(effect) {
+        this.updateEffect(effect);
+      },
+    },
+  },
   methods: {
-    updateEffect(effect){
+    updateEffect(effect) {
       this.channels = effect.listableChannels;
       this.id = effect.id;
     },
     /**
      * Display effect channel preset popup
-     * 
+     *
      * @public
      */
     displayPopup() {
@@ -73,17 +89,17 @@ export default {
     },
     /**
      * Select an affect's channel
-     * 
+     *
        * @public
      * @param {Object} channelData channel configuration object
      */
     selectChannel(channelData) {
-      let channel = this.effect.getChannelFromType(channelData.type);
-      this.$emit("select", channel);
+      const channel = this.effect.getChannelFromType(channelData.type);
+      this.$emit('select', channel);
     },
     /**
      * Deletes a channel from the effect's modulated channel pool
-     * 
+     *
        * @public
      * @param {ObjArrayect} channels Array of channel configuration objects
      */
@@ -91,15 +107,8 @@ export default {
       channels.forEach((channel) => {
         this.effect.deleteChannel(channel);
       });
-      this.channels = this.effect.listableChannels
-      this.$emit("delete", channels);
-    },
-  },
-  watch: {
-    effect:{
-      handler(effect) {
-        this.updateEffect(effect);
-      },
+      this.channels = this.effect.listableChannels;
+      this.$emit('delete', channels);
     },
   },
 };

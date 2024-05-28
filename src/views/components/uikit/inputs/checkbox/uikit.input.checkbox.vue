@@ -1,14 +1,34 @@
 <template>
-  <div class="uikit_checkbox" :class="{ disabled }">
-    <span class="uikit_checkbox_tickbox" v-bind:class="{ active }" @click="toggle()">
+  <div
+    class="uikit_checkbox"
+    :class="{ disabled }"
+  >
+    <span
+      class="uikit_checkbox_tickbox"
+      :class="{ active }"
+      @click="toggle()"
+    >
       <span class="uikit_checkbox_tickbox_tick">
         <!-- TODO: replace this by a div with svg mask to change color dynamically/clean !-->
-        <svg width="9" height="8" viewbox="0 0 9 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M1 3.85714L3.33333 6L8 1" stroke-width="2" />
+        <svg
+          width="9"
+          height="8"
+          viewbox="0 0 9 8"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M1 3.85714L3.33333 6L8 1"
+            stroke-width="2"
+          />
         </svg>
       </span>
     </span>
-    <span class="uikit_checkbox_label" v-if="label != null" v-bind:class="{ active: active }">
+    <span
+      v-if="label != null"
+      class="uikit_checkbox_label"
+      :class="{ active: active }"
+    >
       {{ label }}
     </span>
   </div>
@@ -22,12 +42,11 @@
  * @story Disabled {"value": "Default", "label":"default", "disabled": true}
  */
 export default {
-  name: "ukCheckbox",
+  name: 'UkCheckbox',
   compatConfig: {
     // or, for full vue 3 compat in this component:
     MODE: 3,
   },
-  emits:['update:modelValue','input'],
   props: {
     /**
      * The checkbox's value.
@@ -40,8 +59,12 @@ export default {
     /**
      * Text label to be displayed on the right of the checkbox
      */
-    label: String,
+    label: {
+      type: String,
+      default: null,
+    },
   },
+  emits: ['update:modelValue', 'input'],
   data() {
     return {
       /**
@@ -49,6 +72,11 @@ export default {
        */
       active: this.modelValue,
     };
+  },
+  watch: {
+    modelValue(val) {
+      this.active = val;
+    },
   },
   methods: {
     /**
@@ -63,14 +91,9 @@ export default {
          *
          * @property {Boolean} active the checkbox's activity value
          */
-        this.$emit("input", this.active);
-        this.$emit("update:modelValue", this.active);
+        this.$emit('input', this.active);
+        this.$emit('update:modelValue', this.active);
       }
-    },
-  },
-  watch: {
-    modelValue(val) {
-      this.active = val;
     },
   },
 };

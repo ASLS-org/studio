@@ -1,6 +1,5 @@
 <template>
   <div
-    @click="(e)=>$emit('click',e)"
     class="uikit_list_item"
     :class="{
       highlighted: highlighted && !noHighlight,
@@ -14,31 +13,65 @@
       tall: tall,
       noSelect: noSelect,
     }"
+    @click="(e)=>$emit('click',e)"
   >
-    <uk-checkbox v-model="toggled" :disabled="value.disabled" style="margin-right: 16px" v-if="toggleable" />
-    <span class="uikit_list_item_colored_dot" :style="{ backgroundColor: value.color }" v-if="!value.icon && colored && value.color" />
-    <uk-icon class="uikit_list_item_icon" v-if="value.icon" :name="value.icon" />
+    <uk-checkbox
+      v-if="toggleable"
+      v-model="toggled"
+      :disabled="value.disabled"
+      style="margin-right: 16px"
+    />
+    <span
+      v-if="!value.icon && colored && value.color"
+      class="uikit_list_item_colored_dot"
+      :style="{ backgroundColor: value.color }"
+    />
+    <uk-icon
+      v-if="value.icon"
+      class="uikit_list_item_icon"
+      :name="value.icon"
+    />
     <h4>{{ value.name }}</h4>
     <div style="flex: 1" />
-    <h4 class="uikit_list_item_more" v-if="value.more">{{ value.more }}</h4>
-    <uk-icon v-if="value.unfold" class="uikit_list_item_icon_small" :name="unfolded ? 'arrow_up' : 'arrow_down'" />
-    <uk-icon v-if="deletable" class="uikit_list_item_icon_small" name="cross" />
+    <h4
+      v-if="value.more"
+      class="uikit_list_item_more"
+    >
+      {{ value.more }}
+    </h4>
+    <uk-icon
+      v-if="value.unfold && !unfolded"
+      class="uikit_list_item_icon_small"
+      name="arrow_down"
+    />
+    <uk-icon
+      v-if="value.unfold && unfolded"
+      class="uikit_list_item_icon_small"
+      name="arrow_up"
+    />
+    <uk-icon
+      v-if="deletable"
+      class="uikit_list_item_icon_small"
+      name="cross"
+    />
   </div>
 </template>
 
 <script>
 export default {
-  name: "ukListItem",
+  name: 'UkListItem',
   compatConfig: {
     // or, for full vue 3 compat in this component:
     MODE: 3,
   },
-  emits: ['click'],
   props: {
     /**
      * Handle to the list item
      */
-    item: Object,
+    item: {
+      type: Object,
+      default: null,
+    },
     /**
      * Whether the list item is toggleable or not (appends checkbox to item)
      */
@@ -56,7 +89,7 @@ export default {
      */
     deletable: Boolean,
     /**
-     * Item's foxus state
+     * Item's focus state
      */
     focused: Boolean,
     /**
@@ -76,6 +109,7 @@ export default {
      */
     empty: Boolean,
   },
+  emits: ['click'],
   data() {
     return {
       /**
@@ -133,7 +167,7 @@ export default {
   height: 40px !important;
 }
 .uikit_list_item h4 {
-  font-family: Roboto-medium !important;
+  font-family: Roboto-medium;
 }
 .unfold h4 {
   font-family: Roboto-bold !important;
@@ -154,18 +188,27 @@ export default {
 .deletable.selected .uikit_list_item_icon_small {
   display: initial !important;
 }
-.selected:not(.noSelect) {
+.selected{
+  background: var(--secondary-dark) !important ;
+  opacity: 1;
+}
+.selected.highlighted:not(.noSelect) {
   background: var(--secondary-dark) !important ;
   opacity: 1;
 }
 .selected.focused:not(.noSelect) {
-  background: #2d6ba2 !important;
-  border-color: var(--secondary-darker);
+  /* background: #2d6ba2 !important; */
+  background-color: var(--accent-blue)!important;
+  /* border-color: var(--secondary-darker); */
+  border-color: var(--accent-blue)!important;
   opacity: 1;
 }
-.highlighted {
-  border-color: #2d6ba2;
-  background: #2d6ba2 !important;
+.highlighted:not(.noSelect){
+  background: var(--secondary-darker) !important ;
+}
+.highlighted.focused:not(.noSelect)  {
+  border-color: var(--accent-blue)!important;
+  background: var(--accent-blue)!important;
 }
 .unfold:active {
   background: var(--secondary-dark) !important;
@@ -190,14 +233,19 @@ export default {
   margin-left: 16px !important;
 }
 .uikit_list_item_colored_dot {
-  height: 10px;
-  width: 10px;
+  height: 8px;
+  width: 8px;
   border-radius: 50%;
   background: #533aaa;
   margin-right: 8px;
 }
 .uikit_list_item_more {
-  width: 75px;
+  width: 62px;
+  color: var(--secondary-light-alt);
+  font-family: roboto-regular!important;
+}
+.selected.focused .uikit_list_item_more{
+  color: var(--secondary-lighter)!important
 }
 .disabled h4 {
   color: var(--secondary-light) !important;
@@ -210,7 +258,13 @@ export default {
   cursor: unset;
 }
 .empty {
-  background: var(--primary-light) repeating-linear-gradient(45deg, #1619130a, #1619130a 10px, #0c0e0a38 10px, #0c0e0a38 20px);
+  background: var(--primary-light) repeating-linear-gradient(
+    45deg,
+   #1619130a,
+    #1619130a 10px,
+    #0c0e0a38 10px,
+    #0c0e0a38 20px
+  );
   text-transform: uppercase!important;
 }
 </style>

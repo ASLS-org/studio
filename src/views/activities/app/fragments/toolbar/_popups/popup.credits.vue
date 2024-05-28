@@ -1,17 +1,26 @@
 <template>
-  <uk-popup @submit="close" :movable="false" backdrop :cancelable="false" @input="update()" v-model="state" :header="headerData">
+  <uk-popup
+    v-model="state"
+    :movable="false"
+    backdrop
+    :cancelable="false"
+    :header="headerData"
+    @submit="close"
+    @input="update()"
+  >
     <div class="body">
-      <div v-html="creditsTXT"/>
+      <!-- eslint-disable-next-line vue/no-v-html -->
+      <div v-html="creditsTXT" />
     </div>
   </uk-popup>
 </template>
 
 <script>
-import Credits from "raw-loader!/CREDITS.html";
-import PopupMixin from "@/views/mixins/popup.mixin.js"
+import Credits from '@root/CREDITS.html?raw';
+import PopupMixin from '@/views/mixins/popup.mixin';
 
 export default {
-  name: "popupCredits",
+  name: 'PopupCredits',
   mixins: [PopupMixin],
   compatConfig: {
     // or, for full vue 3 compat in this component:
@@ -23,7 +32,7 @@ export default {
        * Popup header data
        */
       headerData: {
-        title: "Credits",
+        title: 'Credits',
       },
       /**
        * Raw HTLM credits text (loaded from project's root)

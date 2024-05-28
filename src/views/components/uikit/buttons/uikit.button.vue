@@ -1,13 +1,22 @@
 <template>
-  <uk-flex @click="handleClick" class="uikit_button" :style="{background: toggled && color ? color : 'var(--secondary-dark)' }" :class="{ disabled, toggled, toggleable, square }">
-    <uk-icon class="uikit_button_icon" v-if="icon" :name="icon"/>
+  <uk-flex
+    class="uikit_button"
+    :style="{background: toggled && color ? color : 'var(--secondary-dark)' }"
+    :class="{ disabled, toggled, toggleable, square }"
+    @click.stop="handleClick"
+  >
+    <uk-icon
+      v-if="icon"
+      class="uikit_button_icon"
+      :name="icon"
+    />
     <h4>{{ label }}</h4>
   </uk-flex>
 </template>
 
 <script>
 /**
- * @component Button A multi-function customisable button component which can be used as a toggleable and/or temporary switch.
+ * @component Butto customisable button component usable as a toggleable and/or temporary switch.
  * @namespace uikit/inputs/buttons
  * @story Default {"label":"default", "value": false}
  * @story Square {"label":"square", "square": true, "value": false}
@@ -15,17 +24,19 @@
  * @story Icon {"label":"Icon", "toggleable": true, "value": false, "icon":"new"}
  */
 export default {
-  name: "ukButton",
+  name: 'UkButton',
   compatConfig: {
     // or, for full vue 3 compat in this component:
     MODE: 3,
   },
-  emits: ['update:modelValue','click'],
   props: {
     /**
      * Text to be displayed in the button.
      */
-    label: String,
+    label: {
+      type: String,
+      default: null,
+    },
     /**
      *  Whether the button is disabled or not.
      */
@@ -47,13 +58,17 @@ export default {
      */
     color: {
       type: String,
-      default: '#4786B4'
+      default: '#4786B4',
     },
     /**
      * uikit-icon name to preceed the button's label.
      */
-    icon: String
+    icon: {
+      type: String,
+      default: null,
+    },
   },
+  emits: ['update:modelValue', 'click'],
   data() {
     return {
       /**
@@ -62,13 +77,13 @@ export default {
       toggled: this.toggleable ? this.value : false,
     };
   },
-  methods:{
+  methods: {
     /**
      * Handle button click.
-     * 
+     *
        */
-    handleClick(){
-      if(this.toggleable){
+    handleClick() {
+      if (this.toggleable) {
         this.toggled = !this.toggled;
       }
       /**
@@ -78,8 +93,8 @@ export default {
        */
       this.$emit('click', this.toggled);
       this.$emit('update:modelValue', this.toggled);
-    }
-  }
+    },
+  },
 };
 </script>
 
@@ -96,6 +111,7 @@ export default {
   justify-content: center;
   text-transform: uppercase;
   padding: 0 14px;
+  opacity: .9;
 }
 .uikit_button:active:not(.toggleable){
   background: var(--secondary-light)!important;
@@ -115,8 +131,9 @@ export default {
   color: var(--secondary-lighter);
 }
 .uikit_button:hover {
-  background: var(--secondary-light);
+  opacity: 1;
   cursor: pointer;
+  transition: background-color .1s ease-in-out;
 }
 .uikit_button.disabled {
   background: var(--secondary-darker)!important;

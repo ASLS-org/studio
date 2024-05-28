@@ -1,11 +1,35 @@
 <template>
-  <div tabindex="0" @focusout="handleFocusOut" class="menus">
-    <div class="menu" v-for="(menu, index) in mens" :key="index" @mouseover="handleHover(menu)" @click="select(menu)">
-      <div class="header_menu" :class="{ selected: menu.selected }">
+  <div
+    tabindex="0"
+    class="menus"
+    @focusout="handleFocusOut"
+  >
+    <div
+      v-for="(menu, index) in mens"
+      :key="index"
+      class="menu"
+      @mouseover="handleHover(menu)"
+      @click="select(menu)"
+    >
+      <div
+        class="header_menu"
+        :class="{ selected: menu.selected }"
+      >
         <h3>{{ menu.name }}</h3>
       </div>
-      <div class="menu_list" v-show="menu.selected">
-        <uk-list tall @select="selectSubItem" @selected="unselectAll()" class="list" no-highlight no-select :items="menu.items" />
+      <div
+        v-show="menu.selected"
+        class="menu_list"
+      >
+        <uk-list
+          tall
+          class="list"
+          no-highlight
+          no-select
+          :items="menu.items"
+          @select="selectSubItem"
+          @selected="unselectAll()"
+        />
       </div>
     </div>
   </div>
@@ -19,18 +43,21 @@
  * @constant {Object} SHORTCUT_KEYS_STR
  */
 const SHORTCUT_KEYS_STR = {
-  ctrl: "ctrlKey",
-  shift: "shiftKey",
+  ctrl: 'ctrlKey',
+  shift: 'shiftKey',
 };
 
 export default {
-  name: "ukMenu",
+  name: 'UkMenu',
   compatConfig: {
     // or, for full vue 3 compat in this component:
     MODE: 3,
   },
   props: {
-    menus: Array,
+    menus: {
+      type: Array,
+      default: () => [],
+    },
   },
   data() {
     return {
@@ -40,34 +67,69 @@ export default {
       displayState: false,
     };
   },
+  computed: {
+    /**
+     * Computes menu items to ease listability.
+     *
+     * @todo Remove this, it is utterly stupid (well, it sure seems like I am).
+     * This could be done on the mounted hook using a simple method.
+     *
+     * @property mens
+     * @returns {Array} An array of listable menu items
+     */
+    mens() {
+      return this.menus.map((menu) => {
+        menu.items = menu.items.map((item) => {
+          if (item.shortcut) {
+            const shortcuCallback = (e) => {
+              if (this.parseAndEvaluateShortcut(e, item.shortcut)) {
+                e.preventDefault();
+                item.callback();
+              }
+            };
+            window.addEventListener('keydown', shortcuCallback);
+            // this.$once("@vue:destroy", () => {
+            //   window.removeEventListener("keydown", shortcuCallback);
+            // });
+          }
+          item.more = item.shortcut ? `(${item.shortcut})` : '';
+          return item;
+        });
+        return menu;
+      });
+    },
+  },
+  beforeUnmount() {
+    // window.removeEventListener("keydown", shortcuCallback);
+  },
   methods: {
     /**
      * Handles component focus out
-     * 
+     *
        * @param {Object} e Focus event
      */
     handleFocusOut(e) {
       if (!this.$el.contains(e.relatedTarget) && !this.$el.contains(e.explicitOriginalTarget)) {
-        this.unselectAll()
+        this.unselectAll();
         this.displayState = false;
       }
     },
     /**
      * Handles menu hovering.
-     * 
+     *
        * @param {Object} menu Handle to the menu item being hovered
      */
     handleHover(menu) {
       if (this.displayState) {
-        this.mens.forEach((menu) => {
-          menu.selected = false;
+        this.mens.forEach((item) => {
+          item.selected = false;
         });
         menu.selected = true;
       }
     },
     /**
      * Unselects all menu items.
-     * 
+     *
        */
     unselectAll() {
       this.mens.forEach((menu) => {
@@ -76,20 +138,20 @@ export default {
     },
     /**
      * Selects a single menu item. Unselects every other
-     * 
+     *
        * @param {Object} menu Handle to the menu to be selected
      */
     select(menu) {
       this.displayState = !this.displayState;
-      let state = !menu.selected;
-      this.mens.forEach((menu) => {
-        menu.selected = false;
+      const state = !menu.selected;
+      this.mens.forEach((item) => {
+        item.selected = false;
       });
       menu.selected = state;
     },
     /**
      * Executes menu sub item callback.
-     * 
+     *
        * @param {Object} subItem Handle to the menu's subitem to be selected
      */
     selectSubItem(subItem) {
@@ -99,57 +161,24 @@ export default {
      * Parses and evaluates shortcut strings.
      * Shortcut strings should be described as follows:
      * "SHORTCUT_KEYS_STR+keyValue+..." eg: Ctrl+S, Ctrl+Shift+S
-     * 
+     *
        * @param {Object} e Keydown Event
      * @param {String} shortcutString The shortcut string to be parsed and evaluated
      */
     parseAndEvaluateShortcut(e, shortcutString) {
-      let keys = shortcutString.split("+");
-      let conditionStr = keys
+      const keys = shortcutString.split('+');
+      const conditionStr = keys
         .map((key) => {
           key = key.toLowerCase();
           // eslint-disable-next-line no-unused-vars
-          let eKey = e.key.toLowerCase();
-          return `${SHORTCUT_KEYS_STR[key] ? "e."+SHORTCUT_KEYS_STR[key] : `"${eKey}" === '${key.toLowerCase()}'`}`;
+          const eKey = e.key.toLowerCase();
+          return `${SHORTCUT_KEYS_STR[key] ? `e.${SHORTCUT_KEYS_STR[key]}` : `"${eKey}" === '${key.toLowerCase()}'`}`;
         })
-        .join("&&");
+        .join('&&');
+      // eslint-disable-next-line no-eval
       return eval(conditionStr);
     },
   },
-  computed: {
-    /**
-     * Computes menu items to ease listability.
-     * 
-     * @todo Remove this, it is utterly stupid (well, it sure seems like I am).This could be done on the mounted hook using a simple method.
-     * 
-     * @property mens
-     * @returns {Array} An array of listable menu items
-     */
-    mens() {
-      return this.menus.map((menu) => {
-        menu.items = menu.items.map((item) => {
-          if (item.shortcut) {
-            let shortcuCallback = (e) => {
-              if (this.parseAndEvaluateShortcut(e, item.shortcut)) {
-                e.preventDefault();
-                item.callback();
-              }
-            };
-            window.addEventListener("keydown", shortcuCallback);
-            // this.$once("@vue:destroy", () => {
-            //   window.removeEventListener("keydown", shortcuCallback);
-            // });
-          }
-          item.more = item.shortcut ? `(${item.shortcut})` : "";
-          return item;
-        });
-        return menu;
-      });
-    },
-  },
-  beforeUnmount(){
-    // window.removeEventListener("keydown", shortcuCallback);
-  }
 };
 </script>
 
@@ -186,11 +215,14 @@ export default {
 .menu_list {
   position: absolute;
   top: 40px;
-  margin-left: 0px;
+  margin-left: -1px;
   z-index: 1;
-  box-shadow: 0px 10px 15px 1px var(--primary-dark);
+  /* box-shadow: 0px 10px 15px 1px var(--primary-dark); */
+  box-shadow: -2px 10px 15px 0px rgba(0,0,0,.6);
   border: 1px solid var(--primary-dark);
   border-top: none;
+  border-bottom: none;
+  overflow: hidden;
 }
 .list {
   background: #22251f;

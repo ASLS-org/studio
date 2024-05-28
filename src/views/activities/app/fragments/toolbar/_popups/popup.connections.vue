@@ -1,28 +1,75 @@
 <template>
   <uk-popup
+    v-model="state"
+    :movable="true"
+    backdrop
+    :header="headerData"
     @submit="
       updateOutputs();
       close();
     "
-    :movable="true"
-    backdrop
     @input="update()"
-    v-model="state"
-    :header="headerData"
   >
     <div class="body">
-      <uk-list toggleable @toggle="selectIface" :items="outputs" />
-      <uk-button style="margin: 16px" :square="true" label="refresh" @click="updateOutputs" />
+      <uk-list
+        toggleable
+        :items="outputs"
+        @toggle="selectIface"
+      />
+      <uk-button
+        style="margin: 16px"
+        square
+        label="add input"
+        @click="displayAddInputPopup"
+      />
     </div>
+  </uk-popup>
+  <uk-popup
+    v-model="addInputPopupState"
+    :movable="false"
+    backdrop
+    :header="{
+      title: 'Add connection'
+    }"
+    @submit="
+      updateOutputs();
+      close();
+    "
+    @input="update()"
+  >
+    <uk-flex
+      gap="8"
+      col
+      style="padding: 10px;"
+    >
+      <uk-select-input
+        :options="['WebDMX']"
+        label="Type / Protocol"
+      />
+      <uk-flex
+        row
+        gap="8"
+      >
+        <uk-txt-input
+          v-model="ip"
+          label="IP Address"
+        />
+        <uk-num-input
+          v-model="port"
+          label="Port"
+          style="max-width:64px"
+        />
+      </uk-flex>
+    </uk-flex>
   </uk-popup>
 </template>
 
 <script>
 
-import PopupMixin from "@/views/mixins/popup.mixin.js";
+import PopupMixin from '@/views/mixins/popup.mixin';
 
 export default {
-  name: "ukPopupConnections",
+  name: 'UkPopupConnections',
   mixins: [PopupMixin],
   compatConfig: {
     // or, for full vue 3 compat in this component:
@@ -37,42 +84,39 @@ export default {
        * Popup header data
        */
       headerData: {
-        title: "Outputs",
+        title: 'Outputs',
       },
+      addInputPopupState: false,
+      ip: 'dslmdksqlkdsqmk',
+      port: 0,
       outputs: [],
     };
   },
+  mounted() {
+    this.updateOutputs();
+  },
   methods: {
-    update() {
-      this.$emit("input", this.state);
-      if(this.state){
-        this.updateOutputs()
-      }
-    },
-    // close() {
-    //   this.state = false;
-    // },
     selectIface(outputs) {
       this.$show.setOutputs(
-        outputs.map((o) => {
-          return this.$show.outputs[o.id];
-        })
+        outputs.map((o) => this.$show.outputs[o.id]),
       );
+    },
+    displayAddInputPopup() {
+      this.displayAddInputPopup = true;
     },
     updateOutputs() {
       this.outputs = this.$show.outputs.map((output, i) => {
-        let oDeepCpy = JSON.parse(JSON.stringify(output));
+        const oDeepCpy = JSON.parse(JSON.stringify(output));
         return Object.assign(oDeepCpy, {
           id: i,
-          name: `${output.name} - ${output.cidr.split("/")[0]}`,
-          more: "Artnet",
-          active: this.$show.selectedOutputs.length ? this.$show.selectedOutputs.some((v) => v.name === output.name) : false,
+          name: `${output.name} - ${output.cidr.split('/')[0]}`,
+          more: 'Artnet',
+          active: this.$show.selectedOutputs.length
+            ? this.$show.selectedOutputs.some((v) => v.name === output.name)
+            : false,
         });
       });
     },
-  },
-  mounted() {
-    this.updateOutputs();
   },
 };
 </script>

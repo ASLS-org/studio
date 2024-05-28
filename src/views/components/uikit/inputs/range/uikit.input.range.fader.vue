@@ -2,18 +2,23 @@
   <div class="uikit_fader">
     <div class="uikit_fader_wrapper">
       <input
-        class="uikit_fader_slider"
-        :class="{ long, short }"
         ref="track"
         v-model="content"
+        class="uikit_fader_slider"
+        :class="{ long, short }"
         type="range"
         :min="min"
         :max="max"
         :disabled="disabled"
-        v-on:input="updateValue"
-      />
+        @input="updateValue"
+      >
     </div>
-    <h3 :style="{ marginBottom: !short ? '8px' : '' }" class="uikit_fader_label" :class="{ disabled: disabled }" v-if="label != null">
+    <h3
+      v-if="label != null"
+      :style="{ marginBottom: !short ? '8px' : '' }"
+      class="uikit_fader_label"
+      :class="{ disabled: disabled }"
+    >
       {{ label }}
     </h3>
   </div>
@@ -21,7 +26,7 @@
 
 <script>
 /**
- * @component Fader A virtual machine-style fader component which can be used in order to select values within a given range.
+ * @component Fader fader which can be used in order to select values within a given range.
  * @namespace uikit/inputs/range
  * @story Default {"min": 0, "max": 100, "default": 0, "value": 50}
  * @story Disabled {"disabled":true}
@@ -29,29 +34,40 @@
  * @story Short {"min": 0, "max": 100, "default": 0, "value": 50, "short": true}
  */
 export default {
-  name: "ukFader",
+  name: 'UkFader',
   compatConfig: {
     // or, for full vue 3 compat in this component:
     MODE: 3,
   },
-  emits:['update:modelValue','input'],
   props: {
     /**
      * The fader's text label value
      */
-    label: String,
+    label: {
+      type: String,
+      default: null,
+    },
     /**
      * The fader's minimum value
      */
-    min: Number,
+    min: {
+      type: [Number, String],
+      default: 0,
+    },
     /**
      * The fader's maximum value
      */
-    max: Number,
+    max: {
+      type: [Number, String],
+      default: 100,
+    },
     /**
      * The fader's default value
      */
-    default: Number,
+    default: {
+      type: [Number, String],
+      default: 0,
+    },
     /**
      * Whether the fader is disabled or not
      */
@@ -59,7 +75,10 @@ export default {
     /**
      * Actual fader value
      */
-    modelValue: Number,
+    modelValue: {
+      type: [Number, String],
+      default: 0,
+    },
     /**
      * Whether alternative long styling should be applied
      */
@@ -73,9 +92,10 @@ export default {
      */
     color: {
       type: String,
-      default: "#2D6BA2",
+      default: '#2D6BA2',
     },
   },
+  emits: ['update:modelValue', 'input'],
   data() {
     return {
       /**
@@ -83,6 +103,26 @@ export default {
        */
       content: this.modelValue,
     };
+  },
+  watch: {
+    modelValue(val) {
+      this.content = val;
+      this.updateValue(false);
+    },
+    disabled() {
+      this.updateValue(false);
+    },
+  },
+  mounted() {
+    if (this.default != null) {
+      this.content = this.modelValue;
+    }
+    if (this.label == null) {
+      this.hasLabel = false;
+    } else {
+      this.hasLabel = true;
+    }
+    this.updateValue(false);
   },
   methods: {
     /**
@@ -92,11 +132,12 @@ export default {
      */
     updateValue(doEmit = true) {
       if (!this.disabled) {
-        var percentage = (this.content / (this.max - this.min)) * 100;
-        this.$refs.track.style.background = `linear-gradient(90deg,${this.color} 0%,${this.color} ${percentage}%,var(--primary-dark) ${percentage}%, var(--primary-dark) 100%)`;
-        // this.$refs.track.style.background = `linear-gradient(90deg,#4786B4 0%,#78FFDF ${percentage}%,#0C0E0A ${percentage}%, #0C0E0A 100%)`;
-      } else {
-        this.$refs.track.style.background = `#ffffff0d`;
+        const percentage = (this.content / (this.max - this.min)) * 100;
+        if (this.$refs.track) {
+          this.$refs.track.style.background = `linear-gradient(90deg,${this.color} 0%,${this.color} ${percentage}%,var(--primary-dark) ${percentage}%, var(--primary-dark) 100%)`;
+        }
+      } else if (this.$refs.track) {
+        this.$refs.track.style.background = '#ffffff0d';
       }
       if (doEmit) {
         /**
@@ -104,30 +145,9 @@ export default {
          *
          * @property {Number} content the fader's actual value
          */
-       this.$emit("update:modelValue", this.content);
-
-        this.$emit("input", parseInt(this.content));
+        this.$emit('update:modelValue', this.content);
+        this.$emit('input', parseInt(this.content, 10));
       }
-    },
-  },
-  mounted() {
-    if (this.default != null) {
-      this.content = this.modelValue
-    }
-    if (this.label == null) {
-      this.hasLabel = false;
-    } else {
-      this.hasLabel = true;
-    }
-    this.updateValue(false);
-  },
-  watch: {
-    modelValue: function (val) {
-      this.content = val;
-      this.updateValue(false);
-    },
-    disabled: function () {
-      this.updateValue(false);
     },
   },
 };

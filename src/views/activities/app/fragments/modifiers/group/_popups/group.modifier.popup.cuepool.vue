@@ -1,24 +1,44 @@
 <template>
-  <uk-popup @submit="addCue()" @input="update()" v-model="state" :header="headerData">
-    <uk-flex class="cue_popup" col :gap="8">
-      <uk-select-input :options="options" label="Cue type" v-model="cue.type" />
-      <uk-select-input label="Color" @input="setCueColor" :options="colorOptions" :modelValue="getIndexFromColor(cue.color)" />
-      <uk-txt-input label="Name" v-model="cue.name" />
+  <uk-popup
+    v-model="state"
+    :header="headerData"
+    @submit="addCue()"
+    @input="update()"
+  >
+    <uk-flex
+      class="cue_popup"
+      col
+      :gap="8"
+    >
+      <uk-select-input
+        v-model="cue.type"
+        :options="options"
+        label="Cue type"
+      />
+      <uk-select-input
+        label="Color"
+        :options="colorOptions"
+        :model-value="getIndexFromColor(cue.color)"
+        @input="setCueColor"
+      />
+      <uk-txt-input
+        v-model="cue.name"
+        label="Name"
+      />
     </uk-flex>
   </uk-popup>
 </template>
 
 <script>
-import colorMixin from "@/views/mixins/color.mixin";
-import PopupMixin from "@/views/mixins/popup.mixin.js"
+import colorMixin from '@/views/mixins/color.mixin';
+import PopupMixin from '@/views/mixins/popup.mixin';
 
 export default {
-  name: "popupCuePool",
+  name: 'PopupCuePool',
   compatConfig: {
     // or, for full vue 3 compat in this component:
     MODE: 3,
   },
-  emits:['add'],
   mixins: [colorMixin, PopupMixin],
   props: {
     /**
@@ -31,14 +51,18 @@ export default {
     /**
      * Id of the cue to be created
      */
-    cueId: Number,
+    cueId: {
+      type: Number,
+      default: null,
+    },
   },
+  emits: ['add'],
   data() {
     return {
       /**
        * Popup header data
        */
-      headerData: { title: "Add cue" },
+      headerData: { title: 'Add cue' },
       /**
        * Cue definition object
        */
@@ -53,29 +77,8 @@ export default {
        * Cue option list
        * @todo make this static/hardcoded
        */
-      options: ["scene", "effect"],
+      options: ['scene', 'effect'],
     };
-  },
-  methods: {
-    /**
-     * Attribute a uikit color to the cue
-     * 
-       * @public
-     * @param {Number} colorIndex index of the color within the uikit's color list
-     */
-    setCueColor(colorIndex) {
-      this.cue.color = this.getColorFromIndex(colorIndex);
-    },
-    /**
-     * Create and add the cue to the group
-     * 
-       * @public
-     */
-    addCue() {
-      let cue = this.group.addCue(this.cue);
-      this.close();
-      this.$emit("add", cue);
-    }
   },
   watch: {
     cueId() {
@@ -87,8 +90,8 @@ export default {
         color: this.group.color,
       };
     },
-    //TODO check if this can be removed
-    /*group() {
+    // TODO check if this can be removed
+    /* group() {
       this.cue = this.group
         ? {
             name: `Cue ${this.cueId}`,
@@ -98,7 +101,28 @@ export default {
             color: this.group.color,
           }
         : {};
-    },*/
+    }, */
+  },
+  methods: {
+    /**
+     * Attribute a uikit color to the cue
+     *
+       * @public
+     * @param {Number} colorIndex index of the color within the uikit's color list
+     */
+    setCueColor(colorIndex) {
+      this.cue.color = this.getColorFromIndex(colorIndex);
+    },
+    /**
+     * Create and add the cue to the group
+     *
+       * @public
+     */
+    addCue() {
+      const cue = this.group.addCue(this.cue);
+      this.close();
+      this.$emit('add', cue);
+    },
   },
 };
 </script>

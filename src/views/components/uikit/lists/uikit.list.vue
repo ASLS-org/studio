@@ -1,46 +1,74 @@
 <template>
   <div class="uikit_list">
     <uk-txt-input
+      v-if="filterable"
+      v-model="searchString"
       :disabled="disabled"
       :outlined="false"
       auto-update
-      v-if="filterable"
       class="uikit_list_searchbox"
       :placeholder="'Search items'"
-      v-model="searchString"
     />
-    <div tabindex="0" @focus="handleFocusIn" @focusout="handleFocusOut" v-if="filteredItems.length != 0" class="uikit_list_body">
-      <div class="uikit_list_item parent" v-for="(treeItem, index) in filteredItems" :key="index">
-        <div class="uikit_list_item_unfoldable" v-if="treeItem.value.unfold">
-          <uk-list-item :colored="colored" :index="index" :item="treeItem" @click="unfold(treeItem)" />
-            <span v-if="treeItem.unfolded">
-              <template v-if="treeItem.value.unfold && treeItem.value.unfold.length">
-                <uk-list-item
-                  class="uikit_sublist_body"
-                  :item="subTreeItem"
-                  :toggleable="toggleable"
-                  :noHighlight="noHighlight"
-                  :focused="hasFocus"
-                  :tall="tall"
-                  :no-select="noSelect"
-                  v-for="(subTreeItem, index) in treeItem.value.unfold"
-                  :key="index"
-                  @click="(e) => selectItem({caca: 'hello'}, subTreeItem, treeItem.value.unfold)"
-                  @toggle="toggleItem(subTreeItem)"
-                />
-              </template>
+    <div
+      v-if="filteredItems.length != 0"
+      tabindex="0"
+      class="uikit_list_body"
+      @focus="handleFocusIn"
+      @focusout="handleFocusOut"
+    >
+      <div
+        v-for="(treeItem, index) in filteredItems"
+        :key="index"
+        class="uikit_list_item parent"
+      >
+        <div
+          v-if="treeItem.value.unfold"
+          class="uikit_list_item_unfoldable"
+        >
+          <uk-list-item
+            :colored="colored"
+            :index="index"
+            :item="treeItem"
+            @click="unfold(treeItem)"
+          />
+          <span
+            v-if="treeItem.unfolded"
+            style="height:100%"
+          >
+            <template v-if="treeItem.value.unfold && treeItem.value.unfold.length">
               <uk-list-item
-                v-else
-                disabled
-                empty
+                v-for="(subTreeItem, subIndex) in treeItem.value.unfold"
+                :key="subIndex"
                 class="uikit_sublist_body"
-                :item="{ value: { name: 'Nothing To Display' } }"
-                :noHighlight="true"
+                :item="subTreeItem"
+                :toggleable="toggleable"
+                :no-highlight="noHighlight"
+                :focused="hasFocus"
                 :tall="tall"
                 :no-select="noSelect"
-                :key="index"
+                @click="(e) => selectItem({caca: 'hello'}, subTreeItem, treeItem.value.unfold)"
+                @toggle="toggleItem(subTreeItem)"
               />
-            </span>
+            </template>
+            <!-- <h3
+              v-else
+              class="uikit_list_body_empty"
+            >
+              Nothing to display
+              />
+            </h3> -->
+            <uk-list-item
+              v-else
+              :key="index"
+              disabled
+              empty
+              class="uikit_sublist_body"
+              :item="{ value: { name: 'Nothing To Display' } }"
+              :no-highlight="true"
+              :tall="tall"
+              :no-select="noSelect"
+            />
+          </span>
         </div>
         <uk-list-item
           v-else
@@ -50,6 +78,7 @@
           :focused="hasFocus"
           :tall="tall"
           :no-select="noSelect"
+          :draggable="draggable"
           @dragstart="
             (e) => {
               startDrag(e, index);
@@ -78,31 +107,42 @@
           "
           @click="(e) => selectItem(e, treeItem, filteredItems)"
           @toggle="toggleItem(treeItem)"
-          :draggable="draggable"
         />
       </div>
     </div>
-    <h3 v-else class="uikit_list_body_empty">Nothing To Display</h3>
-    <uk-popup @submit="handleDeletion" ref="popup" :header="{ title: 'Delete items ?' }" v-model="deletePopupState">
-      <uk-flex col style="max-width: 350px">
-        <p style="padding: 16px">These items will be permanently removed from your project. Do you wish to continue ?</p>
+    <h3
+      v-else
+      class="uikit_list_body_empty"
+    >
+      Nothing to display
+    </h3>
+    <uk-popup
+      ref="popup"
+      v-model="deletePopupState"
+      :header="{ title: 'Delete items ?' }"
+      @submit="handleDeletion"
+    >
+      <uk-flex
+        col
+        style="max-width: 350px"
+      >
+        <p style="padding: 16px">
+          These items will be permanently removed from your project. Do you wish to continue ?
+        </p>
       </uk-flex>
     </uk-popup>
   </div>
 </template>
-<style scoped>
-</style>
 <script>
 /**
  * This is a MESS. Sure, it does the work, but this should be refactored
  */
 export default {
-  name: "ukList",
+  name: 'UkList',
   compatConfig: {
     // or, for full vue 3 compat in this component:
     MODE: 3,
   },
-  emits: ['unfold','focused','highlight','toggle','select','reorder'],
   props: {
     /**
      * Whether the list is disabled or not
@@ -154,7 +194,10 @@ export default {
     /**
      * Automatically select item at given index
      */
-    autoSelect: Number,
+    autoSelect: {
+      type: Number,
+      default: null,
+    },
     /**
      * DOM element list which wont be affected by focusout event
      * useful when seleting multiple items in order to set their value commonly from
@@ -162,17 +205,16 @@ export default {
      */
     preventUnfocus: {
       type: Array,
-      default: () => {
-        return [];
-      },
+      default: () => [],
     },
   },
+  emits: ['unfold', 'focused', 'highlight', 'toggle', 'select', 'reorder', 'delete'],
   data() {
     return {
       /**
        * List's filter string
        */
-      searchString: "",
+      searchString: '',
       /**
        * List's tree elements. provided on component mount
        * though updateTree method.
@@ -212,38 +254,131 @@ export default {
       dragging: false,
     };
   },
+
+  computed: {
+    /**
+     * Filters tree items/subitems on their name using provided search string
+     *
+     * @returns {Array} array of filtered tree items and subitems
+     */
+    filteredItems() {
+      let items = this.tree;
+      const treeCpy = JSON.parse(JSON.stringify(this.tree));
+      const normalizedSearchString = this.searchString.toLowerCase();
+      if (normalizedSearchString) {
+        items = [];
+        items = treeCpy.filter((treeItem, index) => {
+          if (treeItem.value.unfold) {
+            const subItems = treeItem.value.unfold.filter((unfoldItem) => {
+              const normalizedName = unfoldItem.value.name.toLowerCase().replace('-', ' ');
+              return normalizedName.indexOf(normalizedSearchString) > -1;
+            });
+            if (subItems.length > 0) {
+              treeItem.value.unfold = subItems;
+              treeItem.unfolded = true;
+              return true;
+            }
+            treeItem.value.unfold = treeCpy[index].value.unfold;
+            treeItem.unfolded = false;
+          }
+          const normalizedName = treeItem.value.name.toLowerCase().replace('-', ' ');
+          return normalizedName.indexOf(normalizedSearchString) > -1;
+        });
+      } else {
+        // eslint-disable-next-line no-return-assign
+        treeCpy.forEach((treeItem) => (treeItem.unfolded = false));
+      }
+      return items;
+    },
+  },
+  watch: {
+    items(items, oldItems) {
+      // Listening to every entry changes, which are by design reactive, seems like a
+      // waste of eventloop instructions. There should be a better approach.
+      // Passing in getters does not allow to check for same-reference value though.
+      // This is a quick and dirty hack to guarantee refresh only if actual data has changed
+      if (this.updateTree(items)) {
+        if (items && items.length && (!oldItems || !oldItems.length)) {
+          if (this.autoSelectFirst && this.tree[0]) {
+            if (this.tree[0].value.unfold) {
+              this.tree[0].unfolded = true;
+            } else {
+              this.selectItem(undefined, this.tree[0]);
+            }
+          }
+        }
+      }
+    },
+    preventUnfocus() {
+      this.unfocusElBlacklist.push(...this.preventUnfocus);
+    },
+    deletePopupState(value) {
+      if (!value) {
+        this.unfocusElBlacklist.pop();
+        this.handleFocusOut();
+      }
+    },
+    autoSelect(index) {
+      const item = this.tree[parseInt(index, 10)];
+      if (item) {
+        this.selectItem(undefined, item);
+        this.clearHighlighted(true);
+      }
+    },
+  },
+  unmounted() {
+    window.removeEventListener('keydown', this.keydownListener);
+    this.$emit('focused', false);
+  },
+  mounted() {
+    this.selectedItem = [];
+    if (this.updateTree(this.items)) {
+      if (this.autoSelectFirst && this.tree[0]) {
+        if (this.tree[0].value.unfold) {
+          this.tree[0].unfolded = true;
+        } else {
+          this.selectItem(undefined, this.tree[0]);
+        }
+      }
+    }
+  },
   methods: {
     /**
      * Update the component two level tree list
      *
      * @param {Array} items items to be displayed within the list
+     * @returns {Boolean} information regarding whether or not an update was made
      */
     updateTree(items) {
-      this._tree = [];
-      items.forEach((item, index) => {
-        if (this._tree[index]) {
-          this._tree[index].value = item;
-        } else {
-          this._tree.push({
-            value: item,
-            unfolded: this.tree[index] ? this.tree[index].value.unfold : false,
-            highlighted: this.tree[index] ? this.tree[index].highlighted : false,
-            toggled: item.active,
-            selected: this.tree[index] ? this.tree[index].selected : false,
-          });
-        }
-        if (item.unfold) {
-          this._tree[index].value.unfold = this._tree[index].value.unfold.map((subItem) => {
-            return {
+      const jsonData = JSON.stringify(items);
+      if (this.jsonData !== jsonData) {
+        this.jsonData = jsonData;
+        this._tree = [];
+        items.forEach((item, index) => {
+          if (this._tree[index]) {
+            this._tree[index].value = item;
+          } else {
+            this._tree.push({
+              value: item,
+              unfolded: false, // this.tree[index] ? this.tree[index].value.unfold : false,
+              highlighted: this.tree[index] ? this.tree[index].highlighted : false,
+              toggled: item.active,
+              selected: this.tree[index] ? this.tree[index].selected : false,
+            });
+          }
+          if (item.unfold) {
+            this._tree[index].value.unfold = this._tree[index].value.unfold.map((subItem) => ({
               value: subItem,
               highlighted: false,
               selected: false,
               toggled: subItem.active,
-            };
-          });
-        }
-      });
-      this.tree = this._tree;
+            }));
+          }
+        });
+        this.tree = this._tree;
+        return true;
+      }
+      return false;
     },
     /**
      * Reveal sublist from unfoldable item
@@ -257,7 +392,7 @@ export default {
        *
        * @property {Object} item.value Unfolded/folded item value
        */
-      this.$emit("unfold", item.value);
+      this.$emit('unfold', item.value);
     },
     /**
      * Handler for list focus-in
@@ -270,8 +405,8 @@ export default {
        *
        * @property {Boolean} -List focus state
        */
-      this.$emit("focused", this.hasFocus);
-      window.addEventListener("keydown", this.keydownListener);
+      this.$emit('focused', this.hasFocus);
+      window.addEventListener('keydown', this.keydownListener);
     },
     /**
      * Handler for list focus-out
@@ -280,26 +415,30 @@ export default {
      */
     handleFocusOut(e) {
       let keepFocus = false;
-      window.removeEventListener("click", this.handleFocusOut);
+      window.removeEventListener('click', this.handleFocusOut);
       if (e) {
-        keepFocus =
-          this.unfocusElBlacklist.filter((el) => {
-            return el.contains(e.target) || el.contains(e.relatedTarget) || el.contains(e.explicitOriginalTarget) || this.$el.contains(e.target);
-          }).length >= 1;
+        keepFocus = this.unfocusElBlacklist.filter(
+          (el) => (
+            el.contains(e.target)
+            || el.contains(e.relatedTarget)
+            || el.contains(e.explicitOriginalTarget)
+            || this.$el.contains(e.target)
+          ),
+        ).length >= 1;
       }
       if (!keepFocus || this.unfocusElBlacklist.length === 0) {
         this.hasFocus = false;
         this.clearHighlighted();
-        window.removeEventListener("keydown", this.keydownListener);
+        window.removeEventListener('keydown', this.keydownListener);
         /**
          * List focus state event
          *
          * @property {Boolean} -List focus state
          */
-        this.$emit("focused", this.hasFocus);
+        this.$emit('focused', this.hasFocus);
       } else {
         this.$nextTick(() => {
-          window.addEventListener("click", this.handleFocusOut);
+          window.addEventListener('click', this.handleFocusOut);
         });
       }
     },
@@ -319,9 +458,9 @@ export default {
          *
          * @property {Array} -List of references to highlighted items values
          */
-        this.$emit("highlight", []);
+        this.$emit('highlight', []);
         if (focusOut) {
-          this.$emit("focused", false);
+          this.$emit('focused', false);
           this.hasFocus = false;
         }
       }
@@ -335,7 +474,7 @@ export default {
        *
        * @property {Array} -List of references to highlighted items values
        */
-      this.$emit("delete", this.highlightedItems.length ? this.highlightedItems.map((i) => i.value) : [this.selectedItem.value]);
+      this.$emit('delete', this.highlightedItems.length ? this.highlightedItems.map((i) => i.value) : [this.selectedItem.value]);
       this.deletePopupState = false;
       this.clearHighlighted();
     },
@@ -359,10 +498,10 @@ export default {
      * @param {Event} e keydown event
      */
     keydownListener(e) {
-      const key = e.key;
-      if (key === "Backspace" || key === "Delete") {
+      const { key } = e;
+      if (key === 'Backspace' || key === 'Delete') {
         this.displayDeletionPopup();
-      } else if (key === "Escape") {
+      } else if (key === 'Escape') {
         this.clearHighlighted(true);
         this.hasFocus = false;
       }
@@ -370,14 +509,13 @@ export default {
     toggleItem(item) {
       if (!item.value.disabled && !this.dragging) {
         item.toggled = !item.toggled;
-        this.toggledItems = this.tree.flatMap((item) => {
-          if (item.toggled) {
-            return item;
-          } else if (item.value.unfold) {
-            return item.value.unfold.flatMap((subItem) => (subItem.toggled ? subItem : []));
-          } else {
-            return [];
+        this.toggledItems = this.tree.flatMap((i) => {
+          if (i.toggled) {
+            return i;
+          } if (i.value.unfold) {
+            return i.value.unfold.flatMap((subItem) => (subItem.toggled ? subItem : []));
           }
+          return [];
         });
         /**
          * Item selection event
@@ -385,8 +523,8 @@ export default {
          * @property {Object} this.selectedItem.value reference to selected tree item object's value
          */
         this.$emit(
-          "toggle",
-          this.toggledItems.map((i) => i.value)
+          'toggle',
+          this.toggledItems.map((i) => i.value),
         );
       }
     },
@@ -406,7 +544,7 @@ export default {
         }
       });
       this.selectedItem = item;
-      this.selectedIndex = this.tree.indexOf(item)
+      this.selectedIndex = this.tree.indexOf(item);
       item.selected = true;
       if (!this.noHighlight && clearHighlighted) {
         this.clearHighlighted();
@@ -416,17 +554,20 @@ export default {
        *
        * @property {Object} this.selectedItem.value reference to selected tree item object's value
        */
-      this.$emit("select", this.selectedItem.value);
+      this.$emit('select', this.selectedItem.value);
     },
     handleMultiSelection(item) {
       item.highlighted = !item.highlighted;
       if (item.highlighted) {
         this.highlightedItems.push(item);
       } else {
-        let index = this.highlightedItems.findIndex((highlightedItem) => highlightedItem.value == item.value);
+        const index = this.highlightedItems.findIndex(
+          (highlightedItem) => highlightedItem.value === item.value,
+        );
         this.highlightedItems.splice(index, 1);
       }
       if (!this.selectedItem && this.highlightedItems.length) {
+        // eslint-disable-next-line prefer-destructuring
         this.selectedItem = this.highlightedItems[0];
       }
       if (this.selectedItem && this.highlightedItems.length === 1) {
@@ -438,27 +579,28 @@ export default {
        *
        * @property {Array} -List of references to highlighted items values
        */
-      this.$emit("select", this.selectedItem.value);
+      this.$emit('select', this.selectedItem.value);
       this.$emit(
-        "highlight",
-        this.highlightedItems.map((i) => i.value)
+        'highlight',
+        this.highlightedItems.map((i) => i.value),
       );
     },
     handleGroupedSelection(item, childs) {
       if (!this.selectedItem) {
         this.handleSingleSelection(item, true);
-      } else if (childs.some((c) => c == item) && item != this.selectedItem) {
-        let index = childs.findIndex((c) => c == item);
-        let start = Math.min(index, this.selectedIndex);
-        let stop = Math.max(index, this.selectedIndex);
+      } else if (childs.some((c) => c === item) && item !== this.selectedItem) {
+        const index = childs.findIndex((c) => c === item);
+        const start = Math.min(index, this.selectedIndex);
+        const stop = Math.max(index, this.selectedIndex);
+        this.clearHighlighted();
         for (let i = start; i <= stop; i++) {
-          let item = childs[i];
-          item.highlighted = true;
-          this.highlightedItems.push(item);
+          const _item = childs[i];
+          _item.highlighted = true;
+          this.highlightedItems.push(_item);
         }
         this.$emit(
-          "highlight",
-          this.highlightedItems.map((i) => i.value)
+          'highlight',
+          this.highlightedItems.map((i) => i.value),
         );
       }
     },
@@ -469,6 +611,7 @@ export default {
      * @param {Event} e click event
      * @param {Object} item tree (sub)item involved in the selection
      */
+    // eslint-disable-next-line default-param-last
     selectItem(e = {}, item, childs) {
       if (!item.value.disabled && !this.dragging) {
         this.hasFocus = true;
@@ -502,8 +645,8 @@ export default {
       this.originalDragItemIndex = index;
       this.dragItemIndex = this.originalDragItemIndex;
       this.imtsCpy = JSON.parse(JSON.stringify(this.items));
-      e.dataTransfer.effectAllowed = "move";
-      e.target.style.setProperty("background-color", "transparent", "important");
+      e.dataTransfer.effectAllowed = 'move';
+      e.target.style.setProperty('background-color', 'transparent', 'important');
     },
     /**
      * Handles drag enter on droppable element.
@@ -517,12 +660,12 @@ export default {
       if (e.target.classList && this.dragging) {
         this.items.splice(index, 0, this.items.splice(this.dragItemIndex, 1)[0]);
         this.dragItemIndex = index;
-        let childs = e.target.children;
-        e.target.classList.add("dragged_over");
-        e.target.style.setProperty("background-color", "var(--secondary-darker)", "important");
-        e.dataTransfer.dropEffect = "move";
+        const childs = e.target.children;
+        e.target.classList.add('dragged_over');
+        e.target.style.setProperty('background-color', 'var(--secondary-darker)', 'important');
+        e.dataTransfer.dropEffect = 'move';
         for (let i = 0; i < childs.length; i++) {
-          childs[i].style.visibility = "hidden";
+          childs[i].style.visibility = 'hidden';
         }
       }
     },
@@ -534,11 +677,11 @@ export default {
      */
     dragOut(e) {
       if (e.target.classList) {
-        e.target.classList.remove("dragged_over");
-        e.target.style.setProperty("background-color", "", "important");
-        let childs = e.target.children;
+        e.target.classList.remove('dragged_over');
+        e.target.style.setProperty('background-color', '', 'important');
+        const childs = e.target.children;
         for (let i = 0; i < childs.length; i++) {
-          childs[i].style.visibility = "visible";
+          childs[i].style.visibility = 'visible';
         }
       }
     },
@@ -550,18 +693,19 @@ export default {
      */
     drop(e) {
       e.preventDefault();
-      let draggedOverEls = this.$el.getElementsByClassName("dragged_over");
+      const draggedOverEls = this.$el.getElementsByClassName('dragged_over');
       if (draggedOverEls.length) {
-        for (let el of draggedOverEls) {
-          el.classList.remove("dragged_over");
-          el.style.setProperty("background-color", "", "important");
-          let childs = el.children;
+        // eslint-disable-next-line no-restricted-syntax
+        for (const el of draggedOverEls) {
+          el.classList.remove('dragged_over');
+          el.style.setProperty('background-color', '', 'important');
+          const childs = el.children;
           for (let i = 0; i < childs.length; i++) {
-            childs[i].style.visibility = "visible";
+            childs[i].style.visibility = 'visible';
           }
         }
       }
-      e.target.style.setProperty("background-color", "", "important");
+      e.target.style.setProperty('background-color', '', 'important');
       this.selectItem(undefined, this.tree[this.dragItemIndex]);
       /**
        * Item dragging event
@@ -569,7 +713,7 @@ export default {
        * @property {Number} original Original dragged item index
        * @property {Number} final FInal item index
        */
-      this.$emit("reorder", {
+      this.$emit('reorder', {
         original: this.originalDragItemIndex,
         final: this.dragItemIndex,
       });
@@ -581,99 +725,17 @@ export default {
      */
     stopDrag(e) {
       e.preventDefault();
-      if (e.dataTransfer.dropEffect != "move") {
+      if (e.dataTransfer.dropEffect !== 'move') {
         this.updateTree(this.itms_cpy);
       }
       this.dragging = false;
-      e.target.style.setProperty("background-color", "", "important");
-    },
-  },
-
-  computed: {
-    /**
-     * Filters tree items/subitems on their name using provided search string
-     *
-     * @returns {Array} array of filtered tree items and subitems
-     */
-    filteredItems() {
-      let items = this.tree;
-      let treeCpy = JSON.parse(JSON.stringify(this.tree));
-      let normalizedSearchString = this.searchString.toLowerCase();
-      if (normalizedSearchString) {
-        items = [];
-        items = treeCpy.filter((treeItem, index) => {
-          if (treeItem.value.unfold) {
-            let subItems = treeItem.value.unfold.filter((unfoldItem) => {
-              let normalizedName = unfoldItem.value.name.toLowerCase().replace("-", " ");
-              return normalizedName.indexOf(normalizedSearchString) > -1;
-            });
-            if (subItems.length > 0) {
-              treeItem.value.unfold = subItems;
-              treeItem.unfolded = true;
-              return true;
-            } else {
-              treeItem.value.unfold = treeCpy[index].value.unfold;
-              treeItem.unfolded = false;
-            }
-          }
-          let normalizedName = treeItem.value.name.toLowerCase().replace("-", " ");
-          return normalizedName.indexOf(normalizedSearchString) > -1;
-        });
-      } else {
-        treeCpy.forEach((treeItem) => (treeItem.unfolded = false));
-      }
-      return items;
-    },
-  },
-  unmounted() {
-    window.removeEventListener("keydown", this.keydownListener);
-    this.$emit("focused", false);
-  },
-  mounted() {
-    this.selectedItem = [];
-    this.updateTree(this.items);
-    if (this.autoSelectFirst && this.tree[0]) {
-      this.selectItem(undefined, this.tree[0]);
-      this.clearHighlighted(true);
-    }
-    this.tree.forEach((i) => {
-      if (i.value.unfold) i.unfolded = true;
-    });
-  },
-  watch: {
-    items(items, oldItems) {
-      //Listening to every entry changes, which are by design reactive, seems like a
-      //waste of eventloop instructions. There should be a better approach.
-      //Passing in getters does not allow to check for same-reference value though.
-      this.updateTree(items);
-      if (items && items.length && (!oldItems || !oldItems.length)) {
-        if (this.autoSelectFirst && this.tree[0]) {
-          this.selectItem(undefined, this.tree[0]);
-        }
-      }
-      this.tree.forEach((i) => {
-        if (i.value.unfold) i.unfolded = true;
-      });
-    },
-    preventUnfocus() {
-      this.unfocusElBlacklist.push(...this.preventUnfocus);
-    },
-    deletePopupState(value) {
-      if (!value) {
-        this.unfocusElBlacklist.pop();
-        this.handleFocusOut();
-      }
-    },
-    autoSelect(index) {
-      let item = this.tree[parseInt(index)];
-      if (item) {
-        this.selectItem(undefined, item);
-        this.clearHighlighted(true);
-      }
+      e.target.style.setProperty('background-color', '', 'important');
     },
   },
 };
 </script>
+<style scoped>
+</style>
 
 <style scoped>
 .uikit_list {
@@ -689,7 +751,6 @@ export default {
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 100%;
   align-items: center;
   overflow: hidden;
   overflow-y: auto;
@@ -698,14 +759,19 @@ export default {
 .uikit_list_item {
   width: 100%;
 }
+.parent{
+  height: 100%;
+}
 .uikit_list_body_empty {
   display: flex;
-  height: 100%;
   flex: 1;
-  flex-direction: row;
+  flex-direction: column;
+  gap: 8px;
   align-items: center;
   justify-content: center;
   color: var(--secondary-light);
+  text-transform: uppercase;
+  font-family: roboto-regular;
 }
 .uikit_list_header_button {
   cursor: pointer;

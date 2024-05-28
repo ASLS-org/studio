@@ -1,17 +1,26 @@
 <template>
-  <div @click="$emit('click')" class="uikit_container_flex" :style="getStyle()" :class="{ row: row && !reverse, column: col && !reverse, 'row-reverse': row && reverse, 'column-reverse': col && reverse }">
+  <div
+    class="uikit_container_flex"
+    :style="getStyle()"
+    :class="{
+      row: row && !reverse,
+      column: col && !reverse,
+      'row-reverse': row && reverse,
+      'column-reverse': col && reverse
+    }"
+    @click="(e)=>$emit('click',e)"
+  >
     <slot />
   </div>
 </template>
 
 <script>
 export default {
-  name: "ukFlex",
+  name: 'UkFlex',
   compatConfig: {
     // or, for full vue 3 compat in this component:
     MODE: 3,
   },
-  emits:['click'],
   props: {
     /**
      * Sets the flex container direction as row.
@@ -58,25 +67,29 @@ export default {
     /**
      * Reverse flex container direction ?
      */
-    reverse:{
+    reverse: {
       type: Boolean,
-      default: false
+      default: false,
     },
     /**
      * Gap value in pixels between items
      */
-    gap: Number,
+    gap: {
+      type: [Number, String],
+      default: 0,
+    },
   },
+  emits: ['click'],
   methods: {
     /**
      * Computes and returns container style based on provided direction and centering properties
-     * 
+     *
        * @returns {Object} The computed styling object
      */
     getStyle() {
-      let style = { gap: `${this.gap}px` };
-      let justify = { justifyContent: "center" };
-      let align = { alignItems: "center" };
+      const style = { gap: `${this.gap}px` };
+      const justify = { justifyContent: 'center' };
+      const align = { alignItems: 'center' };
       if (this.centerH) {
         Object.assign(style, this.row ? justify : align);
       } else if (this.centerV) {

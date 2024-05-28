@@ -1,48 +1,72 @@
 <template>
   <uk-widget :header="{ title: 'Universe', icon: 'wrench' }">
     <template v-if="universe && universe.fixturePool">
-      <uk-flex :gap="8" col class="universe_settings">
-        <uk-txt-input label="Name" v-model="universe.name" />
-        <uk-select-input label="Color" :modelValue="getIndexFromColor(universe.color)" @input="setUniverseColor" :options="colorOptions" />
-        <uk-num-input style="width: 60px" label="ID" v-model="universe.id" />
+      <uk-flex
+        :gap="8"
+        col
+        class="universe_settings"
+      >
+        <uk-txt-input
+          v-model="universe.name"
+          label="Name"
+        />
+        <uk-select-input
+          label="Color"
+          :model-value="getIndexFromColor(universe.color)"
+          :options="colorOptions"
+          @input="setUniverseColor"
+        />
+        <uk-num-input
+          v-model="universe.id"
+          style="width: 60px"
+          label="ID"
+        />
       </uk-flex>
     </template>
-    <h3 v-else class="empty_text">No Universe Selected</h3>
+    <h3
+      v-else
+      class="empty_text"
+    >
+      No Universe Selected
+    </h3>
   </uk-widget>
 </template>
 
 <script>
-import colorMixin from "@/views/mixins/color.mixin";
+import colorMixin from '@/views/mixins/color.mixin';
 
 export default {
-  name: "universeModifierSettings",
+  name: 'UniverseModifierSettings',
   compatConfig: {
     // or, for full vue 3 compat in this component:
     MODE: 3,
   },
   mixins: [colorMixin],
   props: {
-    modelValue: Object,
+    modelValue: {
+      type: Object,
+      default: null,
+    },
   },
   data() {
     return {
       header: {
-        title: "Universe Settings",
-        icon: "wrench",
+        title: 'Universe Settings',
+        icon: 'wrench',
       },
       universe: this.modelValue,
     };
-  },
-  methods: {
-    setUniverseColor(colorIndex) {
-      this.universe.color = this.getColorFromIndex(colorIndex);
-    },
   },
   watch: {
     modelValue(value) {
       this.universe = value;
     },
 
+  },
+  methods: {
+    setUniverseColor(colorIndex) {
+      this.universe.color = this.getColorFromIndex(colorIndex);
+    },
   },
 };
 </script>

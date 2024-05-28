@@ -3,15 +3,29 @@
     <div class="patch_bay_header">
       <h3>Patch Bay</h3>
       <span style="flex: 1" />
-      <!-- <uk-button @click="displayPatchPopup" icon="patch" style="margin-right: 8px" label="patch" /> -->
+      <uk-button
+        icon="patch"
+        style="margin-right: 8px"
+        label="patch"
+        @click="displayPatchPopup"
+      />
     </div>
-    <uk-list deletable @unfold="displayUniverse" @select="displayFixture" colored class="patch_bay_universe_list" filterable :items="pool.listable" />
+    <uk-list
+      deletable
+      colored
+      auto-select-first
+      class="patch_bay_universe_list"
+      filterable
+      :items="pool.listable"
+      @unfold="displayUniverse"
+      @select="displayFixture"
+    />
   </div>
 </template>
 
 <script>
 export default {
-  name: "patchBayFragment",
+  name: 'PatchBayFragment',
   compatConfig: {
     // or, for full vue 3 compat in this component:
     MODE: 3,
@@ -25,7 +39,7 @@ export default {
     /**
      * Displays the modifier of the unfolded universe
      *
-       * @public
+     * @public
      */
     displayUniverse(universeData) {
       if (universeData) {
@@ -33,9 +47,10 @@ export default {
       }
     },
     /**
-     * Displays the modifier of the unfolded universe and pre-selects selected fixture within the modifier.
+     * Displays the modifier of the unfolded universe
+     * and pre-selects selected fixture within the modifier.
      *
-       * @public
+     * @public
      */
     displayFixture(fixtureData) {
       if (fixtureData) {
@@ -45,7 +60,7 @@ export default {
     /**
      * Displays the patch popup
      *
-       * @public
+     * @public
      * @todo implement the patch popup
      */
     displayPatchPopup() {},

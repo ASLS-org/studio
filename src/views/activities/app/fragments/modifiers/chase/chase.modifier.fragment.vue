@@ -1,28 +1,60 @@
 <template>
   <uk-flex class="chase_modifier">
     <uk-widget :header="{ title: 'Chase' }">
-      <uk-flex :gap="8" col class="chase_settings">
+      <uk-flex
+        :gap="8"
+        col
+        class="chase_settings"
+      >
         <uk-flex :gap="8">
-          <uk-txt-input label="Name" v-model="chase.name" />
-          <uk-num-input style="width: 70px" :min="1" :max="99" label="Duration" v-model="chase.duration" />
+          <uk-txt-input
+            v-model="chase.name"
+            label="Name"
+          />
+          <uk-num-input
+            v-model="chase.duration"
+            style="width: 70px"
+            :min="1"
+            :max="99"
+            label="Duration"
+          />
         </uk-flex>
-        <uk-select-input label="Color" :modelValue="0" :options="colorOptions" />
+        <uk-select-input
+          label="Color"
+          :model-value="getIndexFromColor(chase.color)"
+          :options="colorOptions"
+          @input="setChaseColor"
+        />
         <uk-flex :gap="8">
-          <uk-select-input label="Quantize" v-model="chase.quantize" :options="quantizeOptions" />
-          <uk-select-input class="field" label="Trigger" v-model="chase.trigger" :options="triggerOptions" />
+          <uk-select-input
+            v-model="chase.quantize"
+            label="Quantize"
+            :options="quantizeOptions"
+          />
+          <uk-select-input
+            v-model="chase.trigger"
+            class="field"
+            label="Trigger"
+            :options="triggerOptions"
+          />
         </uk-flex>
       </uk-flex>
     </uk-widget>
-    <widget-pool-timeline v-show="group.cuePool.cues.length" :pool="chase" />
+    <widget-pool-timeline
+      v-show="group.cuePool.cues.length"
+      :pool="chase"
+    />
   </uk-flex>
 </template>
 
 <script>
-import WidgetPoolTimeline from "./_widgets/chase.modifier.widget.timeline.vue";
-import colorMixin from "@/views/mixins/color.mixin";
+import colorMixin from '@/views/mixins/color.mixin';
+import Group from '@/models/DMX/group.model';
+import Chase from '@/models/DMX/chase.model';
+import WidgetPoolTimeline from './_widgets/chase.modifier.widget.timeline.vue';
 
 export default {
-  name: "chaseModifierFragment",
+  name: 'ChaseModifierFragment',
   compatConfig: {
     // or, for full vue 3 compat in this component:
     MODE: 3,
@@ -36,62 +68,71 @@ export default {
       /**
        * Handle to the selected group instance
        */
-      group: this.$show.groupPool.getFromId(this.$route.params.groupId),
+      group: new Group(), // this.$show.groupPool.getFromId(this.$route.params.groupId),
       /**
        * Handle to the group's selected chase instance
        */
-      chase: this.$show.groupPool.getFromId(this.$route.params.groupId).chasePool.getFromId(this.$route.params.chaseId),
+      // eslint-disable-next-line max-len
+      chase: new Chase(), // this.$show.groupPool.getFromId(this.$route.params.groupId).chasePool.getFromId(this.$route.params.chaseId),
       /**
        * Chase trigger options
        * @todo this should be static/hardcoded
        */
-      triggerOptions: ["Toggle", "One Shot"],
+      triggerOptions: ['Loop', 'One Shot'],
       /**
        * Chase triquantization options
        * @todo this should be static/hardcoded
        */
-      quantizeOptions: ["None", "1/8", "1/4", "1/2", "1/1"],
+      quantizeOptions: ['None', '1/8', '1/4', '1/2', '1/1'],
     };
+  },
+  watch: {
+    // '$route.params.chaseId': function routeParamsChaseIdWatcher(chaseId) {
+    //   console.log('dklsdklskd');
+    //   this.fetchChaseData(chaseId);
+    // },
+    '$route.params': function routeParamsChaseIdWatcher({ groupId, chaseId }) {
+      if (groupId) this.fetchGroupData(groupId);
+      if (chaseId) this.fetchChaseData(chaseId);
+    },
+  },
+  beforeUnmount() {
+    window.removeEventListener('keydown', this.keydownHandler);
   },
   methods: {
     /**
      * Fetch group and chase data from route groupId and chaseId parameters
-     * 
+     *
        * @public
      */
-    fetchChaseData() {
-      window.removeEventListener("keydown", this.keydownHandler);
-      if (this.$route.params.chaseId != null && this.$route.params.groupId != null) {
-        this.group = this.$show.groupPool.getFromId(this.$route.params.groupId);
-        this.chase = this.$show.groupPool.getFromId(this.$route.params.groupId).chasePool.getFromId(this.$route.params.chaseId);
-        window.addEventListener("keydown", this.keydownHandler);
+    fetchChaseData(id) {
+      if (id !== undefined) {
+        window.removeEventListener('keydown', this.keydownHandler);
+        // eslint-disable-next-line max-len
+        this.chase = this.group.chasePool.getFromId(id);
+        window.addEventListener('keydown', this.keydownHandler);
+      }
+    },
+    fetchGroupData(id) {
+      if (id !== undefined) {
+        window.removeEventListener('keydown', this.keydownHandler);
+        this.group = this.$show.groupPool.getFromId(id);
       }
     },
     /**
      * Keydown handler used to handle chase deletion on del/backspace hit
-     * 
-       * @public
-     * @param {Object} e keydown event 
+     *
+     * @public
+     * @param {Object} e keydown event
      */
     keydownHandler(e) {
-      if (e.key === "Backspace" || e.key === "Delete") {
+      if (e.key === 'Backspace' || e.key === 'Delete') {
         this.group.chasePool.delete(this.chase);
         this.$router.push(`/group/${this.$route.params.groupId}`).catch(() => {});
       }
     },
-  },
-  beforeUnmount() {
-    window.removeEventListener("keydown", this.keydownHandler);
-  },
-  mounted() {
-    this.fetchChaseData();
-  },
-  watch: {
-    "$route.params.chaseId"() {
-      this.fetchChaseData();
-    },
-    "$route.params.groupId"() {
-      this.fetchChaseData();
+    setChaseColor(colorIndex) {
+      this.chase.color = this.getColorFromIndex(colorIndex);
     },
   },
 };
