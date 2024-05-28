@@ -5,14 +5,16 @@ hero:
   text: Open-source, web-based DMX lighting control software.
   tagline: Learn how to use ASLS studio today !
   image: 
-    src: /hero.png
+    dark: /studio_standalone_logo.png
+    light: /studio_standalone_logo_dark.png
+    alt: ASLS Studio
   actions: 
     - theme: brand
       text: User Manual
       link: /introduction/
     - theme: alt
-      text: Developer Resources
-      link: "https://dev.studio.asls.timekadel.com"
+      text: View on GitHub
+      link: "https://github.com/asls-org/studio"
 features:
   - icon: 🌎
     title: One show file to rule them all
@@ -24,3 +26,5 @@ features:
     title: Visualize
     details: Get a preview of the show you're programming thanks to ASLS's WebGL based light-rendering engine.
 ---
+
+<VPTeamMembers size="small" :members="members" />

@@ -48,10 +48,10 @@ $ npm install
 
 Serve ASLS Studio in the local server.
 ```
-$ npm run serve
+$ npm start
 ```
 
-ASLS Studio will start a server at <a href="localhost:4515" target="_blank" rel="noreferrer">localhost:4515</a>. Simply browse to the following URL using your favorite browser to be prompted with ASLS Studio's user interface.
+ASLS Studio will start a server over <a href="localhost:4515" target="_blank" rel="noreferrer">localhost:4515</a>. Simply browse to the following URL using your favorite browser to be prompted with ASLS Studio's user interface.
 
 ## Build For Production
 

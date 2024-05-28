@@ -2,16 +2,17 @@ export default {
   title: "ASLS Studio",
   description: "Open-source, web-based DMX lighting control software.",
   head:[
-    ['link', { rel: "icon", type: "image/png", sizes: "32x32", href: "/asls-logo.png"}],
+    ['link', { rel: "icon", type: "image/png", sizes: "32x32", href: "/studio_standalone_logo.png"}],
   ],
   themeConfig: {
     siteTitle: "ASLS Studio",
-    algolia: {
-      apiKey: '535c62495650c876ca7413debb4491ff',
-      indexName: 'ASLS',
-      appId: '1L7RJIJ77A'
+    search:{
+      provider: 'local',
     },
-    logo: '/asls-logo.png',
+    socialLinks: [
+      { icon: 'github', link: 'https://github.com/asls-org/studio' },
+    ],
+    logo: '/studio_standalone_logo.png',
     nav: [{
         text: 'User Manual',
         link: '/introduction/'
@@ -101,7 +102,7 @@ export default {
     },
     footer: {
       message: "ASLS Studio - Released under the GPLv3 License",
-      copyright: "Copyright (C) 2021-present Timé Kadel."
+      copyright: `Copyright (©) 2021-${new Date().getFullYear()} Timé Kadel.`
     },
     markdown: {
       // theme: 'material-palenight'
