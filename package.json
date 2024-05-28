@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "vite",
-    "build": "vue-cli-service build",
+    "build": "vite build",
     "lint": "eslint --ext .js,.vue --ignore-path .gitignore --fix src",
     "docs:build": "npm run docs:manual:build & npm run docs:dev:ui:build & npm run docs:dev:core:build",
     "docs:dev:core:build": "docma --config ./docs/developer/core/docma.json",
@@ -12,7 +12,7 @@
     "docs:dev:ui:build": "build-storybook -c ./docs/developer/ui/.storybook",
     "docs:dev:ui:serve": "start-storybook -c ./docs/developer/ui/.storybook",
     "docs:manual:build": "vitepress build ./docs/manual",
-    "docs:manual:serve": "vitepress dev ./docs/manual --port 6065",
+    "docs:manual:serve": "vitepress dev ./docs/manual",
     "docs:serve": "npm run docs:manual:serve & npm run docs:dev:ui:serve & npm run docs:dev:core:serve"
   },
   "dependencies": {
@@ -48,7 +48,7 @@
     "semantic-release": "^22.0.5",
     "vite": "^5.0.10",
     "vite-svg-loader": "^5.1.0",
-    "vitepress": "^1.0.0-alpha.4",
+    "vitepress": "^1.0.0-rc.39",
     "vue-loader": "^17.3.0",
     "webpack": "^5.89.0",
     "webpack-cli": "^5.1.4",
