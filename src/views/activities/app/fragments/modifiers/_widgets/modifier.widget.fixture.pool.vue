@@ -11,7 +11,8 @@
       filterable
       deletable
       draggable
-      :auto-select="autoSelect"
+      auto-select-first
+      :auto-select="selected"
       :items="pool.listable"
       :prevent-unfocus="preventUnfocus"
       @select="selectFixture"
@@ -79,7 +80,21 @@ export default {
         title: 'Fixture Pool',
         icon: 'patch',
       },
+      /**
+       * Currently selected fixture
+       */
+      selected: 0,
     };
+  },
+  watch: {
+    '$route.query.fixtureId': function watchFixtureId(fixtureId) {
+      if (fixtureId !== this.selected) {
+        const fixture = this.pool.fixtures.find((f) => f.id === Number(fixtureId));
+        if (fixture) {
+          this.selectFixture(fixture);
+        }
+      }
+    },
   },
   mounted() {
     const visualizerEl = document.getElementById('visualizer');
@@ -89,10 +104,11 @@ export default {
     /**
      * Highlights and forwards fixture selection event to parent
      *
-       * @public
+     * @public
      * @param {Object} fixture reference to fixture defintion object
      */
     selectFixture(fixture) {
+      this.selected = this.pool.fixtures.findIndex((f) => f.id === fixture.id);
       fixture = this.pool.getFromId(fixture.id);
       fixture.highlightSingle(true, true);
       this.$emit('select', fixture.id);
@@ -129,17 +145,12 @@ export default {
      * @param {Boolean} state List focusing state
      */
     setFocus(state) {
-      // if (!state) {
-      //   if (this.pool && this.pool.fixtures.length) {
-      //     this.pool.fixtures[0].highlightSingle(false, true);
-      //   }
-      // }
       this.$emit('focused', state);
     },
     /**
      * Reorder list items
      *
-       * @public
+     s* @public
      * @param {Object} reorderData list reordering object
      * @param {Number} reorderData.original original item index
      * @param {Number} reorderData.final final item index
