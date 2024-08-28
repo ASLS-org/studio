@@ -644,18 +644,23 @@ class FXChannel extends Proxify {
           + this.fixturePhaseStart * (Math.PI / 180);
           break;
         case FX_CHANNEL_DIRECTIONS.SYM:
-          fixture.phase = (index < (activeFixtures.length - 1) / 2
-            ? (
-              (this.fixturePhaseStop - this.fixturePhaseStart)
-              * index
+          // eslint-disable-next-line no-case-declarations
+          const midpoint = (activeFixtures.length - 1) / 2;
+          if (index <= midpoint) {
+            fixture.phase = (
+              (this.fixturePhaseStop / 2 - this.fixturePhaseStart)
+              * (index / midpoint)
               * (Math.PI / 180)
               + this.fixturePhaseStart * (Math.PI / 180)
-            )
-            : (
-              (this.fixturePhaseStop - this.fixturePhaseStart)
-              * ((activeFixtures.length - 1) - index)
-              * (Math.PI / 180)) + this.fixturePhaseStart * (Math.PI / 180)
-          );
+            );
+          } else {
+            fixture.phase = (
+              (this.fixturePhaseStop / 2 - this.fixturePhaseStart)
+              * ((activeFixtures.length - 1 - index) / midpoint)
+              * (Math.PI / 180)
+              + this.fixturePhaseStart * (Math.PI / 180)
+            );
+          }
           break;
         default: break;
       }
