@@ -139,6 +139,7 @@ export default {
       if (id !== undefined) {
         try {
           this.universe = this.$show.universePool.getFromId(id);
+          this.selectFixture(0);
         } catch (err) {
           this.universe = {};
         }
