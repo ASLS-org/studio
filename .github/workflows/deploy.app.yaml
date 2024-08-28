@@ -2,36 +2,35 @@ name: Deploy
 
 on:
   push:
-    branches: [ master, staging ]
+    branches: [staging]
 
 permissions:
   contents: read # for checkout
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     # This is due to change for different envs but
     # as of today we only have one deployment endpoint (demo)
     if: github.ref == 'refs/heads/staging'
     steps:
-    - uses: actions/checkout@v3
-    - name: Install Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '16.x'
-    - name: Install npm dependencies
-      run: npm install
-    - name: Run build task
-      run: npm run build --if-present
-    - name: Deploy to Server
-      uses: easingthemes/ssh-deploy@main
-      with:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          ARGS: "-rlgoDzvc -i --delete"
-          SOURCE: "dist/"
-          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
-          REMOTE_USER: ${{ secrets.REMOTE_USER }}
-          TARGET: ${{ secrets.REMOTE_TARGET }}
-          EXCLUDE: "/dist/, /node_modules/"
+      - uses: actions/checkout@v3
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+      - name: Install npm dependencies
+        run: npm install
+      - name: Run build task
+        run: npm run build --if-present
+      - name: Deploy to Server
+        uses: easingthemes/ssh-deploy@main
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+          ARGS: '-rlgoDzvc -i --delete'
+          SOURCE: 'dist/'
+          REMOTE_HOST: ${{ secrets.SERVER_REMOTE_HOST }}
+          REMOTE_USER: ${{ secrets.SERVER_REMOTE_USER }}
+          TARGET: ${{ secrets.STUDIO_APP_SERVER_REMOTE_TARGET }}
+          EXCLUDE: '/dist/, /node_modules/'
