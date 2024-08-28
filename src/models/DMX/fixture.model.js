@@ -496,7 +496,7 @@ class Fixture extends Proxify {
    * Fixture's color channels values.
    * Only RGB color suppoprtded at the moment.
    * @todo Implement other color changer types (HSB...). Should do for the alpha
-   *
+   * @todo, this causes massive slowdowns, this should be refactpred and optimized
    * @type {Number}
    */
   set color(rgbValue) {
