@@ -17,6 +17,7 @@
       class="patch_bay_universe_list"
       filterable
       :items="pool.listable"
+      accordion
       @unfold="displayUniverse"
       @select="displayFixture"
     />
