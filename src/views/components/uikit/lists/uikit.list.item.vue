@@ -54,7 +54,7 @@
       name="arrow_up"
     />
     <uk-icon
-      v-if="!deletable"
+      v-if="deletable"
       class="uikit_list_item_icon_small"
       name="cross"
     />
