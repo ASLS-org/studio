@@ -47,7 +47,6 @@ const CONTROL_MODES = {
 const boundingBoxMaterial = new THREE.MeshBasicMaterial({
   color: 'rgb(162, 45, 88)',
   transparent: true,
-  depthWrite: true,
   opacity: 0.15,
   side: THREE.DoubleSide,
 });
@@ -60,7 +59,6 @@ const boundingBoxEdgesMaterial = new THREE.LineBasicMaterial({
   color: 'rgb(162, 45, 88)',
   linewidth: 1,
   transparent: true,
-  depthWrite: false,
   side: THREE.DoubleSide,
 });
 /**

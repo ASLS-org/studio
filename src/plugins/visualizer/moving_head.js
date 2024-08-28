@@ -30,13 +30,8 @@ MODEL_MATERIAL.onBeforeCompile = (shader) => {
   );
   shader.fragmentShader = shader.fragmentShader.replace(
     'totalEmissiveRadiance = emissive;\n',
-    'totalEmissiveRadiance = vHighlight == 0.0 ? emissive : vec3(.92,.24,.33);\n',
+    'totalEmissiveRadiance = vHighlight == 0.0 ? emissive : vec3(.658,.176,.345);\n',
   );
-  shader.fragmentShader = shader.fragmentShader.replace(
-    'vec4 diffuseColor = vec4( diffuse, opacity );\n',
-    'vec4 diffuseColor = vec4( diffuse, vHighlight == 0.0 ? 1.0 : 0.5 );\n',
-  );
-
   MODEL_MATERIAL.userData.shader = shader;
 };
 
@@ -832,7 +827,6 @@ class MovingHead {
   static prepareBoxHelperInstance() {
     const boundingBoxGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.8);
     const boundingBoxMaterial = new THREE.MeshBasicMaterial({
-      side: THREE.BackSide,
       color: 'rgb(255, 0, 0)',
       opacity: 0.0,
       transparent: true,
@@ -847,6 +841,7 @@ class MovingHead {
     boundingBoxMesh.count = instanceCount;
     boundingBoxMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     boundingBoxMesh.instanceMatrix.needsUpdate = true;
+    boundingBoxMesh.visible = false;
   }
 
   static prepareInstanciation(camera, scene) {
