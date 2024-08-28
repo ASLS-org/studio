@@ -13,7 +13,7 @@
         class="channels_channel"
       >
         <uk-num-input
-          v-model.lazy="channel.value"
+          :value="channel.value"
           class="channel_value"
           :min="0"
           :max="255"
