@@ -1,59 +1,55 @@
 // Author: Fyrestar https://mevedia.com (https://github.com/Fyrestar/THREE.InfiniteGridHelper)
-var THREE = window.THREE = require('three');
+import * as THREE from 'three';
 
-THREE.InfiniteGridHelper = function InfiniteGridHelper(size1, size2, color, distance, axes = 'xzy') {
+export default function InfiniteGridHelper(size1, size2, color, distance, axes = 'xzy') {
+  color = color || new THREE.Color('white');
+  size1 = size1 || 10;
+  size2 = size2 || 100;
 
-	color = color || new THREE.Color('white');
-	size1 = size1 || 10;
-	size2 = size2 || 100;
+  distance = distance || 8000;
 
-	distance = distance || 8000;
+  const planeAxes = axes.substr(0, 2);
 
+  const geometry = new THREE.PlaneGeometry(2, 2, 1, 1);
 
+  const material = new THREE.ShaderMaterial({
 
-	const planeAxes = axes.substr(0, 2);
+    side: THREE.DoubleSide,
 
-	const geometry = new THREE.PlaneBufferGeometry(2, 2, 1, 1);
+    uniforms: {
+      uSize1: {
+        value: size1,
+      },
+      uSize2: {
+        value: size2,
+      },
+      uColor: {
+        value: color,
+      },
+      uDistance: {
+        value: distance,
+      },
+    },
+    transparent: true,
+    vertexShader: `
+          
+          varying vec3 worldPosition;
+      
+          uniform float uDistance;
+          
+          void main() {
+          
+              vec3 pos = position.${axes} * uDistance;
+              pos.${planeAxes} += cameraPosition.${planeAxes};
+              
+              worldPosition = pos;
+              
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+          
+          }
+          `,
 
-	const material = new THREE.ShaderMaterial({
-
-		side: THREE.DoubleSide,
-
-		uniforms: {
-			uSize1: {
-				value: size1
-			},
-			uSize2: {
-				value: size2
-			},
-			uColor: {
-				value: color
-			},
-			uDistance: {
-				value: distance
-			}
-		},
-		transparent: true,
-		vertexShader: `
-           
-           varying vec3 worldPosition;
-		   
-           uniform float uDistance;
-           
-           void main() {
-           
-                vec3 pos = position.${axes} * uDistance;
-                pos.${planeAxes} += cameraPosition.${planeAxes};
-                
-                worldPosition = pos;
-                
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-           
-           }
-           `,
-
-
-		fragmentShader: `
+    fragmentShader: `
            
            varying vec3 worldPosition;
            
@@ -95,67 +91,59 @@ THREE.InfiniteGridHelper = function InfiniteGridHelper(size1, size2, color, dist
            
            `,
 
-		extensions: {
-			derivatives: true
-		}
+    extensions: {
+      derivatives: true,
+    },
 
-	});
+  });
 
+  THREE.Mesh.call(this, geometry, material);
 
-	THREE.Mesh.call(this, geometry, material);
+  this.frustumCulled = false;
+}
 
-	this.frustumCulled = false;
-
+InfiniteGridHelper.prototype = {
+  ...THREE.Mesh.prototype,
+  ...THREE.Object3D.prototype,
+  ...THREE.EventDispatcher.prototype,
 };
 
-THREE.InfiniteGridHelper.prototype = {
-	...THREE.Mesh.prototype,
-	...THREE.Object3D.prototype,
-	...THREE.EventDispatcher.prototype
-};
+if (parseInt(THREE.REVISION, 10) > 126) {
+  class InfiniteGridHelperClass extends THREE.Mesh {
+    constructor(size1, size2, color, distance, axes = 'xzy') {
+      color = color || new THREE.Color('white');
+      size1 = size1 || 10;
+      size2 = size2 || 100;
 
-if (parseInt(THREE.REVISION) > 126) {
+      distance = distance || 8000;
 
-	class InfiniteGridHelper extends THREE.Mesh {
+      const planeAxes = axes.substr(0, 2);
 
-		constructor(size1, size2, color, distance, axes = 'xzy') {
+      const geometry = new THREE.PlaneGeometry(2, 2, 1, 1);
 
+      const material = new THREE.ShaderMaterial({
 
-			color = color || new THREE.Color('white');
-			size1 = size1 || 10;
-			size2 = size2 || 100;
+        side: THREE.DoubleSide,
 
-			distance = distance || 8000;
-
-
-
-			const planeAxes = axes.substr(0, 2);
-
-			const geometry = new THREE.PlaneBufferGeometry(2, 2, 1, 1);
-
-			const material = new THREE.ShaderMaterial({
-
-				side: THREE.DoubleSide,
-
-				uniforms: {
-					uSize1: {
-						value: size1
-					},
-					uSize2: {
-						value: size2
-					},
-					uColor: {
-						value: color
-					},
-					uDistance: {
-						value: distance
-					}
-				},
-				transparent: true,
-				vertexShader: `
+        uniforms: {
+          uSize1: {
+            value: size1,
+          },
+          uSize2: {
+            value: size2,
+          },
+          uColor: {
+            value: color,
+          },
+          uDistance: {
+            value: distance,
+          },
+        },
+        transparent: true,
+        vertexShader: `
            
            varying vec3 worldPosition;
-		   
+   
            uniform float uDistance;
            
            void main() {
@@ -170,8 +158,7 @@ if (parseInt(THREE.REVISION) > 126) {
            }
            `,
 
-
-				fragmentShader: `
+        fragmentShader: `
            
            varying vec3 worldPosition;
            
@@ -204,10 +191,7 @@ if (parseInt(THREE.REVISION) > 126) {
                   
                   
                   gl_FragColor = vec4(uColor.rgb, mix(g2, g1, g1) * 0.35*d);
-                  gl_FragColor.a = mix(0.5 * gl_FragColor.a, gl_FragColor.a, g2);
-
-									//gl_FragColor = vec4(1.0,1.0,1.0,1.0);
-                
+                  gl_FragColor.a = mix(0.5 * gl_FragColor.a, gl_FragColor.a, g2);                
                   if ( gl_FragColor.a <= 0.0 ) discard;
                 
            
@@ -215,22 +199,20 @@ if (parseInt(THREE.REVISION) > 126) {
            
            `,
 
-				extensions: {
-					derivatives: true
-				}
+        extensions: {
+          derivatives: true,
+        },
 
-			});
+      });
 
-			super(geometry, material);
+      super(geometry, material);
 
-			this.frustumCulled = false;
+      this.frustumCulled = false;
+    }
+  }
 
-		}
+  Object.assign(InfiniteGridHelperClass.prototype, InfiniteGridHelper.prototype);
 
-	}
-
-	Object.assign(InfiniteGridHelper.prototype, THREE.InfiniteGridHelper.prototype);
-
-	THREE.InfiniteGridHelper = InfiniteGridHelper;
-
+  // eslint-disable-next-line no-func-assign
+  InfiniteGridHelper = InfiniteGridHelperClass;
 }

@@ -1,53 +1,51 @@
-'use strict'
-
-import Live from './live.model'
-import ukColors from '@/views/components/uikit/colors/uikit.colors.js'
-import {Proxify} from '../utils/proxify.utils.js'
+import ukColors from '@/views/components/uikit/colors/uikit.colors';
+import Live from './live.model';
+import { Proxify } from '../utils/proxify.utils';
 
 /**
  * Cue types enumeration
- * 
+ *
  * @constant {Object} CUE_TYPES
  * @enum {Number}
  */
 const CUE_TYPES = {
   SCENE: 0,
-  EFFECT: 1
-}
+  EFFECT: 1,
+};
 /**
  * Cue states enumeration
- * 
+ *
  * @constant {Object} CUE_STATES
  * @enum {Number}
  */
 const CUE_STATES = {
   IDLE: 0,
-  RUNNING: 1
-}
+  RUNNING: 1,
+};
 /**
  * Cue trigger styles enumeration
- * 
+ *
  * @constant {Object} CUE_TRIGGER_STYLES
  * @enum {Number}
  */
 const CUE_TRIGGER_STYLES = {
   TOGGLE: 0,
-  TEMPORARY: 1
-}
+  TEMPORARY: 1,
+};
 /**
  * Cue loop styles enumeration
- * 
+ *
  * @constant {Object} CUE_LOOP_STYLES
  * @enum {Number}
  */
 const CUE_LOOP_STYLES = {
   ONE_SHOT: 0,
-  LOOP: 1
-}
+  LOOP: 1,
+};
 
 /**
  * Default cue data
- * 
+ *
  * @constant {Object} DEFAULT_CUE_DATA
  */
 const DEFAULT_CUE_DATA = {
@@ -56,23 +54,20 @@ const DEFAULT_CUE_DATA = {
   TRIGGER_STYLE: CUE_TRIGGER_STYLES.TOGGLE,
   LOOP_STYLE: CUE_LOOP_STYLES.ONE_SHOT,
   RELATIVE: 0,
-}
-
-
+};
 
 /**
  * @class Cue
  * @extends {Proxify}
- * @classdesc Cues are collections of DMX channels manipulation function bound to specific sets of fixtures.
- * Cues come in varying types, Currently implemented types include Scene and Effect
+ * @classdesc Cues are collections of DMX channels manipulation function bound to specific sets of
+ * fixtures. They come in varying types, Currently implemented types include Scene and Effect
  * @see Scene
  * @see Effect
  */
-class Cue extends Proxify{
-
+class Cue extends Proxify {
   /**
    * Creates an instance of Cue.
-   * 
+   *
    * @param {Object} data Cue configuration object
    * @param {Number} data.id Cue ID
    * @param {Number} data.type Cue ID
@@ -85,32 +80,42 @@ class Cue extends Proxify{
    */
   constructor(data) {
     super();
-    this.id = data.id;
-    this.type = data.type;
-    this.name = data.name || `Cue ${this.id}`
-    this.color = data.color;
-    this.state = CUE_STATES.IDLE;
-    this.triggerStyle = data.triggerStyle
-    this.loopStyle = data.loopStyle
-    this.duration = data.duration;
-    this.relative = data.relative;
-    this.animationId = null;
-    this.deltaStart = null
-    this.time = 0;
-    this.DMXActivity = 0;
+    if (!data.isStub) {
+      this.id = data.id;
+      this.type = data.type;
+      this.name = data.name || `Cue ${this.id}`;
+      this.color = data.color;
+      this.state = CUE_STATES.IDLE;
+      this.triggerStyle = data.triggerStyle;
+      this.loopStyle = data.loopStyle;
+      this.duration = data.duration;
+      this.relative = data.relative;
+      this.animationId = null;
+      this.deltaStart = null;
+      this.time = 0;
+      this.DMXActivity = 0;
+    }
   }
 
   /**
    * Cue color
-   * 
+   *
    * @type {String}
    */
   set color(color) {
     this._color = color;
   }
 
+  get color() {
+    return this._color || ukColors[Object.keys(ukColors)[this.id % Object.keys(ukColors).length]];
+  }
+
   set state(state) {
     this._state = state != null ? state : DEFAULT_CUE_DATA.STATE;
+  }
+
+  get state() {
+    return this._state || DEFAULT_CUE_DATA.STATE;
   }
 
   /**
@@ -122,6 +127,10 @@ class Cue extends Proxify{
     this._triggerStyle = triggerStyle != null ? triggerStyle : DEFAULT_CUE_DATA.TRIGGER_STYLE;
   }
 
+  get triggerStyle() {
+    return this._triggerStyle || DEFAULT_CUE_DATA.TRIGGER_STYLE;
+  }
+
   /**
    * Cue loop style
    *
@@ -129,6 +138,10 @@ class Cue extends Proxify{
    */
   set loopStyle(loopStyle) {
     this._loopStyle = loopStyle != null ? loopStyle : DEFAULT_CUE_DATA.LOOP_STYLE;
+  }
+
+  get loopStyle() {
+    return this._loopStyle || DEFAULT_CUE_DATA.LOOP_STYLE;
   }
 
   /**
@@ -140,44 +153,26 @@ class Cue extends Proxify{
     this._duration = duration != null ? duration : DEFAULT_CUE_DATA.DURATION;
   }
 
+  get duration() {
+    return this._duration || DEFAULT_CUE_DATA.DURATION;
+  }
+
   /**
    * Cue start configuration
    *
    * @type {Boolean}
    */
-  set relative(relative){
+  set relative(relative) {
     this._relative = relative != null ? relative : DEFAULT_CUE_DATA.RELATIVE;
-  }
-
-
-  get color() {
-    return this._color || ukColors[Object.keys(ukColors)[this.id % Object.keys(ukColors).length]]
-  }
-
-  get state() {
-    return this._state || DEFAULT_CUE_DATA.STATE;
-  }
-
-  get triggerStyle() {
-    return this._triggerStyle || DEFAULT_CUE_DATA.TRIGGER_STYLE;
-  }
-
-  get loopStyle() {
-    return this._loopStyle || DEFAULT_CUE_DATA.LOOP_STYLE;
-  }
-
-  get duration() {
-    return this._duration || DEFAULT_CUE_DATA.DURATION;
-  }
-
-  get durationMS(){
-    return this.duration * Live.barDuration;
   }
 
   get relative() {
     return this._relative || DEFAULT_CUE_DATA.RELATIVE;
   }
 
+  get durationMS() {
+    return this.duration * Live.barDuration;
+  }
 
   /**
    * Cue listable data
@@ -189,8 +184,8 @@ class Cue extends Proxify{
     return {
       name: this.name,
       color: this.color,
-      icon: this.type === CUE_TYPES.SCENE ? 'mixer' : 'mixer'
-    }
+      icon: this.type === CUE_TYPES.SCENE ? 'mixer' : 'mixer',
+    };
   }
 
   /**
@@ -208,7 +203,7 @@ class Cue extends Proxify{
       triggerStyle: this.triggerStyle,
       loopStyle: this.loopStyle,
       relative: this.relative,
-    }
+    };
   }
 
   /**
@@ -223,11 +218,11 @@ class Cue extends Proxify{
       //   this.prepareStartValues();
       // }
       this.animationId = Live.add(this._update.bind(this));
-      this.state = CUE_STATES.RUNNING
-    } else if(this.animationId!=null) {
-      Live.remove(this.animationId)
+      this.state = CUE_STATES.RUNNING;
+    } else if (this.animationId != null) {
+      Live.remove(this.animationId);
       this.animationId = null;
-      this.state = CUE_STATES.IDLE
+      this.state = CUE_STATES.IDLE;
       this.deltaStart = null;
     }
   }
@@ -239,24 +234,29 @@ class Cue extends Proxify{
    * @param {Number} t update time
    */
   _update(t) {
-    if(this.deltaStart == null){
+    if (this.deltaStart == null) {
       this.deltaStart = t;
     }
-    this.time = t - this.deltaStart
-    if (this.time > this.durationMS && this.loopStyle != CUE_LOOP_STYLES.LOOP) {
+    this.time = t - this.deltaStart;
+    if (this.time > this.durationMS && this.loopStyle !== CUE_LOOP_STYLES.LOOP) {
       if (this.animationId != null) {
-        Live.remove(this.animationId)
+        Live.remove(this.animationId);
         this.animationId = null;
-        this.state = CUE_STATES.IDLE
+        this.state = CUE_STATES.IDLE;
         this.deltaStart = null;
       }
     }
     this.update(this.time);
   }
 
+  /* eslint-disable class-methods-use-this */
+  // Abstract methods to be inherited
   update() {}
+
   prepareStartValues() {}
+
   deleteFixture() {}
+  /* eslint-enable class-methods-use-this */
 
   /**
    * Manually remove cue instance reference from memory
@@ -268,12 +268,11 @@ class Cue extends Proxify{
     if (instance.animationId != null) {
       Live.remove(instance.animationId);
     }
-    Object.keys(instance).forEach(prop => {
-      delete instance[prop]
-    })
+    Object.keys(instance).forEach((prop) => {
+      delete instance[prop];
+    });
     instance = null;
   }
-
 }
 
 export default Cue;

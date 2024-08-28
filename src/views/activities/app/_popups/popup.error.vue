@@ -1,32 +1,51 @@
 <template>
-  <uk-popup @submit="close()" backdrop :movable="false" :cancelable="false" @input="update()" v-model="state" :header="headerData">
+  <uk-popup
+    v-model="state"
+    backdrop
+    :movable="false"
+    :cancelable="false"
+    :header="headerData"
+    @submit="close()"
+    @input="update()"
+  >
     <div class="error_body">
-      <h4 class="error_message">{{ error.name || 'Unknow Error' }}:</h4>
-      <h4 class="error_message">{{error.message}}</h4>
+      <h4 class="error_message">
+        {{ error.name || 'Unknow Error' }}:
+      </h4>
+      <h4 class="error_message">
+        {{ error.message }}
+      </h4>
     </div>
   </uk-popup>
 </template>
 
 <script>
-import PopupMixin from "@/views/mixins/popup.mixin.js"
+import PopupMixin from '@/views/mixins/popup.mixin';
 
 export default {
-  name: "popupError",
+  name: 'PopupError',
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   mixins: [PopupMixin],
   props: {
     /**
      * Popup error definition
      */
-    error: [Error, Object],
+    error: {
+      type: [Error, Object],
+      default: new Error('Unhandled error'),
+    },
   },
   data() {
     return {
       /**
        * Popup header definition
        */
-      headerData: { title: "An Error Has Occured" },
+      headerData: { title: 'An Error Has Occured' },
     };
-  }
+  },
 };
 </script>
 

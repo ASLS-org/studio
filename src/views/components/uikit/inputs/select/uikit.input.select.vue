@@ -1,55 +1,117 @@
 <template>
-  <uk-flex col class="uikit_select">
-    <div class="label"  :class="{ disabled: disabled }" v-if="label">
+  <uk-flex
+    col
+    class="uikit_select"
+  >
+    <div
+      v-if="label"
+      class="label"
+      :class="{ disabled: disabled }"
+    >
       {{ label }}
     </div>
-    <div class="uikit_select_box" tabindex="0" @focusout="hide" ref="select_box" :class="{ disabled: disabled }">
-      <uk-flex class="uikit_select_textbox_wrapper" :class="{ selected: displayed }" @click.native="show()">
-        <uk-flex class="uikit_select_textbox" v-html="options[value]" />
+    <div
+      ref="select_box"
+      class="uikit_select_box"
+      tabindex="0"
+      :class="{ disabled: disabled }"
+      @focusout="hide"
+    >
+      <uk-flex
+        class="uikit_select_textbox_wrapper"
+        :class="{ selected: displayed }"
+        @click="show()"
+      >
+        <!-- eslint-disable vue/no-v-html, vue/no-v-text-v-html-on-component -->
+        <uk-flex
+          class="uikit_select_textbox"
+          v-html="options[selected]"
+        />
+        <!-- eslint-enable vue/no-v-html, vue/no-v-text-v-html-on-component -->
         <span class="uikit_select_button">
-          <uk-icon class="uikit_select_button_icon" name="arrow_down" />
+          <uk-icon
+            class="uikit_select_button_icon"
+            name="arrow_down"
+          />
         </span>
       </uk-flex>
-      <uk-flex tabindex="0" v-show="displayed" col class="uikit_select_option_list" :style="optionListStyle" ref="options">
-        <h4 class="uikit_select_option" v-on:click="select(index)" v-html="option" v-for="(option, index) in options" :key="index" />
+      <uk-flex
+        v-show="displayed"
+        ref="options"
+        tabindex="0"
+        col
+        class="uikit_select_option_list"
+        :style="optionListStyle"
+      >
+        <!--eslint-disable vue/no-v-html-->
+        <h4
+          v-for="(option, index) in options"
+          :key="index"
+          class="uikit_select_option"
+          @click="select(index)"
+          v-html="option"
+        />
+        <!--eslint-enable vue/no-v-html-->
       </uk-flex>
     </div>
   </uk-flex>
 </template>
 
 <script>
- /**
+/**
   * @component Select A multiple-choices input with customisable option list.
   * @namespace uikit/inputs/selects
   * @story Default {"options":["one","two","three"], "label":"Hello World", "value": "0"}
-  * @story Disabled {"options":["one","two","three"], "label":"Hello World", "value": "0", "disabled": true}
+  * @story Disabled {
+  *   "options":["one","two","three"],
+  *   "label":"Hello World",
+  *   "value": "0",
+  *   "disabled": true
+  * }
   */
 export default {
-  name: "ukSelectInput",
+  name: 'UkSelectInput',
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   props: {
     /**
      * The gauge's text label value
      */
-    label: String,
+    label: {
+      type: String,
+      default: '',
+    },
     /**
      * An Array of HTML-formated string of select options
      */
-    options: Array,
+    options: {
+      type: Array,
+      default: () => [],
+    },
     /**
      * The input's actual value
      */
-    value: Number,
+    modelValue: {
+      type: [String, Number],
+      default: 0,
+    },
     /**
-     * WHether or not the input is disabled
+     * Whether or not the input is disabled
      */
-    disabled: Boolean,
+    disabled: {
+      type: Boolean,
+      default: false,
+    },
   },
+  emits: ['update:modelValue', 'input'],
   data() {
     return {
       /**
        * Seleted item value (reactive)
        */
-      selected: parseInt(this.value),
+      selected: parseInt(this.modelValue, 10),
       /**
        * Whether the option list is displayed or not
        */
@@ -60,10 +122,15 @@ export default {
       optionListStyle: {},
     };
   },
+  watch: {
+    modelValue(newValue) {
+      this.select(parseInt(newValue, 10));
+    },
+  },
   methods: {
     /**
      * Selects a value from the option list
-     * 
+     *
        * @param {Number} index index of the selected option within te option list
      */
     select(index) {
@@ -74,29 +141,32 @@ export default {
          *
          * @property {Number} index index of the selected option within te option list
          */
-        this.$emit("input", index);
+        this.$emit('update:modelValue', index);
+        this.$emit('input', index);
         this.hide();
       }
     },
     /**
      * Hides the input's option list
-     * 
-       * @param {Object} e click event
+     *
+     * @param {Object} e click event
      */
     hide(e) {
-      let el = this.$refs.options.$el;
-      let childClicked = e ? el.contains(e.relatedTarget) || el.contains(e.explicitOriginalTarget) : false;
+      const el = this.$refs.options.$el;
+      const childClicked = e
+        ? el.contains(e.relatedTarget) || el.contains(e.explicitOriginalTarget)
+        : false;
       if (!this.disabled && !childClicked) {
         this.displayed = false;
       }
     },
     /**
      * Displays the input's option list
-     * 
-       */
+     *
+     */
     show() {
       if (!this.disabled) {
-        let body = document.body;
+        const { body } = document;
         this.displayed = !this.displayed;
         if (this.displayed) {
           body.appendChild(this.$refs.options.$el);
@@ -108,19 +178,19 @@ export default {
     },
     /**
      * Computes the option list styling.
-     * 
-       */
+     *
+     */
     computeOptionListStyle() {
-      let selectBoxEl = this.$refs.select_box;
-      let optionListEl = this.$refs.options.$el;
+      const selectBoxEl = this.$refs.select_box;
+      const optionListEl = this.$refs.options.$el;
       if (selectBoxEl && optionListEl) {
-        let box = selectBoxEl.getBoundingClientRect();
+        const box = selectBoxEl.getBoundingClientRect();
         this.optionListStyle = {
           width: `${selectBoxEl.clientWidth}px`,
           top: `${box.top - Math.min(this.options.length * 25, 100)}px`,
           left: `${box.left}px`,
-          height: this.options.length * 25 + "px",
-          maxHeight: "100px",
+          height: `${this.options.length * 25}px`,
+          maxHeight: '100px',
         };
       }
     },

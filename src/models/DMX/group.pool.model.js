@@ -1,6 +1,4 @@
-'use strict'
-
-import Group from './group.model'
+import Group from './group.model';
 
 /**
  * @class GroupPool
@@ -9,7 +7,6 @@ import Group from './group.model'
  * @see Group
  */
 class GroupPool {
-
   /**
    * Creates an instance of GroupPool.
    */
@@ -25,12 +22,10 @@ class GroupPool {
    * @type {Array}
    */
   get listable() {
-    return this.groups.map(group => {
-      return {
-        name: group.name,
-        unfold: group.cuePool.listable
-      }
-    })
+    return this.groups.map((group) => ({
+      name: group.name,
+      unfold: group.cuePool.listable,
+    }));
   }
 
   /**
@@ -38,18 +33,14 @@ class GroupPool {
    *
    * @public
    * @param {Number} id
-   * @return {Object} Group instance 
+   * @return {Object} Group instance
    */
   getFromId(id) {
-    let group = this.groups.find(group => group.id == id);
+    const group = this.groups.find((item) => item.id === Number(id));
     if (group) {
       return group;
-    } else {
-      throw {
-        errcode: -10,
-        msg: "Cannot find group in pool"
-      }
     }
+    throw new Error('Cannot find group in pool');
   }
 
   /**
@@ -67,11 +58,11 @@ class GroupPool {
    *
    * @public
    * @param {Object} groupData group configuration object
-   * @return {Object} Group instance 
+   * @return {Object} Group instance
    * @see Chase
    */
   addRaw(groupData) {
-    let group = new Group(groupData)
+    const group = new Group(groupData);
     if (!group.id) {
       group.id = this.genGroupId();
     }
@@ -86,7 +77,7 @@ class GroupPool {
    * @param {Object} group group instance handle
    */
   delete(group) {
-    let groupIndex = this.groups.findIndex(item => item.id === group.id);
+    const groupIndex = this.groups.findIndex((item) => item.id === group.id);
     if (groupIndex > -1) {
       group.chasePool.clearAll();
       group.cuePool.clearAll();
@@ -94,10 +85,7 @@ class GroupPool {
       this.groups.splice(groupIndex, 1);
       Group.deleteInstance(group);
     } else {
-      throw {
-        errcode: -12,
-        msg: "Could not find group in group pool"
-      }
+      throw new Error('Could not find group in group pool');
     }
   }
 
@@ -108,7 +96,7 @@ class GroupPool {
    */
   clearAll() {
     for (let i = this.groups.length - 1; i >= 0; i--) {
-      this.delete(this.groups[i])
+      this.delete(this.groups[i]);
     }
   }
 
@@ -119,13 +107,15 @@ class GroupPool {
    * @returns {Number} The group's unique ID
    */
   genGroupId() {
-    let id = this.groups.length ? this.groups[this.groups.length - 1].id + 1 : 0;
-    while (this.groups.find(group => group.id === id)) {
-      id++;
-    }
-    return id;
+    return this.groups.reduce(
+      (prev, current) => (
+        (prev && prev.id > current.id)
+          ? prev.id
+          : current.id
+      ),
+      -1,
+    ) + 1;
   }
-
 }
 
 export default GroupPool;

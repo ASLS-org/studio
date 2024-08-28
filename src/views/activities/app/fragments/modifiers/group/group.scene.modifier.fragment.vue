@@ -1,50 +1,59 @@
 <template>
   <uk-flex>
     <widget-curve :fade="scene ? scene.fadeIn : undefined" />
-    <!-- 
+    <!--
       TODO: Check if fadeout is necessary in this mode.
       It seem like t could only be confusing ? Would
-      having a custom blackout or reset position scene with fade 
+      having a custom blackout or reset position scene with fade
       make more sense ?
     -->
     <!-- <widget-curve :fade="scene ? scene.fadeOut : undefined" /> -->
-    <widget-scene-fixtures v-show="fixtureValue" :preventUnfocus="unfocusPreventable" @select="selectFixtures" :scene="scene ? scene : undefined" />
+    <widget-scene-fixtures
+      v-show="fixtureValue"
+      :prevent-unfocus="unfocusPreventable"
+      :scene="scene ? scene : undefined"
+      @select="selectFixtures"
+    />
     <widget-fixture-channels
       v-show="fixtureValue"
+      ref="channels"
       tabindex="0"
       :channels="channelValues"
-      ref="channels"
       toggleable
       class="modifier_widget"
       @input="updateFixtureChannels"
     />
     <widget-color-picker
-      tabindex="0"
-      ref="colorPicker"
       v-show="colorPickerState && fixtureValue"
+      ref="colorPicker"
+      tabindex="0"
+      :rgb-data="fixtureValue ? fixtureValue.color : undefined"
       @input="updateFixtureColor"
-      :rgbData="fixtureValue ? fixtureValue.color : undefined"
     />
     <widget-pan-tilt
-      tabindex="0"
-      ref="panTiltPicker"
       v-show="panTiltPickerState && fixtureValue"
+      ref="panTiltPicker"
+      tabindex="0"
+      :pan-tilt="fixtureValue ? fixtureValue.panTilt : undefined"
       @input="updateFixturePanTilt"
-      :panTilt="fixtureValue ? fixtureValue.panTilt : undefined"
     />
   </uk-flex>
 </template>
 
 <script>
-import WidgetCurve from "../_widgets/modifier.widget.curve.vue";
-import WidgetColorPicker from "../_widgets/modifier.widget.colorpicker.vue";
-import WidgetPanTilt from "../_widgets/modifier.widget.pantilt.vue";
-import WidgetFixtureChannels from "../_widgets/modifier.widget.fixture.channels.vue"
+import WidgetCurve from '../_widgets/modifier.widget.curve.vue';
+import WidgetColorPicker from '../_widgets/modifier.widget.colorpicker.vue';
+import WidgetPanTilt from '../_widgets/modifier.widget.pantilt.vue';
+import WidgetFixtureChannels from '../_widgets/modifier.widget.fixture.channels.vue';
 
-import WidgetSceneFixtures from "./_widgets/group.scene.modifier.widget.fixtures.vue";
+import WidgetSceneFixtures from './_widgets/group.scene.modifier.widget.fixtures.vue';
 
 export default {
-  name: "groupSceneModifierFragment",
+  name: 'GroupSceneModifierFragment',
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   components: {
     WidgetCurve,
     WidgetFixtureChannels,
@@ -68,7 +77,8 @@ export default {
        */
       selectedFixtureValues: [],
       /**
-       * List of unfocus preventable HTML elements to be forwarded to the scene fixture list components
+       * List of unfocus preventable HTML elements to be forwarded
+       * to the scene fixture list components
        */
       unfocusPreventable: [],
       /**
@@ -92,30 +102,41 @@ export default {
      */
     channelValues() {
       return this.selectedFixtureValues
-        .map((fixtureValue) => {
-          return fixtureValue.channelValues.map((channelValue) => {
-            return channelValue;
-          });
-        })
+        .map((fixtureValue) => fixtureValue.channelValues.map((channelValue) => channelValue))
         .flat()
         .filter((v, i, a) => a.findIndex((v2) => v2.type === v.type && v2.color === v.color) === i);
     },
   },
+  watch: {
+    scene() {
+      this.initSceneValues();
+    },
+  },
+  mounted() {
+    this.$nextTick(() => {
+      this.initSceneValues();
+    });
+  },
   methods: {
     /**
      * Initialize component's data
-     * 
-       * @public
+     * @todo that's not readable
+     *
+     * @public
      */
     initSceneValues() {
       this.selectedFixtureValues = [];
       if (this.scene && this.scene.fixtureValues && this.scene.fixtureValues.length) {
         this.selectedFixtureValues.push(this.scene.fixtureValues[0]);
         this.fixtureValue = this.selectedFixtureValues[this.selectedFixtureValues.length - 1];
-        this.colorPickerState = this.selectedFixtureValues.some((f) => f.fixture.hasColor);
-        this.panTiltPickerState = this.selectedFixtureValues.some((f) => f.fixture.hasPan || f.fixture.hasTilt);
-        let visualizerEl = document.getElementById("visualizer");
-        if(visualizerEl){
+        this.colorPickerState = this.selectedFixtureValues.some(
+          (f) => f.fixture.hasColor,
+        );
+        this.panTiltPickerState = this.selectedFixtureValues.some(
+          (f) => f.fixture.hasPan || f.fixture.hasTilt,
+        );
+        const visualizerEl = document.getElementById('visualizer');
+        if (visualizerEl) {
           this.unfocusPreventable.push(visualizerEl);
         }
         if (this.$refs.channels) {
@@ -131,16 +152,21 @@ export default {
     },
     /**
      * Selects one or multiple fixtures
-     * 
-       * @public
-     * @param {Array} fixtureValues list of scene fixtures ro be selected 
+     * @todo that's not readable
+     *
+     * @public
+     * @param {Array} fixtureValues list of scene fixtures ro be selected
      */
     selectFixtures(fixtureValues) {
       if (fixtureValues && fixtureValues.length) {
         this.selectedFixtureValues = fixtureValues;
         this.fixtureValue = this.selectedFixtureValues[this.selectedFixtureValues.length - 1];
-        this.colorPickerState = this.selectedFixtureValues.some((f) => f.fixture.hasColor);
-        this.panTiltPickerState = this.selectedFixtureValues.some((f) => f.fixture.hasPan || f.fixture.hasTilt);
+        this.colorPickerState = this.selectedFixtureValues.some(
+          (f) => f.fixture.hasColor,
+        );
+        this.panTiltPickerState = this.selectedFixtureValues.some(
+          (f) => f.fixture.hasPan || f.fixture.hasTilt,
+        );
       } else {
         this.selectedFixtureValues = [];
         this.fixtureValue = null;
@@ -150,8 +176,8 @@ export default {
     },
     /**
      * Updates every selected fixture's channel with a new value
-     * 
-       * @public
+     *
+     * @public
      * @param {Object} channel channel object
      */
     updateFixtureChannels(channel) {
@@ -161,8 +187,8 @@ export default {
     },
     /**
      * Updates every selected fixture's color intensity channels
-     * 
-       * @public
+     *
+     * @public
      * @param {Array} rgbValue an array containing [R,G,B] values
      */
     updateFixtureColor(rgbValue) {
@@ -172,8 +198,8 @@ export default {
     },
     /**
      * Updates every selected fixture's pan(fine)/tilt(fine) channels
-     * 
-       * @public
+     *
+     * @public
      * @param {Object} panTilt a panTilt object containing pan(fine)/tilt(fine) values
      * @param {Number} panTilt.pan the fixtures' new pan value
      * @param {Number} panTilt.panFine the fixtures' new pan fine value
@@ -184,16 +210,6 @@ export default {
       this.selectedFixtureValues.forEach((fixtureValue) => {
         fixtureValue.panTilt = panTilt;
       });
-    },
-  },
-  mounted() {
-    this.$nextTick(() => {
-      this.initSceneValues();
-    });
-  },
-  watch: {
-    scene() {
-      this.initSceneValues();
     },
   },
 };

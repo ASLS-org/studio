@@ -1,44 +1,90 @@
 <template>
   <div class="group_pool">
-    <uk-flex center-h class="group_pool_header">
+    <uk-flex
+      center-h
+      class="group_pool_header"
+    >
       <h3>Group Pool</h3>
       <uk-spacer />
-      <uk-button @click.native="displayGroupPopup" icon="new" style="margin-right: 8px" label="new" />
+      <uk-button
+        icon="new"
+        style="margin-right: 8px"
+        label="new"
+        @click="displayGroupPopup"
+      />
     </uk-flex>
-    <uk-flex class="group_pool_body" resizable>
-      <div tabindex="0" @focus="handleFocus(true)" @focusout="handleFocus(false)" :class="{ expand }" class="group_pool_groups">
+    <uk-flex
+      class="group_pool_body"
+      resizable
+    >
+      <div
+        tabindex="0"
+        :class="{ expand }"
+        class="group_pool_groups"
+        @focus="handleFocus(true)"
+        @focusout="handleFocus(false)"
+      >
         <uk-cue-container
-          @poolsize="updatePoolSize"
-          @scrolled="updateScroll"
+          v-for="(group, index) in groups"
+          :key="index"
           :scroll-to="scrollValue"
           :poolsize="poolsize"
-          :selected="selIndex === index"
-          @click.native="select(index)"
-          v-for="(group, index) in groups"
           :group="group"
-          :key="index"
+          :selected="
+            Number($route.params?.groupId) === group.id
+              && $route.params?.chaseId === undefined
+          "
+          :selected-chase-id="
+            Number($route.params?.groupId) === group.id
+              ? Number($route.params?.chaseId)
+              : null
+          "
+          @poolsize="updatePoolSize"
+          @scrolled="updateScroll"
+          @click="select(group)"
+          @select-chase="selectChase"
         />
       </div>
       <uk-spacer />
-      <uk-cue-container @scrolled="updateScroll" class="group_pool_master" :scroll-to="scrollValue" :poolsize="poolsize" master />
+      <uk-cue-container
+        class="group_pool_master"
+        :scroll-to="scrollValue"
+        :poolsize="poolsize"
+        master
+        @scrolled="updateScroll"
+      />
     </uk-flex>
     <group-popup v-model="groupPopupDisplayState" />
-    <uk-popup :header="{ title: 'Delete Group' }" @submit="deleteGroup" v-model="deletePopupDsiplayState">
-      <uk-flex col style="max-width: 350px">
-        <p style="padding: 16px">The group will be permanently removed from your project. Do you wish to continue ?</p>
+    <uk-popup
+      v-model="deletePopupDsiplayState"
+      :header="{ title: 'Delete Group' }"
+      @submit="deleteGroup"
+    >
+      <uk-flex
+        col
+        style="max-width: 350px"
+      >
+        <p style="padding: 16px">
+          The group will be permanently removed from your project. Do you wish to continue ?
+        </p>
       </uk-flex>
     </uk-popup>
   </div>
 </template>
 
 <script>
-import GroupPopup from "./_popups/popup.group.vue";
-//Dirty trick but it should do for now.
-import EventBus from "@/plugins/eventbus";
+import EventBus from '@/plugins/eventbus';
+import GroupPopup from './_popups/popup.group.vue';
+// Dirty trick but it should do for now.
+
 const DEFAULT_POOL_SIZE = 10;
 
 export default {
-  name: "groupPoolFragment",
+  name: 'GroupPoolFragment',
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   components: {
     GroupPopup,
   },
@@ -80,19 +126,51 @@ export default {
        * Group pool container expansion styling states
        */
       expand: false,
+      /**
+       * Id of the currently selected group
+       */
+      // selectedGroup: {
+      //   type: Number,
+      //   default: null,
+      // },
+      selectedChase: null,
     };
+  },
+  watch: {
+    // '$route.params.groupId': function routeParamsGroupIdWatcher() {
+    //   this.selectedGroup = Number(this.$route.params.groupId);
+    // },
+    // '$route.params.chaseId': function routeParamsChaseIdWatcher() {
+    //   console.log(this.$route.params.chaseId);
+    //   if (!this.master) {
+    //     this.selectedChase = this.selected ? this.$route.params.chaseId : null;
+    //   }
+    // },
+  },
+  mounted() {
+    this.groups = this.$show.groupPool.groups;
+    // Dirty trick but it should do for now.
+    EventBus.on('visualizer_visibility', (visibility) => {
+      this.expand = !visibility;
+    });
+    EventBus.on('show_loaded', () => {
+      this.pool = this.$show.groupPool;
+    });
   },
   methods: {
     /**
      * Selects a group from the pool
      *
      * @public
-     * @param {Number} index index of the pool's group to be selected/displayed in the group modifier.
+     * @param {Number} index index of the pool's group to be selected in the group modifier.
      */
-    select(index) {
-      this.selIndex = index;
-      this.selectedGroup = this.pool.groups[index];
-      this.$router.push(`/group/${this.pool.groups[index].id}`).catch(() => {});
+    select(group) {
+      this.selectedGroup = group;
+      this.$router.push(`/group/${group.id}`).catch(() => {});
+    },
+    selectChase(group, chase) {
+      this.selectedChase = chase;
+      this.$router.push(`/group/${group.id}/chase/${chase.id}`).catch(console.log);
     },
     /**
      * Displays the group creation popup
@@ -111,12 +189,12 @@ export default {
       this.deletePopupDsiplayState = false;
       if (this.selectedGroup) {
         this.pool.delete(this.selectedGroup);
-        //Forcing pool update. It's a bit sparse but it works
+        // Forcing pool update. It's a bit sparse but it works
         this.groups = [];
         this.groups.splice();
         this.$nextTick(() => {
           this.groups = this.pool.groups;
-          this.select(0);
+          // this.select(0);
         });
       }
     },
@@ -126,7 +204,11 @@ export default {
      * @public
      */
     updatePoolSize() {
-      this.poolsize = Math.max(...this.pool.groups.map((group) => group.chasePool.chases.length + DEFAULT_POOL_SIZE), DEFAULT_POOL_SIZE);
+      // todo: Math.max on arrays got a bit of overhead, change to reduce
+      this.poolsize = Math.max(
+        ...this.pool.groups.map((group) => group.chasePool.chases.length + DEFAULT_POOL_SIZE),
+        DEFAULT_POOL_SIZE,
+      );
     },
     /**
      * Update scroll value in order to synchronise each group's chase pool scrolling position.
@@ -145,9 +227,9 @@ export default {
      * @param {Bool} state focus state
      */
     handleFocus(state) {
-      window.removeEventListener("keydown", this.keydownHandler);
+      window.removeEventListener('keydown', this.keydownHandler);
       if (state) {
-        window.addEventListener("keydown", this.keydownHandler);
+        window.addEventListener('keydown', this.keydownHandler);
       }
     },
     /**
@@ -157,23 +239,12 @@ export default {
      * @param {Object} e keydown event
      */
     keydownHandler(e) {
-      const key = e.key;
-      if (key === "Backspace" || key === "Delete") {
+      const { key } = e;
+      if (key === 'Backspace' || key === 'Delete') {
         if (this.selectedGroup && this.$route.params.chaseId == null) {
           this.deletePopupDsiplayState = true;
         }
       }
-    },
-  },
-  mounted() {
-    //Dirty trick but it should do for now.
-    EventBus.$on("visualizer_visibility", (visibility) => {
-      this.expand = !visibility;
-    });
-  },
-  watch: {
-    groups() {
-      this.updatePoolSize();
     },
   },
 };
@@ -197,7 +268,13 @@ export default {
 }
 .group_pool_body {
   height: calc(100% - 40px);
-  background: var(--primary-dark-alt) repeating-linear-gradient(45deg, #1619130a, #1619130a 10px, #0c0e0a38 10px, #0c0e0a38 20px);
+  background: var(--primary-dark-alt) repeating-linear-gradient(
+    45deg,
+    #1619130a,
+    #1619130a 10px,
+    #0c0e0a38 10px,
+    #0c0e0a38 20px
+  );
 }
 .group_pool_groups {
   display: flex;
@@ -210,7 +287,6 @@ export default {
 }
 .group_pool_master {
   width: 0px;
-  padding-bottom: 5px;
   margin-left: -1px;
 }
 </style>

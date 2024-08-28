@@ -1,145 +1,225 @@
 <template>
-  <uk-popup :valid="fixture.loaded && !patchError && !loading" @submit="patchFixtures" @input="update()" v-model="state" :header="headerData">
+  <uk-popup
+    v-model="state"
+    :valid="fixture.loaded && !patchError && !loading"
+    :header="headerData"
+    @submit="patchFixtures"
+    @input="update()"
+  >
     <uk-flex class="patch_popup">
-      <uk-list class="fixture_list" @select="loadFixture" :items="fixtures" filterable />
-      <uk-flex col class="patch_form">
+      <uk-list
+        class="fixture_list"
+        :items="fixtures"
+        filterable
+        @select="loadFixture"
+      />
+      <uk-flex
+        col
+        class="patch_form"
+      >
         <div style="padding: 10px">
-          <uk-flex :gap="8" class="patch_form_section">
-            <uk-txt-input :disabled="!fixture.loaded || loading" style="flex: 1" label="Name" v-model="fixture.name" />
-            <uk-num-input disabled class="field" label="Universe" v-model="fixture.universe" @input="autoPatch" />
+          <uk-flex
+            :gap="8"
+            class="patch_form_section"
+          >
+            <uk-txt-input
+              v-model="fixture.name"
+              :disabled="!fixture.loaded || loading"
+              style="flex: 1"
+              label="Name"
+            />
+            <uk-num-input
+              v-model="fixture.universe"
+              disabled
+              class="field"
+              label="Universe"
+              @input="autoPatch"
+            />
           </uk-flex>
-          <uk-flex :gap="8" class="patch_form_section">
+          <uk-flex
+            :gap="8"
+            class="patch_form_section"
+          >
             <uk-select-input
+              v-model="fixture.mode"
               :disabled="!fixture.loaded || loading"
               style="flex: 1"
               label="Fixture mode"
               :options="fixture.modeNames"
-              v-model="fixture.mode"
             />
             <uk-num-input
+              v-model="chStart"
               :disabled="!fixture.loaded || loading"
               class="field"
               label="Address"
               :min="0"
               :max="512"
-              v-model="chStart"
               @input="checkPatch"
             />
             <uk-num-input
+              v-model="amount"
               :disabled="!fixture.loaded || loading"
               class="field"
               label="Amount"
-              v-model="amount"
               :min="1"
               :max="512"
               @input="autoPatch"
             />
-            <uk-num-input disabled class="field" label="Stop" v-model="chStop" />
+            <uk-num-input
+              v-model="chStop"
+              disabled
+              class="field"
+              label="Stop"
+            />
           </uk-flex>
-          <uk-flex :gap="8" class="patch_form_section">
+          <uk-flex
+            :gap="8"
+            class="patch_form_section"
+          >
             <uk-txt-input
+              v-model="fixture.category"
               readonly
               :disabled="!fixture.loaded || loading"
               class="field"
               style="flex: 1"
               label="Fixture type"
-              v-model="fixture.category"
             />
           </uk-flex>
-          <uk-flex :gap="8" class="patch_form_section">
+          <uk-flex
+            :gap="8"
+            class="patch_form_section"
+          >
             <div style="margin-right: 16px">
-              <uk-flex :gap="8" class="patch_form_subsection">
+              <uk-flex
+                :gap="8"
+                class="patch_form_subsection"
+              >
                 <uk-num-input
+                  v-model="fixture.position.x"
                   label="Pos X"
                   :min="-1000"
                   :max="1000"
                   :disabled="!fixture.loaded || loading"
                   class="field"
-                  v-model="fixture.position.x"
                 />
                 <uk-num-input
+                  v-model="fixture.position.y"
                   label="Pos Y"
                   :min="-1000"
                   :max="1000"
                   :disabled="!fixture.loaded || loading"
                   class="field"
-                  v-model="fixture.position.y"
                 />
                 <uk-num-input
+                  v-model="fixture.position.z"
                   label="Pos Z"
                   :min="-1000"
                   :max="1000"
                   :disabled="!fixture.loaded || loading"
                   class="field"
-                  v-model="fixture.position.z"
                 />
               </uk-flex>
             </div>
             <div>
-              <uk-flex :gap="8" class="patch_form_subsection">
+              <uk-flex
+                :gap="8"
+                class="patch_form_subsection"
+              >
                 <uk-num-input
+                  v-model="positionOffsets.x"
                   label="Offset X"
                   :min="-1000"
                   :max="1000"
                   :disabled="!fixture.loaded || loading || amount <= 1"
                   class="field"
-                  v-model="positionOffsets.x"
                 />
                 <uk-num-input
+                  v-model="positionOffsets.y"
                   label="Offset Y"
                   :min="-1000"
                   :max="1000"
                   :disabled="!fixture.loaded || loading || amount <= 1"
                   class="field"
-                  v-model="positionOffsets.y"
                 />
                 <uk-num-input
+                  v-model="positionOffsets.z"
                   label="Offset Z"
                   :min="-1000"
                   :max="1000"
                   :disabled="!fixture.loaded || loading || amount <= 1"
                   class="field"
-                  v-model="positionOffsets.z"
                 />
               </uk-flex>
             </div>
           </uk-flex>
-          <uk-flex :gap="8" class="patch_form_section">
+          <uk-flex
+            :gap="8"
+            class="patch_form_section"
+          >
             <div style="margin-right: 16px">
-              <uk-flex :gap="8" class="patch_form_subsection">
-                <uk-num-input label="°Rot X" :max="360" :disabled="!fixture.loaded || loading" class="field" v-model="fixture.rotation.x" />
-                <uk-num-input label="°Rot Y" :max="360" :disabled="!fixture.loaded || loading" class="field" v-model="fixture.rotation.y" />
-                <uk-num-input label="°Rot Z" :max="360" :disabled="!fixture.loaded || loading" class="field" v-model="fixture.rotation.z" />
+              <uk-flex
+                :gap="8"
+                class="patch_form_subsection"
+              >
+                <uk-num-input
+                  v-model="fixture.rotation.x"
+                  label="°Rot X"
+                  :max="360"
+                  :disabled="!fixture.loaded || loading"
+                  class="field"
+                />
+                <uk-num-input
+                  v-model="fixture.rotation.y"
+                  label="°Rot Y"
+                  :max="360"
+                  :disabled="!fixture.loaded || loading"
+                  class="field"
+                />
+                <uk-num-input
+                  v-model="fixture.rotation.z"
+                  label="°Rot Z"
+                  :max="360"
+                  :disabled="!fixture.loaded || loading"
+                  class="field"
+                />
               </uk-flex>
             </div>
             <div>
-              <uk-flex :gap="8" class="patch_form_subsection">
+              <uk-flex
+                :gap="8"
+                class="patch_form_subsection"
+              >
                 <uk-num-input
+                  v-model="rotationOffsets.x"
                   label="°Offset X"
                   :max="360"
                   :disabled="!fixture.loaded || loading || amount <= 1"
                   class="field"
-                  v-model="rotationOffsets.x"
                 />
                 <uk-num-input
+                  v-model="rotationOffsets.y"
                   label="°Offset Y"
                   :max="360"
                   :disabled="!fixture.loaded || loading || amount <= 1"
                   class="field"
-                  v-model="rotationOffsets.y"
                 />
                 <uk-num-input
+                  v-model="rotationOffsets.z"
                   label="°Offset Z"
                   :max="360"
                   :disabled="!fixture.loaded || loading || amount <= 1"
                   class="field"
-                  v-model="rotationOffsets.z"
                 />
               </uk-flex>
             </div>
           </uk-flex>
           <uk-spacer />
-          <p class="patch_error" v-show="patchError">Patch error: The provided fixture settings are out of universe's range</p>
+          <p
+            v-show="patchError"
+            class="patch_error"
+          >
+            Patch error: The provided fixture settings are out of universe's range
+          </p>
         </div>
         <uk-spacer />
       </uk-flex>
@@ -148,9 +228,9 @@
 </template>
 
 <script>
-import PopupMixin from "@/views/mixins/popup.mixin.js";
+import PopupMixin from '@/views/mixins/popup.mixin';
 
-const NO_FIXTURE_STR = "No fixture model selected";
+const NO_FIXTURE_STR = 'No fixture model selected';
 const DEFAULT_FIXTURE_AMOUNT = 1;
 const DEFAULT_FIXTURE_DATA = {
   name: NO_FIXTURE_STR,
@@ -166,14 +246,21 @@ const DEFAULT_FIXTURE_DATA = {
 };
 
 export default {
-  name: "ukPopupPatch",
+  name: 'UkPopupPatch',
   mixins: [PopupMixin],
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   props: {
-    universe: Object,
+    universe: {
+      type: Object,
+      default: null,
+    },
   },
   data() {
     return {
-      headerData: { title: "Patch fixture" },
+      headerData: { title: 'Patch fixture' },
       fixtures: [],
       fixture: JSON.parse(JSON.stringify(DEFAULT_FIXTURE_DATA)),
       amount: DEFAULT_FIXTURE_AMOUNT,
@@ -185,10 +272,28 @@ export default {
       loading: false,
     };
   },
+  computed: {
+    count() {
+      if (this.fixture.modes[this.fixture.mode]) {
+        return this.fixture.modes[this.fixture.mode].length - 1;
+      }
+      return 0;
+    },
+  },
+  watch: {
+    state(state) {
+      if (state) {
+        this.init();
+      }
+    },
+  },
+  mounted() {
+    this.init();
+  },
   methods: {
     /**
      * Initialise popup variables
-     * 
+     *
      * @public
      */
     init() {
@@ -198,23 +303,23 @@ export default {
       this.positionOffsets = { x: 0, y: 0, z: 0 };
       this.rotationOffsets = { x: 0, y: 0, z: 0 };
       this.chStop = 0;
-      this.state = this.value;
       this.patchError = false;
     },
     /**
      * Patch selected fixture using provided form parameters.
-     * 
+     *
      * @public
      */
+    // eslint-disable-next-line consistent-return
     patchFixtures() {
       if (this.fixture.loaded && !this.patchError) {
         this.loading = true;
-        let fixtures = [];
+        const fixtures = [];
         if (this.checkPatch()) {
           try {
-            let position_tmp = {};
-            let rotation_tmp = {};
-            let chCount = this.fixture.modes[this.fixture.mode].channels.length;
+            const position_tmp = {};
+            const rotation_tmp = {};
+            const chCount = this.fixture.modes[this.fixture.mode].channels.length;
             Object.assign(position_tmp, this.fixture.position);
             Object.assign(rotation_tmp, this.fixture.rotation);
             for (let i = 0; i < this.amount; i++) {
@@ -229,7 +334,11 @@ export default {
                 y: rotation_tmp.y + this.rotationOffsets.y * i,
                 z: rotation_tmp.z + this.rotationOffsets.z * i,
               };
-              let fixture = this.$show.fixturePool.addRaw(JSON.parse(JSON.stringify(this.fixture)));
+              const fixture = this.$show.fixturePool.addRaw(
+                JSON.parse(
+                  JSON.stringify(this.fixture),
+                ),
+              );
               this.universe.patchFixture(fixture);
             }
             this.loading = false;
@@ -241,20 +350,20 @@ export default {
           }
         } else {
           this.loading = false;
-          throw new Error("Out of universe bounds");
+          throw new Error('Out of universe bounds');
         }
       }
     },
     /**
      * Loads selected fixture configuration file
-     * 
+     *
      * @public
      * @async
      */
     async loadFixture(item) {
-      let manufacturer = item.manufacturer;
-      let fixture = item.fixture;
-      let res = await this.$http.get(`/fixtures/${manufacturer.name}/${fixture}`);
+      const { manufacturer } = item;
+      const { fixture } = item;
+      const res = await this.$http.get(`/fixtures/${manufacturer.name}/${fixture}`);
       Object.assign(this.fixture, {
         OFLData: res.data,
         modes: res.data.modes,
@@ -270,28 +379,27 @@ export default {
     },
     /**
      * Checks that provided patch configuration is valid
-     * 
+     *
      * @public
      */
     checkPatch() {
-      let chCount = this.fixture.modes[this.fixture.mode].channels.length;
+      const chCount = this.fixture.modes[this.fixture.mode].channels.length;
       if (this.universe.canPatchMany(this.chStart, chCount, this.amount)) {
         this.patchError = false;
         this.chStop = chCount * this.amount + this.chStart;
         return true;
-      } else {
-        this.patchError = true;
-        return false;
       }
+      this.patchError = true;
+      return false;
     },
     /**
      * Automatically patches fixture within available universe address space.
-     * 
+     *
      * @public
      */
     autoPatch() {
-      let chCount = this.fixture.modes[this.fixture.mode].channels.length;
-      let chStart = this.universe.findChStartAutoPatch(chCount, this.amount);
+      const chCount = this.fixture.modes[this.fixture.mode].channels.length;
+      const chStart = this.universe.findChStartAutoPatch(chCount, this.amount);
       this.chStop = chCount * this.amount + chStart;
       if (chStart > -1) {
         this.patchError = false;
@@ -302,44 +410,21 @@ export default {
     },
     /**
      * Prepare fixture list
-     * 
+     *
      * @todo this shouldn't be called in a watcher. it might (and does) waste event loop time.
      * @public
      */
     prepareFixtures() {
-      return this.$show.rawOFLFixtures.map((manufacturer) => {
-        return {
-          name: manufacturer.name,
-          icon: "folder",
-          unfold: manufacturer.fixtures.map((fixture) => {
-            return {
-              name: fixture,
-              icon: "wave",
-              manufacturer: manufacturer,
-              fixture: fixture,
-            };
-          }),
-        };
-      });
-    },
-  },
-  computed: {
-    count() {
-      if (this.fixture.modes[this.fixture.mode]) {
-        return this.fixture.modes[this.fixture.mode].length - 1;
-      } else {
-        return 0;
-      }
-    },
-  },
-  mounted() {
-    this.init();
-  },
-  watch: {
-    state(state) {
-      if (state) {
-        this.init();
-      }
+      return this.$show.rawOFLFixtures.map((manufacturer) => ({
+        name: manufacturer.name,
+        icon: 'folder',
+        unfold: manufacturer.fixtures.map((fixture) => ({
+          name: fixture,
+          icon: 'wave',
+          manufacturer,
+          fixture,
+        })),
+      }));
     },
   },
 };

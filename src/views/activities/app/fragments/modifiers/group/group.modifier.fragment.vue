@@ -1,34 +1,65 @@
 <template>
-  <div class="group_modifier" v-show="group">
-    <group-settings-widget v-if="group" v-model="group" />
+  <div
+    v-show="group"
+    class="group_modifier"
+  >
+    <group-settings-widget :group="group" />
     <fixture-pool-widget
       v-show="group"
-      @delete="deleteFixtures"
       :pool="group ? group.fixturePool : {}"
       :action="{ icon: 'new', text: 'add', callback: displayFixturePopup }"
+      @delete="deleteFixtures"
     />
-    <widget-cuepool v-show="group" @select="selectCue" :group="group" />
-    <cue-settings-widget v-show="cue" v-model="cue" />
-    <scene-modifier :scene="cue" v-show="cue && cue.type === 0" />
-    <effect-modifier v-model="cue" v-if="cue && cue.type === 1" />
-    <popup-group-patch v-show="group" :group="group" v-model="fixturePopupDisplayState" />
+    <widget-cuepool
+      v-show="group"
+      :group="group"
+      @select="selectCue"
+    />
+    <cue-settings-widget
+      v-show="cue"
+      :cue="cue"
+    />
+    <keep-alive>
+      <scene-modifier
+        v-show="cue && cue.type === 0"
+        :scene="cue"
+      />
+    </keep-alive>
+    <keep-alive>
+      <effect-modifier
+        v-show="cue && cue.type === 1"
+        :effect="cue"
+      />
+    </keep-alive>
+    <popup-group-patch
+      v-show="group"
+      v-model="fixturePopupDisplayState"
+      :group="group"
+    />
   </div>
 </template>
 
 <script>
-import colorMixin from "@/views/mixins/color.mixin";
-import FixturePoolWidget from "../_widgets/modifier.widget.fixture.pool.vue";
+import colorMixin from '@/views/mixins/color.mixin';
+import Group from '@/models/DMX/group.model';
+import Cue from '@/models/DMX/cue.model';
+import Fixture from '@/models/DMX/fixture.model';
+import FixturePoolWidget from '../_widgets/modifier.widget.fixture.pool.vue';
 
-import SceneModifier from "./group.scene.modifier.fragment.vue";
-import EffectModifier from "./group.effect.modifier.fragment.vue";
+import SceneModifier from './group.scene.modifier.fragment.vue';
+import EffectModifier from './group.effect.modifier.fragment.vue';
 
-import PopupGroupPatch from "./_popups/group.modifier.popup.patch.vue";
-import GroupSettingsWidget from "./_widgets/group.modifier.widget.settings.vue";
-import CueSettingsWidget from "./_widgets/group.modifier.widget.cue.settings.vue";
-import WidgetCuepool from "./_widgets/group.modifier.widget.cuepool.vue";
+import PopupGroupPatch from './_popups/group.modifier.popup.patch.vue';
+import GroupSettingsWidget from './_widgets/group.modifier.widget.settings.vue';
+import CueSettingsWidget from './_widgets/group.modifier.widget.cue.settings.vue';
+import WidgetCuepool from './_widgets/group.modifier.widget.cuepool.vue';
 
 export default {
-  name: "groupModifierFragment",
+  name: 'GroupModifierFragment',
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   components: {
     PopupGroupPatch,
     GroupSettingsWidget,
@@ -44,7 +75,7 @@ export default {
       /**
        * Handle to the group instance to be displayed
        */
-      group: this.$show.groupPool.getFromId(this.$route.params.groupId),
+      group: new Group(), // this.$show.groupPool.getFromId(this.$route.params.groupId),
       /**
        * Handle to currently selected fixture instance
        */
@@ -59,31 +90,41 @@ export default {
       fixturePopupDisplayState: false,
     };
   },
+  watch: {
+    // TODO: feed method straight into watcher (idealy get read of watchers as much as possible)
+    '$route.params.groupId': function routeParamsGroupIdWatcher(id) {
+      if (id !== undefined) {
+        this.fetchGroupData(id);
+      }
+    },
+  },
   methods: {
     /**
      * Fetches group data from route's groupId param
-     * 
+     *
        * @public
      */
-    fetchGroupData() {
-      try {
-        this.group = this.$show.groupPool.getFromId(this.$route.params.groupId);
-        this.fixture = null;
-        this.fixturePopupDisplayState = false;
-        if (this.group.cuePool.cues.length) {
-          this.selectCue(this.group.cuePool.cues[0], false);
-        } else {
-          this.cue = null;
+    fetchGroupData(id) {
+      if (id !== undefined) {
+        try {
+          this.group = this.$show.groupPool.getFromId(id);
+          this.fixture = null;
+          this.fixturePopupDisplayState = false;
+          if (this.group.cuePool.cues.length) {
+            this.selectCue(this.group.cuePool.cues[0], false);
+          } else {
+            this.cue = null;
+          }
+        } catch (err) {
+          this.group = new Group();
+          this.fixture = new Fixture({ isStub: true });
+          this.cue = new Cue({ isStub: true });
         }
-      } catch (err) {
-        this.group = null;
-        this.fixture = null;
-        this.cue = null;
       }
     },
     /**
      * Deletes one or multiple fixtures from the group's fixture list
-     * 
+     *
        * @public
      * @param {Array} fixtures array of group fixture objects
      */
@@ -94,14 +135,15 @@ export default {
     },
     /**
      * Selects a cue to be displayed within the group's cue sub-fragment
-     * 
+     *
        * @public
      * @param {Object} cuehandle to the group's cue instance to be displayed
      */
     selectCue(cue) {
       if (cue) {
         this.cue = cue;
-        if (this.$route.name === "Group") {
+        if (this.$route.name === 'Group') {
+          // eslint-disable-next-line no-restricted-globals
           history.pushState({}, null, `${this.$route.path}/cue/${encodeURIComponent(cue.id)}`);
         }
       } else {
@@ -109,8 +151,8 @@ export default {
       }
     },
     /**
-     * Prepares the list of available fixtures and displays group fixture patching popup. 
-     * 
+     * Prepares the list of available fixtures and displays group fixture patching popup.
+     *
        * @public
      */
     displayFixturePopup() {
@@ -123,14 +165,6 @@ export default {
         }
       });
       this.fixturePopupDisplayState = true;
-    },
-  },
-  mounted() {
-    this.fetchGroupData();
-  },
-  watch: {
-    "$route.params.groupId"() {
-      this.fetchGroupData();
     },
   },
 };
