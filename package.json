@@ -22,6 +22,7 @@
     "mitt": "^3.0.1",
     "node-polyfill-webpack-plugin": "^2.0.1",
     "raw-loader": "^4.0.2",
+    "stats.js": "^0.17.0",
     "three": "^0.156.1",
     "three-orbitcontrols": "^2.110.3",
     "vue": "^3.2.36",
