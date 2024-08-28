@@ -177,7 +177,7 @@ export default {
     /**
      * Updates every selected fixture's channel with a new value
      *
-       * @public
+     * @public
      * @param {Object} channel channel object
      */
     updateFixtureChannels(channel) {
@@ -188,7 +188,7 @@ export default {
     /**
      * Updates every selected fixture's color intensity channels
      *
-       * @public
+     * @public
      * @param {Array} rgbValue an array containing [R,G,B] values
      */
     updateFixtureColor(rgbValue) {
@@ -199,7 +199,7 @@ export default {
     /**
      * Updates every selected fixture's pan(fine)/tilt(fine) channels
      *
-       * @public
+     * @public
      * @param {Object} panTilt a panTilt object containing pan(fine)/tilt(fine) values
      * @param {Number} panTilt.pan the fixtures' new pan value
      * @param {Number} panTilt.panFine the fixtures' new pan fine value
