@@ -232,8 +232,7 @@ class Group {
    */
   cueChase(chase, state) {
     try {
-      this.stopAllChases();
-      chase.cue(state);
+      chase.cue(state, this.stopAllChases.bind(this, chase));
     } catch (err) {
       console.log(err);
     }
@@ -244,9 +243,9 @@ class Group {
    *
    * @public
    */
-  stopAllChases() {
+  stopAllChases(except = {}) {
     this.chasePool.chases.forEach((chase) => {
-      chase.cue(false);
+      if (except.id !== chase.id) chase.cue(false);
     });
   }
 

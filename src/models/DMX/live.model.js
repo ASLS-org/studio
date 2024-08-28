@@ -249,7 +249,7 @@ class Live {
    * @param {number} [quantize=0] Animation quantization
    * @return {Number} Animation ID
    */
-  add(updateFunction, quantize = 0, fps = 60) {
+  add(updateFunction, quantize = 0, fps = 60, quantizeReadyCallback = () => {}) {
     if (quantize) {
       const animationId = this.genAnimationId();
       const animation = new Animation(((t) => {
@@ -258,12 +258,14 @@ class Live {
           const animationIndex = this.animations.findIndex((item) => item.id === animationId);
           if (animationIndex > -1) {
             this.animations[animationIndex]._updateFunction = updateFunction;
+            quantizeReadyCallback();
           }
         }
       }), animationId);
       this.animations.push(animation);
       return animationId;
     }
+    quantizeReadyCallback();
     const animation = new Animation(updateFunction, this.genAnimationId(), fps);
     this.animations.push(animation);
     return animation.id;

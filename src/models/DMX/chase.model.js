@@ -220,12 +220,12 @@ class Chase extends Proxify {
    * @public
    * @param {Boolean} state chase's cueing state
    */
-  cue(state) {
+  cue(state, onReadyCallback = () => {}) {
     this.state = state;
     if (state) {
       this.elapsed = 0;
       this.deltaStart = null;
-      this.animationId = Live.add(this.update.bind(this), this.quantize);
+      this.animationId = Live.add(this.update.bind(this), this.quantize, 60, onReadyCallback);
     } else if (this.animationId != null) {
       this.elapsed = 0;
       this.cues.forEach((cueItemPool) => {
