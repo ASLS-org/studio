@@ -3,33 +3,13 @@
 import * as THREE from 'three';
 
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-// import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
-// import { OutlinePass } from 'three/examples/jsm/postprocessing/OutlinePass';
-// import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
-// import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
-// import { FXAAShader } from 'three/examples/jsm/shaders/FXAAShader';
-/* eslint-enable */
-// import setCapture from '@/views/utils/setcapture.utils';
-import { CubeCamera } from 'three';
+import Stats from 'stats.js';
 import ModelInstancer from './model_instancer';
 import SceneManager from './scene_manager';
 import AnimationManager from './animation_manager';
 import Controls from './controls';
 import MovingHead from './moving_head';
-// import './orbitcontrol.zup.patch'
 import InfiniteGridHelper from './grid';
-
-// Modules below are regarded to shader
-// let composer;
-// let outlinePass;
-// let renderPass;
-// let effectFXAA;
-// const raycaster = new THREE.Raycaster();
-// const selectedObjects = [];
-// const mouse = new THREE.Vector2();
-
-let cubeCamera;
-let cubeRenderTarget;
 
 /**
  * THREE.Vector3 round prototype override.
@@ -80,6 +60,9 @@ class Visualizer {
     this.finalComposer = null;
     this.globalBrightness = 100;
     this.globalLightHandle = null;
+    this.stats = new Stats();
+    this.stats.showPanel(0);
+    this.stats.dom.style.position = 'absolute';
   }
 
   /**
@@ -92,15 +75,12 @@ class Visualizer {
     await ModelInstancer.init('/visualizer/models/model_list.json');
     this.prepareRenderer();
     this.prepareCamera();
-    // this.resize();
-    // this.preparePostProcessing();
     this.prepareControls();
     this.resize();
     Controls.init(this.camera, this.domElement, this.controls);
     this.startRender();
     this.main();
     this.resize();
-    // this.renderer.domElement.addEventListener('mousemove', (e) => { this.onTouchMove(e); });
   }
 
   /**
@@ -195,6 +175,7 @@ class Visualizer {
    */
   startRender() {
     if (!this.animation) {
+      this.stats.dom.style.display = 'initial';
       this.animation = AnimationManager.add(this.render.bind(this));
     }
   }
@@ -244,17 +225,7 @@ class Visualizer {
 
     const axesHelper = new THREE.AxesHelper(2);
 
-    const checkerMaterial = new THREE.MeshStandardMaterial({
-      map: texture,
-      polygonOffset: true,
-      polygonOffsetUnits: 2,
-      polygonOffsetFactor: 1,
-      depthWrite: true,
-      depthTest: true,
-      roughness: 0.8,
-      fog: false,
-      side: THREE.DoubleSide,
-    });
+    const checkerMaterial = new THREE.MeshStandardMaterial({ map: texture });
 
     const sideMaterial = new THREE.MeshStandardMaterial();
 
@@ -285,42 +256,14 @@ class Visualizer {
       canvas: this.domElement,
       antialias: true,
     });
+
     this.renderer.autoClear = true;
     this.renderer.shadowMap.autoUpdate = false;
-    this.renderer.toneMapping = THREE.NoToneMapping;
     this.renderer.physicallyCorrectLights = true;
-    this.renderer.setPixelRatio(1); // Forcing pixel ration to 1 to avoid unnecessary computations
+    this.renderer.setPixelRatio(0.8); // Forcing pixel ratio to 1 to avoid unnecessary computations
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
   }
-
-  // onTouchMove(event) {
-  //   const rect = this.renderer.domElement.getBoundingClientRect();
-  //   const x = event.clientX - rect.left;
-  //   const y = event.clientY - rect.top;
-
-  //   mouse.x = (x / this.width) * 2 - 1;
-  //   mouse.y = -(y / this.height) * 2 + 1;
-
-  //   this.checkIntersection();
-  // }
-
-  // checkIntersection() {
-  //   raycaster.setFromCamera(mouse, this.camera);
-  //   const intersects = raycaster.intersectObject(MovingHead.instancedMesh, true);
-  //   // eslint-disable-next-line vars-on-top, no-var
-  //   // this.clickHandler = () => {
-  //   //   Controls.detachAll();
-  //   // };
-  //   if (intersects.length > 0) {
-  //     MovingHead.highlight(intersects[0].instanceId, true);
-  //     this.renderer.domElement.style.cursor = 'pointer';
-  //   } else {
-  //     // Controls.detachAll();
-  //     MovingHead.clearHiglighting();
-  //     this.renderer.domElement.style.cursor = 'grab';
-  //   }
-  // }
 
   /**
    * Prepares Visualizer's camera
