@@ -20,6 +20,10 @@
         v-for="(treeItem, index) in filteredItems"
         :key="index"
         class="uikit_list_item parent"
+        :style="{
+          flex: treeItem.unfolded ? 1 : 'unset',
+          overflowY: treeItem.unfolded && treeItem.value.unfold && accordion ? 'hidden' : 'visible',
+        }"
       >
         <div
           v-if="treeItem.value.unfold"
@@ -31,44 +35,43 @@
             :item="treeItem"
             @click="unfold(treeItem)"
           />
-          <span
-            v-if="treeItem.unfolded"
-            style="height:100%"
+          <Transition
+            name="fadeHeight"
           >
-            <template v-if="treeItem.value.unfold && treeItem.value.unfold.length">
-              <uk-list-item
-                v-for="(subTreeItem, subIndex) in treeItem.value.unfold"
-                :key="subIndex"
-                class="uikit_sublist_body"
-                :item="subTreeItem"
-                :toggleable="toggleable"
-                :no-highlight="noHighlight"
-                :focused="hasFocus"
-                :tall="tall"
-                :no-select="noSelect"
-                @click="(e) => selectItem({caca: 'hello'}, subTreeItem, treeItem.value.unfold)"
-                @toggle="toggleItem(subTreeItem)"
-              />
-            </template>
-            <!-- <h3
-              v-else
-              class="uikit_list_body_empty"
+            <span
+              v-if="treeItem.unfolded"
+              :style="{
+                overflowY: 'auto'
+              }"
             >
+              <template v-if="treeItem.value.unfold && treeItem.value.unfold.length">
+                <uk-list-item
+                  v-for="(subTreeItem, subIndex) in treeItem.value.unfold"
+                  :key="subIndex"
+                  class="uikit_sublist_body"
+                  :item="subTreeItem"
+                  :toggleable="toggleable"
+                  :no-highlight="noHighlight"
+                  :focused="hasFocus"
+                  :tall="tall"
+                  :no-select="noSelect"
+                  @click="(e) => selectItem(e, subTreeItem, treeItem.value.unfold)"
+                  @toggle="toggleItem(subTreeItem)"
+                />
+              </template>
+            </span>
+          </Transition>
+          <div
+            v-if="treeItem.unfolded && !treeItem.value.unfold.length"
+            class="uikit_list_body_empty"
+          >
+            <h3 v-if="!treeItem.value.unfold.length">
               Nothing to display
-              />
-            </h3> -->
-            <uk-list-item
-              v-else
-              :key="index"
-              disabled
-              empty
-              class="uikit_sublist_body"
-              :item="{ value: { name: 'Nothing To Display' } }"
-              :no-highlight="true"
-              :tall="tall"
-              :no-select="noSelect"
-            />
-          </span>
+            </h3>
+            <!-- <uk-button
+              label="patch fixture"
+            /> -->
+          </div>
         </div>
         <uk-list-item
           v-else
@@ -108,14 +111,28 @@
           @click="(e) => selectItem(e, treeItem, filteredItems)"
           @toggle="toggleItem(treeItem)"
         />
+        <div
+          class="uikit_sublist_body_empty"
+        >
+          <!-- <h3
+            class="uikit_list_body_empty"
+          >
+            Nothing to display
+          </h3> -->
+        </div>
       </div>
     </div>
-    <h3
+    <div
       v-else
       class="uikit_list_body_empty"
     >
-      Nothing to display
-    </h3>
+      <h3>
+        Nothing to display
+      </h3>
+      <!-- <uk-button
+        label="patch fixture"
+      /> -->
+    </div>
     <uk-popup
       ref="popup"
       v-model="deletePopupState"
@@ -207,6 +224,11 @@ export default {
       type: Array,
       default: () => [],
     },
+    /**
+     * Whether unfoldable items should squish over the container's height and behave in an
+     * Accordion fashion (only one item unfolded at once).
+     */
+    accordion: Boolean,
   },
   emits: ['unfold', 'focused', 'highlight', 'toggle', 'select', 'reorder', 'delete'],
   data() {
@@ -322,7 +344,6 @@ export default {
       const item = this.tree[parseInt(index, 10)];
       if (item) {
         this.selectItem(undefined, item);
-        this.clearHighlighted(true);
       }
     },
   },
@@ -386,7 +407,12 @@ export default {
      * @param {Object} item the tree item to be unfolded
      */
     unfold(item) {
+      if (this.accordion) {
+        // eslint-disable-next-line no-return-assign
+        this.tree.forEach((i) => i.unfolded = false);
+      }
       item.unfolded = !item.unfolded;
+
       /**
        * Item unfold event
        *
@@ -719,7 +745,7 @@ export default {
       });
     },
     /**
-     * Clotures dradding event following cancellation or drop event
+     * Clotures dragging event following cancellation or drop event
      *
      * @param {Event} e drop event
      */
@@ -751,6 +777,7 @@ export default {
   display: flex;
   flex-direction: column;
   width: 100%;
+  height: 100%;
   align-items: center;
   overflow: hidden;
   overflow-y: auto;
@@ -758,9 +785,6 @@ export default {
 }
 .uikit_list_item {
   width: 100%;
-}
-.parent{
-  height: 100%;
 }
 .uikit_list_body_empty {
   display: flex;
@@ -772,6 +796,21 @@ export default {
   color: var(--secondary-light);
   text-transform: uppercase;
   font-family: roboto-regular;
+  background:
+    var(--primary-light)
+    repeating-linear-gradient(
+      45deg,
+      #1619130a,
+      #1619130a 10px,
+      #0c0e0a38 10px,
+      #0c0e0a38 20px
+    );
+  border-bottom: 1px solid var(--primary-dark);
+}
+.uikit_list_body_empty > h3 {
+  color: var(--secondary-light);
+  text-transform: uppercase;
+  font-family: roboto-regular;
 }
 .uikit_list_header_button {
   cursor: pointer;
@@ -780,9 +819,17 @@ export default {
   display: flex;
   flex-direction: column;
   width: 100%;
+  height: 100%;
 }
 .uikit_sublist_body {
   padding-left: 16px !important;
+}
+.uikit_sublist_body_empty {
+  flex:1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 .delete_popup_buttons {
   display: flex;

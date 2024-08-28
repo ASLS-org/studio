@@ -24,7 +24,10 @@
     <span
       v-if="!value.icon && colored && value.color"
       class="uikit_list_item_colored_dot"
-      :style="{ backgroundColor: value.color }"
+      :style="{
+        backgroundColor: unfolded ? value.color : 'transparent',
+        borderColor: value.color
+      }"
     />
     <uk-icon
       v-if="value.icon"
@@ -47,10 +50,11 @@
     <uk-icon
       v-if="value.unfold && unfolded"
       class="uikit_list_item_icon_small"
+      style="opacity: .5"
       name="arrow_up"
     />
     <uk-icon
-      v-if="deletable"
+      v-if="!deletable"
       class="uikit_list_item_icon_small"
       name="cross"
     />
@@ -176,6 +180,7 @@ export default {
   display: flex;
   flex-direction: column;
   width: 100%;
+  height: 100%;
 }
 .uikit_list_item:hover {
   background: var(--secondary-darker);
@@ -226,6 +231,7 @@ export default {
 }
 .uikit_list_item.unfold {
   min-height: 30px;
+  max-height: 30px;
   height: unset !important;
   font-weight: bold;
 }
@@ -238,6 +244,7 @@ export default {
   border-radius: 50%;
   background: #533aaa;
   margin-right: 8px;
+  border: 1px solid;
 }
 .uikit_list_item_more {
   width: 62px;
@@ -266,5 +273,8 @@ export default {
     #0c0e0a38 20px
   );
   text-transform: uppercase!important;
+}
+.unfold{
+  flex: 1
 }
 </style>
