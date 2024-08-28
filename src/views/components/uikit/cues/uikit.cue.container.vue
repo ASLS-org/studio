@@ -169,7 +169,7 @@
         <uk-button
           v-model="group.solo"
           style="width: 85px"
-          color="var(--accent-light-blue)"
+          color="var(--accent-blue)"
           label="solo"
           toggleable
         />
