@@ -1,13 +1,14 @@
+/* eslint-disable */
 const WW_MSG_TYPES = {
-  COMPUTE_FX: 'compute-fx'
-}
+  COMPUTE_FX: 'compute-fx',
+};
 
 const FX_CHANNEL_WAVEFORMS = {
   SINE: 0,
   TRIANGLE: 1,
   SQUARE: 2,
-  PWM: 3
-}
+  PWM: 3,
+};
 
 function update() {
   self.postMessage('');
@@ -19,7 +20,7 @@ function genSine(t, phaseOffset = 0, average, frequency, phaseRad, amplitude) {
 }
 
 function genTriangle(t, phaseOffset = 0, average, frequency, phaseRad, amplitude) {
-  return average + (2 * amplitude / Math.PI) * Math.asin(Math.sin(2 * Math.PI * frequency * t + phaseRad + phaseOffset))
+  return average + (2 * amplitude / Math.PI) * Math.asin(Math.sin(2 * Math.PI * frequency * t + phaseRad + phaseOffset));
 }
 
 function getFXValue(t, phaseOffset, waveform, average, min, max, frequency, phaseRad, amplitude) {
@@ -31,17 +32,18 @@ function getFXValue(t, phaseOffset, waveform, average, min, max, frequency, phas
     case FX_CHANNEL_WAVEFORMS.SQUARE:
       return genSine(t, phaseOffset, average, min, max, frequency, phaseRad, amplitude) >= average ? max : min;
     default:
-      return 1
+      return 1;
   }
 }
 
-self.addEventListener("message", function(e) {
-  let parsedData = JSON.parse(e.data)
+self.addEventListener('message', (e) => {
+  const parsedData = JSON.parse(e.data);
   switch (parsedData.msg) {
     case WW_MSG_TYPES.COMPUTE_FX:
-      self.postMessage(getFXValue(...parsedData.data))
+      self.postMessage(getFXValue(...parsedData.data));
       break;
   }
-})
+});
 
 update();
+/* eslint-enable */

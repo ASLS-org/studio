@@ -1,31 +1,27 @@
-'use strict'
-
-import CuePool from './cue.pool.model'
-import ChasePool from './chase.pool.model'
-import Modifier from './modifier.model'
-import FixturePool from './fixture.pool.model'
-import ukColors from '@/views/components/uikit/colors/uikit.colors.js'
-
+import ukColors from '@/views/components/uikit/colors/uikit.colors';
+import CuePool from './cue.pool.model';
+import ChasePool from './chase.pool.model';
+import Modifier from './modifier.model';
+import FixturePool from './fixture.pool.model';
 
 /**
  * List of available modifier types
- * 
+ *
  * @constant {Array<String>} MODIFIER_TYPES
  */
 const MODIFIER_TYPES = [
-  "Shutter",
-  "Dimmer",
-  "Zoom",
-  "Color"
-]
+  'Shutter',
+  'Dimmer',
+  'Zoom',
+  'Color',
+];
 
 /**
  * @class Group
  * @extends {Proxify}
- * @classdesc Chases are collections of cues to be triggered over time 
+ * @classdesc Chases are collections of cues to be triggered over time
  */
 class Group {
-
   /**
    * Creates an instance of Group.
    * @param {Object} [data={}] group configuration object
@@ -34,47 +30,48 @@ class Group {
    * @param {String} data.color the group's color string
    */
   constructor(data = {}) {
-    this.id = data.id;
-    this.name = data.name;
-    this._fixtures = [];
-    this.modifiers = [];
-    this.fixturePool = new FixturePool()
-    this.cuePool = new CuePool();
-    this.chasePool = new ChasePool();
-    this.solo = false;
-    this.disabled = false;
-    this._color = data.color;
-    this.master = 255;
+    if (!data.isStub) {
+      this.id = data.id;
+      this.name = data.name;
+      this._fixtures = [];
+      this.modifiers = [];
+      this.fixturePool = new FixturePool();
+      this.cuePool = new CuePool();
+      this.chasePool = new ChasePool();
+      this.solo = false;
+      this.disabled = false;
+      this._color = data.color;
+      this.master = 255;
+    }
   }
 
   /**
    * Group color
-   * 
+   *
    * @type {String}
    */
   set color(color) {
     this._color = color;
-    this.chasePool.chases.forEach(chase => {
-      chase.color = this.color
-    })
+    this.chasePool.chases.forEach((chase) => {
+      chase.color = this.color;
+    });
   }
 
+  get color() {
+    return this._color || ukColors[Object.keys(ukColors)[this.id % Object.keys(ukColors).length]];
+  }
 
   get name() {
-    return this._name || `Group ${this.id}`
+    return this._name || `Group ${this.id}`;
   }
 
   /**
    * Group name
-   * 
+   *
    * @type {String}
    */
   set name(name) {
     this._name = name;
-  }
-
-  get color() {
-    return this._color || ukColors[Object.keys(ukColors)[this.id % Object.keys(ukColors).length]]
   }
 
   /**
@@ -87,16 +84,16 @@ class Group {
     return {
       id: this.id,
       name: this.name,
-      fixtures: this.fixturePool.fixtures.map(f => ({
-        id: f.id
+      fixtures: this.fixturePool.fixtures.map((f) => ({
+        id: f.id,
       })),
-      cues: this.cuePool.cues.map(c => c.showData),
-      chases: this.chasePool.chases.map(c => c.showData),
+      cues: this.cuePool.cues.map((c) => c.showData),
+      chases: this.chasePool.chases.map((c) => c.showData),
       solo: this.solo,
       disabled: this.disabled,
       color: this.color,
-      master: this.master
-    }
+      master: this.master,
+    };
   }
 
   /**
@@ -109,42 +106,42 @@ class Group {
     let DMXActivity = 0;
     let TOTChannels = 0;
     if (this.cuePool) {
-      this.cuePool.cues.forEach(cue => {
+      this.cuePool.cues.forEach((cue) => {
         if (cue.state) {
           DMXActivity += cue.DMXActivity;
         }
-      })
-      this.fixturePool.fixtures.forEach(f => {
+      });
+      this.fixturePool.fixtures.forEach((f) => {
         TOTChannels += f.channels.length;
-      })
+      });
     }
-    return (DMXActivity / TOTChannels * 255);
+    return (DMXActivity / (TOTChannels * 255));
   }
 
   /**
    * Add a fixture to the group's fixture pool
-   * 
+   *
    * @public
-   * @param {Object} fixture 
+   * @param {Object} fixture
    */
   addFixture(fixture) {
     this.fixturePool.addExisting(fixture);
-    this.cuePool.cues.forEach(cue => {
+    this.cuePool.cues.forEach((cue) => {
       cue.addFixture(fixture);
-    })
+    });
   }
 
   /**
    * Removes a fixture from the group's fixture pool
-   * 
+   *
    * @public
-   * @param {Object} fixture 
+   * @param {Object} fixture
    */
   deleteFixture(fixture) {
     try {
-      this.cuePool.cues.forEach(cue => {
+      this.cuePool.cues.forEach((cue) => {
         cue.deleteFixture(fixture);
-      })
+      });
       this.fixturePool.delete(fixture);
     } catch (err) {
       console.log(err);
@@ -154,16 +151,16 @@ class Group {
   addModifiers(fixture) {
     fixture.channels.forEach((channel, index) => {
       if (MODIFIER_TYPES.includes(channel.type)) {
-        let type = channel.type;
-        if (channel.type == "Color") {
-          type = channel.color
+        let { type } = channel;
+        if (channel.type === 'Color') {
+          type = channel.color;
         }
         if (!this.modifiers[type]) {
           this.modifiers[type] = new Modifier(type);
         }
         this.modifiers[type].add(fixture, index);
       }
-    })
+    });
   }
 
   /**
@@ -174,12 +171,12 @@ class Group {
    * @see Cue
    */
   addCue(cueData) {
-    let cue = this.cuePool.addRaw(Object.assign(cueData, {
-      fixtures: this.fixturePool.fixtures
-    }))
-    this.chasePool.chases.forEach(chase => chase.addCue({
-      cue: cue
-    }))
+    const cue = this.cuePool.addRaw(Object.assign(cueData, {
+      fixtures: this.fixturePool.fixtures,
+    }));
+    this.chasePool.chases.forEach((chase) => chase.addCue({
+      cue,
+    }));
     return cue;
   }
 
@@ -191,9 +188,9 @@ class Group {
    */
   deleteCue(cue) {
     this.cuePool.delete(cue);
-    this.chasePool.chases.forEach(chase => {
+    this.chasePool.chases.forEach((chase) => {
       chase.deleteCue(cue);
-    })
+    });
   }
 
   /**
@@ -204,12 +201,10 @@ class Group {
    */
   addChase(chase) {
     chase.color = chase.color || this.color;
-    chase.cues = chase.cues ? chase.cues.map(cue => {
-      return {
-        cue: this.cuePool.getFromId(cue.cue),
-        items: cue.items
-      }
-    }) : this.cuePool.cues;
+    chase.cues = chase.cues ? chase.cues.map((cue) => ({
+      cue: this.cuePool.getFromId(cue.cue),
+      items: cue.items,
+    })) : this.cuePool.cues;
 
     return this.chasePool.addRaw(chase);
   }
@@ -222,8 +217,7 @@ class Group {
    */
   deleteChase(chase) {
     try {
-      this.chasePool.delete(chase)
-
+      this.chasePool.delete(chase);
     } catch (err) {
       console.log(err);
     }
@@ -238,8 +232,7 @@ class Group {
    */
   cueChase(chase, state) {
     try {
-      this.stopAllChases();
-      chase.cue(state);
+      chase.cue(state, this.stopAllChases.bind(this, chase));
     } catch (err) {
       console.log(err);
     }
@@ -247,13 +240,13 @@ class Group {
 
   /**
    * Stops all the chases from playing
-   * 
+   *
    * @public
    */
-  stopAllChases(){
-    this.chasePool.chases.forEach(chase => {
-      chase.cue(false);
-    })
+  stopAllChases(except = {}) {
+    this.chasePool.chases.forEach((chase) => {
+      if (except.id !== chase.id) chase.cue(false);
+    });
   }
 
   /**
@@ -263,12 +256,11 @@ class Group {
    * @param {Object} instance handle to group instance to be freed
    */
   static deleteInstance(instance) {
-    Object.keys(instance).forEach(prop => {
-      delete instance[prop]
-    })
+    Object.keys(instance).forEach((prop) => {
+      delete instance[prop];
+    });
     instance = null;
   }
-
 }
 
 export default Group;

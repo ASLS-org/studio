@@ -1,31 +1,61 @@
 <template>
-  <div class="uikit_num_input" :class="{ disabled: disabled }">
-    <div :class="{ disabled }" class="label" v-if="label">
+  <div
+    class="uikit_num_input"
+    :class="{ disabled: disabled }"
+  >
+    <div
+      v-if="label"
+      :class="{ disabled }"
+      class="label"
+    >
       {{ label }}
     </div>
-    <div class="uikit_num_input_textbox_wrapper" :style="{ borderColor: !disabled ? color : '' }">
+    <div
+      class="uikit_num_input_textbox_wrapper"
+      :class="{color: color !== null}"
+      :style="{ borderColor: !disabled && color ? `color-mix(in srgb,${color} 70%,#0000)` : '' }"
+    >
       <input
+        v-model="content"
         class="uikit_num_input_textbox"
+        :disabled="disabled"
+        :placeholder="placeholder"
         @keydown.up="incrementValue"
         @keydown.down="decrementValue"
         @keydown.stop
         @blur="updateValue"
         @keydown.enter="updateValue"
-        :disabled="disabled"
-        :placeholder="placeholder"
         @input="
           (v) => {
             if (autoUpdate) updateValue(v);
           }
         "
-        v-model="content"
-      />
-      <span class="uikit_num_input_button" :style="{ backgroundColor: !disabled ? color : '' }">
-        <span class="uikit_num_input_button_section" @click="incrementValue()">
-          <uk-icon class="uikit_num_input_button_icon" name="arrow_up" />
+      >
+      <span
+        class="uikit_num_input_button"
+        :style="{
+          backgroundColor: !disabled && color
+            ? `color-mix(in srgb,${color} 70%,#0000)`
+            : ''
+        }"
+      >
+        <span
+          class="uikit_num_input_button_section"
+          @click="incrementValue()"
+        >
+          <uk-icon
+            class="uikit_num_input_button_icon"
+            name="arrow_up"
+          />
         </span>
-        <span class="uikit_num_input_button_section" @click="decrementValue()">
-          <uk-icon class="uikit_num_input_button_icon" name="arrow_down" />
+        <span
+          class="uikit_num_input_button_section"
+          @click="decrementValue()"
+        >
+          <uk-icon
+            class="uikit_num_input_button_icon"
+            name="arrow_down"
+          />
         </span>
       </span>
     </div>
@@ -34,34 +64,45 @@
 
 <script>
 /**
- * @component NumeralInput A text input restricted to number-only values. Values may be incremented/decremented by clicking on
- * the helper arrows and/or by hitting the UP/DOWN arrow keys.
+ * @component NumeralInput text input restricted to number-only values.
+ * Values may be incremented/decremented by clicking on  the helper arrows
+ * and/or by hitting the UP/DOWN arrow keys.
  * @namespace uikit/inputs/textboxes
  * @story Default {"value": 10, "label":"default", "min": 0, "max":100}
  */
 export default {
-  name: "ukNumInput",
+  name: 'UkNumInput',
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   props: {
     /**
      * The numeral input's text label value
      */
-    label: String,
+    label: {
+      type: String,
+      default: null,
+    },
     /**
      * The numeral input's placeholder text
      */
-    placeholder: String,
+    placeholder: {
+      type: String,
+      default: null,
+    },
     /**
      * The numeral input's minimum value
      */
     min: {
-      type: Number,
+      type: [Number, String],
       default: 0,
     },
     /**
      * The numeral input's maximum value
      */
     max: {
-      type: Number,
+      type: [Number, String],
       default: 100000,
     },
     /**
@@ -74,8 +115,8 @@ export default {
     /**
      * The actual numeral input value
      */
-    value: {
-      type: Number,
+    modelValue: {
+      type: [Number, String],
       default: 0,
     },
     /**
@@ -87,7 +128,8 @@ export default {
      */
     color: {
       type: String,
-      default: "var(--secondary-dark)",
+      default: null,
+      // default: 'var(--secondary-dark)',
     },
     /**
      * Whether value should be automatically updated on each keystroke or not
@@ -98,13 +140,30 @@ export default {
       default: false,
     },
   },
+  emits: ['update:modelValue', 'input'],
   data() {
     return {
       /**
        * Numeral input's value (reactive)
        */
-      content: this.value.toFixed(this.precision),
+      content: this.modelValue.toFixed(this.precision),
     };
+  },
+  watch: {
+    modelValue(value) {
+      this.content = parseFloat(value);
+      this.updateValue(false);
+    },
+  },
+  beforeMount() {
+    if (this.default != null) {
+      this.updateValue();
+    }
+    if (this.label == null) {
+      this.hasLabel = false;
+    } else {
+      this.hasLabel = true;
+    }
   },
   methods: {
     /**
@@ -112,10 +171,10 @@ export default {
      *
      */
     incrementValue() {
-      let increment = parseFloat(this.content) + parseFloat(Math.pow(10, -this.precision));
+      const increment = parseFloat(this.content) + parseFloat(10 ** -this.precision);
       if (increment <= this.max && !this.disabled) {
         this.content = increment.toFixed(this.precision);
-        this.$emit("input", parseFloat(this.content));
+        this.updateValue(true);
       }
     },
     /**
@@ -123,10 +182,10 @@ export default {
      *
      */
     decrementValue() {
-      let decrement = parseFloat(this.content) - parseFloat(Math.pow(10, -this.precision));
+      const decrement = parseFloat(this.content) - parseFloat(10 ** -this.precision);
       if (decrement >= this.min && !this.disabled) {
         this.content = decrement.toFixed(this.precision);
-        this.$emit("input", parseFloat(this.content));
+        this.updateValue(true);
       }
     },
     /**
@@ -135,9 +194,9 @@ export default {
      * @param {Boolean} doEmit whether or not to emit changes back to parent element.
      */
     updateValue(doEmit = true) {
-      var val = parseFloat(this.content).toFixed(this.precision);
+      const val = parseFloat(this.content).toFixed(this.precision);
       this.content = val;
-      if (val < this.min || isNaN(val)) {
+      if (val < this.min || Number.isNaN(val)) {
         this.content = parseFloat(this.min >= 0 ? this.min : 0).toFixed(this.precision);
       } else if (val > this.max) {
         this.content = parseFloat(this.max).toFixed(this.precision);
@@ -148,24 +207,9 @@ export default {
          *
          * @property {Number} content Parsed and precision limited input value
          */
-        this.$emit("input", parseFloat(Number(this.content).toFixed(this.precision)));
+        this.$emit('update:modelValue', parseFloat(Number(this.content).toFixed(this.precision)));
+        this.$emit('input', parseFloat(Number(this.content).toFixed(this.precision)));
       }
-    },
-  },
-  beforeMount() {
-    if (this.default != null) {
-      this.value = this.default;
-    }
-    if (this.label == null) {
-      this.hasLabel = false;
-    } else {
-      this.hasLabel = true;
-    }
-  },
-  watch: {
-    value: function (value) {
-      this.content = parseFloat(value);
-      this.updateValue(false);
     },
   },
 };
@@ -178,13 +222,19 @@ export default {
   user-select: none;
   width: fit-content;
 }
+
 .uikit_num_input_textbox_wrapper {
   display: flex;
   user-select: none;
   width: 100%;
 }
-.uikit_num_input_textbox_wrapper:focus-within {
+.uikit_num_input_textbox_wrapper:not(.color):focus-within {
   outline: 1px solid var(--accent-blue);
+  outline-offset: -1px;
+}
+
+.uikit_num_input_textbox_wrapper.color:focus-within {
+  outline: 1px solid var(--secondary-light);
   outline-offset: -1px;
 }
 .uikit_num_input_textbox {
@@ -225,6 +275,10 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: background-color .2s;
+}
+.uikit_num_input_button_section:hover{
+  background-color: var(--secondary-dark);
 }
 .uikit_num_input_button_icon {
   height: 8px !important;

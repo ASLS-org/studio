@@ -1,33 +1,47 @@
 <template>
-  <uk-flex col class="app_activity">
+  <uk-flex
+    col
+    class="app_activity"
+  >
     <toolbar />
     <uk-flex class="top_fragments">
       <uk-flex class="top_fragment_left">
-        <patch-bay/>
-        <group-pool/>
+        <patch-bay />
+        <group-pool />
       </uk-flex>
-      <visualizer/>
+      <visualizer />
     </uk-flex>
     <modifier />
-    <popup-splash :loader="loader" v-model="loader.state" />
-    <error-popup style="z-index: 1000" :error="errPopup.error" v-model="errPopup.state" />
+    <popup-splash
+      v-model="loader.state"
+      :loader="loader"
+    />
+    <error-popup
+      v-model="errPopup.state"
+      style="z-index: 1000"
+      :error="errPopup.error"
+    />
   </uk-flex>
 </template>
 
 <script>
-import EventBus from "@/plugins/eventbus";
+import EventBus from '@/plugins/eventbus';
 
-import Toolbar from "./fragments/toolbar/toolbar.fragment.vue";
-import PatchBay from "./fragments/patch-bay/patch-bay.fragment.vue";
-import GroupPool from "./fragments/group-pool/group-pool.fragment.vue";
-import Visualizer from "./fragments/visualizer/visualizer.fragment.vue";
-import Modifier from "./fragments/modifiers/modifier.fragment.vue";
+import Toolbar from './fragments/toolbar/toolbar.fragment.vue';
+import PatchBay from './fragments/patch-bay/patch-bay.fragment.vue';
+import GroupPool from './fragments/group-pool/group-pool.fragment.vue';
+import Visualizer from './fragments/visualizer/visualizer.fragment.vue';
+import Modifier from './fragments/modifiers/modifier.fragment.vue';
 
-import PopupSplash from "./_popups/popup.splash.vue";
-import ErrorPopup from "./_popups/popup.error.vue";
+import PopupSplash from './_popups/popup.splash.vue';
+import ErrorPopup from './_popups/popup.error.vue';
 
 export default {
-  name: "AppActivity",
+  name: 'AppActivity',
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   components: {
     Toolbar,
     PatchBay,
@@ -60,46 +74,47 @@ export default {
       loader: this.$show.loading,
     };
   },
-  methods: {
-    /**
-     * Setup App. Loads show from local storage or creates new
-     * show project if no local data is available
-     * 
-       * @public
-     */
-    async setup() {
-      this.loader = {
-        message: "Loading show data",
-        percentage: 0,
-      };
-      await this.$show.loadFromLocalStorage();
-      this.$router
-        .push("/universe/0")
-        .then(() => {
-          this.loader.state = false;
-          this.$router._appReayState = true;
-          this.ready = true;
-          // document.documentElement.setAttribute("data-theme", "light");
-          EventBus.$emit("app_ready");
-        })
-        .catch(() => {});
-    },
-  },
-  async mounted() {
-    this.$router._appReayState = false;
-    EventBus.$on("visualizer_loaded", this.setup);
-    EventBus.$on("app_error", (err) => {
-      this.loader.message = "An error occured while loading the app...";
-      this.errPopup.error = err;
-      this.errPopup.state = true;
-    });
-  },
   watch: {
-    "$show.loading": {
+    '$show.loading': {
       deep: true,
       handler(value) {
         this.loader = value;
       },
+    },
+  },
+  async mounted() {
+    this.$router._appReayState = false;
+    EventBus.on('visualizer_loaded', this.setup);
+    EventBus.on('app_error', (err) => {
+      this.loader.message = 'An error occured while loading the app...';
+      this.errPopup.error = err;
+      this.errPopup.state = true;
+    });
+  },
+  methods: {
+    /**
+     * Setup App. Loads show from local storage or creates new
+     * show project if no local data is available
+     *
+       * @public
+     */
+    async setup() {
+      this.loader = {
+        message: 'Loading show data',
+        percentage: 0,
+      };
+      await this.$show.loadFromLocalStorage();
+      await this.$router.push('/universe/0');
+      this.loader = {
+        message: 'Waiting for views to settle',
+        percentage: 90,
+        state: true,
+      };
+      await new Promise((r) => { setTimeout(r, 500); });
+      this.loader.state = false;
+      this.$router._appReayState = true;
+      this.ready = true;
+      EventBus.emit('app_ready');
     },
   },
 };

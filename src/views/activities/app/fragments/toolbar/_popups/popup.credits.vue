@@ -1,25 +1,38 @@
 <template>
-  <uk-popup @submit="close" :movable="false" backdrop :cancelable="false" @input="update()" v-model="state" :header="headerData">
+  <uk-popup
+    v-model="state"
+    :movable="false"
+    backdrop
+    :cancelable="false"
+    :header="headerData"
+    @submit="close"
+    @input="update()"
+  >
     <div class="body">
-      <div v-html="creditsTXT"/>
+      <!-- eslint-disable-next-line vue/no-v-html -->
+      <div v-html="creditsTXT" />
     </div>
   </uk-popup>
 </template>
 
 <script>
-import Credits from "raw-loader!/CREDITS.html";
-import PopupMixin from "@/views/mixins/popup.mixin.js"
+import Credits from '@root/CREDITS.html?raw';
+import PopupMixin from '@/views/mixins/popup.mixin';
 
 export default {
-  name: "popupCredits",
+  name: 'PopupCredits',
   mixins: [PopupMixin],
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   data() {
     return {
       /**
        * Popup header data
        */
       headerData: {
-        title: "Credits",
+        title: 'Credits',
       },
       /**
        * Raw HTLM credits text (loaded from project's root)
@@ -42,19 +55,19 @@ export default {
   width: auto;
   display: block;
 }
-::v-deep h1 {
+:deep(h1) {
   font-family: Roboto-Regular;
   font-size: 24px;
   color: var(--secondary-lighter);
 }
 
-::v-deep h2 {
+:deep(h2) {
   font-family: Roboto-Regular;
   font-size: 16px;
   color: var(--secondary-lighter);
 }
 
-::v-deep h3 {
+:deep(h3) {
   font-family: Roboto-Bold;
   text-transform: uppercase;
   font-size: 12px;
@@ -64,7 +77,7 @@ export default {
   font-weight: normal;
 }
 
-::v-deep h4 {
+:deep(h4) {
   font-family: Roboto-Bold;
   font-size: 12px;
   color: var(--secondary-lighter);
@@ -76,7 +89,7 @@ export default {
   text-overflow: ellipsis;
 }
 
-::v-deep p {
+:deep(p) {
   font-family: Roboto-Medium;
   font-style: normal;
   font-weight: normal;
@@ -89,7 +102,7 @@ export default {
   color: var(--secondary-lighter);
   margin: 0;
 }
-::v-deep a{
+:deep(a){
   font-family: Roboto-Medium;
   font-size: 12px;
   color: var(--accent-blue)

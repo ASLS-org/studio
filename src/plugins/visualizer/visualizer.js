@@ -1,34 +1,35 @@
-var THREE = window.THREE = require('three');
+/* eslint-disable */
+// TODO: find a way for the linter to accept node_module nested libs
+import * as THREE from 'three';
+
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import Stats from 'stats.js';
+import ModelInstancer from './model_instancer';
+import SceneManager from './scene_manager';
+import AnimationManager from './animation_manager';
+import Controls from './controls';
+import MovingHead from './moving_head';
+import InfiniteGridHelper from './grid';
 
 /**
  * THREE.Vector3 round prototype override.
  * Allows for precision-specified rounding
- * 
+ *
  * @param {Number} digits Decimal place of rounding
  * @returns {Object} THREE.Vector3 instance
  * @todo put every overrides in an override.js module
  */
-THREE.Vector3.prototype.round = function (digits) {
-  var e = Math.pow(10, digits || 0);
+THREE.Vector3.prototype.round = function vector3RoundPolyfill(digits) {
+  const e = 10 ** (digits || 0);
   this.x = Math.round(this.x * e) / e;
   this.y = Math.round(this.y * e) / e;
   this.z = Math.round(this.z * e) / e;
   return this;
-}
-
-import ModelInstancer from './model_instancer'
-import SceneManager from './scene_manager'
-import AnimationManager from './animation_manager';
-import Controls from './controls'
-import MovingHead from './moving_head'
-
-require('./orbitcontrol.zup.patch')
-require('./grid');
-
+};
 
 /**
  * Default visualizer preferences values
- * 
+ *
  * @constant
  * @type {String}
  * @default
@@ -37,20 +38,18 @@ const DEFAULT_PREFERENCES = {
   FOGGING_STATE: true,
   FOGGING_DENSITY: 0,
   GLOBAL_FOGGING_TURBULENCES: 0,
-  GLOBAL_BRIGHTNESS: 50
-}
-
+  GLOBAL_BRIGHTNESS: 80,
+};
 
 /**
  * @class
  * @classdesc WebGL Visualizer instance
  */
 class Visualizer {
-
   /**
    * Constructs Visualizer instance
-   * 
-   * @param {Object} domElement handle to domElement to be used by the WEBGL renderer 
+   *
+   * @param {Object} domElement handle to domElement to be used by the WEBGL renderer
    */
   constructor(domElement) {
     this.domElement = domElement;
@@ -59,18 +58,21 @@ class Visualizer {
     this.controls = null;
     this.animation = null;
     this.finalComposer = null;
-    this.globalBrightness = 80;
+    this.globalBrightness = 100;
     this.globalLightHandle = null;
+    this.stats = new Stats();
+    this.stats.showPanel(0);
+    this.stats.dom.style.position = 'absolute';
   }
 
   /**
    * Initialises WebGL Visualizer instance
-   * 
+   *
    * @public
    * @async
    */
   async init() {
-    await ModelInstancer.init("/visualizer/models/model_list.json");
+    await ModelInstancer.init('/visualizer/models/model_list.json');
     this.prepareRenderer();
     this.prepareCamera();
     this.prepareControls();
@@ -83,7 +85,7 @@ class Visualizer {
 
   /**
    * Visualizer preferences
-   * 
+   *
    * @type {Object}
    */
   set preferences(preferences) {
@@ -97,35 +99,52 @@ class Visualizer {
 
   /**
    * Global scene fogging state
-   * 
    * @type {Boolean}
+   * @param {boolean} value
    */
+  // eslint-disable-next-line class-methods-use-this
   set globalFoggingState(value) {
-    MovingHead.fogState = value ? value : DEFAULT_PREFERENCES.GLOBAL_FOGGING_STATE;
+    MovingHead.fogState = value || DEFAULT_PREFERENCES.GLOBAL_FOGGING_STATE;
+  }
+
+  // eslint-disable-next-line class-methods-use-this
+  get globalFoggingState() {
+    return MovingHead.fogState ? 1 : 0;
   }
 
   /**
    * Global scene fogging density
-   * 
+   *
    * @type {Number}
    */
+  // eslint-disable-next-line class-methods-use-this
   set globalFoggingDensity(value) {
     MovingHead.fogDensity = value ? value / 100 : DEFAULT_PREFERENCES.GLOBAL_FOGGING_DENSITY;
+  }
 
+  // eslint-disable-next-line class-methods-use-this
+  get globalFoggingDensity() {
+    return MovingHead.fogDensity * 100;
   }
 
   /**
    * Global scene fogging turbulence
-   * 
+   *
    * @type {Number}
    */
+  // eslint-disable-next-line class-methods-use-this
   set globalFoggingTurbulences(value) {
     MovingHead.fogTurbulence = value ? value / 50 : DEFAULT_PREFERENCES.GLOBAL_FOGGING_TURBULENCES;
   }
 
+  // eslint-disable-next-line class-methods-use-this
+  get globalFoggingTurbulences() {
+    return MovingHead.fogTurbulence * 50;
+  }
+
   /**
    * Global scene brightness
-   * 
+   *
    * @type {Number}
    */
   set globalBrightness(value) {
@@ -133,18 +152,6 @@ class Visualizer {
     if (this.globalLightHandle) {
       this.globalLightHandle.intensity = this._globalBrightness * 0.25;
     }
-  }
-
-  get globalFoggingState() {
-    return MovingHead.fogState ? 1 : 0;
-  }
-
-  get globalFoggingDensity() {
-    return MovingHead.fogDensity * 100;
-  }
-
-  get globalFoggingTurbulences() {
-    return MovingHead.fogTurbulence * 50;
   }
 
   get globalBrightness() {
@@ -156,18 +163,19 @@ class Visualizer {
       globalFoggingState: this.globalFoggingState,
       globalFoggingDensity: this.globalFoggingDensity,
       globalFoggingTurbulences: this.globalFoggingTurbulences,
-      globalBrightness: this.globalBrightness
-    }
+      globalBrightness: this.globalBrightness,
+    };
   }
 
   /**
    * Starts rendering loop.
    * Pools the rendering function into the animation manager's pool
-   * 
+   *
    * @public
    */
   startRender() {
     if (!this.animation) {
+      this.stats.dom.style.display = 'initial';
       this.animation = AnimationManager.add(this.render.bind(this));
     }
   }
@@ -175,7 +183,7 @@ class Visualizer {
   /**
    * Stops rendering loop.
    * Removes of the rendering function from the animation manager's pool
-   * 
+   *
    * @public
    */
   stopRender() {
@@ -187,48 +195,39 @@ class Visualizer {
 
   /**
    * Sets up visualizer environment
-   * 
+   *
    * @public
    * @async
    */
   async main() {
-
-    this.globalLightHandle = new THREE.DirectionalLight('white', this._globalBrightness);
+    this.globalLightHandle = new THREE.DirectionalLight('white', this._globalBrightness * 100);
     this.globalLightHandle.castShadow = false;
-    this.globalLightHandle.position.set(10, 10, 10);
+    this.globalLightHandle.position.set(-10, -10, 10);
 
     MovingHead.prepareInstanciation(this.camera, SceneManager);
 
     AnimationManager.add((t) => {
       MovingHead.update(t);
-    })
+    });
 
     // Floor
-    const loader = new THREE.TextureLoader()
-    const texture = await loader.loadAsync('/visualizer/textures/environment/checkerboard_default.jpg')
+    const loader = new THREE.TextureLoader();
+    const texture = await loader.loadAsync('/visualizer/textures/environment/checkerboard_default.jpg');
 
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
     texture.repeat.set(8, 8);
 
-    const gridHelper = new THREE.InfiniteGridHelper(5, 100, new THREE.Color("white"), 100)
+    const gridHelper = new InfiniteGridHelper(5, 100, new THREE.Color('white'), 100);
     gridHelper.rotateX(Math.PI / 2.0);
-    gridHelper.position.setZ(-.3)
-    SceneManager.add(gridHelper)
+    gridHelper.position.setZ(-0.3);
+    SceneManager.add(gridHelper);
 
     const axesHelper = new THREE.AxesHelper(2);
 
-    const checkerMaterial = new THREE.MeshStandardMaterial({
-      map: texture,
-      polygonOffset: true,
-      polygonOffsetUnits: 2,
-      polygonOffsetFactor: 1,
-      depthWrite: true,
-      depthTest: true,
-      fog: false,
-    })
+    const checkerMaterial = new THREE.MeshStandardMaterial({ map: texture });
 
-    const sideMaterial = new THREE.MeshStandardMaterial()
+    const sideMaterial = new THREE.MeshStandardMaterial();
 
     const floorMaterial = [];
 
@@ -238,9 +237,9 @@ class Visualizer {
     floorMaterial.push(sideMaterial);
     floorMaterial.push(checkerMaterial);
 
-    const floor_geometry = new THREE.BoxGeometry(50, 50, .5, 1, 1, 1);
-    const floor = new THREE.Mesh(floor_geometry, floorMaterial);
-    floor.position.setZ(-.25)
+    const floor_geometry = new THREE.BoxGeometry(50, 50, 0.5, 1, 1, 1);
+    const floor = new THREE.Mesh(floor_geometry, checkerMaterial);
+    floor.position.setZ(-0.25);
 
     this.globalLightHandle.target = floor;
 
@@ -249,34 +248,34 @@ class Visualizer {
 
   /**
    * Prepares WebGL renderer
-   * 
+   *
    * @public
    */
   prepareRenderer() {
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.domElement,
-      antialias: true
+      antialias: true,
     });
+
     this.renderer.autoClear = true;
     this.renderer.shadowMap.autoUpdate = false;
-    this.renderer.toneMapping = THREE.NoToneMapping;
     this.renderer.physicallyCorrectLights = true;
-    this.renderer.setPixelRatio(window.devicePixelRatio);
-    var globalPlane = new THREE.Plane(new THREE.Vector3(0, 0, 0.5), 0.5);
-    this.renderer.clippingPlanes = [globalPlane];
+    this.renderer.setPixelRatio(0.8); // Forcing pixel ratio to 1 to avoid unnecessary computations
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
   }
 
   /**
    * Prepares Visualizer's camera
-   * 
+   *
    * @public
    */
   prepareCamera() {
-    var width = this.domElement.offsetWidth;
-    var height = this.domElement.clientHeight;
-    var aspect = width / height;
-    this.camera = new THREE.PerspectiveCamera(45, aspect, 1, 1000);
-    this.camera.up.set(0, 0, 1)
+    const width = this.domElement.offsetWidth;
+    const height = this.domElement.clientHeight;
+    const aspect = width / height;
+    this.camera = new THREE.PerspectiveCamera(45, aspect, 0.01, 1000);
+    this.camera.up.set(0, 0, 1);
     this.camera.position.y = 40;
     this.camera.position.z = 10;
     this.camera.position.x = 40;
@@ -285,31 +284,31 @@ class Visualizer {
 
   /**
    * Prepares Visualizer's camera controls
-   * 
+   *
    * @public
    */
   prepareControls() {
-    this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-    this.controls.screenSpacePannning = false
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.screenSpacePannning = false;
     this.controls.minDistance = 5;
     this.controls.maxDistance = 100;
     this.controls.maxPolarAngle = Math.PI / 2.1;
     AnimationManager.add(() => {
       this.controls.update();
-    })
+    });
   }
 
   /**
    * Resize handler.
    * Handles renderer's resizing and ensures preservation of screen aspect ratio.
-   * 
+   *
    * @public
    */
   resize() {
-    var width = this.domElement.offsetWidth;
-    var height = this.domElement.clientHeight;
-    var aspect = width / height;
-    if (this.width != width || this.height != height) {
+    const width = this.domElement.offsetWidth;
+    const height = this.domElement.clientHeight;
+    const aspect = width / height;
+    if (this.width !== width || this.height !== height) {
       this.width = width;
       this.height = height;
       this.renderer.setSize(width, height);
@@ -320,13 +319,12 @@ class Visualizer {
 
   /**
    * Render function
-   * 
+   *
    * @public
    */
   render() {
     this.renderer.render(SceneManager, this.camera);
   }
-
 }
 
 export default Visualizer;

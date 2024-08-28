@@ -1,28 +1,86 @@
 <template>
-  <uk-widget dockable class="widget_curve" :header="{ title: 'Fade Editor' }">
-    <uk-flex col :gap="8" class="widget_curve_body">
-      <uk-select-input label="Type" v-model="fade.type" :options="fade.availabelEasingFunctions" />
+  <uk-widget
+    dockable
+    class="widget_curve"
+    :header="{ title: 'Fade Editor' }"
+  >
+    <uk-flex
+      col
+      :gap="8"
+      class="widget_curve_body"
+    >
+      <uk-select-input
+        v-model="fade.type"
+        label="Type"
+        :options="fade.availabelEasingFunctions"
+      />
       <uk-flex :gap="8">
-        <uk-num-input :precision="2" :max="1" label="CP1 X" v-model="fade.controlPoints[0].x" />
-        <uk-num-input :precision="2" :max="1" label="CP1 Y" v-model="fade.controlPoints[0].y" />
+        <uk-num-input
+          v-model="fade.controlPoints[0].x"
+          :precision="2"
+          :max="1"
+          label="CP1 X"
+        />
+        <uk-num-input
+          v-model="fade.controlPoints[0].y"
+          :precision="2"
+          :max="1"
+          label="CP1 Y"
+        />
       </uk-flex>
       <uk-flex :gap="8">
-        <uk-num-input :precision="2" :max="1" label="CP2 X" v-model="fade.controlPoints[1].x" />
-        <uk-num-input :precision="2" :max="1" label="CP2 Y" v-model="fade.controlPoints[1].y" />
+        <uk-num-input
+          v-model="fade.controlPoints[1].x"
+          :precision="2"
+          :max="1"
+          label="CP2 X"
+        />
+        <uk-num-input
+          v-model="fade.controlPoints[1].y"
+          :precision="2"
+          :max="1"
+          label="CP2 Y"
+        />
       </uk-flex>
     </uk-flex>
     <div class="widget_curve_modifier">
-      <canvas width="190" height="189" class="widget_curve_modifier_canvas" id="curveModifier" />
-      <div @mousedown="startDragCp(0)" @mouseup="stopDragCp()" :style="cp1Style" class="widget_curve_cp" id="cp1" ref="cp1" />
-      <div @mousedown="startDragCp(1)" @mouseup="stopDragCp()" :style="cp2Style" class="widget_curve_cp" id="cp2" ref="cp2" />
-      <div :style="cp3Style" class="widget_curve_picker" />
+      <canvas
+        id="curveModifier"
+        width="190"
+        height="189"
+        class="widget_curve_modifier_canvas"
+      />
+      <div
+        id="cp1"
+        ref="cp1"
+        :style="cp1Style"
+        class="widget_curve_cp"
+        @mousedown="startDragCp(0)"
+        @mouseup="stopDragCp()"
+      />
+      <div
+        id="cp2"
+        ref="cp2"
+        :style="cp2Style"
+        class="widget_curve_cp"
+        @mousedown="startDragCp(1)"
+        @mouseup="stopDragCp()"
+      />
+      <div
+        :style="cp3Style"
+        class="widget_curve_picker"
+      />
     </div>
   </uk-widget>
 </template>
 
 <script>
 export default {
-  name: "groupSceneModifierWidgetCurve",
+  name: 'GroupSceneModifierWidgetCurve',
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   props: {
     /**
      * Handle to Fade instance
@@ -45,6 +103,7 @@ export default {
       }),
     },
   },
+  emits: ['input'],
   data() {
     return {
       /**
@@ -70,8 +129,8 @@ export default {
      */
     cp1Style() {
       return {
-        left: Math.max(this.fade.controlPoints[0].x * this.canvas.width - 14, 0) + "px",
-        bottom: Math.max(this.fade.controlPoints[0].y * this.canvas.height - 18, 0) + "px",
+        left: `${Math.max(this.fade.controlPoints[0].x * this.canvas.width - 14, 0)}px`,
+        bottom: `${Math.max(this.fade.controlPoints[0].y * this.canvas.height - 18, 0)}px`,
       };
     },
     /**
@@ -79,8 +138,8 @@ export default {
      */
     cp2Style() {
       return {
-        left: Math.max(this.fade.controlPoints[1].x * this.canvas.width - 14, 0) + "px",
-        bottom: Math.max(this.fade.controlPoints[1].y * this.canvas.height - 18, 0) + "px",
+        left: `${Math.max(this.fade.controlPoints[1].x * this.canvas.width - 14, 0)}px`,
+        bottom: `${Math.max(this.fade.controlPoints[1].y * this.canvas.height - 18, 0)}px`,
       };
     },
     /**
@@ -88,57 +147,84 @@ export default {
      */
     cp3Style() {
       return {
-        bottom: (Math.min(this.fade.value, 1) % 1) * this.canvas.height - 8 + "px",
-        left: (Math.min(this.fade.x, 1) % 1) * this.canvas.width - 8 + "px",
+        bottom: `${(Math.min(this.fade.value, 1) % 1) * this.canvas.height - 8}px`,
+        left: `${(Math.min(this.fade.x, 1) % 1) * this.canvas.width - 8}px`,
       };
     },
+  },
+  watch: {
+    fade: {
+      deep: true,
+      handler() {
+        this.update();
+      },
+    },
+  },
+  mounted() {
+    this.prepareCanvas();
   },
   methods: {
     /**
      * Initiate control point dragging procedure
-     * 
-       * @public 
+     *
+       * @public
      * @param {Number} controlPointId control point ID
      */
     startDragCp(controlPointId) {
       this.dragListener = (dragEvent) => {
         this.dragCp(dragEvent, controlPointId);
       };
-      window.addEventListener("mousemove", this.dragListener);
-      window.addEventListener("mouseup", this.stopDragCp);
+      window.addEventListener('mousemove', this.dragListener);
+      window.addEventListener('mouseup', this.stopDragCp);
     },
     /**
      * Control point drag handler
-     * 
-       * @public 
+     *
+       * @public
      * @param {Object} e mousemove event
      * @param {Number} controlPointId control point ID
      */
     dragCp(e, controlPointId) {
       this.fade.type = 0;
-      var rect = this.canvas.getBoundingClientRect();
-      var posX = e.clientX - rect.left;
-      var posY = e.clientY - rect.top;
-      this.fade.controlPoints[controlPointId].x = parseFloat(Math.min(Math.max(posX / this.canvas.width, 0), 1.0).toFixed(2));
-      this.fade.controlPoints[controlPointId].y = parseFloat(Math.min(Math.max(1.0 - posY / this.canvas.height, 0), 1.0).toFixed(2));
-      this.$emit("input", this.fade);
+      const rect = this.canvas.getBoundingClientRect();
+      const posX = e.clientX - rect.left;
+      const posY = e.clientY - rect.top;
+      this.fade.controlPoints[controlPointId].x = parseFloat(
+        Math.min(
+          Math.max(
+            posX / this.canvas.width,
+            0,
+          ),
+          1.0,
+        ).toFixed(2),
+      );
+      this.fade.controlPoints[controlPointId].y = parseFloat(
+        Math.min(
+          Math.max(
+            1.0 - posY / this.canvas.height,
+            0,
+          ),
+          1.0,
+        ).toFixed(2),
+      );
+      this.$emit('input', this.fade);
     },
     /**
      * Terminate control point dragging procedure.
-     * 
-       * @public 
+     *
+       * @public
      */
     stopDragCp() {
-      window.removeEventListener("mousemove", this.dragListener);
+      window.removeEventListener('mousemove', this.dragListener);
     },
     /**
      * Setup HTML canvas
-     * 
+     *
        * @public
      */
     prepareCanvas() {
-      this.canvas = document.getElementById("curveModifier");
-      this.context = this.canvas.getContext("2d");
+      this.canvas = document.getElementById('curveModifier');
+      this.context = this.canvas.getContext('2d');
       this.update();
     },
     /**
@@ -148,7 +234,7 @@ export default {
      */
     update() {
       this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-      this.context.strokeStyle = "#b6b7b5";
+      this.context.strokeStyle = 'red';
       this.context.lineWidth = 2;
 
       this.context.setLineDash([0, 0]);
@@ -161,49 +247,37 @@ export default {
         this.fade.controlPoints[1].x * this.canvas.width,
         (1.0 - this.fade.controlPoints[1].y) * this.canvas.height,
         this.canvas.width,
-        0
+        0,
       );
       this.context.stroke();
 
       this.context.beginPath();
       this.context.setLineDash([5, 3]);
 
-      this.context.strokeStyle = "#bb2d9880";
+      this.context.strokeStyle = '#bb2d9880';
       this.context.lineWidth = 2;
       this.context.moveTo(0, this.canvas.height);
       this.context.lineTo(
-        Math.max(this.fade.controlPoints[0].x * this.canvas.width - 7, 6),
-        Math.min((1.0 - this.fade.controlPoints[0].y) * (this.canvas.height + 18), this.canvas.height - 6)
+        Math.max(
+          this.fade.controlPoints[0].x * this.canvas.width - 7,
+          6,
+        ),
+        Math.min(
+          (1.0 - this.fade.controlPoints[0].y) * (this.canvas.height + 18),
+          this.canvas.height - 6,
+        ),
       );
       this.context.stroke();
 
       this.context.beginPath();
-      this.context.strokeStyle = "#1e45b980";
+      this.context.strokeStyle = '#1e45b980';
       this.context.lineWidth = 2;
       this.context.moveTo(this.canvas.width, 0);
       this.context.lineTo(
         Math.max(this.fade.controlPoints[1].x * this.canvas.width - 7, 6),
-        Math.max((1.0 - this.fade.controlPoints[1].y) * (this.canvas.height + 18), 6)
+        Math.max((1.0 - this.fade.controlPoints[1].y) * (this.canvas.height + 18), 6),
       );
       this.context.stroke();
-    },
-  },
-  mounted() {
-    this.prepareCanvas();
-  },
-  watch: {
-    value: {
-      deep: true,
-      handler(value) {
-        this.fade = value;
-        this.update();
-      },
-    },
-    fade: {
-      deep: true,
-      handler() {
-        this.update();
-      },
     },
   },
 };
@@ -225,8 +299,20 @@ export default {
   width: 190px;
   height: 100%;
   background-color: var(--primary-dark-alt);
-  background-image: linear-gradient(to right, var(--primary-dark) 0, var(--primary-dark) 1px, transparent 1px, transparent 100%),
-    linear-gradient(to bottom, var(--primary-dark) 0, var(--primary-dark) 1px, transparent 1px, transparent 100%);
+  background-image:
+    linear-gradient(
+      to right, var(--primary-dark) 0,
+      var(--primary-dark) 1px,
+      transparent 1px,
+      transparent 100%
+    ),
+    linear-gradient(
+      to bottom,
+      var(--primary-dark) 0,
+      var(--primary-dark) 1px,
+      transparent 1px,
+      transparent 100%
+    );
   background-size: 19px 18.5px;
 }
 .widget_curve_modifier_canvas {
@@ -238,7 +324,7 @@ export default {
   position: absolute;
   width: 12px;
   height: 12px;
-  background: #1e45b9;
+  background: var(--accent-blue);
   border-radius: 50%;
   border: 2px solid var(--secondary-light);
   opacity: 0.8;
@@ -260,7 +346,7 @@ export default {
   opacity: inherit;
 }
 .widget_curve_cp:nth-child(2) {
-  background: #bb2d98;
+  background: var(--accent-pink);
   content: "CP1";
 }
 .widget_curve_picker {

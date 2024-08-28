@@ -1,15 +1,20 @@
 <template>
-  <uk-widget class="modifier_widget_fixture_pool" :header="header" dockable :action="action">
+  <uk-widget
+    class="modifier_widget_fixture_pool"
+    :header="header"
+    dockable
+    :action="action"
+  >
     <uk-list
+      v-if="pool"
       class="modifier_widget_fixture_pool_body"
       filterable
       deletable
       draggable
       auto-select-first
-      :auto-select="autoSelect"
-      v-if="pool"
-      :items="poolListable"
-      :preventUnfocus="preventUnfocus"
+      :auto-select="selected"
+      :items="pool.listable"
+      :prevent-unfocus="preventUnfocus"
       @select="selectFixture"
       @delete="deleteFixtures"
       @highlight="highlightFixtures"
@@ -28,24 +33,35 @@
  * @todo find a way to either improve or remove this component
  */
 export default {
-  name: "modifierWidgetFixturePool",
+  name: 'ModifierWidgetFixturePool',
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   props: {
     /**
      * Handle to fixture pool
      */
-    pool: Object,
-    /**
-     * 
-     */
-    // poolListable: Array,
+    pool: {
+      type: Object,
+      default: () => ({
+        listable: [],
+      }),
+    },
     /**
      * Action description object
      */
-    action: Object,
+    action: {
+      type: Object,
+      default: null,
+    },
     /**
      * Which index of the list should be selected on mount
      */
-    autoSelect: Number,
+    autoSelect: {
+      type: Number,
+      default: 0,
+    },
     /**
      * List of elements that will not propagate unfocus event to component
      */
@@ -54,28 +70,48 @@ export default {
       default: () => [],
     },
   },
+  emits: ['select', 'delete', 'highlight', 'focused'],
   data() {
     return {
       /**
        * Widget header data
        */
       header: {
-        title: "Fixture Pool",
-        icon: "patch",
+        title: 'Fixture Pool',
+        icon: 'patch',
       },
+      /**
+       * Currently selected fixture
+       */
+      selected: 0,
     };
+  },
+  watch: {
+    '$route.query.fixtureId': function watchFixtureId(fixtureId) {
+      if (fixtureId !== this.selected) {
+        const fixture = this.pool.fixtures.find((f) => f.id === Number(fixtureId));
+        if (fixture) {
+          this.selectFixture(fixture);
+        }
+      }
+    },
+  },
+  mounted() {
+    const visualizerEl = document.getElementById('visualizer');
+    this.preventUnfocus.push(...[visualizerEl]);
   },
   methods: {
     /**
      * Highlights and forwards fixture selection event to parent
      *
-       * @public
+     * @public
      * @param {Object} fixture reference to fixture defintion object
      */
     selectFixture(fixture) {
+      this.selected = this.pool.fixtures.findIndex((f) => f.id === fixture.id);
       fixture = this.pool.getFromId(fixture.id);
       fixture.highlightSingle(true, true);
-      this.$emit("select", fixture.id);
+      this.$emit('select', fixture.id);
     },
     /**
      * Forwards fixture deletion event
@@ -84,7 +120,7 @@ export default {
      * @param {Array} fixtures Array of references to fixture defintion object
      */
     deleteFixtures(fixtures) {
-      this.$emit("delete", fixtures);
+      this.$emit('delete', fixtures);
     },
     /**
      * Highlights and forwards fixture highlighting event
@@ -93,11 +129,14 @@ export default {
      * @param {Array} fixtures Array of references to fixture defintion object
      */
     highlightFixtures(fixtures) {
-      fixtures.forEach((fixtureData) => {
-        let fixture = this.pool.getFromId(fixtureData.id);
+      fixtures.forEach((fixtureData, index) => {
+        const fixture = this.pool.getFromId(fixtureData.id);
+        if (index === 0) {
+          fixture.highlightSingle(false, false);
+        }
         fixture.highlight(true, true);
       });
-      this.$emit("highlight", fixtures);
+      this.$emit('highlight', fixtures);
     },
     /**
      * Forwards list focus event
@@ -106,17 +145,12 @@ export default {
      * @param {Boolean} state List focusing state
      */
     setFocus(state) {
-      if (!state) {
-        if(this.pool && this.pool.fixtures.length){
-          this.pool.fixtures[0].highlightSingle(false, true)
-        }
-      }
-      this.$emit("focused", state);
+      this.$emit('focused', state);
     },
     /**
      * Reorder list items
      *
-       * @public
+     s* @public
      * @param {Object} reorderData list reordering object
      * @param {Number} reorderData.original original item index
      * @param {Number} reorderData.final final item index
@@ -125,15 +159,6 @@ export default {
       this.pool.moveItem(reorderData.original, reorderData.final);
     },
   },
-  computed:{
-    poolListable(){
-      return JSON.parse(JSON.stringify(this.pool.listable))
-    }
-  },
-  mounted() {
-    let visualizerEl = document.getElementById("visualizer");
-    this.preventUnfocus.push(...[visualizerEl]);
-  }
 };
 </script>
 
@@ -144,13 +169,5 @@ export default {
 .modifier_widget_fixture_pool_body {
   width: 100%;
   height: 100%;
-}
-.empty_text {
-  display: flex;
-  flex: 1;
-  flex-direction: row;
-  align-items: center;
-  color: var(--secondary-light);
-  justify-content: center;
 }
 </style>

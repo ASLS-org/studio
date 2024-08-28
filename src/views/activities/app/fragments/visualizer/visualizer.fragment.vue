@@ -1,22 +1,47 @@
 <template>
-  <uk-flex col class="visualizer" :class="{ hidden }">
-    <uk-flex class="header" v-if="$route.name != 'Visualizer'">
+  <uk-flex
+    col
+    class="visualizer"
+    :class="{ hidden }"
+  >
+    <uk-flex
+      class="header"
+    >
       <h3>Visualizer</h3>
       <span style="flex: 1" />
-      <!-- <uk-button v-show="!hidden" @click.native="popout" icon="popout" style="margin-right: 8px" label="Popout" /> -->
-      <uk-button v-show="!hidden" @click.native="toggleVisibility" icon="hide" style="margin-right: 8px" label="Hide" />
-      <uk-icon v-show="hidden" @click.native="toggleVisibility" name="hide" style="fill: var(--secondary-lighter); cursor: pointer" />
+      <uk-button
+        v-show="!hidden"
+        icon="hide"
+        style="margin-right: 8px"
+        label="Hide"
+        @click="toggleVisibility"
+      />
+      <uk-icon
+        v-show="hidden"
+        name="hide"
+        style="fill: var(--secondary-lighter); cursor: pointer"
+        @click="toggleVisibility"
+      />
     </uk-flex>
-    <canvas v-show="!hidden" class="visualizer" id="visualizer" ref="visualizer" />
+    <canvas
+      v-show="!hidden"
+      id="visualizer"
+      ref="visualizer"
+      class="visualizer"
+    />
   </uk-flex>
 </template>
 
 <script>
-import Visualizer from "@/plugins/visualizer/visualizer.js";
-import EventBus from "@/plugins/eventbus";
+import Visualizer from '@/plugins/visualizer/visualizer';
+import EventBus from '@/plugins/eventbus';
 
 export default {
-  name: "VisualizerFragment",
+  name: 'VisualizerFragment',
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   data() {
     return {
       /**
@@ -33,6 +58,14 @@ export default {
       hidden: false,
     };
   },
+  async mounted() {
+    this.$show.visualizerHandle = new Visualizer(this.$refs.visualizer);
+    await this.$show.visualizerHandle.init();
+    new ResizeObserver(
+      this.$show.visualizerHandle.resize.bind(this.$show.visualizerHandle),
+    ).observe(this.$refs.visualizer);
+    EventBus.emit('visualizer_loaded', true);
+  },
   methods: {
     /**
      * Opens visualizer in a popup window
@@ -41,7 +74,7 @@ export default {
      */
     popout() {
       this.hide();
-      this.popupHandle = window.open("/visualizer", "visualizerWindow", "popup");
+      this.popupHandle = window.open('/visualizer', 'visualizerWindow', 'popup');
       this.popupHandle.$show = this.$show;
       this.popupHandle.onbeforeunload = this.show;
     },
@@ -56,8 +89,8 @@ export default {
       } else {
         this.hide();
       }
-      //Dirty trick but it should do for now.
-      EventBus.$emit("visualizer_visibility", !this.hidden);
+      // Dirty trick but it should do for now.
+      EventBus.emit('visualizer_visibility', !this.hidden);
     },
     /**
      * Toggles visualizer's visibility state off
@@ -85,33 +118,19 @@ export default {
       });
     },
   },
-  async mounted() {
-    try {
-      this.$show.visualizerHandle = new Visualizer(this.$refs.visualizer);
-      await this.$show.visualizerHandle.init();
-      window.addEventListener("resize", () => {
-        this.$show.visualizerHandle.resize();
-      });
-      this.$show.visualizerHandle.resize();
-      setTimeout(() => {
-        this.$show.visualizerHandle.resize();
-      }, 500);
-      EventBus.$emit("visualizer_loaded", true);
-    } catch (err) {
-      console.log(err);
-    }
-  },
 };
 </script>
 
 <style scoped>
+#visualizer{
+  cursor: grab;
+}
 .visualizer {
   display: flex;
   height: 100% !important;
   width: 100% !important;
   outline: none;
   border-left: var(--primary-dark);
-  cursor: grab;
 }
 .visualizer.hidden {
   width: unset !important;
@@ -134,7 +153,6 @@ export default {
 .visualizer.hidden .header {
   height: 100%;
   width: 40px;
-  /* background: repeating-linear-gradient(45deg, #161913, #161913 10px, #0c0e0a 10px, #0c0e0a 20px); */
   text-align: left;
   flex-direction: column-reverse;
   padding: 10px 0px;
