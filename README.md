@@ -1,86 +1,86 @@
-[![MadeWithVueJs.com shield](https://madewithvuejs.com/storage/repo-shields/4381-shield.svg)](https://madewithvuejs.com/p/asls-studio/shield-link)
-# What is ASLS Studio
+<p align="center">
+  <a href="https://studio.asls.io/" target="blank"><img src="./src/assets/images/studio_logo_textual.svg" height="100" alt="ASLS Studio logo" /></a>
+  <p align="center">Open source, web-based, show control software and visualizer </p>
+</p>
 
-[ASLS Studio](https://studio.asls.timekadel.com) is an open-source, web-based, DMX lighting control software and visualizer.
+<p align="center">
+  <a href="https://madewithvuejs.com/p/asls-studio/shield-link" target="_blank">
+    <img src="https://madewithvuejs.com/storage/repo-shields/4381-shield.svg" alt="MadeWithVueJs.com shield" />
+  </a>
+  <a href="https://github.com/ASLS-org/studio/?tab=GPL-3.0-1-ov-file" target="_blank">
+    <img src="https://img.shields.io/github/license/asls-org/studio" alt="License" />
+  </a>
+  </a>
+  <a href="https://github.com/ASLS-org/studio/releases" target="_blank">
+    <img src="https://img.shields.io/github/v/tag/asls-org/studio?include_prereleases&sort=semver&style=flat&label=version" alt="Version" />
+  </a>
+</p>
 
-> **Warning:**
-The current distribution of ASLS Studio is in alpha status. Listed features are provided as-is, without any guarantee. Please report any issue over the project's repository. 
+## Overview
 
+ASLS Studio is currently in alpha version and available for download through its GitHub repository. This guide will help you set up ASLS Studio on your machine.
 
-## Motivation
+> **Warning**: ASLS Studio is in early beta phase. Features are provided as-is, without guarantees. Please report any issues on the project's repository.
 
-Part of ASLS (Autonomous Stage Lighting Systems) development, it was originally created to offer ways to program ASLS DMX nodes on the fly through a simple web-browser. Following the end of the project, it was decided to release the project as an open-source, free to use platform for anyone to enjoy. 
-
-## Features
-
-ASLS Studio comes with standard DMX lighting control software features such as Universe patching, Fixture grouping, Scene generation, Effect engines, Show Emulation and much more. The following manual aims to guide you through each individual feature.
-
-
-# Installation
-
-The alpha version of ASLS Studio is presently available to download through it's [repository](https://github.com/ASLS-org/studio.git). An executable version of the software should be released during beta state.
-This section will help you download and setup ASLS Studio on your machine.
-
-> **Warning:**
-The current distribution of ASLS Studio is in alpha status. Listed features are provided as-is, without any guarantee. Please report any issue over the project's repository. 
-
-## Requirements
-
-> **Info:**
-As of today, there is no **"user-friendly"** installation script available to download. It is recommended to users that might not be familiar with [Git](https://git-scm.com/)/[GitHub](https://github.com/) and [Node.js](https://nodejs.org/en/) to read a bit about these tools before proceeding with the next steps.
-
-In order for ASLS Studio to run on your machine, please make sure that you meet the following minimum system specifications:
+## System Requirements
 
 ### Hardware
-
-- 4GB of RAM (8GB or more recommended)
-- Integrated graphics with WebGL 1.0 / WebGL 2.0 support (A dedicated GPU is recommended)
+- RAM: 4GB minimum (8GB or more recommended)
+- Graphics: Integrated graphics with WebGL 1.0 / WebGL 2.0 support (Dedicated GPU recommended)
 
 ### Software
-- [Node.js](https://nodejs.org/en/) v16.15.1 or upper
-- Latest version of one of the following browsers: [Chrome](https://www.google.com/chrome/), [Firefox](https://www.mozilla.org/en-US/firefox/new/), [Opera](https://www.opera.com/download)
-  
+- Operating System: Any OS supporting the required software
+- Node.js: v16.15.1 or higher
+- Browser: Latest version of Chrome, Firefox, or Opera
 
-## Download and install
+## Installation Process
 
-Browse to the path of your choice and run the following command from a terminal:
+1. **Clone the Repository**
 
-```
-$ git clone https://github.com/ASLS-org/studio.git
-```
+   Open a terminal and navigate to your desired installation directory. Then run:
 
-Get to the project's root.
-```
-$ cd studio
-```
+   ```
+   git clone https://github.com/ASLS-org/studio
+   ```
 
-Install package dependencies.
-```
-$ npm install
-```
+2. **Navigate to Project Directory**
 
-## Start Environment locally
+   ```
+   cd studio
+   ```
 
-Serve ASLS Studio in the local server.
-```
-$ npm run serve
-```
+3. **Install Dependencies**
 
-ASLS Studio will start a server at http://localhost:4515. Simply browse to the following URL using your favorite browser to be prompted with ASLS Studio's user interface.
+   ```
+   npm install
+   ```
 
-## Build For Production
+## Running ASLS Studio
 
-Build ASLS Studio from source.
+### Local Development Server
 
-```
-$ npm run build
-```
+To start ASLS Studio on a local development server:
 
-Built files will be located over the local `./dist` folder located at project root.
+1. Run the following command:
 
-# Getting Started
+   ```
+   npm start
+   ```
 
-Please refer to [ASLS Studio's manual](https://studio.asls.timekadel.com) for an in-depth guide on how to use this tool. 
+2. Open your browser and navigate to [http://localhost:5173](http://localhost:5173)
 
-> **Warning:**
-Please note that this is an early alpha version. Documentation is still in progress. It will be updated following the next releases.
+### Production Build
+
+To create a production build:
+
+1. Run the build command:
+
+   ```
+   npm run build
+   ```
+
+2. Locate the built files in the `./dist` folder at the project root.
+
+## Troubleshooting
+
+If you encounter any issues during installation or usage, please report them on the [ASLS Studio GitHub repository](https://github.com/ASLS-org/studio/issues).
