@@ -18,7 +18,7 @@
 
 ## Overview
 
-ASLS Studio is currently in alpha version and available for download through its GitHub repository. This guide will help you set up ASLS Studio on your machine.
+ASLS Studio is currently in beta version and available for download through its GitHub repository. This guide will help you set up ASLS Studio on your machine.
 
 > **Warning**: ASLS Studio is in early beta phase. Features are provided as-is, without guarantees. Please report any issues on the project's repository.
 
