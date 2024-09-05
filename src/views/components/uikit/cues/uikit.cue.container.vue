@@ -151,7 +151,6 @@
             style="
               height: 10px;
               width: 10px;
-              /* background: red; */
               border-radius: 50%;
               box-shadow: inset 1px 1px 2px var(--primary-dark);
               transition: all .2s;
