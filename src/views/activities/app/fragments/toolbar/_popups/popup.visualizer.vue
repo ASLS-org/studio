@@ -14,13 +14,15 @@
     >
       <uk-flex
         :gap="8"
-        center-h
+        col
+        class="title"
       >
         <h3>Fogging</h3>
+        <p class="subtitle">
+          Global scene fogging settings.
+        </p>
       </uk-flex>
-      <p class="subtitle">
-        Global scene fogging settings.
-      </p>
+
       <uk-flex center-h>
         <div>
           <h4>State:</h4>
@@ -49,7 +51,7 @@
           v-model="$show.visualizerHandle.globalFoggingDensity"
           :min="0"
           :max="100"
-          style="width: 70px"
+          style="width: 100px"
         />
       </uk-flex>
       <uk-flex center-h>
@@ -64,19 +66,20 @@
           v-model="$show.visualizerHandle.globalFoggingTurbulences"
           :min="0"
           :max="100"
-          style="width: 70px"
+          style="width: 100px"
         />
       </uk-flex>
       <div class="separator" />
       <uk-flex
         :gap="8"
-        center-h
+        col
+        class="title"
       >
         <h3>Lighting</h3>
+        <p class="subtitle">
+          Lighting emulation settings.
+        </p>
       </uk-flex>
-      <p class="subtitle">
-        Lighting emulation settings.
-      </p>
       <uk-flex center-h>
         <div>
           <h4>Global Brightness:</h4>
@@ -89,33 +92,7 @@
           v-model="$show.visualizerHandle.globalBrightness"
           :min="25"
           :max="100"
-          style="width: 70px"
-        />
-      </uk-flex>
-      <uk-flex center-h>
-        <div>
-          <h4>Volumetrics:</h4>
-          <p class="subtitle">
-            Volumetrics emulation mode
-          </p>
-        </div>
-        <uk-spacer />
-        <uk-select-input
           style="width: 100px"
-          :options="['high', 'medium', 'low', 'disabled']"
-        />
-      </uk-flex>
-      <uk-flex center-h>
-        <div>
-          <h4>Light Sources:</h4>
-          <p class="subtitle">
-            Light sources emulation settings
-          </p>
-        </div>
-        <uk-spacer />
-        <uk-select-input
-          style="width: 100px"
-          :options="['enabled', 'disabled']"
         />
       </uk-flex>
     </uk-flex>
@@ -184,15 +161,16 @@ export default {
   margin-left: 8px;
 }
 .separator {
-  margin: 8px 0;
+  margin: 4px 0;
   width: 100%;
-  height: 1px;
-  border-bottom: 1px solid var(--primary-dark);
 }
 .subtitle {
   font-family: Roboto-Regular;
   margin-bottom: 8px;
   color: var(--secondary-lighter-alt);
+}
+.title{
+  border-bottom: 1px solid var(--primary-dark);
 }
 .title_icon {
   fill: var(--secondary-lighter);
