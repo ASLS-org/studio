@@ -90,18 +90,6 @@ export default {
         color: this.group.color,
       };
     },
-    // TODO check if this can be removed
-    /* group() {
-      this.cue = this.group
-        ? {
-            name: `Cue ${this.cueId}`,
-            type: 0,
-            id: this.cueId,
-            fixtures: this.group.fixturePool.fixtures,
-            color: this.group.color,
-          }
-        : {};
-    }, */
   },
   methods: {
     /**
