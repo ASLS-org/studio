@@ -13,7 +13,7 @@
         class="channels_channel"
       >
         <uk-num-input
-          :value="channel.value"
+          v-model.lazy="channel.value"
           class="channel_value"
           :min="0"
           :max="255"
@@ -60,7 +60,7 @@ export default {
      */
     channels: {
       type: Array,
-      default: () => [1, 2, 3, 4, 5],
+      default: () => [],
     },
     /**
      * Whether the channels are toggleable or not (checkbox displayed)
