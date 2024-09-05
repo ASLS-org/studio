@@ -2,7 +2,7 @@ import UkColors from '@/views/components/uikit/colors/uikit.colors';
 import {
   Proxify,
 } from '../utils/proxify.utils';
-import Cue from './cue.model';
+import Cue, { CUE_LOOP_STYLES } from './cue.model';
 
 /**
  * Available color channels
@@ -43,6 +43,7 @@ const FX_CHANNEL_DIRECTIONS = {
   BOUNCELRT: 2,
   BOUNCERTL: 3,
   SYM: 4,
+  SYMREV: 5,
 };
 
 /**
@@ -643,24 +644,43 @@ class FXChannel extends Proxify {
           * (index / activeFixtures.length) * (Math.PI / 180)
           + this.fixturePhaseStart * (Math.PI / 180);
           break;
-        case FX_CHANNEL_DIRECTIONS.SYM:
-          // eslint-disable-next-line no-case-declarations
-          const midpoint = (activeFixtures.length - 1) / 2;
-          if (index <= midpoint) {
+        case FX_CHANNEL_DIRECTIONS.SYM: {
+          const normalizedIndex = index / (activeFixtures.length - 1);
+          let phaseOffset;
+
+          if (normalizedIndex <= 0.5) {
+            // First half: 0 to 0.5
+            phaseOffset = normalizedIndex * 2;
+          } else {
+            // Second half: 0.5 to 0
+            phaseOffset = (1 - normalizedIndex) * 2;
+          }
+
+          fixture.phase = (
+            (this.fixturePhaseStop - this.fixturePhaseStart)
+            * phaseOffset
+            * (Math.PI / 180) + this.fixturePhaseStart * (Math.PI / 180)
+          );
+        }
+          break;
+        case FX_CHANNEL_DIRECTIONS.SYMREV:
+          /* eslint-disable */
+          const halfLength = activeFixtures.length / 2;
+
+          if (index < halfLength) {
+            // First half: spread from 0 to π
+            const phaseOffset = index / (halfLength - 1);
             fixture.phase = (
-              (this.fixturePhaseStop / 2 - this.fixturePhaseStart)
-              * (index / midpoint)
-              * (Math.PI / 180)
-              + this.fixturePhaseStart * (Math.PI / 180)
+              phaseOffset * Math.PI
             );
           } else {
+            // Second half: spread from 2π to π
+            const normalizedIndex = (index - halfLength) / (halfLength - 1);
             fixture.phase = (
-              (this.fixturePhaseStop / 2 - this.fixturePhaseStart)
-              * ((activeFixtures.length - 1 - index) / midpoint)
-              * (Math.PI / 180)
-              + this.fixturePhaseStart * (Math.PI / 180)
+              (2 * Math.PI) - (normalizedIndex * Math.PI)
             );
           }
+          /* eslint-enable */
           break;
         default: break;
       }
@@ -834,6 +854,7 @@ class FX extends Cue {
    */
   constructor(data = {}) {
     super(data);
+    this.loopStyle = data.loopStyle != null ? data.loopStyle : CUE_LOOP_STYLES.LOOP;
     this.type = CUE_TYPE_EFFECT;
     this._channels = [];
     this.proxify();
