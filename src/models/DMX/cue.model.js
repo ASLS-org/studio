@@ -8,7 +8,7 @@ import { Proxify } from '../utils/proxify.utils';
  * @constant {Object} CUE_TYPES
  * @enum {Number}
  */
-const CUE_TYPES = {
+export const CUE_TYPES = {
   SCENE: 0,
   EFFECT: 1,
 };
@@ -18,7 +18,7 @@ const CUE_TYPES = {
  * @constant {Object} CUE_STATES
  * @enum {Number}
  */
-const CUE_STATES = {
+export const CUE_STATES = {
   IDLE: 0,
   RUNNING: 1,
 };
@@ -28,7 +28,7 @@ const CUE_STATES = {
  * @constant {Object} CUE_TRIGGER_STYLES
  * @enum {Number}
  */
-const CUE_TRIGGER_STYLES = {
+export const CUE_TRIGGER_STYLES = {
   TOGGLE: 0,
   TEMPORARY: 1,
 };
@@ -38,7 +38,7 @@ const CUE_TRIGGER_STYLES = {
  * @constant {Object} CUE_LOOP_STYLES
  * @enum {Number}
  */
-const CUE_LOOP_STYLES = {
+export const CUE_LOOP_STYLES = {
   ONE_SHOT: 0,
   LOOP: 1,
 };
