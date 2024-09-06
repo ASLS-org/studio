@@ -88,9 +88,6 @@ export default {
               }
             };
             window.addEventListener('keydown', shortcuCallback);
-            // this.$once("@vue:destroy", () => {
-            //   window.removeEventListener("keydown", shortcuCallback);
-            // });
           }
           item.more = item.shortcut ? `(${item.shortcut})` : '';
           return item;

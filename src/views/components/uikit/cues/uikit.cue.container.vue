@@ -232,17 +232,9 @@ export default {
     return {
       poolsize: 100,
       /**
-       * Whether this container is currently selected or not
-       */
-      // selected: this.master ? false : this.$route.params.groupId === this.group.id,
-      /**
-       * Id of the currently selected chase
-       */
-      // selectedChaseId: null,
-      /**
        * List of chases contained within the group
        */
-      chases: this.master ? [] : this.group.chasePool.chases,
+      chases: this.master ? [] : this.group?.chasePool.chases,
       binDisplay: [0, 0, 0, 0],
       masterPlayingRow: this.$show.master.test,
     };

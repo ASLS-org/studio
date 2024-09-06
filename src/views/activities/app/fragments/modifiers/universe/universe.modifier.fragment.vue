@@ -85,17 +85,9 @@ export default {
        */
       universe: {},
       /**
-       * Handle to universe's fixture pool instance
-       */
-      fixtures: [],
-      /**
        * Currently selected fixture
        */
       selectedFixture: null,
-      /**
-       * List of currently highlighted fixtures
-       */
-      highlightedFixtures: [],
       /**
        * Patch popup display state
        */
@@ -122,7 +114,7 @@ export default {
     },
   },
   mounted() {
-    this.fetchUniverseData();
+    this.fetchUniverseData(0);
   },
   beforeUnmount() {
     if (this.selectedFixture && this.selectedFixture.id) {
@@ -142,6 +134,7 @@ export default {
           this.selectFixture(0);
         } catch (err) {
           this.universe = {};
+          this.selectedFixture = null;
         }
       }
     },

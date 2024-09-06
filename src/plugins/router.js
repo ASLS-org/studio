@@ -46,8 +46,7 @@ const routes = [{
   path: '/visualizer',
   component: VisualizerActivity,
   name: 'Visualizer',
-},
-];
+}];
 
 const router = createRouter({
   history: createWebHistory(),

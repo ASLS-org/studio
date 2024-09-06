@@ -136,17 +136,6 @@ export default {
       selectedChase: null,
     };
   },
-  watch: {
-    // '$route.params.groupId': function routeParamsGroupIdWatcher() {
-    //   this.selectedGroup = Number(this.$route.params.groupId);
-    // },
-    // '$route.params.chaseId': function routeParamsChaseIdWatcher() {
-    //   console.log(this.$route.params.chaseId);
-    //   if (!this.master) {
-    //     this.selectedChase = this.selected ? this.$route.params.chaseId : null;
-    //   }
-    // },
-  },
   mounted() {
     this.groups = this.$show.groupPool.groups;
     // Dirty trick but it should do for now.
