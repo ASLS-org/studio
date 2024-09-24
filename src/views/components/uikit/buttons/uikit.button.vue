@@ -1,5 +1,5 @@
 <template>
-  <uk-flex
+  <button
     class="uikit_button"
     :style="{background: toggled && color ? color : 'var(--secondary-dark)' }"
     :class="{ disabled, toggled, toggleable, square }"
@@ -11,7 +11,7 @@
       :name="icon"
     />
     <h4>{{ label }}</h4>
-  </uk-flex>
+  </button>
 </template>
 
 <script>
@@ -77,22 +77,31 @@ export default {
       toggled: this.toggleable ? this.value : false,
     };
   },
+  watch: {
+    modelValue(value) {
+      if (this.toggleable) {
+        this.toggled = value;
+      }
+    },
+  },
   methods: {
     /**
      * Handle button click.
      *
        */
     handleClick() {
-      if (this.toggleable) {
-        this.toggled = !this.toggled;
-      }
-      /**
+      if (!this.disabled) {
+        if (this.toggleable) {
+          this.toggled = !this.toggled;
+        }
+        /**
        * Button input event
        *
        * @property {Boolean} toggled button's toggle state
        */
-      this.$emit('click', this.toggled);
-      this.$emit('update:modelValue', this.toggled);
+        this.$emit('click', this.toggled);
+        this.$emit('update:modelValue', this.toggled);
+      }
     },
   },
 };
@@ -100,6 +109,7 @@ export default {
 
 <style scoped>
 .uikit_button {
+  display: flex;
   user-select: none;
   background: var(--secondary-dark);
   height: 20px;
@@ -113,7 +123,7 @@ export default {
   padding: 0 14px;
   opacity: .9;
 }
-.uikit_button:active:not(.toggleable){
+.uikit_button:not(.disabled):not(.toggleable){
   background: var(--secondary-light)!important;
 }
 .uikit_button.toggleable{
@@ -130,7 +140,7 @@ export default {
   font-size: 10px;
   color: var(--secondary-lighter);
 }
-.uikit_button:hover {
+.uikit_button:not(.disabled):hover {
   opacity: 1;
   cursor: pointer;
   transition: background-color .1s ease-in-out;
@@ -141,6 +151,9 @@ export default {
 }
 .disabled h4{
   color: var(--secondary-light)!important;
+}
+.disabled .uikit_button_icon{
+  fill: var(--secondary-light)!important;
 }
 .uikit_button.toggled {
   background: var(--accent-blue);
