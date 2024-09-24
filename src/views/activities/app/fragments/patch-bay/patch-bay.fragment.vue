@@ -4,9 +4,9 @@
       <h3>Patch Bay</h3>
       <span style="flex: 1" />
       <uk-button
-        icon="patch"
+        icon="new"
         style="margin-right: 8px"
-        label="patch"
+        label="new"
         @click="displayPatchPopup"
       />
     </div>

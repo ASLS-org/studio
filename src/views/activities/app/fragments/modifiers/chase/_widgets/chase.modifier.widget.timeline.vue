@@ -736,7 +736,7 @@ export default {
   background: var(--accent-maroon);
   z-index: 0;
   position: absolute;
-  height: 166px;
+  height: 100%;
   margin-top: 12px;
   z-index: 30;
   opacity: .8;
