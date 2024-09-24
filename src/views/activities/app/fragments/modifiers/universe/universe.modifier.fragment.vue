@@ -2,7 +2,6 @@
   <uk-flex class="universe_modifier">
     <universe-settings-widget v-model="universe" />
     <fixture-pool-widget
-      :prevent-unfocus="unfocusPreventable"
       :pool="universe.fixturePool"
       :action="{
         icon: 'new',
@@ -92,11 +91,6 @@ export default {
        * Patch popup display state
        */
       patchPopupDisplayState: false,
-      /**
-       * List of unfocus preventable HTML elements to be
-       * forwarded to the universe's fixture list component.
-       */
-      unfocusPreventable: [],
       /**
        * Index of the currently selected fixture in the universe's fixture pool.
        */

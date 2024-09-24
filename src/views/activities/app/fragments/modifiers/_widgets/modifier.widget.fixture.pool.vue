@@ -14,7 +14,6 @@
       auto-select-first
       :auto-select="selected"
       :items="pool.listable"
-      :prevent-unfocus="preventUnfocus"
       @select="selectFixture"
       @delete="deleteFixtures"
       @highlight="highlightFixtures"
@@ -62,13 +61,6 @@ export default {
       type: Number,
       default: 0,
     },
-    /**
-     * List of elements that will not propagate unfocus event to component
-     */
-    preventUnfocus: {
-      type: Array,
-      default: () => [],
-    },
   },
   emits: ['select', 'delete', 'highlight', 'focused'],
   data() {
@@ -96,10 +88,6 @@ export default {
       }
     },
   },
-  mounted() {
-    const visualizerEl = document.getElementById('visualizer');
-    this.preventUnfocus.push(...[visualizerEl]);
-  },
   methods: {
     /**
      * Highlights and forwards fixture selection event to parent
@@ -116,7 +104,7 @@ export default {
     /**
      * Forwards fixture deletion event
      *
-       * @public
+     * @public
      * @param {Array} fixtures Array of references to fixture defintion object
      */
     deleteFixtures(fixtures) {
@@ -129,13 +117,17 @@ export default {
      * @param {Array} fixtures Array of references to fixture defintion object
      */
     highlightFixtures(fixtures) {
-      fixtures.forEach((fixtureData, index) => {
-        const fixture = this.pool.getFromId(fixtureData.id);
-        if (index === 0) {
-          fixture.highlightSingle(false, false);
-        }
-        fixture.highlight(true, true);
-      });
+      if (fixtures.length) {
+        fixtures.forEach((fixtureData, index) => {
+          const fixture = this.pool.getFromId(fixtureData.id);
+          if (index === 0) {
+            fixture.highlightSingle(false, false);
+          }
+          fixture.highlight(true, true);
+        });
+      } else {
+        console.log(fixtures);
+      }
       this.$emit('highlight', fixtures);
     },
     /**

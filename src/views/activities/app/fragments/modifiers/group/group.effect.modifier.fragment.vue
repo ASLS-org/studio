@@ -80,6 +80,11 @@ export default {
       fixtures: [],
     };
   },
+  watch: {
+    'selectedFxChannel.listableFixtures': function () {
+      this.fixtures = this.selectedFxChannel.listableFixtures;
+    },
+  },
   methods: {
     /**
      * Picks a channel from the effect's modulated channel list to be selected.
@@ -112,14 +117,6 @@ export default {
       this.selectedFxChannel.changeFixtureOrder(reorderData.original, reorderData.final);
     },
   },
-  // watch: {
-  //   // "effect.channels"() {
-  //   //   this.selectFxChannel(this.effect.channels[0] || null);
-  //   // },
-  //   // "effect.fixtures"(){
-  //   //   this.fixtures = this.selectedFxChannel.listableFixtures;
-  //   // }
-  // },
 };
 </script>
 
