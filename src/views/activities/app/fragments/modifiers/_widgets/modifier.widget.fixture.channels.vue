@@ -28,7 +28,6 @@
         />
         <uk-fader
           v-model.lazy="channel.value"
-          :short="toggleable"
           :min="0"
           :max="255"
           :label="`CH${index + 1}`"
@@ -87,7 +86,7 @@ export default {
      * @param {Object} channel a channel description object
      */
     update(channel) {
-      this.$emit('input', channel);
+      this.$nextTick(() => this.$emit('input', channel));
     },
     /**
      * GetRetrieves icon that is associated to a specific channel type

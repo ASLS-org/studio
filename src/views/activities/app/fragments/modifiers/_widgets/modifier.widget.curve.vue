@@ -108,9 +108,16 @@ export default {
   data() {
     return {
       /**
-       * Canvas dimensions
+       * Canvas handle
        */
       canvas: {
+        width: 0,
+        height: 0,
+      },
+      /**
+       * Canvas dimensions
+       */
+      canvasDimensions: {
         width: 0,
         height: 0,
       },
@@ -130,10 +137,10 @@ export default {
      */
     cp1Style() {
       const bottomOffset = !this.fade.direction
-        ? this.fade.controlPoints[0].y * this.canvas.height - 18
-        : (1.0 - this.fade.controlPoints[0].y) * this.canvas.height - 18;
+        ? this.fade.controlPoints[0].y * this.canvasDimensions.height - 18
+        : (1.0 - this.fade.controlPoints[0].y) * this.canvasDimensions.height - 18;
       return {
-        left: `${Math.max(this.fade.controlPoints[0].x * this.canvas.width - 14, 0)}px`,
+        left: `${Math.max(this.fade.controlPoints[0].x * this.canvasDimensions.width - 14, 0)}px`,
         bottom: `${Math.max(bottomOffset, 0)}px`,
       };
     },
@@ -142,10 +149,10 @@ export default {
      */
     cp2Style() {
       const bottomOffset = !this.fade.direction
-        ? this.fade.controlPoints[1].y * this.canvas.height - 18
-        : (1.0 - this.fade.controlPoints[1].y) * this.canvas.height - 18;
+        ? this.fade.controlPoints[1].y * this.canvasDimensions.height - 18
+        : (1.0 - this.fade.controlPoints[1].y) * this.canvasDimensions.height - 18;
       return {
-        left: `${Math.max(this.fade.controlPoints[1].x * this.canvas.width - 14, 0)}px`,
+        left: `${Math.max(this.fade.controlPoints[1].x * this.canvasDimensions.width - 14, 0)}px`,
         bottom: `${Math.max(bottomOffset, 0)}px`,
       };
     },
@@ -158,7 +165,7 @@ export default {
         : (1.0 - this.fade.value);
       return {
         bottom: `calc(${(Math.min(bottomOffset, 1) % 1) * 100}% - 6px)`,
-        left: `calc(${(Math.min(this.fade.x, 1) % 1) * (this.canvas.width / this.canvas.height) * 100}% - 6px)`,
+        left: `calc(${(Math.min(this.fade.x, 1) % 1) * (this.canvasDimensions.width / this.canvasDimensions.height) * 100}% - 6px)`,
       };
     },
   },
@@ -198,11 +205,15 @@ export default {
     dragCp(e, controlPointId) {
       this.fade.type = 0;
       const rect = this.canvas.getBoundingClientRect();
+      this.canvasDimensions = {
+        width: rect.width,
+        height: rect.height,
+      };
       const posX = e.clientX - rect.left;
       const posY = e.clientY - rect.top;
       const cpY = !this.fade.direction
-        ? 1.0 - posY / this.canvas.height
-        : posY / this.canvas.height;
+        ? 1.0 - posY / rect.height
+        : posY / rect.height;
       this.fade.controlPoints[controlPointId].x = parseFloat(
         Math.min(
           Math.max(

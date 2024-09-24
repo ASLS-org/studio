@@ -398,7 +398,7 @@ export default {
 
 <style scoped>
 .navigation_header {
-  height: 40px;
+  min-height: 40px;
   width: 100%;
   background: var(--primary-light);
   border-bottom: 1px solid var(--primary-dark);

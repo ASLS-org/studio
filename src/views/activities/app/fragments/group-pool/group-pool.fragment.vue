@@ -267,12 +267,17 @@ export default {
 }
 .group_pool_groups {
   display: flex;
-  max-width: 480px;
+  width: 480px;
+  max-width: calc(100vw - 920px);
+  min-width: 240px;
   overflow: hidden;
   overflow-x: auto;
+  resize: horizontal
 }
 .group_pool_groups.expand {
   max-width: calc(100vw - 359px);
+  width: 100%;
+  resize: unset;
 }
 .group_pool_master {
   width: 0px;

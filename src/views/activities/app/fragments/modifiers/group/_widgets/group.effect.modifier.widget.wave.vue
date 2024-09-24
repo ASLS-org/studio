@@ -45,14 +45,14 @@
               v-model="channel.frequency"
               :disabled="!channel.type"
               :min="1"
-              :max="10"
+              :max="100"
               label="Freq"
               @input="update"
             />
             <uk-num-input
               v-model="channel.phase"
               :disabled="!channel.type"
-              :max="360"
+              :max="3600"
               label="Phase"
               @input="update"
             />
@@ -95,15 +95,20 @@
           height="189"
           class="widget_wave_modifier_canvas"
         />
-        <template v-for="(fixture, index) in channel.fixtures">
+        <template
+          v-for="(fixture, index) in channel.fixtures"
+        >
           <template v-if="channel && channel.fixtures.length">
             <div
               v-if="fixture.active"
-              :key="index"
+              :key="index + key"
               class="dot"
               :style="getTickPosition(fixture)"
             >
-              <div class="fixture-label">
+              <div
+                class="fixture-label"
+                :style="{top: index % 2 ? '-18px' : '10px'}"
+              >
                 F{{ index }}
               </div>
             </div>
@@ -155,6 +160,10 @@ export default {
         height: 0,
       },
       /**
+       * Key used to force-refresh points on size update
+       */
+      key: 0,
+      /**
        * Handle to canvas context
        */
       context: null,
@@ -175,16 +184,23 @@ export default {
      * @param {Object} fixture hande to channel fixture instance
      */
     getTickPosition(fixture) {
-      const w = this.canvas.width;
-      const h = this.canvas.height;
-      const t = this.channel.time;
-      // eslint-disable-next-line max-len
-      const xOffset = (w * (t + ((fixture.phase / this.channel.frequency) * (180 / Math.PI)) / 360)) % w;
-      const yOffset = (1 - fixture.value / 255) * h;
+      if (this.canvas && this.canvas.getBoundingClientRect) {
+        const rect = this?.canvas?.getBoundingClientRect();
+        const w = rect.width;
+        const h = rect.height;
+        const t = this.channel.time;
+        // eslint-disable-next-line max-len
+        const xOffset = ((fixture.phase <= 0 ? -1 : 1) * (w * (t + ((fixture.phase / this.channel.frequency) * (180 / Math.PI)) / 360))) % w;
+        const yOffset = (1 - fixture.value / 255) * h;
+        return {
+          left: `${xOffset - 8}px`,
+          top: `${yOffset - 8}px`,
+          background: this.channel.color,
+        };
+      }
       return {
-        left: `${xOffset - 8}px`,
-        top: `${yOffset - 8}px`,
-        background: this.channel.color,
+        left: '0px',
+        top: '0px',
       };
     },
     /**
@@ -195,13 +211,14 @@ export default {
       this.canvas = this.$refs.waveModifier;
       this.context = this.canvas.getContext('2d');
       this.update();
+      new ResizeObserver(() => { this.key = Date.now(); }).observe(this.canvas);
     },
     /**
      * Draw the channel's waveform
      * @public
      */
     update() {
-      if (this.channel) {
+      if (this.context && this.channel) {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.context.lineWidth = 2;
         const { width } = this.canvas;

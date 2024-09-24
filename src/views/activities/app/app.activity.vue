@@ -142,9 +142,12 @@ export default {
   width: 100%;
 }
 .top_fragments {
-  max-height: calc(100% - 260px)!important;
-  min-height: calc(100% - 260px)!important;
   z-index: 10;
+  overflow: hidden;
+  resize: vertical;
+  min-height: calc(100% - 500px);
+  max-height: calc(100% - 280px);
+  height: calc(100% - 280px);
 }
 .top_fragment_left{
   flex: 1;

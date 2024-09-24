@@ -108,5 +108,6 @@ export default {
 }
 .modifier_widget_cue_settings_body {
   padding: 10px;
+  height: 100%;
 }
 </style>
