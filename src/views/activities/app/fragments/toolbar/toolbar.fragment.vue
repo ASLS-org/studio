@@ -317,18 +317,10 @@ export default {
       el.addEventListener('change', async () => {
         if (el.files) {
           try {
-            await this.$router.push('/');
+            this.$router.push('/');
             await this.$show.loadFromFile(el.files[0]);
-            this.$router
-              .push('/universe/0')
-              .then(() => {
-                this.$show.loading.state = false;
-              })
-              .catch(() => {
-                this.$show.loading.state = false;
-              });
-            this.project = this.$show.name;
-            EventBus.emit('show_loaded');
+            // Yeah it sucks... But cleaning up everything from the view was a nightmare so for now:
+            window.location.reload();
           } catch (err) {
             EventBus.emit('app_error', err);
           }

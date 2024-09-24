@@ -152,12 +152,14 @@ export default {
      * @param {Object} e click event
      */
     hide(e) {
-      const el = this.$refs.options.$el;
-      const childClicked = e
-        ? el.contains(e.relatedTarget) || el.contains(e.explicitOriginalTarget)
-        : false;
-      if (!this.disabled && !childClicked) {
-        this.displayed = false;
+      const el = this.$refs?.options?.$el;
+      if (el) {
+        const childClicked = e
+          ? el.contains(e.relatedTarget) || el.contains(e.explicitOriginalTarget)
+          : false;
+        if (!this.disabled && !childClicked) {
+          this.displayed = false;
+        }
       }
     },
     /**
