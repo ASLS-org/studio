@@ -5,7 +5,6 @@ import {
 import {
   parseStringPromise as XMLParse,
 } from 'xml2js';
-import WebRTC from '@/plugins/webrtc';
 import {
   ProxifySingleton,
 } from '../utils/proxify.utils';
@@ -15,6 +14,7 @@ import GroupPool from './group.pool.model';
 import UniversePool from './universe.pool.model';
 import FixturePool from './fixture.pool.model';
 import Live from './live.model';
+import OutputPool from './output.pool.model';
 
 const LOCALSTORAGE_SHOWFILE_KEY = 'ASLS_STUDIO_SHOWFILE';
 const DEFAULT_PROJECT_NAME = 'new_project.asls';
@@ -48,9 +48,9 @@ class Show extends EventEmitter {
     this.universePool = new UniversePool();
     this.groupPool = new GroupPool();
     this.master = new Master(this.groupPool);
+    this.outputPool = new OutputPool();
     this.running = false;
     this.slave = false;
-    this.outputs = [];
     this.selectedOutputs = [];
     this.loading = {
       state: true,
@@ -63,12 +63,6 @@ class Show extends EventEmitter {
     ProxifySingleton.on('changed', () => {
       this.isSaved = false;
       this.emit('saveState', this.isSaved);
-    });
-    WebRTC.on('open', () => {
-      Live.add(this.dumpShowData.bind(this), null, 44);
-    });
-    WebRTC.on('config-update', () => {
-      this.outputs = WebRTC.ifaces;
     });
     this.universePool.addRaw();
     this.preloadFixtureList();
@@ -103,7 +97,7 @@ class Show extends EventEmitter {
       universes: this.universePool.universes.map((u) => u.showData),
       groups: this.groupPool.groups.map((g) => g.showData),
       visualizer: this.visualizerHandle.showData,
-      selectedOutputs: this.selectedOutputs,
+      outputs: this.outputPool.showData,
     };
   }
 
@@ -115,6 +109,8 @@ class Show extends EventEmitter {
   set name(name) {
     if (name) {
       this._name = name.replace('.json', '');
+    } else {
+      this._name = 'Untitled project';
     }
   }
 
@@ -202,32 +198,6 @@ class Show extends EventEmitter {
   }
 
   /**
-   * Sets show output preferences.
-   *
-   * @param {Array} outputs outputs preferences
-   * @public
-   */
-  setOutputs(outputs) {
-    WebRTC.setOutputs(outputs);
-    this.selectedOutputs = outputs;
-  }
-
-  /**
-   * Dumps show data over WebRTC
-   *
-   * @public
-   */
-  dumpShowData() {
-    if (!this.slave) {
-      WebRTC.broadcastUniverseData(this.universePool.universes[0].DMX512Data);
-
-      // this.universePool.universes.forEach((universe) => {
-      //   WebRTC.broadcastUniverseData(universe.DMX512Data);
-      // });
-    }
-  }
-
-  /**
    * Prepares universes from show data.
    *
    * @param {Object} showData hande toa show configuration object
@@ -266,6 +236,22 @@ class Show extends EventEmitter {
   }
 
   /**
+   * Prepares show outputs from show data.
+   *
+   * @param {Object} showData hande toa show configuration object
+   */
+  prepareOutputs(showData) {
+    if (showData.outputs) {
+      showData.outputs.forEach((o) => {
+        this.outputPool.addRaw({
+          ...o,
+          universe: this.universePool.getFromId(o.universe),
+        });
+      });
+    }
+  }
+
+  /**
    * Deletes a fixture from the show.
    *
    * @param {Object} fixture a fixture configuration object
@@ -293,51 +279,10 @@ class Show extends EventEmitter {
     this.groupPool.clearAll();
     this.universePool.clearAll();
     this.fixturePool.clearAll(true);
+    this.outputPool.clearAll();
     this.name = '';
     this.isSaved = true;
     this.bpm = DEFAULT_BPM_VALUE;
-  }
-
-  /**
-   * Sets up a nex project
-   *
-   * @param {String} name the name of the new project to be setup.
-   * @public
-   */
-  setupNewProject(name) {
-    this.loading = {
-      state: true,
-      message: 'Clearing show data',
-      percentage: 20,
-    };
-    this.clearShowData();
-    this.loading = {
-      state: true,
-      message: 'Setting up new project',
-      percentage: 40,
-    };
-    this.name = name;
-    this.bpm = 120;
-    this.universePool.addRaw();
-    this.universePool.addRaw();
-    this.universePool.addRaw();
-    this.universePool.addRaw();
-    this.groupPool.addRaw();
-    this.groupPool.addRaw();
-    this.groupPool.addRaw();
-    this.groupPool.addRaw();
-    this.loading = {
-      state: true,
-      message: 'Preloading fixture library',
-      percentage: 60,
-    };
-    this.preloadFixtureList();
-    this.loading = {
-      state: true,
-      message: 'Persisting project locally',
-      percentage: 80,
-    };
-    this.persistLocally();
   }
 
   /**
@@ -355,8 +300,9 @@ class Show extends EventEmitter {
    * @param {String} url local url of the showfile
    */
   async loadFromUrl(url) {
-    const res = await axios.get(url);
-    await this.loadShowFile(url, res.data);
+    const res = await fetch(url);
+    const data = await res.json();
+    await this.loadFromData(data);
   }
 
   /**
@@ -386,9 +332,9 @@ class Show extends EventEmitter {
     const ls_showdata = localStorage.getItem(LOCALSTORAGE_SHOWFILE_KEY);
     if (ls_showdata != null) {
       await this.loadFromData(JSON.parse(ls_showdata));
-    } else {
-      await this.setupNewProject();
+      return true;
     }
+    return false;
   }
 
   /**
@@ -443,12 +389,17 @@ class Show extends EventEmitter {
     this.loading.percentage = 90;
     this.prepareGroups(showData);
 
+    this.loading.message = 'Loading outputs';
+    this.loading.percentage = 90;
+    this.prepareOutputs(showData);
+
     this.loading.message = 'Finalizing';
     this.loading.percentage = 95;
     this.name = showData.name;
-    this.selectedOutputs = showData.selectedOutputs;
     this.ready = true;
     this.isSaved = true;
+
+    this.persistLocally();
   }
 
   /**
