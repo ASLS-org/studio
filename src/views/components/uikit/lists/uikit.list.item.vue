@@ -19,7 +19,6 @@
       v-if="toggleable"
       v-model="toggled"
       :disabled="value.disabled"
-      style="margin-right: 16px"
     />
     <span
       v-if="!value.icon && colored && value.color"
@@ -42,6 +41,12 @@
     >
       {{ value.more }}
     </h4>
+    <uk-button
+      v-if="value.action"
+      :icon="value.action.icon"
+      :label="value.action.label"
+      @click="value.action.callback"
+    />
     <uk-icon
       v-if="value.unfold && !unfolded"
       class="uikit_list_item_icon_small"
@@ -166,9 +171,10 @@ export default {
   background: var(--primary-light);
   opacity: 0.9;
   transition: background-color 0.1s;
+  gap: 10px;
 }
 .tall {
-  height: 40px !important;
+  min-height: 40px !important;
 }
 .uikit_list_item h4 {
   font-family: Roboto-medium;
@@ -193,7 +199,7 @@ export default {
 .deletable.selected .uikit_list_item_icon_small {
   display: initial !important;
 }
-.selected{
+.selected:not(.noSelect){
   background: var(--secondary-dark) !important ;
   opacity: 1;
 }
@@ -219,7 +225,7 @@ export default {
   background: var(--secondary-dark) !important;
 }
 .uikit_list_item_icon {
-  margin-right: 10px;
+  /* margin-right: 10px; */
   width: 14px !important;
   height: 14px !important;
   fill: var(--secondary-lighter) !important;
@@ -243,11 +249,11 @@ export default {
   width: 8px;
   border-radius: 50%;
   background: #533aaa;
-  margin-right: 8px;
+  /* margin-right: 8px; */
   border: 1px solid;
 }
 .uikit_list_item_more {
-  width: 62px;
+  /* width: 62px; */
   color: var(--secondary-light-alt);
   font-family: roboto-regular!important;
 }
