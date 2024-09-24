@@ -167,11 +167,6 @@ export default {
   },
   beforeUnmount() {
     const { body } = document;
-    // if (body.contains(this.$el)) {
-    //   console.log(body.contains(this.$el));
-    //   console.log(this.$el, body);
-    //   body.removeChild(this.$el);
-    // }
     window.removeEventListener('keydown', this.handleKeydown);
     if (this.backdrop && this.backdropEl) {
       body.removeChild(this.backdropEl);

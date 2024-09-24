@@ -125,8 +125,6 @@ export default {
           }
           fixture.highlight(true, true);
         });
-      } else {
-        console.log(fixtures);
       }
       this.$emit('highlight', fixtures);
     },
