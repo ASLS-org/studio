@@ -51,7 +51,10 @@ export default {
     /**
      * The checkbox's value.
      */
-    modelValue: Boolean,
+    modelValue: {
+      type: [Boolean, Number],
+      default: false,
+    },
     /**
      * Whether the checkbox is disabled or not.
      */
