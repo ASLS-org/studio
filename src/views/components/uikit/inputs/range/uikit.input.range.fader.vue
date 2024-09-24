@@ -5,7 +5,6 @@
         ref="track"
         v-model="content"
         class="uikit_fader_slider"
-        :class="{ long, short }"
         type="range"
         :min="min"
         :max="max"
@@ -15,7 +14,6 @@
     </div>
     <h3
       v-if="label != null"
-      :style="{ marginBottom: !short ? '8px' : '' }"
       class="uikit_fader_label"
       :class="{ disabled: disabled }"
     >
@@ -80,14 +78,6 @@ export default {
       default: 0,
     },
     /**
-     * Whether alternative long styling should be applied
-     */
-    long: Boolean,
-    /**
-     * Whether alternative short styling should be applied
-     */
-    short: Boolean,
-    /**
      * Fader's active track color
      */
     color: {
@@ -134,7 +124,7 @@ export default {
       if (!this.disabled) {
         const percentage = (this.content / (this.max - this.min)) * 100;
         if (this.$refs.track) {
-          this.$refs.track.style.background = `linear-gradient(90deg,${this.color} 0%,${this.color} ${percentage}%,var(--primary-dark) ${percentage}%, var(--primary-dark) 100%)`;
+          this.$refs.track.style.background = `linear-gradient(0deg,${this.color} 0%,${this.color} ${percentage}%,var(--primary-dark) ${percentage}%, var(--primary-dark) 100%)`;
         }
       } else if (this.$refs.track) {
         this.$refs.track.style.background = '#ffffff0d';
@@ -161,33 +151,32 @@ export default {
   user-select: none;
   align-items: center;
   justify-content: center;
-  width: 70px;
   height: 100%;
+  position: relative;
+  overflow: hidden;
+  padding-top: 8px;
+  padding-bottom: 8px;
 }
 .uikit_fader_wrapper {
   display: flex;
   flex-direction: row;
   align-items: center;
   height: 100%;
+  padding: 8px 0;
 }
 .uikit_fader_slider {
   -webkit-appearance: none;
-  height: 7px;
-  width: 100px;
-  padding: 0;
+  height: 100%;
+  width: 7px;
+  padding: 0 0;
   margin: 0;
-  transform: rotate(-90deg);
   border-radius: 5px;
   background: var(--primary-dark);
   box-shadow: inset 2px 2px 2px rgba(0, 0, 0, 0.25);
   cursor: pointer;
-}
-.long {
-  width: 200px !important;
-  height: 9px !important;
-}
-.short {
-  width: 80px !important;
+  writing-mode: vertical-lr;
+  direction: rtl;
+  vertical-align: middle;
 }
 .uikit_fader_slider:disabled {
   -webkit-appearance: none;
@@ -213,10 +202,10 @@ export default {
   -webkit-appearance: none;
   border: none;
   border-radius: 0;
-  height: 17px;
-  width: 36px;
+  height: 36px;
+  width: 17px;
   background: linear-gradient(
-    -90deg,
+    180deg,
     #1b1d18 0%,
     #373a33 12.22%,
     #161913 12.22%,
@@ -245,10 +234,10 @@ export default {
 .uikit_fader_slider::-moz-range-thumb {
   border: none;
   border-radius: 0;
-  height: 17px;
-  width: 36px;
+  height: 36px;
+  width: 17px;
   background: linear-gradient(
-    -90deg,
+    180deg,
     #1b1d18 0%,
     #373a33 12.22%,
     #161913 12.22%,
