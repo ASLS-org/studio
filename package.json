@@ -27,6 +27,7 @@
     "three-orbitcontrols": "^2.110.3",
     "vue": "^3.2.36",
     "vue-router": "^4.2.5",
+    "webrtc-adapter": "^9.0.1",
     "xml2js": "^0.6.2"
   },
   "devDependencies": {
