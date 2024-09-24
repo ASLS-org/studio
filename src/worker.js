@@ -12,7 +12,7 @@ const FX_CHANNEL_WAVEFORMS = {
 
 function update() {
   self.postMessage('');
-  setTimeout(update, 1000 / 44);
+  setTimeout(update, 1000 / 60);
 }
 
 function genSine(t, phaseOffset = 0, average, frequency, phaseRad, amplitude) {
