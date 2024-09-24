@@ -2,8 +2,9 @@
   <uk-popup
     v-model="state"
     :movable="true"
-    backdrop
     :header="headerData"
+    no-validation
+    backdrop
     @submit="
       updateOutputs();
       close();
@@ -11,56 +12,160 @@
     @input="update()"
   >
     <div class="body">
-      <uk-list
-        toggleable
-        :items="outputs"
-        @toggle="selectIface"
-      />
-      <uk-button
-        style="margin: 16px"
-        square
-        label="add input"
-        @click="displayAddInputPopup"
-      />
-    </div>
-  </uk-popup>
-  <uk-popup
-    v-model="addInputPopupState"
-    :movable="false"
-    backdrop
-    :header="{
-      title: 'Add connection'
-    }"
-    @submit="
-      updateOutputs();
-      close();
-    "
-    @input="update()"
-  >
-    <uk-flex
-      gap="8"
-      col
-      style="padding: 10px;"
-    >
-      <uk-select-input
-        :options="['WebDMX']"
-        label="Type / Protocol"
-      />
       <uk-flex
-        row
-        gap="8"
+        class="list_wrapper"
+        col
       >
-        <uk-txt-input
-          v-model="ip"
-          label="IP Address"
+        <uk-list
+          :items="outputs"
+          accordion
+          colored
+          auto-select-first
+          :auto-select="selectedOutputIndex"
+          filterable
+          class="list"
+          tall
+          @select="selectOutput"
         />
-        <uk-num-input
-          v-model="port"
-          label="Port"
-          style="max-width:64px"
-        />
+        <uk-flex
+          style="
+            align-items: flex-end;
+            padding:10px;
+            border-top:1px solid var(--primary-dark)
+          "
+          gap="8"
+        >
+          <uk-button
+            label="add new connection"
+            icon="new"
+            square
+            style="width:100%;"
+            @click="addNewConnection"
+          />
+        </uk-flex>
       </uk-flex>
-    </uk-flex>
+      <uk-flex
+        v-show="!!selectedOutput"
+        col
+        class="form"
+      >
+        <uk-flex
+          col
+          gap="8"
+          style="padding: 10px;height:100%"
+        >
+          <uk-flex gap="10">
+            <uk-select-input
+              :options="['WSC (Web Show Control)']"
+              label="Type / Protocol"
+              :disabled="!selectedOutput"
+            />
+          </uk-flex>
+          <uk-flex
+            style="align-items: flex-end;"
+            gap="8"
+          >
+            <uk-txt-input
+              v-model="formOutput.name"
+              label="Label"
+              style="width: 100%;"
+              :disabled="!selectedOutput"
+            />
+            <uk-select-input
+              v-model="formOutput.universe"
+              :options="$show.universePool.universes.map(u=>u.name)"
+              label="Data"
+              style="width: 150px;"
+              :disabled="!selectedOutput"
+            />
+          </uk-flex>
+          <uk-flex
+            row
+            gap="8"
+          >
+            <uk-flex
+              col
+            >
+              <uk-flex
+                row
+                gap="0"
+                style="align-items: flex-end"
+              >
+                <uk-num-input
+                  v-model="formOutput.ip[0]"
+                  label="IP"
+                  :min="0"
+                  :max="255"
+                  style="max-width:48px"
+                  :disabled="!selectedOutput"
+                />
+                <uk-num-input
+                  v-model="formOutput.ip[1]"
+                  :min="0"
+                  :max="255"
+                  style="max-width:48px"
+                  :disabled="!selectedOutput"
+                />
+                <uk-num-input
+                  v-model="formOutput.ip[2]"
+                  :min="0"
+                  :max="255"
+                  style="max-width:48px"
+                  :disabled="!selectedOutput"
+                />
+                <uk-num-input
+                  v-model="formOutput.ip[3]"
+                  :min="0"
+                  :max="255"
+                  style="max-width:48px"
+                  :disabled="!selectedOutput"
+                />
+              </uk-flex>
+            </uk-flex>
+            <uk-num-input
+              v-model="formOutput.port"
+              label="Port"
+              style="max-width:64px"
+              :disabled="!selectedOutput"
+            />
+          </uk-flex>
+          <p
+            ref="debugger"
+            class="debugger"
+            v-html="debug"
+          />
+        </uk-flex>
+        <uk-flex
+          style="
+            align-items: flex-end;
+            padding:10px;
+            border-top:1px solid var(--primary-dark)
+          "
+          gap="8"
+        >
+          <uk-button
+            squared
+            label="delete"
+            style="width:100%;"
+            :disabled="!selectedOutput"
+            color="red"
+            @click="deleteOutput"
+          />
+          <uk-button
+            squared
+            icon="patch"
+            :label="
+              selectedOutput?.state > 1
+                ? 'disconnect'
+                : 'connect'
+            "
+            style="width:100%;"
+            :disabled="!selectedOutput"
+            @click="connect"
+          />
+        </uk-flex>
+      </uk-flex>
+    </div>
   </uk-popup>
 </template>
 
@@ -84,60 +189,182 @@ export default {
        * Popup header data
        */
       headerData: {
-        title: 'Outputs',
+        title: 'Input/Outputs',
       },
-      addInputPopupState: false,
-      ip: 'dslmdksqlkdsqmk',
-      port: 0,
-      outputs: [],
+      formOutput: {
+        ip: [0, 0, 0, 0],
+        port: 0,
+        name: '',
+        universe: 0,
+      },
+      selectedOutput: null,
+      selectedOutputIndex: 0,
     };
   },
-  mounted() {
-    this.updateOutputs();
+  computed: {
+    debug() {
+      return this.selectedOutput?.debug.map((log) => (
+        `<span style="alignt-items: start;color: ${[
+          'var(--accent-maroon)',
+          'var(--secondary-lighter)',
+          'var(--accent-sea-green)'][log.type + 1]
+        }">
+            <span style="color: var(--secondary-lighter); opacity:.8">
+              [${log.timestamp}] - 
+            </span>
+            ${log.data}
+          </span>`
+      )).join('\n')
+      || '<p style="color: var(--secondary-lighter); opacity: .8">Waiting for connection...</p>';
+    },
+    outputs() {
+      return this.$show.outputPool.outputs.map((o) => ({
+        name: o.name,
+        id: o.id,
+        icon: 'patch',
+        more: [
+          'Conn error',
+          'Disconnected',
+          'Connecting...',
+          'Connected',
+        ][o.state + 1],
+      }));
+    },
+  },
+  watch: {
+    state(state) {
+      if (state) {
+        this.selectedOutput = null;
+        this.formOutput = {
+          active: false,
+          ip: [0, 0, 0, 0],
+          port: 0,
+          name: '',
+          universe: 0,
+        };
+      }
+    },
+    'selectedOutput.debug.length': function watchDebugOuptutLength() {
+      this.$nextTick(() => {
+        const debuggerEl = this.$refs.debugger;
+        if (debuggerEl) {
+          debuggerEl.scrollTop = debuggerEl.scrollHeight;
+        }
+      });
+    },
   },
   methods: {
-    selectIface(outputs) {
-      this.$show.setOutputs(
-        outputs.map((o) => this.$show.outputs[o.id]),
-      );
+    selectOutput(output) {
+      if (output) {
+        this.selectedOutput = this.$show.outputPool.getFromId(output.id);
+        this.selectedOutputIndex = this.outputs.findIndex((o) => o.id === this.selectedOutput.id);
+        this.formOutput = {
+          ip: this.selectedOutput.remote.split('.'),
+          port: this.selectedOutput.port,
+          name: this.selectedOutput.name,
+          universe: this.$show.universePool.universes.findIndex(
+            (u) => u.id === this.selectedOutput.universe.id,
+          ),
+        };
+      } else {
+        this.selectedOutput = null;
+        this.selectedOutputIndex = 0;
+      }
     },
-    displayAddInputPopup() {
-      this.displayAddInputPopup = true;
-    },
-    updateOutputs() {
-      this.outputs = this.$show.outputs.map((output, i) => {
-        const oDeepCpy = JSON.parse(JSON.stringify(output));
-        return Object.assign(oDeepCpy, {
-          id: i,
-          name: `${output.name} - ${output.cidr.split('/')[0]}`,
-          more: 'Artnet',
-          active: this.$show.selectedOutputs.length
-            ? this.$show.selectedOutputs.some((v) => v.name === output.name)
-            : false,
-        });
+    addNewConnection() {
+      const output = this.$show.outputPool.addRaw({
+        name: `New Connection ${this.outputs.length + 1}`,
+        remote: '127.0.0.1',
+        port: '5214',
+        universe: this.$show.universePool.universes[0] || null,
       });
+      this.selectOutput({ id: output.id });
+    },
+    connect() {
+      this.selectedOutput.remote = this.formOutput.ip.join('.');
+      this.selectedOutput.port = this.formOutput.port;
+      this.selectedOutput.universe = this.$show.universePool.getFromId(
+        this.$show.universePool.universes[this.formOutput.universe]?.id,
+      );
+      this.selectedOutput.name = this.formOutput.name;
+      this.selectedOutput.connect();
+    },
+    deleteOutput() {
+      if (this.selectedOutput) {
+        this.$show.outputPool.delete(this.selectedOutput);
+        this.formOutput = {
+          ip: [0, 0, 0, 0],
+          port: 0,
+          name: '',
+          universe: 0,
+        };
+        this.selectOutput(this.outputs[0]);
+      }
     },
   },
 };
 </script>
 
+<style>
+.spinner{
+  height: 10px;
+  width: 10px;
+  border-radius: 100%;
+  border: 2px solid var(--accent-sea-green)
+}
+</style>
+
 <style scoped>
 .body {
   display: flex;
-  flex-direction: column;
-  width: 300px;
-  height: 300px;
+  min-height: 350px;
+  max-height: 350px;
+  height: 350px;
   padding: 0px !important;
 }
-.subtitle {
-  font-family: Roboto-Regular;
-  margin-bottom: 8px;
-  color: var(--secondary-lighter-alt);
+.list{
+  min-width:370px;
+  max-width: 370px;
+  overflow-y: auto;
 }
-.title_icon {
-  fill: var(--secondary-lighter);
+.list_wrapper{
+  height: 100%;
 }
-h4 {
-  margin-bottom: 4px;
+.form{
+  border-left: 1px solid var(--primary-dark);
+  width: 280px;
+}
+.stats{
+  height: 100%;
+  width: 100%;
+  flex: 1;
+  background-color: var(--primary-dark-alt);
+  background-image:
+    linear-gradient(
+      to right,
+      var(--primary-dark) 0,
+      var(--primary-dark) 1px,
+      transparent 1px,
+      transparent 100%
+    ),
+    linear-gradient(
+      to bottom,
+      var(--primary-dark) 0,
+      var(--primary-dark) 1px,
+      transparent 1px,
+      transparent 100%
+    );
+  background-size: calc(100% / 20) calc(100% / 12);
+  /* background-position: 0px -1px; */
+  /* border: 1px solid var(--primary-dark) */
+}
+.debugger{
+  flex: 1;
+  background: var(--primary-dark);
+  overflow-y: auto;
+  flex-direction: column;
+  align-items: start;
+  padding: 5px;
+  max-height: 122px;
 }
 </style>

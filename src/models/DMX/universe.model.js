@@ -144,24 +144,11 @@ class Universe {
       if (fixture) {
         const fixtureChannelIndex = index - fixture.chStart;
         DMX_BUFF[index] = fixture.channels[fixtureChannelIndex].value.DMX || 0;
-        // return fixture.channels[fixtureChannelIndex].value.DMX || 0;
       } else {
         DMX_BUFF[index] = 0;
       }
-      // return 0;
     });
     return DMX_BUFF;
-    // return {
-    //   universe: this.id,
-    //   DMX512Buffer: this._addressMap.map((address, index) => {
-    //     const fixture = this._patch[address];
-    //     if (fixture) {
-    //       const fixtureChannelIndex = index - fixture.chStart;
-    //       return fixture.channels[fixtureChannelIndex].value.DMX || 0;
-    //     }
-    //     return 0;
-    //   }),
-    // };
   }
 
   /**
