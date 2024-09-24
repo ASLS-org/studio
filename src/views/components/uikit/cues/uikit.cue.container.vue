@@ -401,7 +401,7 @@ export default {
   display: flex;
   height: 100%;
   min-width: 120px;
-  max-width: 200px;
+  max-width: 120px;
   width: 100%;
   border-right: 1px solid var(--primary-dark);
   background: var(--primary-light);
