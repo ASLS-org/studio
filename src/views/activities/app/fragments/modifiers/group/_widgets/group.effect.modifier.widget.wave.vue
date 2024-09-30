@@ -190,7 +190,7 @@ export default {
         const h = rect.height;
         const t = this.channel.time;
         // eslint-disable-next-line max-len
-        const xOffset = ((fixture.phase <= 0 ? -1 : 1) * (w * (t + ((fixture.phase / this.channel.frequency) * (180 / Math.PI)) / 360))) % w;
+        const xOffset = (w * (t + ((fixture.phase / this.channel.frequency) * (180 / Math.PI)) / 360)) % w;
         const yOffset = (1 - fixture.value / 255) * h;
         return {
           left: `${xOffset - 8}px`,
