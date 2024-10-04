@@ -250,12 +250,14 @@ export default {
     prepareCanvas() {
       this.canvas = this.$refs.curveModifier;
       this.context = this.canvas.getContext('2d');
+      this.canvasDimensions.width = this.canvas.width;
+      this.canvasDimensions.height = this.canvas.height;
       this.update();
     },
     /**
      * Update canvas curve
      *
-       * @public
+     * @public
      */
     update() {
       this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
