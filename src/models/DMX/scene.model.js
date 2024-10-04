@@ -445,7 +445,7 @@ class Scene extends Cue {
     if (
       (!this.state && this.relative)
       || (time === 0 && this.relative)
-      || (!this.state && this.direction === SCENE_DIRECTIONS.OUT)) {
+    ) {
       this.prepareStartValues();
       this.state = 1;
     }
@@ -468,7 +468,7 @@ class Scene extends Cue {
         });
       });
     });
-    if (time >= this.durationMS) {
+    if (time >= duration) {
       this.state = this.direction;
     }
   }

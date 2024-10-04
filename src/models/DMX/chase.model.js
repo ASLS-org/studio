@@ -274,7 +274,6 @@ class Chase extends Proxify {
           t >= item.tick * this.tickDuration
           && t <= (item.tick + item.length) * this.tickDuration
         ) {
-          if (cueItemPool.cue.type === 1) cueItemPool.cue.state = 1;
           item.update(t - (item.tick * this.tickDuration));
         } else {
           cueItemPool.cue.state = 0;

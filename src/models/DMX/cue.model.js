@@ -111,7 +111,7 @@ class Cue extends Proxify {
   }
 
   set state(state) {
-    this._state = state != null ? state : DEFAULT_CUE_DATA.STATE;
+    this._state = state !== null ? state : DEFAULT_CUE_DATA.STATE;
   }
 
   get state() {
