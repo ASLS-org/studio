@@ -100,7 +100,6 @@
             >
               <div
                 :key="key"
-
                 class="widget_pool_timeline_grid_row_sub"
                 style="width: 100%; position: relative; min-height: 1%"
                 :style="{
@@ -136,7 +135,9 @@
                       height="100%"
                       xmlns="http://www.w3.org/2000/svg"
                     >
-                      <path :d="computeCueItemCurve(cueItem, `cue-${cueIndex}`)" />
+                      <path
+                        :d="computeCueItemCurve(cueItem, `cue-${cueIndex}`)"
+                      />
                     </svg>
 
                     <uk-icon
@@ -238,6 +239,9 @@ export default {
     };
   },
   watch: {
+    '$route.params.chaseId': function forceRerender() {
+      this.forceReRender();
+    },
     'pool.duration': function poolDurationWatcher() {
       this.resetZoom();
       this.computeRowStyle();
