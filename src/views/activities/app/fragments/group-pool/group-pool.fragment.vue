@@ -174,9 +174,10 @@ export default {
      *
      * @public
      */
-    deleteGroup() {
+    async deleteGroup() {
       this.deletePopupDsiplayState = false;
       if (this.selectedGroup) {
+        await this.$router.push(`/group/${this.groups[0].id}`);
         this.pool.delete(this.selectedGroup);
         // Forcing pool update. It's a bit sparse but it works
         this.groups = [];
