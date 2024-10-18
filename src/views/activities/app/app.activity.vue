@@ -102,7 +102,7 @@ export default {
       const localLoadingSucceeded = await this.$show.loadFromLocalStorage();
 
       if (!localLoadingSucceeded) {
-        const res = await fetch('/demo/showfiles/demo.showfile.json');
+        const res = await fetch(`${import.meta.env.VITE_STATIC_URL}/demo/showfiles/demo.showfile.json`);
         const showData = await res.json();
         await this.$show.loadFromData(showData);
       }
