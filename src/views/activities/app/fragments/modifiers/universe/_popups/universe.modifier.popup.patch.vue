@@ -363,7 +363,7 @@ export default {
     async loadFixture(item) {
       const { manufacturer } = item;
       const { fixture } = item;
-      const res = await this.$http.get(`${import.meta.env.VITE_STATIC_URL}/fixtures/${manufacturer.name}/${fixture}`);
+      const res = await this.$http.get(`${import.meta.env.VITE_STATIC_URL}fixtures/${manufacturer.name}/${fixture}`);
       Object.assign(this.fixture, {
         OFLData: res.data,
         modes: res.data.modes,

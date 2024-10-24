@@ -117,7 +117,7 @@ export default {
     async submit() {
       this.close();
       this.$router.replace('/');
-      await this.$show.loadFromUrl(`${import.meta.env.VITE_STATIC_URL}/demo/showfiles/${this.selectedTemplate.showfile}`);
+      await this.$show.loadFromUrl(`${import.meta.env.VITE_STATIC_URL}demo/showfiles/${this.selectedTemplate.showfile}`);
       this.$show.loading.state = false;
       // Yeah it sucks... But cleaning up everything from the view was a nightmare so for now:
       window.location.reload();

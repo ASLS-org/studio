@@ -74,7 +74,7 @@ class Visualizer {
    * @async
    */
   async init() {
-    await ModelInstancer.init('visualizer/models/model_list.json');
+    await ModelInstancer.init(`${import.meta.env.VITE_STATIC_URL}/visualizer/models/model_list.json`);
     this.prepareRenderer();
     this.prepareCamera();
     this.prepareControls();

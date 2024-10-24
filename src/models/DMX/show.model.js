@@ -414,7 +414,7 @@ class Show extends EventEmitter {
       const fixtureData = showData.fixtures[i];
       fixtureData.OFLData = JSON.parse(fixtureDataCache[`${fixtureData.manufacturer}/${fixtureData.model}`] || null);
       if (!fixtureData.OFLData) {
-        const res = await axios.get(`${import.meta.env.VITE_STATIC_URL}/fixtures/${fixtureData.manufacturer}/${fixtureData.model}.json`);
+        const res = await axios.get(`${import.meta.env.VITE_STATIC_URL}fixtures/${fixtureData.manufacturer}/${fixtureData.model}.json`);
         fixtureData.OFLData = res.data;
         fixtureDataCache[`${fixtureData.manufacturer}/${fixtureData.model}`] = JSON.stringify(fixtureData.OFLData);
       }
@@ -432,7 +432,7 @@ class Show extends EventEmitter {
    */
   async preloadFixtureList() {
     try {
-      const res = await axios.get(`${import.meta.env.VITE_STATIC_URL}/fixtures/fixture_list.json`);
+      const res = await axios.get(`${import.meta.env.VITE_STATIC_URL}fixtures/fixture_list.json`);
       this.rawOFLFixtures = res.data;
     } catch (err) {
       console.log('could not fetch fixture list.');
