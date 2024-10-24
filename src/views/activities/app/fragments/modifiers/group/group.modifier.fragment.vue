@@ -144,7 +144,7 @@ export default {
         this.cue = cue;
         if (this.$route.name === 'Group') {
           // eslint-disable-next-line no-restricted-globals
-          history.pushState({}, null, `${this.$route.path}/cue/${encodeURIComponent(cue.id)}`);
+          // history.pushState({}, null, `${this.$route.path}/cue/${encodeURIComponent(cue.id)}`);
         }
       } else {
         this.cue = null;
