@@ -1,9 +1,9 @@
 /* eslint-disable import/no-extraneous-dependencies */
-import { defineConfig } from 'vite';
+import { defineConfig } from 'electron-vite';
+import path, { resolve } from 'path';
 import vue from '@vitejs/plugin-vue';
 import svgLoader from 'vite-svg-loader';
 import { fileURLToPath } from 'url';
-import path from 'path';
 import util from 'util';
 import { exec } from 'child_process';
 
@@ -36,9 +36,22 @@ const filename = fileURLToPath(import.meta.url);
 const pathSegments = path.dirname(filename);
 
 export default defineConfig(async () => {
-  try {
-    await prepareVersioningEnv();
-    return {
+  process.env.VITE_STATIC_URL = 'static:/';
+  await prepareVersioningEnv();
+  return {
+    root: './',
+    plugins: [
+      vue(),
+      svgLoader(),
+    ],
+    resolve: {
+      alias: {
+        '@': path.resolve(pathSegments, './src'),
+        '@root': path.resolve(pathSegments, './'),
+      },
+      extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue'],
+    },
+    main: {
       plugins: [
         vue(),
         svgLoader(),
@@ -50,8 +63,43 @@ export default defineConfig(async () => {
         },
         extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue'],
       },
-    };
-  } catch (err) {
-    return err;
-  }
+      root: '.',
+      build: {
+        publicDir: resolve(__dirname, 'public'),
+        lib: {
+          entry: './src/electron/main.js',
+        },
+      },
+    },
+    preload: {
+      build: {
+        publicDir: resolve(__dirname, 'public'),
+        lib: {
+          entry: './src/electron/preload.js',
+        },
+      },
+    },
+    renderer: {
+      plugins: [
+        vue(),
+        svgLoader(),
+      ],
+      resolve: {
+        alias: {
+          '@': path.resolve(pathSegments, './src'),
+          '@root': path.resolve(pathSegments, './'),
+        },
+        extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue'],
+      },
+      root: '.',
+      build: {
+        publicDir: resolve(__dirname, 'public'),
+        rollupOptions: {
+          input: {
+            index: './index.html',
+          },
+        },
+      },
+    },
+  };
 });

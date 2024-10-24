@@ -74,7 +74,7 @@ class Visualizer {
    * @async
    */
   async init() {
-    await ModelInstancer.init('/visualizer/models/model_list.json');
+    await ModelInstancer.init(`${import.meta.env.VITE_STATIC_URL}/visualizer/models/model_list.json`);
     this.prepareRenderer();
     this.prepareCamera();
     this.prepareControls();
@@ -252,8 +252,9 @@ class Visualizer {
     });
 
     // Floor
-    const loader = new THREE.TextureLoader();
-    const texture = await loader.loadAsync('/visualizer/textures/environment/checkerboard_default.jpg');
+    const loader = new THREE.TextureLoader()
+    .setPath(import.meta.env.VITE_STATIC_URL)
+    const texture = await loader.loadAsync('./visualizer/textures/environment/checkerboard_default.jpg');
 
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
