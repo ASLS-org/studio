@@ -42,7 +42,6 @@
         color="var(--accent-blue)"
         @click="toggleAutoFocus"
       />
-      <span style="flex: 1" />
       <uk-button
         v-show="!hidden"
         icon="hide"
@@ -215,7 +214,8 @@ export default {
      */
     startRecording() {
       if (!this.recording) {
-        this.videoStream = this.$refs.visualizer.captureStream(5);
+        // TODO: set this as a visualizer parameter
+        this.videoStream = this.$refs.visualizer.captureStream(24);
         this.mediaRecorder = new MediaRecorder(this.videoStream, {
           audioBitsPerSecond: 0,
           videoBitsPerSecond: 600 * 1024 * 1024,
