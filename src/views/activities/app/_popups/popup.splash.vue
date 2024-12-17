@@ -29,8 +29,8 @@
               traget="_blank"
               :href="
                 versionData.version
-                  ? `https://github.com/getcaravel/caravel-api/releases/tag/${versionData.version}`
-                  : 'https://github.com/getcaravel/caravel-api/releases/'
+                  ? `https://github.com/ASLS-org/studio/releases/tag/${versionData.version}`
+                  : 'https://github.com/ASLS-org/studio/releases/'
               "
             >{{ versionData.version || 'no-version-data' }}</a>
           </p>
