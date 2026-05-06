@@ -216,7 +216,7 @@ class Fade extends Proxify {
       + this.t ** 3
     );
     this.value = val;
-    return val;
+    return val?.toFixed(3) || 0;
   }
 
   /**

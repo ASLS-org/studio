@@ -13,7 +13,7 @@
         class="channels_channel"
       >
         <uk-num-input
-          :value="channel.value"
+          v-model.lazy="channel.value"
           class="channel_value"
           :min="0"
           :max="255"
@@ -28,7 +28,6 @@
         />
         <uk-fader
           v-model.lazy="channel.value"
-          :short="toggleable"
           :min="0"
           :max="255"
           :label="`CH${index + 1}`"
@@ -60,7 +59,7 @@ export default {
      */
     channels: {
       type: Array,
-      default: () => [1, 2, 3, 4, 5],
+      default: () => [],
     },
     /**
      * Whether the channels are toggleable or not (checkbox displayed)
@@ -87,7 +86,7 @@ export default {
      * @param {Object} channel a channel description object
      */
     update(channel) {
-      this.$emit('input', channel);
+      this.$nextTick(() => this.$emit('input', channel));
     },
     /**
      * GetRetrieves icon that is associated to a specific channel type

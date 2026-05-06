@@ -60,6 +60,8 @@ class Visualizer {
     this.finalComposer = null;
     this.globalBrightness = 100;
     this.globalLightHandle = null;
+    this.autoRotate = false;
+    this.autoFocus = true;
     this.stats = new Stats();
     this.stats.showPanel(0);
     this.stats.dom.style.position = 'absolute';
@@ -72,7 +74,7 @@ class Visualizer {
    * @async
    */
   async init() {
-    await ModelInstancer.init('/visualizer/models/model_list.json');
+    await ModelInstancer.init(`${import.meta.env.VITE_STATIC_URL}/visualizer/models/model_list.json`);
     this.prepareRenderer();
     this.prepareCamera();
     this.prepareControls();
@@ -158,13 +160,52 @@ class Visualizer {
     return this._globalBrightness * 100;
   }
 
+  /**
+   * Global scene brightness
+   *
+   * @type {Number}
+   */
+    set autoFocus(value) {
+      Controls.autoFocus = value;
+    }
+  
+    get autoFocus() {
+      return Controls.autoFocus;
+    }
+
+  /**
+   * Controls auto-rotation state
+   * 
+   * @type {Boolean}
+   */
+  set autoRotate(value) {
+    if(this.controls){
+      this.controls.autoRotate = value;
+    }
+  }
+
+  get autoRotate(){
+    if(this.controls){ 
+      return this.controls.autoRotate
+    }
+    return false;
+  }
+
   get showData() {
     return {
       globalFoggingState: this.globalFoggingState,
       globalFoggingDensity: this.globalFoggingDensity,
       globalFoggingTurbulences: this.globalFoggingTurbulences,
       globalBrightness: this.globalBrightness,
+      autoRotate: this.autoRotate,
     };
+  }
+
+  /**
+   * Recenters the camera to point at (0,0,0)
+   */
+  recenter(){
+    Controls.setFocus(false);
   }
 
   /**
@@ -211,8 +252,9 @@ class Visualizer {
     });
 
     // Floor
-    const loader = new THREE.TextureLoader();
-    const texture = await loader.loadAsync('/visualizer/textures/environment/checkerboard_default.jpg');
+    const loader = new THREE.TextureLoader()
+    .setPath(import.meta.env.VITE_STATIC_URL)
+    const texture = await loader.loadAsync('./visualizer/textures/environment/checkerboard_default.jpg');
 
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
@@ -224,6 +266,18 @@ class Visualizer {
     SceneManager.add(gridHelper);
 
     const axesHelper = new THREE.AxesHelper(2);
+
+    axesHelper.material.depthTest = false;
+    axesHelper.renderOrder = 999;
+
+    axesHelper.material.transparent = true;
+    axesHelper.material.opacity = 0.8;
+
+    axesHelper.setColors(
+      new THREE.Color('#ff4d4d'), // X
+      new THREE.Color('#4dff88'), // Y
+      new THREE.Color('#4da6ff')  // Z
+    );
 
     const checkerMaterial = new THREE.MeshStandardMaterial({ map: texture });
 
@@ -258,7 +312,7 @@ class Visualizer {
     });
 
     this.renderer.autoClear = true;
-    this.renderer.shadowMap.autoUpdate = false;
+    this.renderer.shadowMap.autoUpdate = true;
     this.renderer.physicallyCorrectLights = true;
     this.renderer.setPixelRatio(0.8); // Forcing pixel ratio to 1 to avoid unnecessary computations
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -293,6 +347,8 @@ class Visualizer {
     this.controls.minDistance = 5;
     this.controls.maxDistance = 100;
     this.controls.maxPolarAngle = Math.PI / 2.1;
+    this.controls.autoRotate = this.autoRotate;
+    this.controls.autoRotateSpeed = 5
     AnimationManager.add(() => {
       this.controls.update();
     });

@@ -3,6 +3,7 @@ import {
   TransformControls,
 } from 'three/examples/jsm/controls/TransformControls.js';
 import SceneManager from './scene_manager';
+import MovingHead from './moving_head';
 
 /**
  * Global position vector handle
@@ -112,11 +113,23 @@ class Controls {
       this.boundingBoxMesh.add(boundingBoxEdges);
       this.animationId = null;
       this.focusTransitionDuration = 1000;
+      this.autoFocus = null;
       controlsInstance = this;
     }
     // eslint-disable-next-line no-constructor-return
     return controlsInstance;
     /* eslint-enable no-use-before-define */
+  }
+
+  set autoFocus(value) {
+    this._autoFocus = value;
+    if (this.cameraHandle) {
+      this.setFocus(value);
+    }
+  }
+
+  get autoFocus() {
+    return this._autoFocus;
   }
 
   /**
@@ -132,10 +145,40 @@ class Controls {
     this.handle.size = 1; // Setting default handle size
     this.handle.translationSnap = 0.5; // Setting default handle translation snap
     // this.handle.rotationSnap = 0.0872665 //Setting default handle rotation snap
-    this.handle.mode = 'translate'; // Setting default handle mode
+    this.handle.setMode('translate'); // Setting default handle mode
     this.controlHandle = orbitcontrolsControlsHandle;
     this.cameraHandle = camera;
-    SceneManager.add(this.groupedInstances, this.handle); // Adding instances to scene
+
+    const helper = this.handle.getHelper();
+
+    helper.traverse((child) => {
+      if (child.material) {
+        // X axis
+        if (child.name.includes('X')) {
+          child.material.color.set('#ff4d4d');
+        }
+
+        // Y axis
+        if (child.name.includes('Y')) {
+          child.material.color.set('#4dff88');
+        }
+
+        // Z axis
+        if (child.name.includes('Z')) {
+          child.material.color.set('#4da6ff');
+        }
+
+        // Transparency
+        child.material.transparent = true;
+        child.material.opacity = 0.9;
+
+        // Prevent depth clipping
+        child.material.depthTest = false;
+        child.renderOrder = 999;
+      }
+    });
+
+    SceneManager.add(this.groupedInstances, helper); // Adding instances to scene
     this.handle.addEventListener('mouseDown', () => { // Listening for mousedown events on control helpers
       this.controlHandle.enabled = false; // Disabling camera controls to enable user interaction
     });
@@ -166,6 +209,7 @@ class Controls {
       this.handle.setMode('translate');
       this.detachAll();
       this.setFocus(false);
+      MovingHead.clearHiglighting();
     } else if (e.key.toLowerCase() === 't') {
       this.mode = CONTROL_MODES.NORMAL;
       this.handle.setMode('translate');
@@ -184,35 +228,37 @@ class Controls {
   }
 
   setFocus(state) {
-    this.cameraHandle.updateMatrixWorld();
-    const startPos = new THREE.Vector3();
-    startPos.setFromMatrixPosition(this.cameraHandle.matrixWorld);
-    const startTPos = this.controlHandle.target.clone();
-    const endPos = state ? this.groupedInstances.position.clone() : DEFAULT_ZOOM_OUT_ENDPOS;
-    const startTime = performance.now();
+    if (!state || this.autoFocus) {
+      this.cameraHandle.updateMatrixWorld();
+      const startPos = new THREE.Vector3();
+      startPos.setFromMatrixPosition(this.cameraHandle.matrixWorld);
+      const startTPos = this.controlHandle.target.clone();
+      const endPos = state ? this.groupedInstances.position.clone() : DEFAULT_ZOOM_OUT_ENDPOS;
+      const startTime = performance.now();
 
-    const dX = (endPos.x - startPos.x);
-    const dY = state ? 0 : (endPos.y - startPos.y);
-    const dZ = state ? ((endPos.z - startPos.z) - 0) : (endPos.z - startPos.z);
+      const dX = (endPos.x - startPos.x);
+      const dY = state ? 0 : (endPos.y - startPos.y);
+      const dZ = state ? ((endPos.z - startPos.z) - 0) : (endPos.z - startPos.z);
 
-    const dTX = state ? (endPos.x - startTPos.x) : -startTPos.x;
-    const dTY = state ? (endPos.y - startTPos.y) : -startTPos.y;
-    const dTZ = state ? (endPos.z - startTPos.z) : -startTPos.z;
+      const dTX = state ? (endPos.x - startTPos.x) : -startTPos.x;
+      const dTY = state ? (endPos.y - startTPos.y) : -startTPos.y;
+      const dTZ = state ? (endPos.z - startTPos.z) : -startTPos.z;
 
-    const animationFunction = () => {
-      const time = performance.now() - startTime;
-      const animationPercentage = Math.sin(((time / this.focusTransitionDuration) * Math.PI) / 2);
-      if (time < this.focusTransitionDuration && animationPercentage <= 1.0) {
-        this.cameraHandle.position.setX(startPos.x + dX * animationPercentage);
-        this.cameraHandle.position.setY(startPos.y + dY * animationPercentage);
-        this.cameraHandle.position.setZ(startPos.z + dZ * animationPercentage);
-        this.controlHandle.target.setX(startTPos.x + dTX * animationPercentage);
-        this.controlHandle.target.setY(startTPos.y + dTY * animationPercentage);
-        this.controlHandle.target.setZ(startTPos.z + dTZ * animationPercentage);
-        this.rafID = requestAnimationFrame(animationFunction.bind(this));
-      }
-    };
-    this.rafID = requestAnimationFrame(animationFunction.bind(this));
+      const animationFunction = () => {
+        const time = performance.now() - startTime;
+        const animationPercentage = Math.sin(((time / this.focusTransitionDuration) * Math.PI) / 2);
+        if (time < this.focusTransitionDuration && animationPercentage <= 1.0) {
+          this.cameraHandle.position.setX(startPos.x + dX * animationPercentage);
+          this.cameraHandle.position.setY(startPos.y + dY * animationPercentage);
+          this.cameraHandle.position.setZ(startPos.z + dZ * animationPercentage);
+          this.controlHandle.target.setX(startTPos.x + dTX * animationPercentage);
+          this.controlHandle.target.setY(startTPos.y + dTY * animationPercentage);
+          this.controlHandle.target.setZ(startTPos.z + dTZ * animationPercentage);
+          this.rafID = requestAnimationFrame(animationFunction.bind(this));
+        }
+      };
+      this.rafID = requestAnimationFrame(animationFunction.bind(this));
+    }
   }
 
   /**

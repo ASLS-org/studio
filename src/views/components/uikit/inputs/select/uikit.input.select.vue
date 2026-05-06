@@ -25,7 +25,7 @@
         <!-- eslint-disable vue/no-v-html, vue/no-v-text-v-html-on-component -->
         <uk-flex
           class="uikit_select_textbox"
-          v-html="options[selected]"
+          v-html="options[selected] || placeholder"
         />
         <!-- eslint-enable vue/no-v-html, vue/no-v-text-v-html-on-component -->
         <span class="uikit_select_button">
@@ -77,9 +77,16 @@ export default {
   },
   props: {
     /**
-     * The gauge's text label value
+     * The input's label value
      */
     label: {
+      type: String,
+      default: '',
+    },
+    /**
+     * The input's placeholder value
+     */
+    placeholder: {
       type: String,
       default: '',
     },
@@ -152,12 +159,14 @@ export default {
      * @param {Object} e click event
      */
     hide(e) {
-      const el = this.$refs.options.$el;
-      const childClicked = e
-        ? el.contains(e.relatedTarget) || el.contains(e.explicitOriginalTarget)
-        : false;
-      if (!this.disabled && !childClicked) {
-        this.displayed = false;
+      const el = this.$refs?.options?.$el;
+      if (el) {
+        const childClicked = e
+          ? el.contains(e.relatedTarget) || el.contains(e.explicitOriginalTarget)
+          : false;
+        if (!this.disabled && !childClicked) {
+          this.displayed = false;
+        }
       }
     },
     /**

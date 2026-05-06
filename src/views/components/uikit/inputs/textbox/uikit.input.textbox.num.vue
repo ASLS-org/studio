@@ -146,7 +146,7 @@ export default {
       /**
        * Numeral input's value (reactive)
        */
-      content: this.modelValue.toFixed(this.precision),
+      content: this.modelValue,
     };
   },
   watch: {
@@ -164,6 +164,17 @@ export default {
     } else {
       this.hasLabel = true;
     }
+  },
+  mounted() {
+    if (this.default != null) {
+      this.content = this.modelValue;
+    }
+    if (this.label == null) {
+      this.hasLabel = false;
+    } else {
+      this.hasLabel = true;
+    }
+    this.updateValue(false);
   },
   methods: {
     /**

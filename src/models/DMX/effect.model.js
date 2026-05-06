@@ -2,7 +2,9 @@ import UkColors from '@/views/components/uikit/colors/uikit.colors';
 import {
   Proxify,
 } from '../utils/proxify.utils';
-import Cue from './cue.model';
+import Cue, { CUE_LOOP_STYLES } from './cue.model';
+
+let fxFixtureId = 0;
 
 /**
  * Available color channels
@@ -43,6 +45,7 @@ const FX_CHANNEL_DIRECTIONS = {
   BOUNCELRT: 2,
   BOUNCERTL: 3,
   SYM: 4,
+  SYMREV: 5,
 };
 
 /**
@@ -248,15 +251,22 @@ class FXFixture extends Proxify {
    *     phase: 0
    *   }] fixture preset instance
    */
-  constructor(fixture, fixturePreset = {
-    active: true,
-    phase: 0,
-  }) {
+  constructor(
+    fixture,
+    // eslint-disable-next-line default-param-last
+    fixturePreset = {
+      active: true,
+      phase: 0,
+    },
+    fxChannelHandle,
+  ) {
     super();
     this.handle = fixture;
+    this.channelHandle = fxChannelHandle;
     this.phase = fixturePreset.phase;
     this.active = fixturePreset.active;
     this.value = 0;
+    this.id = fxFixtureId++;
     return this.proxify();
   }
 
@@ -340,10 +350,15 @@ class FXChannel extends Proxify {
   set fixtures(fixtures) {
     this._fixtures = fixtures.map((fixture, index) => {
       const phase = 360 * (index / fixtures.length) * (Math.PI / 180);
-      return new FXFixture(fixture, {
-        active: true,
-        phase,
-      });
+      const fxFixture = new FXFixture(
+        fixture,
+        {
+          active: true,
+          phase,
+        },
+        this,
+      );
+      return fxFixture;
     });
   }
 
@@ -643,24 +658,43 @@ class FXChannel extends Proxify {
           * (index / activeFixtures.length) * (Math.PI / 180)
           + this.fixturePhaseStart * (Math.PI / 180);
           break;
-        case FX_CHANNEL_DIRECTIONS.SYM:
-          // eslint-disable-next-line no-case-declarations
-          const midpoint = (activeFixtures.length - 1) / 2;
-          if (index <= midpoint) {
+        case FX_CHANNEL_DIRECTIONS.SYM: {
+          const normalizedIndex = index / (activeFixtures.length - 1);
+          let phaseOffset;
+
+          if (normalizedIndex <= 0.5) {
+            // First half: 0 to 0.5
+            phaseOffset = normalizedIndex * 2;
+          } else {
+            // Second half: 0.5 to 0
+            phaseOffset = (1 - normalizedIndex) * 2;
+          }
+
+          fixture.phase = (
+            (this.fixturePhaseStop - this.fixturePhaseStart)
+            * phaseOffset
+            * (Math.PI / 180) + this.fixturePhaseStart * (Math.PI / 180)
+          );
+        }
+          break;
+        case FX_CHANNEL_DIRECTIONS.SYMREV:
+          /* eslint-disable */
+          const halfLength = activeFixtures.length / 2;
+
+          if (index < halfLength) {
+            // First half: spread from 0 to π
+            const phaseOffset = index / (halfLength - 1);
             fixture.phase = (
-              (this.fixturePhaseStop / 2 - this.fixturePhaseStart)
-              * (index / midpoint)
-              * (Math.PI / 180)
-              + this.fixturePhaseStart * (Math.PI / 180)
+              phaseOffset * Math.PI
             );
           } else {
+            // Second half: spread from 2π to π
+            const normalizedIndex = (index - halfLength) / (halfLength - 1);
             fixture.phase = (
-              (this.fixturePhaseStop / 2 - this.fixturePhaseStart)
-              * ((activeFixtures.length - 1 - index) / midpoint)
-              * (Math.PI / 180)
-              + this.fixturePhaseStart * (Math.PI / 180)
+              (2 * Math.PI) - (normalizedIndex * Math.PI)
             );
           }
+          /* eslint-enable */
           break;
         default: break;
       }
@@ -674,7 +708,12 @@ class FXChannel extends Proxify {
    * @param {Object} fixture Fixture instance handle
    */
   addFixture(fixture) {
-    this.fixtures.push(new FXFixture(fixture)); // TODO: replace with ..AndStackUndo once patched
+    const fxFixture = new FXFixture(
+      fixture,
+      null,
+      this,
+    );
+    this.fixtures.push(fxFixture); // TODO: replace with ..AndStackUndo once patched
     this.computeFixturesPhasing();
   }
 
@@ -834,6 +873,7 @@ class FX extends Cue {
    */
   constructor(data = {}) {
     super(data);
+    this.loopStyle = data.loopStyle != null ? data.loopStyle : CUE_LOOP_STYLES.LOOP;
     this.type = CUE_TYPE_EFFECT;
     this._channels = [];
     this.proxify();
@@ -986,7 +1026,8 @@ class FX extends Cue {
   addChannel(channel) {
     if (!this.channels.find((fxChannel) => fxChannel.type === channel.type)) {
       // TODO: replace with ..AndStackUndo once patched
-      this.channels.push(new FXChannel(channel, this.fixtures, this.duration));
+      const fxChannel = new FXChannel(channel, this.fixtures, this.duration);
+      this.channels.push(fxChannel);
     } else {
       throw new Error('FX channel already in use');
     }

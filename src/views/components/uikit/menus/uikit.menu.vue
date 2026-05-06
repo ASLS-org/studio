@@ -65,20 +65,18 @@ export default {
        * Current menu disaply state
        */
       displayState: false,
+      mens: [],
     };
   },
-  computed: {
-    /**
-     * Computes menu items to ease listability.
-     *
-     * @todo Remove this, it is utterly stupid (well, it sure seems like I am).
-     * This could be done on the mounted hook using a simple method.
-     *
-     * @property mens
-     * @returns {Array} An array of listable menu items
-     */
-    mens() {
-      return this.menus.map((menu) => {
+  mounted() {
+    this.initializeMenus();
+  },
+  beforeUnmount() {
+    // window.removeEventListener("keydown", shortcuCallback);
+  },
+  methods: {
+    initializeMenus() {
+      this.mens = this.menus.map((menu) => {
         menu.items = menu.items.map((item) => {
           if (item.shortcut) {
             const shortcuCallback = (e) => {
@@ -88,9 +86,6 @@ export default {
               }
             };
             window.addEventListener('keydown', shortcuCallback);
-            // this.$once("@vue:destroy", () => {
-            //   window.removeEventListener("keydown", shortcuCallback);
-            // });
           }
           item.more = item.shortcut ? `(${item.shortcut})` : '';
           return item;
@@ -98,11 +93,6 @@ export default {
         return menu;
       });
     },
-  },
-  beforeUnmount() {
-    // window.removeEventListener("keydown", shortcuCallback);
-  },
-  methods: {
     /**
      * Handles component focus out
      *

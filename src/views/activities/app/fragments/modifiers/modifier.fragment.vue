@@ -34,9 +34,7 @@ export default {
 <style scoped>
 .modifier {
   position: relative;
-  max-height: 220px;
-  min-height: 220px;
-  height: 220px;
+  flex: 1;
   width: 100%;
   background: var(--primary-light) repeating-linear-gradient(
     45deg,

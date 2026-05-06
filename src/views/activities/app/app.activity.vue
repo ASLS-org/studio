@@ -96,20 +96,24 @@ export default {
      * Setup App. Loads show from local storage or creates new
      * show project if no local data is available
      *
-       * @public
+     * @public
      */
     async setup() {
-      this.loader = {
-        message: 'Loading show data',
-        percentage: 0,
-      };
-      await this.$show.loadFromLocalStorage();
+      const localLoadingSucceeded = await this.$show.loadFromLocalStorage();
+
+      if (!localLoadingSucceeded) {
+        const res = await fetch(`${import.meta.env.VITE_STATIC_URL}demo/showfiles/demo.showfile.json`);
+        const showData = await res.json();
+        await this.$show.loadFromData(showData);
+      }
+
       await this.$router.push('/universe/0');
       this.loader = {
         message: 'Waiting for views to settle',
         percentage: 90,
         state: true,
       };
+
       await new Promise((r) => { setTimeout(r, 500); });
       this.loader.state = false;
       this.$router._appReayState = true;
@@ -138,9 +142,12 @@ export default {
   width: 100%;
 }
 .top_fragments {
-  max-height: calc(100% - 260px)!important;
-  min-height: calc(100% - 260px)!important;
   z-index: 10;
+  overflow: hidden;
+  resize: vertical;
+  min-height: calc(100% - 500px);
+  max-height: calc(100% - 280px);
+  height: calc(100% - 280px);
 }
 .top_fragment_left{
   flex: 1;

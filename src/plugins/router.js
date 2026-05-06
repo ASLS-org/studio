@@ -1,4 +1,7 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import {
+  createMemoryHistory,
+  createRouter,
+} from 'vue-router';
 import ShowSingleton from '@/singletons/show.singleton';
 import {
   ProxifySingleton,
@@ -46,11 +49,10 @@ const routes = [{
   path: '/visualizer',
   component: VisualizerActivity,
   name: 'Visualizer',
-},
-];
+}];
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createMemoryHistory(),
   routes,
 });
 

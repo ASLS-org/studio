@@ -136,17 +136,6 @@ export default {
       selectedChase: null,
     };
   },
-  watch: {
-    // '$route.params.groupId': function routeParamsGroupIdWatcher() {
-    //   this.selectedGroup = Number(this.$route.params.groupId);
-    // },
-    // '$route.params.chaseId': function routeParamsChaseIdWatcher() {
-    //   console.log(this.$route.params.chaseId);
-    //   if (!this.master) {
-    //     this.selectedChase = this.selected ? this.$route.params.chaseId : null;
-    //   }
-    // },
-  },
   mounted() {
     this.groups = this.$show.groupPool.groups;
     // Dirty trick but it should do for now.
@@ -185,9 +174,10 @@ export default {
      *
      * @public
      */
-    deleteGroup() {
+    async deleteGroup() {
       this.deletePopupDsiplayState = false;
       if (this.selectedGroup) {
+        await this.$router.push(`/group/${this.groups[0].id}`);
         this.pool.delete(this.selectedGroup);
         // Forcing pool update. It's a bit sparse but it works
         this.groups = [];
@@ -278,12 +268,17 @@ export default {
 }
 .group_pool_groups {
   display: flex;
-  max-width: 480px;
+  width: 480px;
+  max-width: calc(100vw - 920px);
+  min-width: 240px;
   overflow: hidden;
   overflow-x: auto;
+  resize: horizontal
 }
 .group_pool_groups.expand {
   max-width: calc(100vw - 359px);
+  width: 100%;
+  resize: unset;
 }
 .group_pool_master {
   width: 0px;

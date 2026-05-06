@@ -79,9 +79,9 @@ class GroupPool {
   delete(group) {
     const groupIndex = this.groups.findIndex((item) => item.id === group.id);
     if (groupIndex > -1) {
-      group.chasePool.clearAll();
-      group.cuePool.clearAll();
-      group.fixturePool.clearAll();
+      group?.chasePool?.clearAll();
+      group?.cuePool?.clearAll();
+      group?.fixturePool?.clearAll();
       this.groups.splice(groupIndex, 1);
       Group.deleteInstance(group);
     } else {

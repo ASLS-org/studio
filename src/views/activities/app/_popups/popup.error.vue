@@ -8,14 +8,18 @@
     @submit="close()"
     @input="update()"
   >
-    <div class="error_body">
-      <h4 class="error_message">
+    <uk-flex
+      col
+      class="error_body"
+      gap="12"
+    >
+      <h4>
         {{ error.name || 'Unknow Error' }}:
       </h4>
-      <h4 class="error_message">
+      <p class="error_message">
         {{ error.message }}
-      </h4>
-    </div>
+      </p>
+    </uk-flex>
   </uk-popup>
 </template>
 
@@ -52,13 +56,11 @@ export default {
 <style scoped>
 
 .error_body {
-  display: flex;
-  flex-direction: column;
   width: 100%;
   padding: 16px;
 }
 .error_message {
-  color: #ce3d3db3;
+  color: var(--accent-red);
 }
 .error_buttons {
   display: flex;

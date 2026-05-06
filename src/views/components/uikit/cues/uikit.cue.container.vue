@@ -151,7 +151,6 @@
             style="
               height: 10px;
               width: 10px;
-              /* background: red; */
               border-radius: 50%;
               box-shadow: inset 1px 1px 2px var(--primary-dark);
               transition: all .2s;
@@ -233,17 +232,9 @@ export default {
     return {
       poolsize: 100,
       /**
-       * Whether this container is currently selected or not
-       */
-      // selected: this.master ? false : this.$route.params.groupId === this.group.id,
-      /**
-       * Id of the currently selected chase
-       */
-      // selectedChaseId: null,
-      /**
        * List of chases contained within the group
        */
-      chases: this.master ? [] : this.group.chasePool.chases,
+      chases: this.master ? [] : this.group?.chasePool.chases,
       binDisplay: [0, 0, 0, 0],
       masterPlayingRow: this.$show.master.test,
     };
@@ -410,7 +401,7 @@ export default {
   display: flex;
   height: 100%;
   min-width: 120px;
-  max-width: 200px;
+  max-width: 120px;
   width: 100%;
   border-right: 1px solid var(--primary-dark);
   background: var(--primary-light);

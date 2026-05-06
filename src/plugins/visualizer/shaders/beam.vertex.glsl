@@ -14,6 +14,7 @@ uniform float length;       //Maximum length of the cylinder
 varying vec3 vPosition;         //Vertex local position
 varying vec3 beamPos;
 varying vec4 vWorldPosition;    //Vertex world position
+varying vec4 vAbsoluteWorldPosition;    //Vertex world position
 varying vec2 vUv;               //UV position
 varying vec3 vNormal;           //Vertex normal (not used here. recomputed in the vertex shader since vertex displacement is involved)
 varying vec3 vDirection;        //Beam direction in worldspace coordinates
@@ -54,6 +55,6 @@ void main() {
   vPosition = computeRadiusVertexScaleFactor(position);     //Displaing vertex position to match desired angle
   vWorldPosition = projectionMatrix * viewMatrix * modelMatrix * instanceMatrix * vec4(vPosition, 1.0);      //Determining vertex worldspace coordinates
   vNormal = vec3(viewMatrix * modelMatrix * instanceMatrix * vec4(normal, 0.0));  //Computing instance normal
-
+  vAbsoluteWorldPosition =  modelMatrix * instanceMatrix * vec4(vPosition, 1.0);
   gl_Position = vWorldPosition;   //Setting up fragment world position 
 }

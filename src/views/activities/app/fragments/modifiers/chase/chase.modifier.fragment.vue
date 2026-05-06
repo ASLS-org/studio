@@ -41,7 +41,7 @@
       </uk-flex>
     </uk-widget>
     <widget-pool-timeline
-      v-show="group.cuePool.cues.length"
+      v-show="group.cuePool?.cues.length"
       :pool="chase"
     />
   </uk-flex>
@@ -87,10 +87,6 @@ export default {
     };
   },
   watch: {
-    // '$route.params.chaseId': function routeParamsChaseIdWatcher(chaseId) {
-    //   console.log('dklsdklskd');
-    //   this.fetchChaseData(chaseId);
-    // },
     '$route.params': function routeParamsChaseIdWatcher({ groupId, chaseId }) {
       if (groupId) this.fetchGroupData(groupId);
       if (chaseId) this.fetchChaseData(chaseId);

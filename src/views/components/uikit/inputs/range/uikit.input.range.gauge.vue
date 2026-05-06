@@ -1,12 +1,5 @@
 <template>
   <div class="uikit_gauge">
-    <!-- <div
-      v-if="label != null"
-      class="label"
-      style="margin-bottom: 10px"
-    >
-      {{ label }}
-    </div> -->
     <div class="uikit_gauge_wrapper">
       <input
         ref="track"
@@ -137,6 +130,9 @@ export default {
   justify-content: center;
   width: 70px;
   height: 100%;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  overflow: hidden;
 }
 .uikit_gauge_wrapper {
   display: flex;
@@ -147,16 +143,18 @@ export default {
 }
 .uikit_gauge_slider {
   -webkit-appearance: none;
-  height: 10px;
-  width: 110px;
+  height: 100%;
+  width: 10px;
   padding: 0;
   margin: 0;
-  transform: rotate(-90deg);
   border-radius: 5px;
-  background: linear-gradient(-90deg, var(--secondary-lighter) 0, var(--primary-light) 100%);
+  background: linear-gradient(-180deg, var(--secondary-lighter) 0, var(--primary-light) 100%);
   box-shadow: inset 0px 4px 4px rgba(0, 0, 0, 0.25);
   cursor: pointer;
   pointer-events: auto;
+  writing-mode: vertical-lr;
+  direction: rtl;
+  vertical-align: middle;
 }
 
 .uikit_gauge_slider:disabled {
@@ -181,7 +179,6 @@ export default {
   width: 20px;
   background: var(--secondary-lighter);
   clip-path: polygon(30% 50%, 70% 50%, 100% 0, 100% 100%, 70% 50%, 30% 50%, 0 100%, 0 0);
-  transform: rotate(90deg);
   pointer-events: auto;
 }
 .uikit_gauge_slider:disabled::-webkit-slider-thumb {
@@ -197,6 +194,10 @@ export default {
   background: transparent;
   width: 0px;
   pointer-events: auto;
+  cursor: pointer;
+  writing-mode: vertical-lr;
+  direction: rtl;
+  vertical-align: middle;
 }
 .uikit_gauge_slider::-moz-range-thumb {
   border: none;
@@ -205,7 +206,6 @@ export default {
   width: 26px;
   background: var(--secondary-lighter);
   clip-path: polygon(30% 50%, 70% 50%, 100% 0, 100% 100%, 70% 50%, 30% 50%, 0 100%, 0 0);
-  transform: rotate(90deg);
   pointer-events: auto;
 }
 .uikit_gauge_slider:disabled::-moz-range-thumb {

@@ -1,8 +1,11 @@
 <template>
   <uk-flex class="universe_modifier">
     <universe-settings-widget v-model="universe" />
+    <universe-connection-widget
+      v-show="universe.stream"
+      v-model="universe"
+    />
     <fixture-pool-widget
-      :prevent-unfocus="unfocusPreventable"
       :pool="universe.fixturePool"
       :action="{
         icon: 'new',
@@ -61,6 +64,7 @@ import UniverseSettingsWidget from './_widgets/universe.modifier.widget.settings
 import FixtureSettingsWidget from './_widgets/universe.modifier.widget.fixture.settings.vue';
 import PositionToolWidget from './_widgets/universe.modifier.widget.fixture.position.tool.vue';
 import PatchPopup from './_popups/universe.modifier.popup.patch.vue';
+import UniverseConnectionWidget from './_widgets/universe.modifier.widget.connection.vue';
 
 export default {
   name: 'UniverseModifierFragment',
@@ -70,6 +74,7 @@ export default {
   },
   components: {
     UniverseSettingsWidget,
+    UniverseConnectionWidget,
     FixturePoolWidget,
     FixtureSettingsWidget,
     PositionToolWidget,
@@ -85,26 +90,13 @@ export default {
        */
       universe: {},
       /**
-       * Handle to universe's fixture pool instance
-       */
-      fixtures: [],
-      /**
        * Currently selected fixture
        */
       selectedFixture: null,
       /**
-       * List of currently highlighted fixtures
-       */
-      highlightedFixtures: [],
-      /**
        * Patch popup display state
        */
       patchPopupDisplayState: false,
-      /**
-       * List of unfocus preventable HTML elements to be
-       * forwarded to the universe's fixture list component.
-       */
-      unfocusPreventable: [],
       /**
        * Index of the currently selected fixture in the universe's fixture pool.
        */
@@ -122,7 +114,7 @@ export default {
     },
   },
   mounted() {
-    this.fetchUniverseData();
+    this.fetchUniverseData(0);
   },
   beforeUnmount() {
     if (this.selectedFixture && this.selectedFixture.id) {
@@ -142,6 +134,7 @@ export default {
           this.selectFixture(0);
         } catch (err) {
           this.universe = {};
+          this.selectedFixture = null;
         }
       }
     },

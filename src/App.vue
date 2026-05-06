@@ -1,6 +1,5 @@
 <template>
   <div id="app">
-    <!-- <router-view /> -->
     <app-activity />
   </div>
 </template>

@@ -1,5 +1,5 @@
 //
-// Description : Array and textureless GLSL 2D/3D/4D simplex 
+// Description : Array and textureless GLSL 2D/3D/4D simplex
 //               noise functions.
 //      Author : Ian McEwan, Ashima Arts.
 //  Maintainer : stegu
@@ -8,7 +8,7 @@
 //               Distributed under the MIT License. See LICENSE file.
 //               https://github.com/ashima/webgl-noise
 //               https://github.com/stegu/webgl-noise
-// 
+//
 
 vec3 mod289(vec3 x) {
   return x - floor(x * (1.0 / 289.0)) * 289.0;
@@ -57,10 +57,10 @@ float snoise(vec3 v) {
   float n_ = 0.142857142857; // 1.0/7.0
   vec3 ns = n_ * D.wyz - D.xzx;
 
-  vec4 j = p - 49.0 * floor(p * ns.z * ns.z);  //  mod(p,7*7)
+  vec4 j = p - 49.0 * floor(p * ns.z * ns.z); //  mod(p,7*7)
 
   vec4 x_ = floor(j * ns.z);
-  vec4 y_ = floor(j - 7.0 * x_);    // mod(j,N)
+  vec4 y_ = floor(j - 7.0 * x_); // mod(j,N)
 
   vec4 x = x_ * ns.x + ns.yyyy;
   vec4 y = y_ * ns.x + ns.yyyy;
@@ -69,8 +69,8 @@ float snoise(vec3 v) {
   vec4 b0 = vec4(x.xy, y.xy);
   vec4 b1 = vec4(x.zw, y.zw);
 
-  //vec4 s0 = vec4(lessThan(b0,0.0))*2.0 - 1.0;
-  //vec4 s1 = vec4(lessThan(b1,0.0))*2.0 - 1.0;
+  // vec4 s0 = vec4(lessThan(b0,0.0))*2.0 - 1.0;
+  // vec4 s1 = vec4(lessThan(b1,0.0))*2.0 - 1.0;
   vec4 s0 = floor(b0) * 2.0 + 1.0;
   vec4 s1 = floor(b1) * 2.0 + 1.0;
   vec4 sh = -step(h, vec4(0.0));
@@ -83,7 +83,7 @@ float snoise(vec3 v) {
   vec3 p2 = vec3(a1.xy, h.z);
   vec3 p3 = vec3(a1.zw, h.w);
 
-  //Normalise gradients
+  // Normalise gradients
   vec4 norm = taylorInvSqrt(vec4(dot(p0, p0), dot(p1, p1), dot(p2, p2), dot(p3, p3)));
   p0 *= norm.x;
   p1 *= norm.y;
@@ -100,31 +100,32 @@ float snoise(vec3 v) {
 #define M_PI 3.1415926535897932384626433832795
 precision highp float;
 
-uniform float glowFactor;       //Global glow factor
+uniform float glowFactor; // Global glow factor
 uniform bool fogState;
-uniform float fogFactor;        //Global fogging factor
-uniform float fogTurbulence;    //Global fogging turbulence factor
-uniform float time;             //Current time
-uniform float vertexCount;      //Per instance vertex count
-uniform vec3 cameraDir;         //Camera direction
+uniform float fogFactor;     // Global fogging factor
+uniform float fogTurbulence; // Global fogging turbulence factor
+uniform float time;          // Current time
+uniform float vertexCount;   // Per instance vertex count
+uniform vec3 cameraDir;      // Camera direction
 uniform vec3 cameraPos;
 
-varying vec3 vPosition;         //Vertex local position
-varying vec3 beamPos;           //Vertex local position
-varying vec3 vNormal;           //Vertex normal
-varying vec2 vUv;               //UV position
-varying vec3 vDirection;        //Intance direction
-varying vec3 vColor;            //Instance colro
-varying vec4 vWorldPosition;    //Vertex world position
-varying float vIntensity;       //Instance intensity
-varying float vAngle;           //Instance angle
-varying float vIndex;           //Vertex index
+varying vec3 vPosition;      // Vertex local position
+varying vec3 beamPos;        // Vertex local position
+varying vec3 vNormal;        // Vertex normal
+varying vec2 vUv;            // UV position
+varying vec3 vDirection;     // Intance direction
+varying vec3 vColor;         // Instance colro
+varying vec4 vWorldPosition; // Vertex world position
+varying vec4 vAbsoluteWorldPosition;
+varying float vIntensity;    // Instance intensity
+varying float vAngle;        // Instance angle
+varying float vIndex;        // Vertex index
 
 /**
  * @function fogging
  * @brief Uses 3D simplex noise functions in order to mimmic fogging
  * @param coord fog coordinates
- * @returns float the fog opacity at provided coordinates 
+ * @returns float the fog opacity at provided coordinates
  */
 float fogging(vec3 coord) {
   float fog = 0.0;
@@ -191,6 +192,19 @@ vec3 recomputeVertexNormal() {
   return normalize(cross(X, Y));
 }
 
+float floorFade(vec3 worldPos)
+{
+  float h = worldPos.z;
+
+  float fadeStart = 0.0;
+  float fadeEnd   = 0.01;
+
+  float t = clamp((h - fadeStart) / (fadeEnd - fadeStart), 0.0, 1.0);
+
+  // soften curve (key part)
+  return t * t * (3.0 - 2.0 * t); // smoothstep-like but explicit
+}
+
 void main() {
   #include <clipping_planes_fragment>
 
@@ -205,10 +219,10 @@ void main() {
 
   float intensity = attenuation * anglePower;
 
+  float fade = floorFade(vAbsoluteWorldPosition.xyz);
+
   vec3 hsvColor = rgb2hsv(vColor);
   hsvColor.z = hsvColor.z > 0.001 ? hsvColor.z * intensity : 0.0;
   vec3 rgbColor = hsv2rgb(hsvColor);
-
-  gl_FragColor = vec4(rgbColor * computeFog(intensity) * vIntensity, 1.0);
-
+  gl_FragColor = vec4(rgbColor * computeFog(intensity) * vIntensity * fade, 1.0);
 }

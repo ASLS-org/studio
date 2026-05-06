@@ -10,7 +10,6 @@
     <!-- <widget-curve :fade="scene ? scene.fadeOut : undefined" /> -->
     <widget-scene-fixtures
       v-show="fixtureValue"
-      :prevent-unfocus="unfocusPreventable"
       :scene="scene ? scene : undefined"
       @select="selectFixtures"
     />
@@ -77,11 +76,6 @@ export default {
        */
       selectedFixtureValues: [],
       /**
-       * List of unfocus preventable HTML elements to be forwarded
-       * to the scene fixture list components
-       */
-      unfocusPreventable: [],
-      /**
        * Handle to currently selected fixture scene value
        */
       fixtureValue: null,
@@ -135,19 +129,6 @@ export default {
         this.panTiltPickerState = this.selectedFixtureValues.some(
           (f) => f.fixture.hasPan || f.fixture.hasTilt,
         );
-        const visualizerEl = document.getElementById('visualizer');
-        if (visualizerEl) {
-          this.unfocusPreventable.push(visualizerEl);
-        }
-        if (this.$refs.channels) {
-          this.unfocusPreventable.push(this.$refs.channels.$el);
-        }
-        if (this.$refs.colorPicker && this.colorPickerState) {
-          this.unfocusPreventable.push(this.$refs.colorPicker.$el);
-        }
-        if (this.$refs.panTiltPicker && this.panTiltPickerState) {
-          this.unfocusPreventable.push(this.$refs.panTiltPicker.$el);
-        }
       }
     },
     /**

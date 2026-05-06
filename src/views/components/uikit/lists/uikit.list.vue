@@ -1,5 +1,18 @@
 <template>
   <div class="uikit_list">
+    <uk-list-item
+      v-if="toggleable && !tree.some(i=>i.value.unfold)"
+      toggleable
+      :item="{
+        value: {
+          name: toggledItems.length ? 'Uncheck All' : 'Check All',
+          more: `${toggledItems.length}/${items.length}`,
+        },
+        toggled: toggledItems.length,
+      }"
+      style="padding: 6px 8px;"
+      @click="checkAll(!toggledItems.length)"
+    />
     <uk-txt-input
       v-if="filterable"
       v-model="searchString"
@@ -33,6 +46,7 @@
             :colored="colored"
             :index="index"
             :item="treeItem"
+            :tall="tall"
             @click="unfold(treeItem)"
           />
           <Transition
@@ -45,6 +59,22 @@
               }"
             >
               <template v-if="treeItem.value.unfold && treeItem.value.unfold.length">
+                <uk-list-item
+                  v-show="toggleable"
+                  toggleable
+                  :item="{
+                    value: {
+                      name: treeItem.value.unfold.filter(i=>i.toggled).length
+                        ? 'Uncheck All'
+                        : 'Check All',
+                      more: `${treeItem.value.unfold.filter(i=>i.toggled).length}
+                      /${treeItem.value.unfold.length}`,
+                    },
+                    toggled: treeItem.value.unfold.filter(i=>i.toggled).length,
+                  }"
+                  style="padding: 6px 6px 6px 16px;"
+                  @click="checkAll(!treeItem.value.unfold.filter(i=>i.toggled).length, treeItem)"
+                />
                 <uk-list-item
                   v-for="(subTreeItem, subIndex) in treeItem.value.unfold"
                   :key="subIndex"
@@ -113,13 +143,7 @@
         />
         <div
           class="uikit_sublist_body_empty"
-        >
-          <!-- <h3
-            class="uikit_list_body_empty"
-          >
-            Nothing to display
-          </h3> -->
-        </div>
+        />
       </div>
     </div>
     <div
@@ -137,14 +161,34 @@
       ref="popup"
       v-model="deletePopupState"
       :header="{ title: 'Delete items ?' }"
+      backdrop
       @submit="handleDeletion"
     >
       <uk-flex
         col
-        style="max-width: 350px"
+        style="max-width: 350px;min-width:350px"
       >
-        <p style="padding: 16px">
-          These items will be permanently removed from your project. Do you wish to continue ?
+        <p style="padding: 16px; flex-direction: column; align-items: start;gap:10px">
+          <b>
+            Are you sure you want to delete the following
+            {{ highlightedItems.length || '' }}
+            item(s)?
+          </b>
+          <uk-flex col>
+            <p
+              v-for="(item, key) in
+                highlightedItems.length
+                  ? highlightedItems.slice(0,5)
+                  : [selectedItem]
+              "
+              :key="key"
+            >
+              {{ item.value.name }} {{ item.value.more ? `(${item.value.more})` : '' }}
+            </p>
+            <p v-show="highlightedItems.length > 5">
+              ...{{ highlightedItems.length - 5 }} additional items are not shown
+            </p>
+          </uk-flex>
         </p>
       </uk-flex>
     </uk-popup>
@@ -362,6 +406,7 @@ export default {
         }
       }
     }
+    this.preventUnfocus.push(this.$refs.popup);
   },
   methods: {
     /**
@@ -440,33 +485,35 @@ export default {
      * @param {Object} e focusout event
      */
     handleFocusOut(e) {
-      let keepFocus = false;
-      window.removeEventListener('click', this.handleFocusOut);
-      if (e) {
-        keepFocus = this.unfocusElBlacklist.filter(
-          (el) => (
-            el.contains(e.target)
-            || el.contains(e.relatedTarget)
-            || el.contains(e.explicitOriginalTarget)
-            || this.$el.contains(e.target)
-          ),
-        ).length >= 1;
-      }
-      if (!keepFocus || this.unfocusElBlacklist.length === 0) {
-        this.hasFocus = false;
-        this.clearHighlighted();
-        window.removeEventListener('keydown', this.keydownListener);
-        /**
-         * List focus state event
-         *
-         * @property {Boolean} -List focus state
-         */
-        this.$emit('focused', this.hasFocus);
-      } else {
-        this.$nextTick(() => {
-          window.addEventListener('click', this.handleFocusOut);
-        });
-      }
+      this.hasFocus = false;
+      this.$emit('focused', false);
+      // let keepFocus = false;
+      // window.removeEventListener('click', this.handleFocusOut);
+      // if (e) {
+      //   keepFocus = this.unfocusElBlacklist.filter(
+      //     (el) => (
+      //       el.contains(e.target)
+      //       || el.contains(e.relatedTarget)
+      //       || el.contains(e.explicitOriginalTarget)
+      //       || this.$el.contains(e.target)
+      //     ),
+      //   ).length >= 1;
+      // }
+      // if (!keepFocus || this.unfocusElBlacklist.length === 0) {
+      //   this.hasFocus = false;
+      //   this.clearHighlighted();
+      //   window.removeEventListener('keydown', this.keydownListener);
+      //   /**
+      //    * List focus state event
+      //    *
+      //    * @property {Boolean} -List focus state
+      //    */
+      //   this.$emit('focused', this.hasFocus);
+      // } else {
+      //   this.$nextTick(() => {
+      //     window.addEventListener('click', this.handleFocusOut);
+      //   });
+      // }
     },
     /**
      * Clear all highlighted items from the highlightedItems list
@@ -509,16 +556,12 @@ export default {
      *
      */
     displayDeletionPopup() {
-      if ((this.selectedItem || this.highlightedItems.length) && this.deletable) {
+      if (this.hasFocus && (this.selectedItem || this.highlightedItems.length) && this.deletable) {
         this.deletePopupState = true;
       }
-      this.$nextTick(() => {
-        if (this.unfocusElBlacklist.length === this.preventUnfocus.length) {
-          this.unfocusElBlacklist.push(this.$refs.popup.$el);
-        }
-      });
     },
     /**
+     *
      * Keydown event listener.
      *
      * @param {Event} e keydown event
@@ -553,6 +596,34 @@ export default {
           this.toggledItems.map((i) => i.value),
         );
       }
+    },
+    checkAll(state, item) {
+      if (item) {
+        item.value.unfold?.forEach((i) => {
+          i.toggled = state;
+        });
+      } else {
+        this.tree.forEach((i) => {
+          i.toggled = state;
+        });
+      }
+      this.toggledItems = this.tree.flatMap((i) => {
+        if (i.toggled) {
+          return i;
+        } if (i.value.unfold) {
+          return i.value.unfold.flatMap((subItem) => (subItem.toggled ? subItem : []));
+        }
+        return [];
+      });
+      /**
+         * Item selection event
+         *
+         * @property {Object} this.selectedItem.value reference to selected tree item object's value
+         */
+      this.$emit(
+        'toggle',
+        this.toggledItems.map((i) => i.value),
+      );
     },
     handleSingleSelection(item, clearHighlighted = false) {
       this.tree.forEach((treeItem) => {
@@ -640,7 +711,7 @@ export default {
     // eslint-disable-next-line default-param-last
     selectItem(e = {}, item, childs) {
       if (!item.value.disabled && !this.dragging) {
-        this.hasFocus = true;
+        // this.hasFocus = true;
         if (e.shiftKey && !this.noHighlight && !this.toggleable) {
           this.handleGroupedSelection(item, childs);
         } else if (e.ctrlKey && !this.noHighlight && !this.toggleable) {

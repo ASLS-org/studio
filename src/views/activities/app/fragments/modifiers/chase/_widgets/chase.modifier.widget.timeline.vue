@@ -100,7 +100,6 @@
             >
               <div
                 :key="key"
-
                 class="widget_pool_timeline_grid_row_sub"
                 style="width: 100%; position: relative; min-height: 1%"
                 :style="{
@@ -136,7 +135,9 @@
                       height="100%"
                       xmlns="http://www.w3.org/2000/svg"
                     >
-                      <path :d="computeCueItemCurve(cueItem, `cue-${cueIndex}`)" />
+                      <path
+                        :d="computeCueItemCurve(cueItem, `cue-${cueIndex}`)"
+                      />
                     </svg>
 
                     <uk-icon
@@ -238,6 +239,9 @@ export default {
     };
   },
   watch: {
+    '$route.params.chaseId': function forceRerender() {
+      this.forceReRender();
+    },
     'pool.duration': function poolDurationWatcher() {
       this.resetZoom();
       this.computeRowStyle();
@@ -579,75 +583,180 @@ export default {
       this.pool.update(time);
     },
     /**
-     * Computes cue items position collisions recursively and returns
-     * currently available tick position. Tick value will be locked to current value
-     * in case of collision.
-     *
-     * @public
-     * @param {Number} tick tick number to which the cue item should be moved
-     * @param {Number} length width of the cue item being moved
-     * @param {Number} cue handle to cue item instance being moved
-     * @param {Object} neighbours list of cue items adjacent to the cue item being dragged
-     * @returns {Number} new cue item tick value
-     */
+ * Computes cue items position collisions with improved magnetic behavior.
+ * Creates a more natural-feeling drag experience with consistent collision handling.
+ *
+ * @param {Number} tick tick number to which the cue item should be moved
+ * @param {Number} length width of the cue item being moved
+ * @param {Object} cue handle to cue item instance being moved
+ * @param {Array} neighbours list of cue items adjacent to the cue item being dragged
+ * @returns {Number} new cue item tick value
+ */
     computeCuePositionCollision(tick, length, cue, neighbours) {
-      const collision = { tick, length };
+      // Original requested position (desired position)
+      const requestedTick = Math.max(tick, 0);
+
+      // Define a "magnetic threshold" - how close to a collision before the item jumps
+      // Smaller values make it more responsive, larger values require more deliberate movement
+      const magneticThreshold = 0; // in ticks
+
+      // 1. First check if the current position is free from collisions
+      let hasCollision = false;
+      let collisionInfo = null;
+
       for (let i = 0; i < neighbours.length; i++) {
         const neighbourCue = neighbours[i];
-        if (neighbourCue !== cue) {
-          if (
-            neighbourCue.tick < tick + cue.length
-            && tick < neighbourCue.tick + neighbourCue.length
-          ) {
-            collision.tick = collision.tick > neighbourCue.tick
-              ? neighbourCue.length + neighbourCue.tick
-              : neighbourCue.tick - length;
-            collision.tick = collision.tick <= 0
-              ? neighbourCue.length
-              : collision.tick;
+        // Skip if it's the same cue
+        // eslint-disable-next-line no-continue
+        if (neighbourCue === cue) continue;
+
+        const cueEnd = requestedTick + length;
+        const neighbourEnd = neighbourCue.tick + neighbourCue.length;
+
+        // Check if there's a collision or if we're within the magnetic threshold of a collision
+        const distanceToLeftEdge = Math.abs(neighbourCue.tick - cueEnd);
+        const distanceToRightEdge = Math.abs(requestedTick - neighbourEnd);
+        // eslint-disable-next-line max-len
+        const isWithinMagneticField = distanceToLeftEdge <= magneticThreshold || distanceToRightEdge <= magneticThreshold;
+
+        if (
+          (requestedTick < neighbourEnd && cueEnd > neighbourCue.tick)
+      || (isWithinMagneticField
+       // eslint-disable-next-line max-len
+       && ((requestedTick < neighbourCue.tick && neighbourCue.tick - (requestedTick + length) <= magneticThreshold)
+        || (cueEnd > neighbourEnd && requestedTick - neighbourEnd <= magneticThreshold)))
+        ) {
+          hasCollision = true;
+
+          // Store information about this collision
+          const newCollisionInfo = {
+            neighbor: neighbourCue,
+            distanceToLeft: Math.abs(neighbourCue.tick - requestedTick - length),
+            distanceToRight: Math.abs(requestedTick - (neighbourCue.tick + neighbourCue.length)),
+            positionBefore: neighbourCue.tick - length,
+            positionAfter: neighbourCue.tick + neighbourCue.length,
+          };
+
+          // If this is our first collision or it's closer than previous collisions
+          if (!collisionInfo
+          || Math.min(newCollisionInfo.distanceToLeft, newCollisionInfo.distanceToRight)
+          < Math.min(collisionInfo.distanceToLeft, collisionInfo.distanceToRight)) {
+            collisionInfo = newCollisionInfo;
           }
         }
       }
-      if (tick === collision.tick) {
-        return tick;
+
+      // If no collision or magnetic snap, return the requested position
+      if (!hasCollision) {
+        return requestedTick;
       }
-      return this.computeCuePositionCollision(collision.tick, collision.length, cue, neighbours);
-    },
-    /**
-     * Computes cue items position collisions recursively and returns
-     * currently available tick position. Tick value will be locked to current value
-     * in case of collision.
-     *
-     * @public
-     * @param {Number} length width of the cue item being resized
-     * @param {Number} cue handle to cue item instance being resized
-     * @param {Object} neighbours list of cue items adjacent to the cue item being resized
-     * @returns {Number} new cue item width value
-     */
-    computeCueResizeCollision(length, cue, neighbours) {
-      const max = Math.min(...neighbours.filter(
-        (nCue) => nCue.tick >= cue.tick + cue.length,
-      ).map((c) => c.tick - cue.tick));
-      return Math.min(length, max);
-    },
-    /**
-     * Determines whether or not a cue item at position "tick" of a length "length"
-     * collides with any neightbouring cue item.
-     *
-     * @public
-     * @param {Number} tick cue item's starting tick position
-     * @param {Number} length cue item's length in ticks
-     * @param {Object} neighbours list of cue items adjacent to the cue item being resized
-     * @returns {Boolean} Whether the cue item is colliding or not
-     */
-    doesCollide(tick, length, neighbours) {
+
+      // 2. Find the best position based on the collision
+      // Determine if it's better to place before or after the collision
+      let newPosition;
+
+      // Choose the position with the smallest distance to the requested position
+      // eslint-disable-next-line max-len
+      if (Math.abs(collisionInfo.positionBefore - requestedTick) <= Math.abs(collisionInfo.positionAfter - requestedTick)) {
+        // Prefer the before position if it's valid
+        newPosition = Math.max(0, collisionInfo.positionBefore);
+      } else {
+        // Otherwise use the after position
+        newPosition = collisionInfo.positionAfter;
+      }
+
+      // 3. Verify the new position doesn't create new collisions
       for (let i = 0; i < neighbours.length; i++) {
-        const neighbour = neighbours[i];
-        if (neighbour.tick < tick + length && tick <= neighbour.tick + neighbour.length) {
-          return neighbour.tick - tick;
+        const neighbourCue = neighbours[i];
+        // eslint-disable-next-line no-continue
+        if (neighbourCue === cue) continue;
+
+        if (
+          newPosition < neighbourCue.tick + neighbourCue.length
+      && newPosition + length > neighbourCue.tick
+        ) {
+          // We have a secondary collision
+          // For simplicity, in case of chain collisions, we'll just place it after all items
+          let furthestEnd = 0;
+          for (let j = 0; j < neighbours.length; j++) {
+            // eslint-disable-next-line no-continue
+            if (neighbours[j] === cue) continue;
+            const endTick = neighbours[j].tick + neighbours[j].length;
+            if (endTick > furthestEnd) furthestEnd = endTick;
+          }
+          return furthestEnd;
         }
       }
-      return length;
+
+      return newPosition;
+    },
+    /**
+     * Computes the maximum allowable length for a cue item during resizing
+     * to avoid collisions with neighboring items.
+     *
+     * @param {Number} desiredLength width that the cue item is being resized to
+     * @param {Object} cue handle to cue item instance being resized
+     * @param {Array} neighbours list of cue items adjacent to the cue item being resized
+     * @returns {Number} maximum allowable length for the cue item
+     */
+    computeCueResizeCollision(desiredLength, cue, neighbours) {
+      // Start with the desired length
+      let maxLength = desiredLength;
+
+      // Find the closest neighbor to the right of the current cue
+      for (let i = 0; i < neighbours.length; i++) {
+        const neighbourCue = neighbours[i];
+
+        // Skip if it's the same cue
+        // eslint-disable-next-line no-continue
+        if (neighbourCue === cue) continue;
+
+        // Only consider neighbors that are to the right of the current cue
+        if (neighbourCue.tick > cue.tick) {
+          // Calculate the maximum possible length before hitting this neighbor
+          const possibleLength = neighbourCue.tick - cue.tick;
+
+          // Update maxLength if this neighbor is closer
+          if (possibleLength < maxLength) {
+            maxLength = possibleLength;
+          }
+        }
+      }
+
+      // Ensure we don't return a negative length
+      return Math.max(maxLength, 0);
+    },
+
+    /**
+ * Determines the maximum allowable length for a new cue item at a specific tick position
+ * without colliding with any existing cue items.
+ *
+ * @param {Number} tick cue item's starting tick position
+ * @param {Number} requestedLength desired cue item's length in ticks
+ * @param {Array} neighbours list of existing cue items
+ * @returns {Number} maximum allowable length for the new cue item
+ */
+    doesCollide(tick, requestedLength, neighbours) {
+      // Start with the requested length
+      let availableLength = requestedLength;
+
+      // Check all existing cue items for potential collisions
+      for (let i = 0; i < neighbours.length; i++) {
+        const neighbour = neighbours[i];
+
+        // Check if this neighbor would collide with the new cue
+        if (neighbour.tick <= tick + requestedLength && tick < neighbour.tick + neighbour.length) {
+          // Calculate how much space is available before this collision
+          const availableSpace = neighbour.tick - tick;
+
+          // If this offers less space than our current calculation, update availableLength
+          if (availableSpace >= 0 && availableSpace < availableLength) {
+            availableLength = availableSpace;
+          }
+        }
+      }
+
+      return availableLength;
     },
     /**
      * Force full component re-render
@@ -736,7 +845,7 @@ export default {
   background: var(--accent-maroon);
   z-index: 0;
   position: absolute;
-  height: 166px;
+  height: 100%;
   margin-top: 12px;
   z-index: 30;
   opacity: .8;

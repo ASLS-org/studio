@@ -7,14 +7,6 @@
   >
     <uk-flex class="body">
       <div class="picker">
-        <!-- <canvas
-              ref="wheel"
-              class="hsl_conical_gradient"
-              height="189"
-              width="189"
-              @mousedown="startDrag($event)"
-              @mouseup="stopDrag()"
-            /> -->
         <div
           ref="hue_picker"
           class="hue_picker"
@@ -227,7 +219,7 @@ export default {
               name: 'hue',
               icon: 'hue',
               max: 360,
-              bg: 'linear-gradient(90deg, #ff0000A1 0%, #ffff00A1 17%, #00ff00A1 33%, #00ffffA1 50%, #0000fff1 67%, #ff00ffA1 83%, #ff0000A1 100%)',
+              bg: 'linear-gradient(0deg, #ff0000A1 0%, #ffff00A1 17%, #00ff00A1 33%, #00ffffA1 50%, #0000fff1 67%, #ff00ffA1 83%, #ff0000A1 100%)',
 
             },
             {
@@ -235,14 +227,14 @@ export default {
               name: 'sat',
               icon: 'green',
               max: 100,
-              bg: 'linear-gradient(90deg, var(--secondary-lighter), #282980)',
+              bg: 'linear-gradient(0deg, var(--secondary-lighter), #282980)',
             },
             {
               val: 0,
               name: 'val',
               icon: 'blue',
               max: 100,
-              bg: 'linear-gradient(90deg, var(--primary-dark), #282980)',
+              bg: 'linear-gradient(0deg, var(--primary-dark), #282980)',
             },
           ],
         }, {
@@ -253,7 +245,7 @@ export default {
               color: 'var(--accent-maroon)',
               name: 'red',
               icon: 'red',
-              bg: 'linear-gradient(90deg, var(--primary-dark),var(--accent-maroon))',
+              bg: 'linear-gradient(0deg, var(--primary-dark),var(--accent-maroon))',
               max: 255,
             },
             {
@@ -261,7 +253,7 @@ export default {
               color: 'var(--accent-sea-green)',
               name: 'green',
               icon: 'green',
-              bg: 'linear-gradient(90deg, var(--primary-dark),var(--accent-sea-green))',
+              bg: 'linear-gradient(0deg, var(--primary-dark),var(--accent-sea-green))',
               max: 255,
             },
             {
@@ -269,7 +261,7 @@ export default {
               color: 'var(--accent-blue)',
               name: 'blue',
               icon: 'blue',
-              bg: 'linear-gradient(90deg, var(--primary-dark),var(--accent-blue))',
+              bg: 'linear-gradient(0deg, var(--primary-dark),var(--accent-blue))',
               max: 255,
             },
           ],
@@ -281,7 +273,7 @@ export default {
               color: 'var(--accent-light-blue)',
               name: 'cya',
               icon: 'cyan',
-              bg: 'linear-gradient(90deg, var(--primary-dark),var(--accent-light-blue))',
+              bg: 'linear-gradient(0deg, var(--primary-dark),var(--accent-light-blue))',
               max: 255,
             },
 
@@ -290,7 +282,7 @@ export default {
               color: 'var(--accent-pink)',
               name: 'mag',
               icon: 'mag',
-              bg: 'linear-gradient(90deg, var(--primary-dark),var(--accent-pink))',
+              bg: 'linear-gradient(0deg, var(--primary-dark),var(--accent-pink))',
               max: 255,
             },
             {
@@ -298,7 +290,7 @@ export default {
               color: 'var(--accent-gold)',
               name: 'yel',
               icon: 'yel',
-              bg: 'linear-gradient(90deg, var(--primary-dark),var(--accent-gold))',
+              bg: 'linear-gradient(0deg, var(--primary-dark),var(--accent-gold))',
               max: 255,
             },
           ],
@@ -316,13 +308,13 @@ export default {
     },
     valBg() {
       if (this.modes[0]) {
-        return `linear-gradient(90deg,hsla(${this.modes[0].channels[0].val}deg,${this.modes[0].channels[1].val}%,50%,0%) 0%,hsl(${this.modes[0].channels[0].val}deg,${this.modes[0].channels[1].val}%,50%,100%) 100%)`;
+        return `linear-gradient(0deg,hsla(${this.modes[0].channels[0].val}deg,${this.modes[0].channels[1].val}%,50%,0%) 0%,hsl(${this.modes[0].channels[0].val}deg,${this.modes[0].channels[1].val}%,50%,100%) 100%)`;
       }
       return null;
     },
     satBg() {
       if (this.modes[0]) {
-        return `linear-gradient(-90deg,hsla(${this.modes[0].channels[0].val}deg,100%,50%,80%) 0%,hsla(${this.modes[0].channels[0].val}deg,0%,50%, 80%) 100%)`;
+        return `linear-gradient(-180deg,hsla(${this.modes[0].channels[0].val}deg,100%,50%,80%) 0%,hsla(${this.modes[0].channels[0].val}deg,0%,50%, 80%) 100%)`;
       }
       return null;
     },
@@ -825,11 +817,10 @@ export default {
 }
 .hue_picker{
   z-index: 10;
-  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 95%;
+  width: 95%;
   aspect-ratio: 1/1;
   aspect-ratio : 1 / 1;
   background: conic-gradient(
@@ -854,7 +845,6 @@ export default {
 .lightness_picker{
   z-index: 20;
   width: 54%;
-  height: 54%;
   aspect-ratio : 1 / 1;
   position: absolute;
   top: 50%;

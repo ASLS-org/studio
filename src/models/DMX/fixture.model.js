@@ -858,9 +858,6 @@ class Fixture extends Proxify {
       default:
         break;
     }
-    Object.keys(instance).forEach((prop) => {
-      delete instance[prop];
-    });
     instance = null;
   }
 

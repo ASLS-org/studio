@@ -14,7 +14,8 @@ dracoLoader.setDecoderPath('libs/gltf/');
  */
 const loader = new GLTFLoader()
   .setCrossOrigin('anonymous')
-  .setDRACOLoader(dracoLoader);
+  .setDRACOLoader(dracoLoader)
+  .setPath(import.meta.env.VITE_STATIC_URL);
 
 /**
  * @class
