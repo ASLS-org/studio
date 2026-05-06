@@ -1,24 +1,32 @@
 <template>
   <div class="uikit_txt_input">
-    <div :class="{ disabled }" class="label" v-if="label">
+    <div
+      v-if="label"
+      :class="{ disabled }"
+      class="label"
+    >
       {{ label }}
     </div>
-    <div class="uikit_txt_input_textbox_wrapper" tabindex="0" :class="{ disabled: disabled || readonly, outlined }">
+    <div
+      class="uikit_txt_input_textbox_wrapper"
+      tabindex="0"
+      :class="{ disabled: disabled || readonly, outlined }"
+    >
       <input
-        @keydown.stop
-        @keydown.enter="updateValue"
-        @blur="updateValue"
+        v-model="content"
         class="uikit_txt_input_textbox"
         :disabled="disabled || readonly"
         type="text"
-        v-model="content"
         :placeholder="placeholder"
+        @keydown.stop
+        @keydown.enter="updateValue"
+        @blur="updateValue"
         @input="
           (v) => {
             if (autoUpdate) updateValue(v);
           }
         "
-      />
+      >
     </div>
   </div>
 </template>
@@ -32,20 +40,33 @@
  * @story "Read Only" {"value": "Default", "label":"default", "readonly": true}
  */
 export default {
-  name: "ukTxtInput",
+  name: 'UkTxtInput',
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   props: {
     /**
      * The textual input's text label value
      */
-    label: String,
+    label: {
+      type: String,
+      default: null,
+    },
     /**
      * The textual input's placeholder text
      */
-    placeholder: String,
+    placeholder: {
+      type: String,
+      default: null,
+    },
     /**
      * The actual textual input value
      */
-    value: String,
+    modelValue: {
+      type: String,
+      default: null,
+    },
     /**
      * Whether or not the input should be disabled
      */
@@ -70,13 +91,19 @@ export default {
       default: false,
     },
   },
+  emits: ['update:modelValue', 'input'],
   data() {
     return {
       /**
        * Textual input's value (reactive)
        */
-      content: this.value,
+      content: this.modelValue,
     };
+  },
+  watch: {
+    modelValue(newValue) {
+      this.content = newValue;
+    },
   },
   methods: {
     /**
@@ -89,12 +116,8 @@ export default {
        *
        * @property {String} content Textualinput value
        */
-      this.$emit("input", this.content);
-    },
-  },
-  watch: {
-    value: function (newValue) {
-      this.content = newValue;
+      this.$emit('update:modelValue', this.content);
+      this.$emit('input', this.content);
     },
   },
 };

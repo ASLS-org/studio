@@ -1,9 +1,7 @@
-'use strict'
-
 import {
-  Proxify
-} from '../utils/proxify.utils.js'
-import Chase from './chase.model'
+  Proxify,
+} from '../utils/proxify.utils';
+import Chase from './chase.model';
 
 /**
  * @class ChasePool
@@ -11,10 +9,9 @@ import Chase from './chase.model'
  * @classdesc Pool of chase instances
  */
 class ChasePool extends Proxify {
-
   constructor() {
     super();
-    this.chases = []
+    this.chases = [];
     return this.proxify();
   }
 
@@ -26,7 +23,7 @@ class ChasePool extends Proxify {
    * @type {Array}
    */
   get listable() {
-    return this.chases.map(chase => chase.listable)
+    return this.chases.map((chase) => chase.listable);
   }
 
   /**
@@ -34,18 +31,14 @@ class ChasePool extends Proxify {
    *
    * @public
    * @param {Number} id
-   * @return {Object} Chase instance 
+   * @return {Object} Chase instance
    */
   getFromId(id) {
-    let chase = this.chases.find(chase => chase.id == id);
+    const chase = this.chases.find((item) => item.id === Number(id));
     if (chase) {
       return chase;
-    } else {
-      throw {
-        errcode: -10,
-        msg: "Cannot find chase in pool"
-      }
     }
+    throw new Error('Cannot find chase in pool');
   }
 
   /**
@@ -55,7 +48,7 @@ class ChasePool extends Proxify {
    * @param {Object} chase chase instance
    */
   addExisting(chase) {
-    this.chases.pushAndStackUndo(chase);
+    this.chases.push(chase); // TODO: replace with pushAndStackUndo once patched
   }
 
   /**
@@ -63,13 +56,13 @@ class ChasePool extends Proxify {
    *
    * @public
    * @param {Object} chaseData chase configuration object
-   * @return {Object} Chase instance 
+   * @return {Object} Chase instance
    * @see Chase
    */
   addRaw(chaseData) {
-    let chase = new Chase(chaseData)
-    chase.id = chaseData.id != undefined ? chaseData.id : this.genChaseId();
-    this.chases.pushAndStackUndo(chase);
+    const chase = new Chase(chaseData);
+    chase.id = chaseData.id !== undefined ? chaseData.id : this.genChaseId();
+    this.chases.push(chase); // TODO: replace with ..AndStackUndo once patched
     return chase;
   }
 
@@ -80,15 +73,12 @@ class ChasePool extends Proxify {
    * @param {Object} chase chase instance handle
    */
   delete(chase) {
-    let chaseIndex = this.chases.findIndex(item => item.id === chase.id);
+    const chaseIndex = this.chases.findIndex((item) => item.id === chase.id);
     if (chaseIndex > -1) {
-      this.chases.spliceAndStackUndo(chaseIndex, 1);
+      this.chases.splice(chaseIndex, 1); // TODO: replace with ..AndStackUndo once patched
       Chase.deleteInstance(chase);
     } else {
-      throw {
-        errcode: -12,
-        msg: "Could not find chase in chase pool"
-      }
+      throw new Error('Could not find chase in chase pool');
     }
   }
 
@@ -99,7 +89,7 @@ class ChasePool extends Proxify {
    */
   clearAll() {
     for (let i = this.chases.length - 1; i >= 0; i--) {
-      this.delete(this.chases[i])
+      this.delete(this.chases[i]);
     }
   }
 
@@ -110,11 +100,14 @@ class ChasePool extends Proxify {
    * @returns {Number} The chase's unique ID
    */
   genChaseId() {
-    let id = this.chases.length ? this.chases[this.chases.length - 1].id + 1 : 0;
-    while (this.chases.find(chase => chase.id === id)) {
-      id++;
-    }
-    return id;
+    return this.chases.reduce(
+      (prev, current) => (
+        (prev && prev.id > current.id)
+          ? prev.id
+          : current.id
+      ),
+      -1,
+    ) + 1;
   }
 
   /**
@@ -124,12 +117,11 @@ class ChasePool extends Proxify {
    * @param {Object} instance handle to chasePool instance to be freed
    */
   static deleteInstance(instance) {
-    Object.keys(instance).forEach(prop => {
-      delete instance[prop]
-    })
+    Object.keys(instance).forEach((prop) => {
+      delete instance[prop];
+    });
     instance = null;
   }
-
 }
 
 export default ChasePool;

@@ -1,37 +1,34 @@
-'use strict'
-
 /**
  * Default cue fade-in time
- * 
+ *
  * @constant {Number} DEFAULT_CUE_FADEIN
  */
+import { Proxify } from '../utils/proxify.utils';
+import Live from './live.model';
+
 const DEFAULT_CUE_FADEIN = 0;
 /**
  * Default cue fade-out time
- * 
+ *
  * @constant {Number} DEFAULT_CUE_FADEOUT
  */
 const DEFAULT_CUE_FADEOUT = 0;
 
-import {Proxify} from '../utils/proxify.utils.js'
-
-
 /**
  * @class CueItem
  * @extends {Proxify}
- * @classdesc CueItems are references to a chase's cue instance activity overtime 
+ * @classdesc CueItems are references to a chase's cue instance activity overtime
  */
 class CueItem extends Proxify {
-
   /**
    * Creates an instance of CueItem.
-   * 
+   *
    * @param {Object} data CueItem configuration object
    * @param {Number} data.id CueItem's ID
    * @param {Object} data.cue CueItem's cue instance handle
    * @param {Number} data.fadeIn CueItem's Fadein duration
    * @param {Number} data.fadeOut CueItem's Fadeout duration
-   * @param {Number} data.timeDuration CueItem's duration  TODO: remove this ?? => replaced with below
+   * @param {Number} data.timeDuration CueItem's duration  TODO: remove this ??
    * @param {Number} data.tickDuration CueItem's tick duration
    * @param {Number} data.timeStart CueItem's start tick
    * @param {Number} data.subDiv CueItem's bar subdivision data TODO: remove this ??
@@ -42,8 +39,8 @@ class CueItem extends Proxify {
     this.handle = data.cue;
     this.fadeIn = data.fadeIn;
     this.fadeOut = data.fadeOut;
-    this.timeDuration =  data.timeDuration;
-    this.tickDuration =  data.tickDuration;
+    this.timeDuration = data.timeDuration;
+    this.tickDuration = data.tickDuration;
     this.timeStart = data.timeStart;
     this.tickStart = data.tickStart;
     this._subDiv = data.subDiv;
@@ -51,12 +48,16 @@ class CueItem extends Proxify {
   }
 
   /**
-   * Fadein time 
+   * Fadein time
    *
    * @type {Number}
    */
-  set fadeIn(fadeIn){
+  set fadeIn(fadeIn) {
     this._fadeIn = fadeIn;
+  }
+
+  get fadeIn() {
+    return this._fadeIn || DEFAULT_CUE_FADEIN;
   }
 
   /**
@@ -64,18 +65,22 @@ class CueItem extends Proxify {
    *
    * @type {Number}
    */
-  set fadeOut(fadeIn){
+  set fadeOut(fadeIn) {
     this._fadeIn = fadeIn;
+  }
+
+  get fadeOut() {
+    return this._fadeOut || DEFAULT_CUE_FADEOUT;
   }
 
   /**
    * Hold duration
-   * 
+   *
    * @todo remove this ? replaced with tick ?
    * @type {Number}
    */
-  set timeDuration(timeDuration){
-    this._timeDuration= timeDuration;
+  set timeDuration(timeDuration) {
+    this._timeDuration = timeDuration;
   }
 
   /**
@@ -83,8 +88,12 @@ class CueItem extends Proxify {
    *
    * @type {Number}
    */
-  set tickDuration(tickDuration){
-    this._tickDuration= tickDuration;
+  set tickDuration(tickDuration) {
+    this._tickDuration = tickDuration;
+  }
+
+  get tickDuration() {
+    return this._tickDuration;
   }
 
   /**
@@ -93,7 +102,7 @@ class CueItem extends Proxify {
    * @todo remove this ? replaced with tick ?
    * @type {Number}
    */
-  set timeStart(timeStart){
+  set timeStart(timeStart) {
     this._timeStart = timeStart;
   }
 
@@ -102,7 +111,7 @@ class CueItem extends Proxify {
    *
    * @type {Number}
    */
-  set tickStart(tickStart){
+  set tickStart(tickStart) {
     this._tickStart = tickStart;
   }
 
@@ -111,8 +120,12 @@ class CueItem extends Proxify {
    * @todo remove this ? replaced with tick ?
    * @type {Number}
    */
-  set length(duration){
+  set length(duration) {
     this._tickDuration = duration;
+  }
+
+  get length() {
+    return this._tickDuration;
   }
 
   /**
@@ -121,28 +134,12 @@ class CueItem extends Proxify {
    * @todo remove this ? replaced with tick ?
    * @type {Number}
    */
-  set tick(tickStart){
+  set tick(tickStart) {
     this._tickStart = tickStart;
   }
 
-  get fadeIn(){
-    return this._fadeIn || DEFAULT_CUE_FADEIN;
-  }
-
-  get fadeOut(){
-    return this._fadeOut || DEFAULT_CUE_FADEOUT;
-  }
-
-  get length(){
-    return this._tickDuration;
-  }
-
-  get tick(){
+  get tick() {
     return this._tickStart;
-  }
-
-  get tickDuration(){
-    return this._tickDuration;
   }
 
   /**
@@ -151,7 +148,7 @@ class CueItem extends Proxify {
    * @readonly
    * @type {String}
    */
-  get color(){
+  get color() {
     return this.handle.color;
   }
 
@@ -161,7 +158,7 @@ class CueItem extends Proxify {
    * @readonly
    * @type {String}
    */
-  get name(){
+  get name() {
     return this.handle.name;
   }
 
@@ -171,14 +168,19 @@ class CueItem extends Proxify {
    * @readonly
    * @type {Object}
    */
-  get showData(){
+  get showData() {
     return {
       id: this.id,
       name: this.name,
       color: this.color,
       tickStart: this.tick,
-      tickDuration: this.length
-    }
+      tickDuration: this.length,
+    };
+  }
+
+  update(t) {
+    const duration = this.length * (Live.barDuration / 4 / 16);
+    this.handle.update(t, duration);
   }
 
   /**
@@ -188,12 +190,11 @@ class CueItem extends Proxify {
    * @param {Object} instance handle to CueItem instance to be freed
    */
   static deleteInstance(instance) {
-    Object.keys(instance).forEach(prop => {
-      delete instance[prop]
-    })
+    Object.keys(instance).forEach((prop) => {
+      delete instance[prop];
+    });
     instance = null;
   }
-
 }
 
 export default CueItem;

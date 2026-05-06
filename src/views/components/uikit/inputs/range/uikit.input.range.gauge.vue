@@ -1,51 +1,70 @@
 <template>
   <div class="uikit_gauge">
-    <div class="label" style="margin-bottom: 10px" v-if="label != null">
-      {{ label }}
-    </div>
     <div class="uikit_gauge_wrapper">
       <input
-        class="uikit_gauge_slider"
-        @mousedown="propagateMD()"
-        @mouseup="propagateMU()"
         ref="track"
         v-model="content"
+        class="uikit_gauge_slider"
         type="range"
         :min="min"
         :max="max"
-        v-on:input="updateValue"
         :disabled="disabled"
-      />
+        @input="updateValue(true)"
+      >
     </div>
   </div>
+  <h3
+    v-if="label != null"
+    :style="{ marginBottom: '8px' }"
+    class="uikit_gauge_label"
+    :class="{ disabled: disabled }"
+  >
+    {{ label }}
+  </h3>
 </template>
 
 <script>
 /**
- * @component Gauge  A virtual slider/gauge component which can be used in order to select values within a given range.
+ * @component Gauge slider/gauge which can be used in order to select values within a given range.
  * @namespace uikit/inputs/range
  * @story Default {"min": 0, "max": 100, "default": 0, "value": 50}
  * @story Disabled {"disabled":true}
  */
 export default {
-  name: "ukGauge",
+  name: 'UkGauge',
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   props: {
     /**
      * The gauge's text label value
      */
-    label: String,
+    label: {
+      type: String,
+      default: null,
+    },
     /**
      * The gauge's minimum value
      */
-    min: Number,
+    min: {
+      type: Number,
+      default: 0,
+    },
     /**
      * The gauge's maximum value
      */
-    max: Number,
+    max: {
+      type: Number,
+      default: 100,
+    },
     /**
      * Gauge's track color
      */
-    background: String,
+    background: {
+      type: String,
+      default: 'var(--accent-maroon)',
+    },
     /**
      * Whether the gauge is disabled or not
      */
@@ -53,58 +72,49 @@ export default {
     /**
      * Actual gauge value
      */
-    value: Number,
+    modelValue: {
+      type: Number,
+      default: 0,
+    },
   },
+  emits: ['update:modelValue', 'input'],
   data() {
     return {
       /**
        * The gauge's value (reactive)
        */
-      content: this.value,
+      content: this.modelValue,
     };
   },
+  watch: {
+    modelValue(value) {
+      this.content = parseInt(value, 10);
+      this.updateValue(false);
+    },
+    background(newVal) {
+      this.$refs.track.style.background = newVal;
+    },
+  },
+  mounted() {
+    this.$refs.track.style.background = this.background;
+  },
   methods: {
-    /**
-     * Propagates mousedown event to parent element
-     * TODO: Rmove this ? is it used elsewhere ? Why did I implement that ?
-     *
-       */
-    propagateMD() {
-      this.$emit("mousedown", null);
-    },
-    /**
-    /**
-     * Propagates mousedown event to parent element
-     * TODO: Rmove this ? is it used elsewhere ? Why did I implement that ?
-     *
-       */
-    propagateMU() {
-      this.$emit("mouseup", null);
-    },
     /**
      * Updates the gauge's value
      *
        * @todo => implement the {Boolean}. It's been a while since I digged into this file.
      * doEmit wheter or not we want to emit changes to parent element.
      */
-    updateValue() {
+    updateValue(doEmit = true) {
       /**
        * Gauge's value changed
        *
        * @property {Number} content the gauge's actual value
        */
-      this.$emit("input", parseInt(this.content));
-    },
-  },
-  mounted() {
-    this.$refs.track.style.background = this.background;
-  },
-  watch: {
-    value: function (newValue) {
-      this.content = newValue;
-    },
-    background: function (newVal) {
-      this.$refs.track.style.background = newVal;
+      if (doEmit) {
+        this.$emit('update:modelValue', parseInt(this.content, 10));
+        this.$emit('input', parseInt(this.content, 10));
+      }
     },
   },
 };
@@ -117,7 +127,12 @@ export default {
   flex-direction: column;
   user-select: none;
   align-items: center;
-  width: 40px;
+  justify-content: center;
+  width: 70px;
+  height: 100%;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  overflow: hidden;
 }
 .uikit_gauge_wrapper {
   display: flex;
@@ -128,16 +143,18 @@ export default {
 }
 .uikit_gauge_slider {
   -webkit-appearance: none;
-  height: 10px;
-  width: 140px;
+  height: 100%;
+  width: 10px;
   padding: 0;
   margin: 0;
-  transform: rotate(-90deg);
   border-radius: 5px;
-  background: linear-gradient(-90deg, var(--secondary-lighter) 0, var(--primary-light) 100%);
+  background: linear-gradient(-180deg, var(--secondary-lighter) 0, var(--primary-light) 100%);
   box-shadow: inset 0px 4px 4px rgba(0, 0, 0, 0.25);
   cursor: pointer;
   pointer-events: auto;
+  writing-mode: vertical-lr;
+  direction: rtl;
+  vertical-align: middle;
 }
 
 .uikit_gauge_slider:disabled {
@@ -162,7 +179,6 @@ export default {
   width: 20px;
   background: var(--secondary-lighter);
   clip-path: polygon(30% 50%, 70% 50%, 100% 0, 100% 100%, 70% 50%, 30% 50%, 0 100%, 0 0);
-  transform: rotate(90deg);
   pointer-events: auto;
 }
 .uikit_gauge_slider:disabled::-webkit-slider-thumb {
@@ -178,6 +194,10 @@ export default {
   background: transparent;
   width: 0px;
   pointer-events: auto;
+  cursor: pointer;
+  writing-mode: vertical-lr;
+  direction: rtl;
+  vertical-align: middle;
 }
 .uikit_gauge_slider::-moz-range-thumb {
   border: none;
@@ -186,7 +206,6 @@ export default {
   width: 26px;
   background: var(--secondary-lighter);
   clip-path: polygon(30% 50%, 70% 50%, 100% 0, 100% 100%, 70% 50%, 30% 50%, 0 100%, 0 0);
-  transform: rotate(90deg);
   pointer-events: auto;
 }
 .uikit_gauge_slider:disabled::-moz-range-thumb {
@@ -194,4 +213,9 @@ export default {
   background: var(--secondary-darker);
   pointer-events: auto;
 }
+.uikit_gauge_label {
+  display: flex;
+  justify-content: center;
+}
+
 </style>

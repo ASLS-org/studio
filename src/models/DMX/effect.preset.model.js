@@ -1,28 +1,26 @@
-'use strict'
-
 import Live from './live.model';
 
-//TODO: remove this file
+// TODO: remove this file
 
 const FX_CHANNEL_WAVEFORMS = {
   SINE: 0,
   TRIANGLE: 1,
   SQUARE: 2,
-  PWM: 3
-}
+  PWM: 3,
+};
 
 const FX_CHANNEL_DIRECTIONS = {
   LTR: 0,
   RTL: 1,
   BOUNCELRT: 2,
-  BOUNCERTL: 3
-}
+  BOUNCERTL: 3,
+};
 
 const FXPresets = [{
-  name: "Zoom",
+  name: 'Zoom',
   presets: [{
     waveform: FX_CHANNEL_WAVEFORMS.SINE,
-    name: "zoom",
+    name: 'zoom',
     channels: {
       zoom: {
         min: 0,
@@ -30,13 +28,13 @@ const FXPresets = [{
         phase: 0,
         frequency: 1,
       },
-    }
-  }]
+    },
+  }],
 }, {
-  name: "Dimmer",
+  name: 'Dimmer',
   presets: [{
     waveform: FX_CHANNEL_WAVEFORMS.SINE,
-    name: "dimmer",
+    name: 'dimmer',
     channels: {
       dimmer: {
         min: 0,
@@ -44,13 +42,13 @@ const FXPresets = [{
         phase: 0,
         frequency: 1,
       },
-    }
-  }]
+    },
+  }],
 }, {
-  name: "pan & tilt",
+  name: 'pan & tilt',
   presets: [{
     waveform: FX_CHANNEL_WAVEFORMS.SINE,
-    name: "Line",
+    name: 'Line',
     channels: {
       pan: {
         min: 0,
@@ -63,10 +61,10 @@ const FXPresets = [{
         max: 255,
         phase: 0,
         frequency: 1,
-      }
-    }
+      },
+    },
   }, {
-    name: "Circle",
+    name: 'Circle',
     waveform: FX_CHANNEL_WAVEFORMS.SINE,
     channels: {
       pan: {
@@ -80,10 +78,10 @@ const FXPresets = [{
         max: 255,
         phase: 90,
         frequency: 1,
-      }
-    }
+      },
+    },
   }, {
-    name: "Eight",
+    name: 'Eight',
     waveform: FX_CHANNEL_WAVEFORMS.SINE,
     channels: {
       pan: {
@@ -97,10 +95,10 @@ const FXPresets = [{
         max: 255,
         phase: 0,
         frequency: 1,
-      }
-    }
+      },
+    },
   }, {
-    name: "Pan",
+    name: 'Pan',
     waveform: FX_CHANNEL_WAVEFORMS.SINE,
     channels: {
       pan: {
@@ -108,10 +106,10 @@ const FXPresets = [{
         max: 255,
         phase: 0,
         frequency: 1,
-      }
-    }
+      },
+    },
   }, {
-    name: "Tilt",
+    name: 'Tilt',
     waveform: FX_CHANNEL_WAVEFORMS.SINE,
     channels: {
       tilt: {
@@ -119,14 +117,14 @@ const FXPresets = [{
         max: 255,
         phase: 0,
         frequency: 1,
-      }
-    }
-  }]
+      },
+    },
+  }],
 }, {
-  name: "Color",
+  name: 'Color',
   waveform: FX_CHANNEL_WAVEFORMS.SINE,
   presets: [{
-    name: "Hue shift",
+    name: 'Hue shift',
     channels: {
       red: {
         min: 0,
@@ -146,9 +144,9 @@ const FXPresets = [{
         phase: 300,
         frequency: 1,
       },
-    }
+    },
   }, {
-    name: "color intensity red",
+    name: 'color intensity red',
     channels: {
       red: {
         min: 0,
@@ -157,9 +155,9 @@ const FXPresets = [{
         frequency: 1,
       },
 
-    }
+    },
   }, {
-    name: "color intensity green",
+    name: 'color intensity green',
     channels: {
       green: {
         min: 0,
@@ -168,9 +166,9 @@ const FXPresets = [{
         frequency: 1,
       },
 
-    }
+    },
   }, {
-    name: "color intensity blue",
+    name: 'color intensity blue',
     channels: {
       blue: {
         min: 0,
@@ -178,18 +176,17 @@ const FXPresets = [{
         phase: 60,
         frequency: 1,
       },
-    }
-  }]
-}]
+    },
+  }],
+}];
 
 class FXFixture {
-
   constructor(fixture, fixturePreset = {
     active: true,
-    phase: 0
+    phase: 0,
   }) {
     this.handle = fixture;
-    this.phase = fixturePreset.phase
+    this.phase = fixturePreset.phase;
     this.active = fixturePreset.active;
     this.value = 0;
   }
@@ -199,24 +196,22 @@ class FXFixture {
       id: this.handle.id,
       name: this.handle.name,
       active: this.active,
-      icon: "wave",
-    }
+      icon: 'wave',
+    };
   }
-
 }
 
 class FXChannel {
-
   constructor(channel, fixtures, presetValues = {
     min: 0,
     max: 255,
     frequency: 1,
-    phase: 0
+    phase: 0,
   }) {
-    this.handle = channel
+    this.handle = channel;
     this.fixtures = fixtures;
-    this.direction = FX_CHANNEL_DIRECTIONS.LTR
-    this.waveform = FX_CHANNEL_WAVEFORMS.SINE
+    this.direction = FX_CHANNEL_DIRECTIONS.LTR;
+    this.waveform = FX_CHANNEL_WAVEFORMS.SINE;
     this.max = presetValues.max;
     this.min = presetValues.min;
     this.frequency = presetValues.frequency;
@@ -230,12 +225,16 @@ class FXChannel {
 
   set fixtures(fixtures) {
     this._fixtures = fixtures.map((fixture, index) => {
-      let phase = 360 * (index / fixtures.length) * (Math.PI / 180)
+      const phase = 360 * (index / fixtures.length) * (Math.PI / 180);
       return new FXFixture(fixture, {
         active: true,
-        phase: phase
-      })
-    })
+        phase,
+      });
+    });
+  }
+
+  get fixtures() {
+    return this._fixtures;
   }
 
   set phase(phase) {
@@ -243,48 +242,50 @@ class FXChannel {
     this._phaseRad = phase * (Math.PI / 180);
   }
 
-  set fixturePhaseStart(fixturePhaseStart){
-    this._fixturePhaseStart = fixturePhaseStart;
-    this.computeFixturesPhasing();
-  }
-
-  set fixturePhaseStop(fixturePhaseStop){
-    this._fixturePhaseStop = fixturePhaseStop;
-    this.computeFixturesPhasing();
-  }
-
-  get fixturePhaseStart(){
-    return this._fixturePhaseStart || 0
-  }
-
-  get fixturePhaseStop(){
-    return this._fixturePhaseStop || 360
-  }
-
-  get fixtures() {
-    return this._fixtures;
-  }
-
-  get phaseRad() {
-    return this._phaseRad
-  }
-
   get phase() {
     return this._phase;
   }
 
+  set fixturePhaseStart(fixturePhaseStart) {
+    this._fixturePhaseStart = fixturePhaseStart;
+    this.computeFixturesPhasing();
+  }
+
+  get fixturePhaseStart() {
+    return this._fixturePhaseStart || 0;
+  }
+
+  set fixturePhaseStop(fixturePhaseStop) {
+    this._fixturePhaseStop = fixturePhaseStop;
+    this.computeFixturesPhasing();
+  }
+
+  get fixturePhaseStop() {
+    return this._fixturePhaseStop || 360;
+  }
+
+  get phaseRad() {
+    return this._phaseRad;
+  }
+
   get listable() {
-    let standardizedType = this.handle.type.toLowerCase().replace(' ', '')
+    const standardizedType = this.handle.type.toLowerCase().replace(' ', '');
     return {
       id: this.handle.id,
-      name: this.handle.type == "Color" ? this.handle.color : this.handle.type,
-      icon: standardizedType + (this.handle.type == "Color" ? `intensity${this.handle.color}` : '').toLowerCase(),
-      more: `CH-${this.handle.id}`
-    }
+      name: this.handle.type === 'Color'
+        ? this.handle.color
+        : this.handle.type,
+      icon: standardizedType + (
+        this.handle.type === 'Color'
+          ? `intensity${this.handle.color}`
+          : ''
+      ).toLowerCase(),
+      more: `CH-${this.handle.id}`,
+    };
   }
 
   get listableFixtures() {
-    return this.fixtures.map(fixture => fixture.listable)
+    return this.fixtures.map((fixture) => fixture.listable);
   }
 
   get period() {
@@ -292,26 +293,31 @@ class FXChannel {
   }
 
   get average() {
-    return Math.ceil(0.5 * (this.min + this.max))
+    return Math.ceil(0.5 * (this.min + this.max));
   }
 
   get amplitude() {
-    return Math.ceil(0.5 * (this.max - this.min))
+    return Math.ceil(0.5 * (this.max - this.min));
   }
 
+  // eslint-disable-next-line class-methods-use-this
   get waveOptions() {
     return Object.keys(FX_CHANNEL_WAVEFORMS);
   }
 
+  // eslint-disable-next-line class-methods-use-this
   get directionOptions() {
     return Object.keys(FX_CHANNEL_DIRECTIONS);
   }
 
-  computeFixturesPhasing(){
-    let activeFixtures = this.fixtures.flatMap(fixture=>fixture.active ? fixture : [])
+  computeFixturesPhasing() {
+    const activeFixtures = this.fixtures.flatMap((fixture) => (fixture.active ? fixture : []));
     activeFixtures.forEach((fixture, index) => {
-      fixture.phase = (this.fixturePhaseStop - this.fixturePhaseStart) * (index / activeFixtures.length) * (Math.PI / 180)
-    })
+      fixture.phase = (
+        (this.fixturePhaseStop - this.fixturePhaseStart)
+        * (index / activeFixtures.length) * (Math.PI / 180)
+      );
+    });
   }
 
   addFixture(fixture) {
@@ -320,28 +326,30 @@ class FXChannel {
   }
 
   setFixturesActivity(activeIds) {
-    this.fixtures.forEach(fixture => {
-      fixture.active = activeIds.includes(fixture.handle.id)
-      if(!fixture.active){
+    this.fixtures.forEach((fixture) => {
+      fixture.active = activeIds.includes(fixture.handle.id);
+      if (!fixture.active) {
         fixture.handle.setChannel(this.handle.id - 1, 0);
       }
-     /* fixture.active = activeIds.includes(fixture.handle.id)
-      if (fixture.active) {
-        activeFixtures.push(fixture)
-      } else {
-        fixture.handle.setChannel(this.handle.id - 1, 0);
-      }*/
-    })
+    });
     this.computeFixturesPhasing();
     this.update(this.time);
   }
 
   genSine(t, phaseOffset = 0) {
-    return this.average + this.amplitude * Math.sin(2 * Math.PI * this.frequency * t + this.phaseRad + phaseOffset);
+    return (
+      this.average
+      + this.amplitude
+      * Math.sin(2 * Math.PI * this.frequency * t + this.phaseRad + phaseOffset)
+    );
   }
 
   genTriangle(t, phaseOffset = 0) {
-    return this.average + (2 * this.amplitude / Math.PI) * Math.asin(Math.sin(2 * Math.PI * this.frequency * t + this.phaseRad + phaseOffset))
+    return (
+      this.average
+      + ((2 * this.amplitude) / Math.PI)
+      * Math.asin(Math.sin(2 * Math.PI * this.frequency * t + this.phaseRad + phaseOffset))
+    );
   }
 
   getValue(t, phaseOffset) {
@@ -353,7 +361,7 @@ class FXChannel {
       case FX_CHANNEL_WAVEFORMS.SQUARE:
         return this.genSine(t, phaseOffset) >= this.average ? this.max : this.min;
       default:
-        return 1
+        return 1;
     }
   }
 
@@ -373,18 +381,13 @@ class FXChannel {
             phase = fixture.phase;
         }
         this.fixtures[index].value = this.getValue(this.time, phase);
-        /*if (this.handle.fineAlias) {
-          fixture.handle.setChannel(this.handle.fineAlias.id - 1, (this.fixtures[index].value % 1) * 255);
-        }*/
         fixture.handle.setChannel(this.handle.id - 1, this.fixtures[index].value);
       }
-    })
+    });
   }
-
 }
 
 class FX {
-
   constructor() {
     this.fixtures = [];
     this.channels = [];
@@ -397,87 +400,70 @@ class FX {
   }
 
   get channelOptions() {
-    return this.channels.map(channel => channel.type);
+    return this.channels.map((channel) => channel.type);
   }
 
+  // eslint-disable-next-line class-methods-use-this
   get listablePresets() {
-    return FXPresets.map((item, poolIndex) => {
-      return {
-        name: item.name,
-        icon: "folder",
-        id: poolIndex,
-        unfolded: true,
-        unfold: item.presets.map((preset, presetIndex) => {
-          return {
-            name: preset.name,
-            icon: preset.name.toLowerCase().replaceAll(' ', ''),
-            pool: poolIndex,
-            id: presetIndex,
-          }
-        })
-      }
-    })
+    return FXPresets.map((item, poolIndex) => ({
+      name: item.name,
+      icon: 'folder',
+      id: poolIndex,
+      unfolded: true,
+      unfold: item.presets.map((preset, presetIndex) => ({
+        name: preset.name,
+        icon: preset.name.toLowerCase().replaceAll(' ', ''),
+        pool: poolIndex,
+        id: presetIndex,
+      })),
+    }));
   }
 
   get listableChannels() {
-    return this.channels.map(channel => channel.listable)
+    return this.channels.map((channel) => channel.listable);
   }
 
   addFixture(fixture) {
-    if (!this.fixtures.find(fxFixture => fxFixture.id === fixture.id)) {
+    if (!this.fixtures.find((fxFixture) => fxFixture.id === fixture.id)) {
       this.fixtures.push(fixture);
-      this.channels.forEach(channel => {
-        channel.addFixture(fixture)
-      })
+      this.channels.forEach((channel) => {
+        channel.addFixture(fixture);
+      });
     } else {
-      throw {
-        errCode: -40,
-        msg: "Fixture already in use"
-      }
+      throw new Error('Fixture already in use');
     }
   }
 
   addChannel(channel) {
-    if (!this.channels.find(fxChannel => fxChannel.handle.id === channel.id)) {
+    if (!this.channels.find((fxChannel) => fxChannel.handle.id === channel.id)) {
       this.channels.push(new FXChannel(channel, this.fixtures));
     } else {
-      throw {
-        errCode: -50,
-        msg: "FX channel already in use"
-      }
+      throw new Error('FX channel already in use');
     }
   }
 
   getChannelFromId(id) {
-    let channel = this.channels.find(channel => channel.handle.id === id)
+    const channel = this.channels.find((item) => item.handle.id === id);
     if (channel) {
       return channel;
-    } else {
-      throw {
-        errCode: -40,
-        msg: "Could not find channel in FX"
-      }
     }
+    throw new Error('Could not find channel in FX');
   }
 
   getFixtureFromId(id) {
-    let fixture = this.fixtures.find(fixture => fixture.id === id)
+    const fixture = this.fixtures.find((item) => item.id === id);
     if (fixture) {
       return fixture;
-    } else {
-      throw {
-        errCode: -40,
-        msg: "Could not find fixture in FX"
-      }
     }
+    throw new Error('Could not find fixture in FX');
   }
 
   setupPreset(poolId, presetId) {
-    let preset = FXPresets[poolId].presets[presetId]
-    Object.keys(preset.channels).forEach(channelName => {
-      let channelData = preset.channels[channelName];
-      let channel = this.fixtures[0].getQuickAccessorChannel(channelName)
-      let existing = this.channels.find(fxChannel => fxChannel.handle.id === channel.id);
+    const preset = FXPresets[poolId].presets[presetId];
+    Object.keys(preset.channels).forEach((channelName) => {
+      const channelData = preset.channels[channelName];
+      const channel = this.fixtures[0].getQuickAccessorChannel(channelName);
+      const existing = this.channels.find((fxChannel) => fxChannel.handle.id === channel.id);
       if (!existing) {
         this.channels.push(new FXChannel(channel, this.fixtures, channelData));
       } else {
@@ -486,16 +472,15 @@ class FX {
         existing.phase = channelData.phase;
         existing.frequency = channelData.frequency;
       }
-    })
+    });
   }
 
   update(t) {
-    this.time = (t % this.duration) / this.duration
-    this.channels.forEach(channel => {
-      channel.update(this.time)
-    })
+    this.time = (t % this.duration) / this.duration;
+    this.channels.forEach((channel) => {
+      channel.update(this.time);
+    });
   }
-
 }
 
 export default FX;

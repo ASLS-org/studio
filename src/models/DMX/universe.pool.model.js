@@ -1,20 +1,15 @@
-'use strict'
-
-import Universe from './universe.model'
-
+import Universe from './universe.model';
 
 /**
  * @class UniversePool
  * @extends {Proxify}
  * @classdesc Pool of universe instances
  */
-class UniversePool{
-
-  constructor(){
+class UniversePool {
+  constructor() {
     this.universes = [];
     this.selected = [0];
   }
-
 
   /**
    * Pool's listable data
@@ -23,15 +18,13 @@ class UniversePool{
    * @readonly
    * @type {Array}
    */
-  get listable(){
-    return this.universes.map(universe=>{
-      return {
-        id: universe.id,
-        name: universe.name,
-        color: universe.color,
-        unfold: universe.fixturePool.listable,
-      };
-    })
+  get listable() {
+    return this.universes.map((universe) => ({
+      id: universe.id,
+      name: universe.name,
+      color: universe.color,
+      unfold: universe.fixturePool.listable,
+    }));
   }
 
   /**
@@ -39,18 +32,14 @@ class UniversePool{
    *
    * @public
    * @param {Number} id
-   * @return {Object} Universe instance 
+   * @return {Object} Universe instance
    */
-  getFromId(id){
-    let universe = this.universes.find(universe=>universe.id == id);
-    if(universe){
+  getFromId(id) {
+    const universe = this.universes.find((u) => u.id === Number(id));
+    if (universe) {
       return universe;
-    }else{
-      throw {
-        errcode: -10,
-        msg: "Cannot find universe in pool"
-      }
     }
+    throw new Error('Cannot find universe in pool');
   }
 
   /**
@@ -59,7 +48,7 @@ class UniversePool{
    * @public
    * @param {Object} universe universe instance
    */
-  addExisting(universe){
+  addExisting(universe) {
     this.universes.push(universe);
   }
 
@@ -68,12 +57,12 @@ class UniversePool{
    *
    * @public
    * @param {Object} universeData universe configuration object
-   * @return {Object} Universe instance 
+   * @return {Object} Universe instance
    * @see Universe
    */
-  addRaw(universeData={}){
-    let universe = new Universe(universeData)
-    if(!universe.id){
+  addRaw(universeData = {}) {
+    const universe = new Universe(universeData);
+    if (!universe.id) {
       universe.id = this.genUniverseId();
     }
     this.universes.push(universe);
@@ -86,15 +75,12 @@ class UniversePool{
    * @public
    * @param {Object} universe universe instance handle
    */
-  delete(universe){
-    let universeIndex = this.universes.findIndex(item=>item.id === universe.id);
-    if(universeIndex > -1){
+  delete(universe) {
+    const universeIndex = this.universes.findIndex((item) => item.id === universe.id);
+    if (universeIndex > -1) {
       this.universes.splice(universeIndex, 1);
-    }else{
-      throw {
-        errcode: -12,
-        msg: "Could not find universe in universe pool"
-      }
+    } else {
+      throw new Error('Could not find universe in universe pool');
     }
   }
 
@@ -103,9 +89,9 @@ class UniversePool{
    *
    * @public
    */
-  clearAll(){
-    for(let i=this.universes.length-1; i>=0;i--){
-      this.delete(this.universes[i])
+  clearAll() {
+    for (let i = this.universes.length - 1; i >= 0; i--) {
+      this.delete(this.universes[i]);
     }
   }
 
@@ -116,13 +102,15 @@ class UniversePool{
    * @returns {Number} The universe's unique ID
    */
   genUniverseId() {
-    let id = this.universes.length ? this.universes[this.universes.length-1].id + 1 : 0; 
-    while(this.universes.find(universe=>universe.id === id)){
-      id++;
-    }
-    return id;
+    return this.universes.reduce(
+      (prev, current) => (
+        (prev && prev.id > current.id)
+          ? prev.id
+          : current.id
+      ),
+      -1,
+    ) + 1;
   }
-
 }
 
 export default UniversePool;

@@ -1,28 +1,24 @@
-'use strict'
-
-import {Proxify} from '../utils/proxify.utils.js'
-import Effect from './effect.model'
-import Scene from './scene.model'
+import { Proxify } from '../utils/proxify.utils';
+import Effect from './effect.model';
+import Scene from './scene.model';
 
 /**
  * Cue types enumeration
- * 
+ *
  * @constant {Object} CUE_TYPES
  * @enum {Number}
  */
 const CUE_TYPES = {
   SCENE: 0,
-  EFFECT: 1
-}
-
+  EFFECT: 1,
+};
 
 /**
  * @class CuePool
  * @extends {Proxify}
  * @classdesc Pool of cue instances
  */
-class CuePool extends Proxify  {
-
+class CuePool extends Proxify {
   constructor() {
     super();
     this.cues = [];
@@ -36,8 +32,8 @@ class CuePool extends Proxify  {
    * @readonly
    * @type {Array}
    */
-  get listable(){
-    return this.cues.map(cue=>cue.listable)
+  get listable() {
+    return this.cues.map((cue) => cue.listable);
   }
 
   /**
@@ -45,18 +41,14 @@ class CuePool extends Proxify  {
    *
    * @public
    * @param {Number} id
-   * @return {Object} Cue instance 
+   * @return {Object} Cue instance
    */
-  getFromId(id){
-    let cue = this.cues.find(cue=>cue.id == id);
-    if(cue){
+  getFromId(id) {
+    const cue = this.cues.find((item) => item.id === id);
+    if (cue) {
       return cue;
-    }else{
-      throw {
-        errcode: -10,
-        msg: "Cannot find cue in pool"
-      }
     }
+    throw new Error('Cannot find cue in pool');
   }
 
   /**
@@ -65,8 +57,8 @@ class CuePool extends Proxify  {
    * @public
    * @param {Object} cue cue instance
    */
-  addExisting(cue){
-    this.cues.pushAndStackUndo(cue);
+  addExisting(cue) {
+    this.cues.push(cue); // TODO: replace with ..AndStackUndo once patched
   }
 
   /**
@@ -74,12 +66,12 @@ class CuePool extends Proxify  {
    *
    * @public
    * @param {Object} cueData cue configuration object
-   * @return {Object} Cue instance 
+   * @return {Object} Cue instance
    * @see Cue
    */
-  addRaw(cueData){
+  addRaw(cueData) {
     let cue;
-    switch(cueData.type){
+    switch (cueData.type) {
       case CUE_TYPES.SCENE:
         cue = new Scene(cueData);
         break;
@@ -87,13 +79,10 @@ class CuePool extends Proxify  {
         cue = new Effect(cueData);
         break;
       default:
-        throw{
-          errcode: -20,
-          msg: "Unsupported cue type provided."
-        }
+        throw new Error('Unsupported cue type provided.');
     }
-    cue.id = cueData.id != undefined ? cueData.id : this.genCueId();
-    this.cues.pushAndStackUndo(cue);
+    cue.id = cueData.id !== undefined ? cueData.id : this.genCueId();
+    this.cues.push(cue); // TODO: replace with ..AndStackUndo once patched
     return cue;
   }
 
@@ -103,15 +92,12 @@ class CuePool extends Proxify  {
    * @public
    * @param {Object} cue cue instance handle
    */
-  delete(cue){
-    let cueIndex = this.cues.findIndex(item=>item.id === cue.id);
-    if(cueIndex > -1){
-      this.cues.spliceAndStackUndo(cueIndex, 1);
-    }else{
-      throw {
-        errcode: -12,
-        msg: "Could not find cue in cue pool"
-      }
+  delete(cue) {
+    const cueIndex = this.cues.findIndex((item) => item.id === cue.id);
+    if (cueIndex > -1) {
+      this.cues.splice(cueIndex, 1); // TODO: replace with ..AndStackUndo once patched
+    } else {
+      throw new Error('Could not find cue in cue pool');
     }
   }
 
@@ -120,9 +106,9 @@ class CuePool extends Proxify  {
    *
    * @public
    */
-  clearAll(){
-    for(let i=this.cues.length-1; i>=0;i--){
-      this.delete(this.cues[i])
+  clearAll() {
+    for (let i = this.cues.length - 1; i >= 0; i--) {
+      this.delete(this.cues[i]);
     }
   }
 
@@ -133,11 +119,14 @@ class CuePool extends Proxify  {
    * @returns {Number} The cue's unique ID
    */
   genCueId() {
-    let id = this.cues.length ? this.cues[this.cues.length-1].id + 1 : 0; 
-    while(this.cues.find(cue=>cue.id === id)){
-      id++;
-    }
-    return id;
+    return this.chases.reduce(
+      (prev, current) => (
+        (prev && prev.id > current.id)
+          ? prev.id
+          : current.id
+      ),
+      -1,
+    ) + 1;
   }
 
   /**
@@ -147,12 +136,11 @@ class CuePool extends Proxify  {
    * @param {Object} instance handle to cuePool instance to be freed
    */
   static deleteInstance(instance) {
-    Object.keys(instance).forEach(prop => {
-      delete instance[prop]
-    })
+    Object.keys(instance).forEach((prop) => {
+      delete instance[prop];
+    });
     instance = null;
   }
-
 }
 
 export default CuePool;

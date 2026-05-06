@@ -1,2 +1,3 @@
-import button from "./uikit.button.vue";
-export default{button}
+import button from './uikit.button.vue';
+
+export default { button };

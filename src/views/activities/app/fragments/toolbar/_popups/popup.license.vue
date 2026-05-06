@@ -1,5 +1,13 @@
 <template>
-  <uk-popup @submit="close" :movable="false" backdrop :cancelable="false" @input="update()" v-model="state" :header="headerData">
+  <uk-popup
+    v-model="state"
+    :movable="false"
+    backdrop
+    :cancelable="false"
+    :header="headerData"
+    @submit="close"
+    @input="update()"
+  >
     <div class="body">
       <p>{{ licenceTXT }}</p>
     </div>
@@ -7,19 +15,23 @@
 </template>
 
 <script>
-import License from "raw-loader!/COPYING";
-import PopupMixin from "@/views/mixins/popup.mixin.js"
+import License from '@root/COPYING?raw';
+import PopupMixin from '@/views/mixins/popup.mixin';
 
 export default {
-  name: "ukPopupLicense",
+  name: 'UkPopupLicense',
   mixins: [PopupMixin],
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   data() {
     return {
       /**
        * Popup header data
        */
       headerData: {
-        title: "License",
+        title: 'License',
       },
       /**
        * Licence as raw text (loaded from project root)

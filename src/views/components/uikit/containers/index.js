@@ -1,3 +1,4 @@
-import flexContainer from "./uikit.container.flex";
-import spacer from "./uikit.spacer.vue";
-export default{flexContainer, spacer}
+import flexContainer from './uikit.container.flex.vue';
+import spacer from './uikit.spacer.vue';
+
+export default { flexContainer, spacer };

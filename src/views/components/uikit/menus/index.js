@@ -1,2 +1,3 @@
-import menu from "./uikit.menu.vue";
-export default{menu}
+import menu from './uikit.menu.vue';
+
+export default { menu };

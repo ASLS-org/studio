@@ -1,60 +1,80 @@
 <template>
   <uk-flex class="universe_modifier">
     <universe-settings-widget v-model="universe" />
+    <universe-connection-widget
+      v-show="universe.stream"
+      v-model="universe"
+    />
     <fixture-pool-widget
-      :preventUnfocus="unfocusPreventable"
       :pool="universe.fixturePool"
       :action="{
         icon: 'new',
         text: 'add',
         callback: displayPatchPopup,
       }"
-      :autoSelect="selectedFixtureIndex"
+      :auto-select="selectedFixtureIndex"
       @select="selectFixture"
       @delete="deleteFixtures"
-      @focused="handleFocus"
     />
-    <fixture-settings-widget ref="settings" v-show="selectedFixture" :fixture="selectedFixture" />
-    <position-tool-widget ref="positionTool" v-show="selectedFixture" :fixture="selectedFixture" />
-    <fixture-channels-widget
-      ref="channels"
+    <fixture-settings-widget
       v-show="selectedFixture"
+      ref="settings"
+      :fixture="selectedFixture"
+    />
+    <position-tool-widget
+      v-show="selectedFixture"
+      ref="positionTool"
+      :fixture="selectedFixture"
+    />
+    <fixture-channels-widget
+      v-show="selectedFixture"
+      ref="channels"
       class="fixture_channels"
-      @input="setChannel"
       :channels="selectedFixture ? selectedFixture.simplifiedChannels : []"
+      @input="setChannel"
     />
     <widget-color-picker
+      v-if="selectedFixture && selectedFixture.hasColor"
       ref="colorPicker"
-      v-show="selectedFixture && selectedFixture.hasColor"
+      v-model="selectedFixture.color"
       tabindex="0"
-      @input="setFixtureColor"
-      :rgbData="selectedFixture ? selectedFixture.color : undefined"
     />
+    <!-- :rgb-data="selectedFixture ? selectedFixture.color : undefined"
+      @input="setFixtureColor" -->
     <pan-tilt-widget
-      ref="panTiltPicker"
       v-show="selectedFixture && selectedFixture.hasPan && selectedFixture.hasTilt"
+      ref="panTiltPicker"
+      :pan-tilt="selectedFixture ? selectedFixture.panTilt : undefined"
       @input="setFixturePanTilt"
-      :panTilt="selectedFixture ? selectedFixture.panTilt : undefined"
     />
-    <patch-popup :universe="universe" v-model="patchPopupDisplayState" />
+    <patch-popup
+      v-model="patchPopupDisplayState"
+      :universe="universe"
+    />
   </uk-flex>
 </template>
 
 <script>
-import FixturePoolWidget from "../_widgets/modifier.widget.fixture.pool.vue";
-import FixtureChannelsWidget from "../_widgets/modifier.widget.fixture.channels.vue";
-import WidgetColorPicker from "../_widgets/modifier.widget.colorpicker.vue";
-import PanTiltWidget from "../_widgets/modifier.widget.pantilt.vue";
+import FixturePoolWidget from '../_widgets/modifier.widget.fixture.pool.vue';
+import FixtureChannelsWidget from '../_widgets/modifier.widget.fixture.channels.vue';
+import WidgetColorPicker from '../_widgets/modifier.widget.colorpicker.vue';
+import PanTiltWidget from '../_widgets/modifier.widget.pantilt.vue';
 
-import UniverseSettingsWidget from "./_widgets/universe.modifier.widget.settings.vue";
-import FixtureSettingsWidget from "./_widgets/universe.modifier.widget.fixture.settings.vue";
-import PositionToolWidget from "./_widgets/universe.modifier.widget.fixture.position.tool.vue";
-import PatchPopup from "./_popups/universe.modifier.popup.patch.vue";
+import UniverseSettingsWidget from './_widgets/universe.modifier.widget.settings.vue';
+import FixtureSettingsWidget from './_widgets/universe.modifier.widget.fixture.settings.vue';
+import PositionToolWidget from './_widgets/universe.modifier.widget.fixture.position.tool.vue';
+import PatchPopup from './_popups/universe.modifier.popup.patch.vue';
+import UniverseConnectionWidget from './_widgets/universe.modifier.widget.connection.vue';
 
 export default {
-  name: "universeModifierFragment",
+  name: 'UniverseModifierFragment',
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   components: {
     UniverseSettingsWidget,
+    UniverseConnectionWidget,
     FixturePoolWidget,
     FixtureSettingsWidget,
     PositionToolWidget,
@@ -70,48 +90,66 @@ export default {
        */
       universe: {},
       /**
-       * Handle to universe's fixture pool instance
-       */
-      fixtures: {},
-      /**
        * Currently selected fixture
        */
-      selectedFixture: {},
-      /**
-       * List of currently highlighted fixtures
-       */
-      highlightedFixtures: [],
+      selectedFixture: null,
       /**
        * Patch popup display state
        */
       patchPopupDisplayState: false,
-      /**
-       * List of unfocus preventable HTML elements to be
-       * forwarded to the universe's fixture list component.
-       */
-      unfocusPreventable: [],
       /**
        * Index of the currently selected fixture in the universe's fixture pool.
        */
       selectedFixtureIndex: 0,
     };
   },
+  watch: {
+    '$route.query.fixtureId': function routeQueryFixtureIdWatcher(fixtureId) {
+      this.selectFixture(fixtureId);
+    },
+    // TODO: feed method straight into watcher
+    '$route.params.universeId': function routeParamsUniverseIdWatcher(universeId) {
+      this.fetchUniverseData(universeId);
+      this.selectedFixtureIndex = 0;
+    },
+  },
+  mounted() {
+    this.fetchUniverseData(0);
+  },
+  beforeUnmount() {
+    if (this.selectedFixture && this.selectedFixture.id) {
+      this.selectedFixture.highlightSingle(false);
+    }
+  },
   methods: {
     /**
-     * Fetches universe data using route universe ID parameter
+     * Fetches universe data
      *
      * @public
      */
-    fetchUniverseData() {
-      try {
-        this.universe = this.$show.universePool.getFromId(this.$route.params.universeId);
-      } catch (err) {
-        this.universe = {};
+    fetchUniverseData(id) {
+      if (id !== undefined) {
+        try {
+          this.universe = this.$show.universePool.getFromId(id);
+          this.selectFixture(0);
+        } catch (err) {
+          this.universe = {};
+          this.selectedFixture = null;
+        }
       }
-      try {
-        this.selectedFixture = this.universe.fixturePool.getFromId(this.$route.query.fixtureId || 0);
-      } catch (err) {
-        this.selectedFixture = null; // {};
+    },
+    /**
+     * Fetches selected fixture data
+     *
+     * @public
+     */
+    selectFixture(id) {
+      if (id !== undefined) {
+        try {
+          this.selectedFixture = this.universe.fixturePool.getFromId(id || 0);
+        } catch (err) {
+          this.selectedFixture = null;
+        }
       }
     },
     /**
@@ -121,26 +159,6 @@ export default {
      */
     displayPatchPopup() {
       this.patchPopupDisplayState = true;
-    },
-    /**
-     * Selects a universe's fixture.
-     *
-     * @public
-     * @param {Number} fixtureId unique ID of the fixture to be displayed
-     */
-    selectFixture(fixtureId) {
-      if (fixtureId != null) {
-        try {
-          this.selectedFixture = this.universe.fixturePool.getFromId(fixtureId);
-          if (this.selectedFixture) {
-            this.unfocusPreventable = Object.keys(this.$refs).map((refKey) => {
-              return this.$refs[refKey].$el;
-            });
-          }
-        } catch (err) {
-          this.selectedFixture = null; //{};
-        }
-      }
     },
     handleFocus(state) {
       if (!state) {
@@ -195,33 +213,12 @@ export default {
         this.$show.deleteFixture(fixture);
       });
       if (this.universe.fixturePool.fixtures.length) {
+        // eslint-disable-next-line prefer-destructuring
         this.selectedFixture = this.universe.fixturePool.fixtures[0];
       } else {
-        this.selectedFixture = null; //{};
+        this.selectedFixture = null;
       }
-      // this.selectedFixtureIndex = -1;
       this.selectedFixtureIndex = 0;
-    },
-  },
-  mounted() {
-    this.fetchUniverseData();
-  },
-  beforeDestroy() {
-    if (this.selectedFixture && this.selectedFixture.id) {
-      this.selectedFixture.highlightSingle(false);
-    }
-  },
-  watch: {
-    "$route.query.fixtureId"(fixtureId) {
-      if (this.$route.params.universeId != this.universe.id) {
-        this.fetchUniverseData();
-      }
-      if (fixtureId) {
-        this.selectedFixtureIndex = this.universe.fixturePool.fixtures.findIndex((f) => f.id == fixtureId);
-      }
-    },
-    "$route.params.universeId"() {
-      this.fetchUniverseData();
     },
   },
 };

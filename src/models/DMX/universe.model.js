@@ -1,49 +1,50 @@
-'use strict'
-
+import ukColors from '@/views/components/uikit/colors/uikit.colors';
 import FixturePool from './fixture.pool.model';
-import ukColors from '@/views/components/uikit/colors/uikit.colors.js'
 
 /**
  * DMX512 universe length
- * 
+ *
  * @constant {Number} DMX_UNIVERSE_LENGTH
  */
 const DMX_UNIVERSE_LENGTH = 512;
 /**
  * Minimum universe ID
- * 
+ *
  * @constant {Number} DMX_UNIVERSE_LENGTH
  */
 const MIN_UNIVERSE_ID = 0;
 /**
  * Maximum universe ID
- * 
+ *
  * @constant {Number} DMX_UNIVERSE_LENGTH
  */
 const MAX_UNIVERSE_ID = 65535;
+/**
+ * Universe channels lengh
+ *
+ * @constant {Number} DMX_UNIVERSE_CHANNELS_LENGTH
+ */
+const DMX_UNIVERSE_CHANNELS_LENGTH = 512;
 
 /**
  * Default universe data
- * 
+ *
  * @constant {Object} DEFAULT_UNIVERSE_DATA
  * @todo remove this ?
  */
 const DEFAULT_UNIVERSE_DATA = {
-  name: "Universe",
-}
-
+  name: 'Universe',
+};
 
 /**
  * @class Universe
- * @classdesc Universes are a set of DMX compatible fixtures connected to the same. 
+ * @classdesc Universes are a set of DMX compatible fixtures connected to the same.
  * DMX daisy chain using the same set of 512 DMX channels
  */
 class Universe {
-
-
   /**
    * Creates an instance of Universe.
-   * 
+   *
    * @param {*} [data={}]
    * @param {Number} data.id Universe ID
    * @param {String} data.name Universe name
@@ -54,9 +55,15 @@ class Universe {
     this.id = data.id;
     this.name = data.name;
     this.color = data.color;
+    this.connection = null;
     this._patch = {};
     this._addressMap = new Array(DMX_UNIVERSE_LENGTH).fill(undefined);
+    this._dmxBuffer = new Uint8Array(DMX_UNIVERSE_CHANNELS_LENGTH);
     this.fixturePool = new FixturePool();
+    /**
+     * @type {WscConnectionStream|null}
+     */
+    this.stream = null;
   }
 
   /**
@@ -68,6 +75,11 @@ class Universe {
     this._color = color;
   }
 
+  get color() {
+    return this._color
+      || ukColors[Object.keys(ukColors)[(this.id * 3) % Object.keys(ukColors).length]];
+  }
+
   /**
    * Universe name
    *
@@ -77,13 +89,21 @@ class Universe {
     this._name = name;
   }
 
+  get name() {
+    return this._name || `${DEFAULT_UNIVERSE_DATA.name} ${this.id}`;
+  }
+
   /**
    * Universe ID
    *
    * @memberof Universe
    */
   set id(id) {
-    this._id = Math.min(Math.max(parseInt(id), MIN_UNIVERSE_ID), MAX_UNIVERSE_ID);
+    this._id = Math.min(Math.max(parseInt(id, 10), MIN_UNIVERSE_ID), MAX_UNIVERSE_ID);
+  }
+
+  get id() {
+    return this._id;
   }
 
   /**
@@ -93,29 +113,54 @@ class Universe {
    */
   set simplifiedChannels(channels) {
     channels.forEach((channelData) => {
-      let fixtureAddress = this._addressMap[channelData.id - 1];
-      let fixtureChannel = channelData.id - fixtureAddress - 1;
+      const fixtureAddress = this._addressMap[channelData.id - 1];
+      const fixtureChannel = channelData.id - fixtureAddress - 1;
       if (this._patch[fixtureAddress]) {
-        this._patch[fixtureAddress].setChannel(fixtureChannel, channelData.value)
+        this._patch[fixtureAddress].setChannel(fixtureChannel, channelData.value);
       }
-    })
+    });
+  }
+
+  get simplifiedChannels() {
+    if (this._patch) {
+      return Object.keys(this._patch).map((fixtureAddress) => {
+        const fixture = this._patch[fixtureAddress];
+        return fixture.simplifiedChannels;
+      }).flat() || [];
+    }
+    return [];
   }
 
   /**
-   * Universe's DMX512 channel data buffer 
+   * Universe's DMX512 channel data buffer
    *
    * @memberof Universe
    */
   set DMX512Data(DMX512ValueBuffer) {
     DMX512ValueBuffer.forEach((value, channel) => {
-      let fixtureAddress = this._addressMap[channel];
-      let fixtureChannel = channel - fixtureAddress;
+      const fixtureAddress = this._addressMap[channel];
+      const fixtureChannel = channel - fixtureAddress;
       if (this._patch[fixtureAddress]) {
         this._patch[fixtureAddress].setChannel(fixtureChannel, value);
       } else {
-        //Handle address error here
+        // Handle address error here
       }
-    })
+    });
+  }
+
+  get DMX512Data() {
+    const DMX_PACKET_LENGTH = 512;
+    const DMX_BUFF = new Uint8Array(DMX_PACKET_LENGTH);
+    this._addressMap.forEach((address, index) => {
+      const fixture = this._patch[address];
+      if (fixture) {
+        const fixtureChannelIndex = index - fixture.chStart;
+        DMX_BUFF[index] = fixture.channels[fixtureChannelIndex].value.DMX || 0;
+      } else {
+        DMX_BUFF[index] = 0;
+      }
+    });
+    return DMX_BUFF;
   }
 
   /**
@@ -129,46 +174,8 @@ class Universe {
       id: this.id,
       name: this.name,
       color: this.color,
-      fixtures: this.fixturePool.showData
-    }
-  }
-
-  get name() {
-    return this._name || `${DEFAULT_UNIVERSE_DATA.name} ${this.id}`;
-  }
-
-  get id() {
-    return this._id;
-  }
-
-  get color() {
-    return this._color || ukColors[Object.keys(ukColors)[this.id * 3 % Object.keys(ukColors).length]]
-  }
-
-  get simplifiedChannels() {
-    if (this._patch) {
-      return Object.keys(this._patch).map(fixtureAddress => {
-        let fixture = this._patch[fixtureAddress];
-        return fixture.simplifiedChannels
-      }).flat() || [];
-    } else {
-      return []
-    }
-  }
-
-  get DMX512Data() {
-    return {
-      universe: this.id,
-      DMX512Buffer: this._addressMap.map((address, index) => {
-        let fixture = this._patch[address];
-        if (fixture) {
-          let fixtureChannelIndex = index - fixture.chStart;
-          return fixture.channels[fixtureChannelIndex].value.DMX || 0;
-        } else {
-          return 0
-        }
-      })
-    }
+      fixtures: this.fixturePool.showData,
+    };
   }
 
   /**
@@ -183,10 +190,10 @@ class Universe {
       this._patch[fixture.chStart] = fixture;
       this.fixturePool.addExisting(fixture);
       for (let i = fixture.chStart; i < fixture.chStop; i++) {
-        this._addressMap[i] = fixture.chStart
+        this._addressMap[i] = fixture.chStart;
       }
     } else {
-      throw new Error("Cannot patch fixture on this interval")
+      throw new Error('Cannot patch fixture on this interval');
     }
   }
 
@@ -197,9 +204,13 @@ class Universe {
    * @param {Object} fixture Fixture instance
    */
   unpatchFixture(fixture) {
-    this.fixturePool.delete(fixture)
+    this.fixturePool.delete(fixture);
     delete this._patch[fixture.chStart];
-    this._addressMap = this._addressMap.map(address => address == fixture.chStart ? undefined : address);
+    this._addressMap = this._addressMap.map((address) => (
+      address === fixture.chStart
+        ? undefined
+        : address
+    ));
   }
 
   /**
@@ -208,16 +219,17 @@ class Universe {
    * @public
    * @param {Number} chStart start channel universe address
    * @param {Number} chCount Amount of channels to be patched
-   * @return {Boolean} patching capability 
+   * @return {Boolean} patching capability
    */
   checkPatchCapability(chStart, chCount) {
-    let chStop = chStart + chCount;
-    Object.keys(this._patch).forEach(fixtureAddress => {
-      let fixture = this._patch[fixtureAddress]
+    const chStop = chStart + chCount;
+    // eslint-disable-next-line consistent-return
+    Object.keys(this._patch).forEach((fixtureAddress) => {
+      const fixture = this._patch[fixtureAddress];
       if (chStart <= fixture.chStop && fixture.chStart <= chStop) {
         return false;
       }
-    })
+    });
     return true;
   }
 
@@ -228,13 +240,13 @@ class Universe {
    * @param {Number} chStart start channel universe address
    * @param {Number} chCount per-instance count of channels to be patched
    * @param {Number} amount Amount of instances to be patched
-   * @return {Boolean} patching capability 
+   * @return {Boolean} patching capability
    */
   canPatchMany(chStart, chCount, amount) {
-    let total = chCount * amount;
+    const total = chCount * amount;
     for (let i = chStart; i < chStart + total; i++) {
       if (this._addressMap[i]) {
-        return false
+        return false;
       }
     }
     return true;
@@ -246,10 +258,10 @@ class Universe {
    * @public
    * @param {Number} chCount per-instance count of channels to be patched
    * @param {Number} amount Amount of instances to be patched
-   * @return {Number} Available address 
+   * @return {Number} Available address
    */
   findChStartAutoPatch(chCount, amount) {
-    let total = chCount * amount;
+    const total = chCount * amount;
     for (let i = 0; i < DMX_UNIVERSE_LENGTH; i++) {
       let canPatch = true;
       for (let j = 0; j < total; j++) {
@@ -266,18 +278,37 @@ class Universe {
   }
 
   /**
+   * Setup universe connection
+   *
+   * @param {WscConnection} connection
+   * @param {Number} protocol
+   * @param {Object} address
+   */
+  setupConnection(connection, protocol, address) {
+    if (this.stream) {
+      this.stream.stop();
+    }
+
+    this.stream = connection.setupStream(
+      this.id,
+      protocol,
+      address,
+      () => this.DMX512Data,
+    );
+  }
+
+  /**
    * Manually remove universe instance reference from memory
    *
    * @private
    * @param {Object} instance handle to universe instance to be freed
    */
   static deleteInstance(instance) {
-    Object.keys(instance).forEach(prop => {
-      delete instance[prop]
-    })
+    Object.keys(instance).forEach((prop) => {
+      delete instance[prop];
+    });
     instance = null;
   }
-
 }
 
 export default Universe;

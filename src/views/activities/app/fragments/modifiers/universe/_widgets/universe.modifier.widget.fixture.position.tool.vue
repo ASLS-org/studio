@@ -1,15 +1,68 @@
 <template>
-  <uk-widget class="position_tool" dockable :header="{ title: 'Position Tool', icon: 'move' }">
-    <uk-flex v-if="fixture" class="position_tool_body" :gap="16">
-      <uk-flex col :gap="8">
-        <uk-num-input color="#A22D58AF" :precision="1" :min="-1000" :max="1000" label="Position X" v-model="fixture.posX" />
-        <uk-num-input color="#0E7A7DAF" :precision="1" :min="-1000" :max="1000" label="Position Y" v-model="fixture.posY" />
-        <uk-num-input color="#2D6BA2AF" :precision="1" :min="-1000" :max="1000" label="Position Z" v-model="fixture.posZ" />
+  <uk-widget
+    class="position_tool"
+    dockable
+    :header="{ title: 'Position Tool', icon: 'move' }"
+  >
+    <uk-flex
+      v-if="fixture"
+      class="position_tool_body"
+      :gap="16"
+    >
+      <uk-flex
+        col
+        :gap="8"
+      >
+        <uk-num-input
+          v-model="fixture.posX"
+          color="var(--accent-maroon)"
+          :precision="1"
+          :min="-1000"
+          :max="1000"
+          label="Position X"
+        />
+        <uk-num-input
+          v-model="fixture.posY"
+          color="var(--accent-teal)"
+          :precision="1"
+          :min="-1000"
+          :max="1000"
+          label="Position Y"
+        />
+        <uk-num-input
+          v-model="fixture.posZ"
+          color="var(--accent-blue)"
+          :precision="1"
+          :min="-1000"
+          :max="1000"
+          label="Position Z"
+        />
       </uk-flex>
-      <uk-flex col :gap="8">
-        <uk-num-input color="#A22D58AF" :min="-360" :max="360" label="Rotation X" v-model="fixture.rotX" />
-        <uk-num-input color="#0E7A7DAF" :min="-360" :max="360" label="Rotation Y" v-model="fixture.rotY" />
-        <uk-num-input color="#2D6BA2AF" :min="-360" :max="360" label="Rotation Z" v-model="fixture.rotZ" />
+      <uk-flex
+        col
+        :gap="8"
+      >
+        <uk-num-input
+          v-model="fixture.rotX"
+          color="var(--accent-maroon)"
+          :min="-360"
+          :max="360"
+          label="Rotation X"
+        />
+        <uk-num-input
+          v-model="fixture.rotY"
+          color="var(--accent-teal)"
+          :min="-360"
+          :max="360"
+          label="Rotation Y"
+        />
+        <uk-num-input
+          v-model="fixture.rotZ"
+          color="var(--accent-blue)"
+          :min="-360"
+          :max="360"
+          label="Rotation Z"
+        />
       </uk-flex>
     </uk-flex>
   </uk-widget>
@@ -17,12 +70,19 @@
 
 <script>
 export default {
-  name: "universeModifierWidgetPositionTool",
+  name: 'UniverseModifierWidgetPositionTool',
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
   props: {
     /**
      * Handle to fixture instance
      */
-    fixture: Object,
+    fixture: {
+      type: Object,
+      default: null,
+    },
   },
   data() {
     return {
@@ -30,8 +90,8 @@ export default {
        * Widget header data
        */
       header: {
-        title: "Fixture Settings",
-        icon: "move",
+        title: 'Fixture Settings',
+        icon: 'move',
       },
     };
   },

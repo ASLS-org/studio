@@ -1,0 +1,36 @@
+name: Deploy
+
+on:
+  push:
+    branches: [master, staging]
+
+permissions:
+  contents: read # for checkout
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    # This is due to change for different envs but
+    # as of today we only have one deployment endpoint (demo)
+    if: github.ref == 'refs/heads/staging'
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+      - name: Install npm dependencies
+        run: npm run docs:manual:build
+      - name: Run build task
+        run: npm run build --if-present
+      - name: Deploy to Server
+        uses: easingthemes/ssh-deploy@main
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          ARGS: '-rlgoDzvc -i --delete'
+          SOURCE: './docs/manual/.vitepress/dist/'
+          REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+          REMOTE_USER: ${{ secrets.REMOTE_USER }}
+          TARGET: ${{ secrets.REMOTE_TARGET }}
+          EXCLUDE: '/dist/, /node_modules/'

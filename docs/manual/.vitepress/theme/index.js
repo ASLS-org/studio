@@ -1,16 +1,24 @@
 import DefaultTheme from 'vitepress/theme'
-// import './fonts.css'
-// import './global.css'
 import './custom.css'
+import uikit from '../../../../src/views/components/uikit';
+// TODO: find a way to prevent css overrides. (import ui-kit build ?)
+// import '../../../../src/assets/styles/global.css';
+// import '../../../../src/assets/styles/fonts.css';
 
-const components = import.meta.globEager('./components/**/*.vue')
-
+function registerComponents(components, app) {
+  Object.keys(components).forEach((componentKey) => {
+    const component = components[componentKey];
+    if (component.name) {
+      app.component(component.name, component);
+    } else {
+      registerComponents(component, app);
+    }
+  });
+}
 
 export default {
   ...DefaultTheme,
   enhanceApp({ app }) {
-    Object.entries(components).forEach(([_, definition]) => {
-      app.component(definition.default.name, definition.default)
-    })
+    registerComponents(uikit, app);
   }
 }

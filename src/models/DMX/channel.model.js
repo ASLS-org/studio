@@ -1,75 +1,72 @@
-'use strict'
-
-import Capability from './capabilityManager.model'
+import Capability from './capabilityManager.model';
 
 /**
  * Enumeration of every available capability types.
- * 
+ *
  * @constant {Object} CAPABILITY_TYPES
  * @enum {String}
  * @see Capability
  */
 const CAPABILITY_TYPES = {
   /** SHUTTER */
-  ShutterStrobe: "ShutterStrobe",
-  StrobeSpeed: "StrobeSpeed",
-  StrobeDuration: "StrobeDuration",
+  ShutterStrobe: 'ShutterStrobe',
+  StrobeSpeed: 'StrobeSpeed',
+  StrobeDuration: 'StrobeDuration',
   /** DIMMER */
-  Intensity: "Intensity",
+  Intensity: 'Intensity',
   /** COLOR */
-  ColorIntensity: "ColorIntensity",
+  ColorIntensity: 'ColorIntensity',
   /** COLOR PRESET */
-  ColorPreset: "ColorPreset",
+  ColorPreset: 'ColorPreset',
   /** COLOR TEMP */
-  ColorTepemrature: "ColorTepemrature",
+  ColorTepemrature: 'ColorTepemrature',
   /** PAN */
-  Pan: "Pan",
-  PanFine: "PanFine",
+  Pan: 'Pan',
+  PanFine: 'PanFine',
   /** PAN CNOTINUOUS */
-  PanContinuous: "PanContinuous",
+  PanContinuous: 'PanContinuous',
   /** TILT */
-  Tilt: "Tilt",
-  TiltFine: "TiltFine",
+  Tilt: 'Tilt',
+  TiltFine: 'TiltFine',
   /** TILT CONTINUOUS */
-  TiltContinuous: "TiltContinuous",
+  TiltContinuous: 'TiltContinuous',
   /** PANTILT SPEED */
-  PanTiltSpeed: "PanTiltSpeed",
+  PanTiltSpeed: 'PanTiltSpeed',
   /** WHEELSLOT */
-  WheelSlot: "WheelSlot",
+  WheelSlot: 'WheelSlot',
   /** WHEELSHAKE */
-  WheelShake: "WheelShake",
+  WheelShake: 'WheelShake',
   /** WHEELSLOTROT */
-  WheelSlotRotation: "WheelSlotRotation",
+  WheelSlotRotation: 'WheelSlotRotation',
   /** ZOOM */
-  BeamAngle: "BeamAngle",
-  Zoom: "Zoom",
+  BeamAngle: 'BeamAngle',
+  Zoom: 'Zoom',
   /** POSITION */
-  BeamPosition: "BeamPosition",
+  BeamPosition: 'BeamPosition',
   /** EFFECT */
-  Effect: "Effect",
-  EffectSpeed: "EffectSpeed",
-  EffectDuration: "EffectDuration",
-  EffectParameter: "EffectParameter",
-  SoundSensitivity: "SoundSensitivity",
+  Effect: 'Effect',
+  EffectSpeed: 'EffectSpeed',
+  EffectDuration: 'EffectDuration',
+  EffectParameter: 'EffectParameter',
+  SoundSensitivity: 'SoundSensitivity',
   /** FOCUS */
-  Focus: "Focus",
+  Focus: 'Focus',
   /** TIME/SPEED */
-  Speed: "Speed",
-  Time: "Time",
+  Speed: 'Speed',
+  Time: 'Time',
   /** SPECIAL */
-  Maintenance: "Maintenance"
-}
+  Maintenance: 'Maintenance',
+};
 
 /**
  * @class Channel
  * @classdesc Describes a DMX512 fixture channel
  */
 class Channel {
-
   /**
    * Creates an instance of Channel.
-   * 
-   * @param {Object} data Channel data 
+   *
+   * @param {Object} data Channel data
    * @param {Number} data.id Channel ID
    * @param {String} data.type Channel type
    * @param {Boolean} data.isFine Whether or not the channel is a fine channel
@@ -86,32 +83,31 @@ class Channel {
     this.active = true;
     this._value = {
       DMX: 0,
-      model: 0
+      model: 0,
     };
     this.setup(data.OFLData);
   }
 
-
   /**
    * Minimum channel value
    *
-   * @todo this is a bit dodgy but it seems like the only way to get single capabilities minmax values such as pan or tilt...
+   * @todo this is a bit dodgy but it seems like the only way to get single capabilities minmax
    * @readonly
    * @type {Number}
    */
-  get minVal(){
-    return this.capabilities[0].min
+  get minVal() {
+    return this.capabilities[0].min;
   }
 
   /**
    * Maximum channel value
    *
-   * @todo this is a bit dodgy but it seems like the only way to get single capabilities minmax values such as pan or tilt...
+   * @todo this is a bit dodgy but it seems like the only way to get single capabilities minmax
    * @readonly
    * @type {Number}
    */
-  get maxVal(){
-    return this.capabilities[this.capabilities.length-1].max
+  get maxVal() {
+    return this.capabilities[this.capabilities.length - 1].max;
   }
 
   /**
@@ -127,24 +123,23 @@ class Channel {
     this._value.DMX = value;
   }
 
-
   /**
-   * Setup Channel 
+   * Setup Channel
    *
    * @param {Object} channelData OFL Channel data
    * @see https://github.com/OpenLightingProject/open-fixture-library
    */
   setup(channelData) {
     if (channelData) {
-      this.fineChannelAliases = channelData.fineChannelAliases
+      this.fineChannelAliases = channelData.fineChannelAliases;
       if (channelData.capability) {
         this.setChannelTypes(channelData.capability);
-        this.capabilities = [new Capability(channelData.capability)]
+        this.capabilities = [new Capability(channelData.capability)];
       } else {
-        this.capabilities = channelData.capabilities.map(capability => {
+        this.capabilities = channelData.capabilities.map((capability) => {
           this.setChannelTypes(capability);
           return new Capability(capability);
-        })
+        });
       }
     }
   }
@@ -156,72 +151,71 @@ class Channel {
    * @param {Object} capability capability instance handle
    */
   setChannelTypes(capability) {
-
     this.type = [
       CAPABILITY_TYPES.ShutterStrobe,
       CAPABILITY_TYPES.StrobeDuration,
       CAPABILITY_TYPES.StrobeSpeed,
-    ].includes(capability.type) ? "Shutter" : this.type
+    ].includes(capability.type) ? 'Shutter' : this.type;
 
     this.type = [
       CAPABILITY_TYPES.Intensity,
-    ].includes(capability.type) ? "Dimmer" : this.type
+    ].includes(capability.type) ? 'Dimmer' : this.type;
 
     this.type = [
       CAPABILITY_TYPES.ColorIntensity,
-    ].includes(capability.type) ? "Color" : this.type
+    ].includes(capability.type) ? 'Color' : this.type;
 
     this.type = [
       CAPABILITY_TYPES.ColorPreset,
-    ].includes(capability.type) ? "ColorPreset" : this.type
+    ].includes(capability.type) ? 'ColorPreset' : this.type;
 
     this.type = [
       CAPABILITY_TYPES.ColorTemperature,
-    ].includes(capability.type) ? "ColorTemp" : this.type
+    ].includes(capability.type) ? 'ColorTemp' : this.type;
 
     this.type = [
       CAPABILITY_TYPES.Pan,
-      CAPABILITY_TYPES.PanFine
-    ].includes(capability.type) ? "Pan" : this.type
+      CAPABILITY_TYPES.PanFine,
+    ].includes(capability.type) ? 'Pan' : this.type;
 
     this.type = [
       CAPABILITY_TYPES.Tilt,
-      CAPABILITY_TYPES.TiltFine
-    ].includes(capability.type) ? "Tilt" : this.type
+      CAPABILITY_TYPES.TiltFine,
+    ].includes(capability.type) ? 'Tilt' : this.type;
 
     this.type = [
       CAPABILITY_TYPES.PanContinuous,
-    ].includes(capability.type) ? "PanContinuous" : this.type
+    ].includes(capability.type) ? 'PanContinuous' : this.type;
 
     this.type = [
       CAPABILITY_TYPES.TiltContinuous,
-    ].includes(capability.type) ? "TiltContinuous" : this.type
+    ].includes(capability.type) ? 'TiltContinuous' : this.type;
 
     this.type = [
       CAPABILITY_TYPES.BeamAngle,
-      CAPABILITY_TYPES.Zoom
-    ].includes(capability.type) ? "Zoom" : this.type
+      CAPABILITY_TYPES.Zoom,
+    ].includes(capability.type) ? 'Zoom' : this.type;
 
     this.type = [
       CAPABILITY_TYPES.Effect,
       CAPABILITY_TYPES.EffectDuration,
       CAPABILITY_TYPES.EffectSpeed,
       CAPABILITY_TYPES.EffectParameter,
-      CAPABILITY_TYPES.SoundSensitivity
-    ].includes(capability.type) ? "Effect" : this.type
+      CAPABILITY_TYPES.SoundSensitivity,
+    ].includes(capability.type) ? 'Effect' : this.type;
 
     this.type = [
-      CAPABILITY_TYPES.Focus
-    ].includes(capability.type) ? "Focus" : this.type
+      CAPABILITY_TYPES.Focus,
+    ].includes(capability.type) ? 'Focus' : this.type;
 
     this.type = [
-      CAPABILITY_TYPES.Maintenance
-    ].includes(capability.type) ? "Maintenance" : this.type
+      CAPABILITY_TYPES.Maintenance,
+    ].includes(capability.type) ? 'Maintenance' : this.type;
 
     this.type = this.isFine ? `${this.type}Fine` : this.type;
 
-    if (this.type == "Color") {
-      this.color = capability.color
+    if (this.type === 'Color') {
+      this.color = capability.color;
     }
   }
 
@@ -234,13 +228,12 @@ class Channel {
   getCapability(DMXValue) {
     if (this.capabilities) {
       return this.capabilities.find(
-        capability =>
-        capability.range[0] <= DMXValue &&
-        capability.range[1] >= DMXValue
+        (capability) => capability.range[0] <= DMXValue
+        && capability.range[1] >= DMXValue,
       );
     }
+    return null;
   }
-
 }
 
 export default Channel;

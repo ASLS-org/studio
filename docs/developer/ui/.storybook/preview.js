@@ -5,7 +5,7 @@ import uikit from '@/views/components/uikit/'
 import {storiesOf} from '@storybook/vue';
 import { action } from '@storybook/addon-actions'
 import theme from './theme.asls.js'
-const { parse } = require('comment-parser/lib')
+import { parse } from 'comment-parser/lib'
 
 
 /**

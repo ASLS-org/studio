@@ -1,17 +1,30 @@
 # What is ASLS Studio
 
-[ASLS Studio](https://demo.studio.asls.timekadel.com) is an open-source, web-based, DMX lighting control software and visualizer.
+[ASLS Studio](https://asls.io/studio) is a powerful open-source, web-based, DMX lighting control software and visualizer. It comes with standard DMX lighting control software features such as Universe patching, Fixture grouping, Scene generation, Effect engines and much more.
 
-<Video src="/animated.webm"/>
+<div class="tip custom-block" style="padding-top: 8px">
 
-::: warning
-The current distribution of ASLS Studio is in alpha status. Listed features are provided as-is, without any guarantee. Please report any issue over the project's repository. 
+Just want to try it out? Skip to the [Live Browser Demo](https://asls.io/studio/live). Come back later and install [ASLS Studio](https://asls.io/studio) on your machine by following the [Quickstart guide](#). 
+
+</div>
+
+:::warning
+The current distribution of [ASLS Studio](https://asls.io/studio) is in beta status. Listed features are provided as-is, without any guarantee. Please report any issue over the [project's repository](https://github.com/ASLS-org/studio). 
+
 :::
 
-## Motivation
 
-Part of [ASLS](https://asls.timekadel.com) (Autonomous Stage Lighting Systems) development, it was originally created to offer ways to program ASLS DMX nodes on the fly through a simple web-browser. Following the end of the project, it was decided to release the project as an open-source, free to use platform for anyone to enjoy. 
+## Use Cases
+
+- **Live Show Control**
+
+- **Fully Timecoded Show Control**
+
+- **Art installations & Experiments**
+
+- **Architectural Lighting Management**
 
 ## Features
-
 ASLS Studio comes with standard DMX lighting control software features such as [Universe patching](/workflow/patching/), [Fixture grouping](/workflow/grouping/), [Scene generation](/workflow/scenes/), [Effect engines](/workflow/effects/), [Show Emulation](/interface/visualizer/) and much more. The following manual aims to guide you through each individual feature.
+
+## Ambitions

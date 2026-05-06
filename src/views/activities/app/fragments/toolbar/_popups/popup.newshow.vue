@@ -1,103 +1,131 @@
 <template>
   <uk-popup
-    @submit="submit()"
-    :validateTxt="isSaved ? 'create' : 'yes'"
-    :cancelTxt="isSaved ? 'cancel' : 'no'"
-    :onCancel="handleCancel"
-    :valid="!isSaved || name != ''"
-    backdrop
-    :movable="false"
-    @input="update()"
     v-model="state"
+    validate-txt="create"
+    cancel-txt="cancel"
+    :on-cancel="handleCancel"
     :header="headerData"
+    backdrop
+    @submit="submit()"
+    @input="update()"
   >
-    <div class="body">
-      <Transition name="slide">
-        <span :key="0" v-if="!isSaved">
-          <p>Modifications applied to the current project will be lost. Do you wish to export a copy of the current project's showfile ?</p>
-        </span>
-        <span :key="1" v-else>
-          <uk-txt-input v-model="name" label="Project Name" placeholder="project name" />
-        </span>
-      </Transition>
-    </div>
-    <saveas-popup v-model="saveasPopupDisplayState" />
+    <uk-flex col>
+      <uk-flex
+        class="preview"
+        :style="{backgroundImage: `url(/demo/images/${selectedTemplate.preview})`}"
+      >
+        <img class="preview_img">
+      </uk-flex>
+      <uk-flex
+        col
+        class="form"
+      >
+        <uk-flex
+          col
+          gap="10"
+          style="padding:10px;"
+        >
+          <h4>Template:</h4>
+          <p class="subtitle">
+            Please select a new project template from the list below
+            in order to get your new project started.
+          </p>
+        </uk-flex>
+        <uk-list
+          class="template_list"
+          filterable
+          :items="templates"
+          auto-select-first
+          @select="selectTemplate"
+        />
+      </uk-flex>
+    </uk-flex>
   </uk-popup>
 </template>
-<style scoped>
-.slide-leave-active,
-.slide-enter-active {
-  transition: 0.25s;
-}
-.slide-enter {
-  position: absolute;
-  transform: translate(100%, 0);
-}
-.slide-leave-to {
-  position: absolute;
-  transform: translate(-100%, 0);
-}
-</style>
 <script>
-import SaveasPopup from "./popup.saveas.vue";
-import PopupMixin from "@/views/mixins/popup.mixin.js"
+import PopupMixin from '@/views/mixins/popup.mixin';
 
 export default {
-  name: "ukPopupNewshow",
-  components: {
-    SaveasPopup,
+  name: 'UkPopupNewshow',
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
   },
   mixins: [PopupMixin],
-  props: {
-    error: [Error, Object],
-  },
   data() {
     return {
       /**
        * Popup header data
        */
-      headerData: { title: "Save Project" },
+      headerData: { title: 'New Project' },
       /**
        * New project name
        */
-      name: "",
+      name: '',
       /**
-       * Show exported/saved flag.
-       * Used to transition between save/export and create states
+       * Show templates
        */
-      isSaved: false,
+      templates: [
+        {
+          name: 'Blank',
+          more: 'New blank project',
+          icon: 'save',
+          preview: 'blank.png',
+          showfile: 'blank.showfile.json',
+          index: 0,
+        },
+        {
+          name: 'ASLS Demo',
+          more: 'Simple demo sample project',
+          icon: 'save',
+          preview: 'asls.png',
+          showfile: 'demo.showfile.json',
+          index: 1,
+        },
+      ],
       /**
-       * Save as popup display state
+       * Current selected template item
        */
-      saveasPopupDisplayState: false,
+      selectedTemplate: {
+        name: 'Blank',
+        more: 'New blank project',
+        icon: 'save',
+        preview: 'blank.png',
+        showfile: 'blank.showfile.json',
+        index: 0,
+      },
     };
+  },
+  watch: {
+    modelValue(state) {
+      this.state = state;
+      this.name = '';
+    },
   },
   methods: {
     /**
-     * Submit new project creation
-     * 
-       * @public
+     * Select a template from the template list
      */
-    submit() {
-      if (!this.isSaved) {
-        this.saveasPopupDisplayState = true;
-        this.isSaved = true;
-        this.headerData = { title: "New Project" };
-      } else {
-        this.$show.setupNewProject(this.name);
-        this.$router.push("/").then(() => {
-          this.state = false;
-          this.isSaved = false;
-          this.name = "";
-          this.update();
-          this.$router.push("/universe/0");
-        });
-      }
+    selectTemplate(template) {
+      this.selectedTemplate = template;
+    },
+    /**
+     * Submit new project creation
+     *
+     * @public
+     */
+    async submit() {
+      this.close();
+      this.$router.replace('/');
+      await this.$show.loadFromUrl(`${import.meta.env.VITE_STATIC_URL}demo/showfiles/${this.selectedTemplate.showfile}`);
+      this.$show.loading.state = false;
+      // Yeah it sucks... But cleaning up everything from the view was a nightmare so for now:
+      window.location.reload();
     },
     /**
      * Handle cancellation. for both first and second phase
      * (save actual project or create new project)
-     * 
+     *
        * @public
      */
     handleCancel() {
@@ -109,22 +137,28 @@ export default {
       }
     },
   },
-  watch: {
-    value(state) {
-      this.state = state;
-      this.isSaved = false;
-      this.name = "";
-      this.saveasPopupDisplayState = false;
-    },
-  },
 };
 </script>
 
 <style scoped>
-.body {
-  display: flex;
-  flex-direction: column;
-  width: 300px;
-  padding: 16px;
+.form {
+  width: 400px;
+  border-right: 1px solid var(--primary-dark);
+}
+.preview{
+  height: 200px;
+  width: 100%;
+  background: url('/demo/images/asls.png');
+  background-position: center;
+  background-size: cover;
+}
+.subtitle {
+  font-family: Roboto-Regular;
+  margin-bottom: 8px;
+  color: var(--secondary-lighter-alt);
+}
+.template_list{
+  max-height: 204px;
+  min-height: 204px;
 }
 </style>
