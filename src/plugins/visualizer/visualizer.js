@@ -267,6 +267,18 @@ class Visualizer {
 
     const axesHelper = new THREE.AxesHelper(2);
 
+    axesHelper.material.depthTest = false;
+    axesHelper.renderOrder = 999;
+
+    axesHelper.material.transparent = true;
+    axesHelper.material.opacity = 0.8;
+
+    axesHelper.setColors(
+      new THREE.Color('#ff4d4d'), // X
+      new THREE.Color('#4dff88'), // Y
+      new THREE.Color('#4da6ff')  // Z
+    );
+
     const checkerMaterial = new THREE.MeshStandardMaterial({ map: texture });
 
     const sideMaterial = new THREE.MeshStandardMaterial();

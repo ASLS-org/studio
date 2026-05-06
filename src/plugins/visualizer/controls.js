@@ -145,10 +145,40 @@ class Controls {
     this.handle.size = 1; // Setting default handle size
     this.handle.translationSnap = 0.5; // Setting default handle translation snap
     // this.handle.rotationSnap = 0.0872665 //Setting default handle rotation snap
-    this.handle.mode = 'translate'; // Setting default handle mode
+    this.handle.setMode('translate'); // Setting default handle mode
     this.controlHandle = orbitcontrolsControlsHandle;
     this.cameraHandle = camera;
-    SceneManager.add(this.groupedInstances, this.handle); // Adding instances to scene
+
+    const helper = this.handle.getHelper();
+
+    helper.traverse((child) => {
+      if (child.material) {
+        // X axis
+        if (child.name.includes('X')) {
+          child.material.color.set('#ff4d4d');
+        }
+
+        // Y axis
+        if (child.name.includes('Y')) {
+          child.material.color.set('#4dff88');
+        }
+
+        // Z axis
+        if (child.name.includes('Z')) {
+          child.material.color.set('#4da6ff');
+        }
+
+        // Transparency
+        child.material.transparent = true;
+        child.material.opacity = 0.9;
+
+        // Prevent depth clipping
+        child.material.depthTest = false;
+        child.renderOrder = 999;
+      }
+    });
+
+    SceneManager.add(this.groupedInstances, helper); // Adding instances to scene
     this.handle.addEventListener('mouseDown', () => { // Listening for mousedown events on control helpers
       this.controlHandle.enabled = false; // Disabling camera controls to enable user interaction
     });

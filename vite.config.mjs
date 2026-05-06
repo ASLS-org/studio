@@ -48,7 +48,7 @@ export default defineConfig(async () => {
           '@': path.resolve(pathSegments, './src'),
           '@root': path.resolve(pathSegments, './'),
         },
-        extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue'],
+        extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue', '*?raw'],
       },
     };
   } catch (err) {
