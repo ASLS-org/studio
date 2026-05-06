@@ -1,7 +1,9 @@
+/* eslint-disable no-console */
 /* eslint-disable import/no-extraneous-dependencies */
 import {
   app,
   BrowserWindow,
+  dialog,
   Menu,
   net,
   protocol,
@@ -11,7 +13,30 @@ import {
   optimizer,
 } from '@electron-toolkit/utils';
 import path from 'path';
+import { spawn } from 'child_process';
+import os from 'node:os';
 import icon from '../assets/images/studio_standalone_logo.svg';
+
+console.log('MAIN PROCESS STARTED');
+
+process.on('exit', (code) => {
+  console.log('💀 PROCESS EXIT EVENT', code);
+});
+
+process.on('beforeExit', (code) => {
+  console.log('⚠️ BEFORE EXIT', code);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION:', err);
+});
+
+process.on('unhandledRejection', (err) => {
+  console.error('UNHANDLED REJECTION:', err);
+});
+
+process.env.ELECTRON_ENABLE_LOGGING = '1';
+process.env.ELECTRON_ENABLE_STACK_DUMPING = '1';
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -25,6 +50,22 @@ protocol.registerSchemesAsPrivileged([
   },
 ]);
 
+let wscServer = null;
+
+function showError(title, err) {
+  const message = err?.message || String(err);
+  const stack = err?.stack || 'No stack trace available';
+
+  dialog.showMessageBox({
+    type: 'error',
+    title,
+    message,
+    detail: stack,
+    buttons: ['OK'],
+    noLink: true,
+  });
+}
+
 function createWindow() {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -32,52 +73,86 @@ function createWindow() {
     height: 800,
     minWidth: 1200,
     minHeight: 800,
+
+    vibrancy: 'under-window', // optional
+    visualEffectState: 'active',
     show: false,
     autoHideMenuBar: true,
     icon,
     webPreferences: {
       sandbox: false,
       nodeIntegration: true,
-      protocol: 'static',
     },
   });
 
-  const menuTemplate = [
-    {
-      label: 'Window Manager',
-      submenu: [
-        { label: 'create New' },
-      ],
-    },
-    {
-      label: 'View',
-      submenu: [
-        { role: 'reload' },
-        { label: 'custom reload' },
-      ],
-    },
-  ];
-
-  const menu = Menu.buildFromTemplate(menuTemplate);
-  Menu.setApplicationMenu(menu);
-
   if (process.env.VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
+    mainWindow.loadURL('http://localhost:5173');
   } else {
     mainWindow.loadFile('./out/renderer/index.html');
   }
+
   mainWindow.on('ready-to-show', () => {
     mainWindow.maximize();
     mainWindow.show();
   });
+
+  mainWindow.on('closed', () => {
+    mainWindow.destroy();
+  });
 }
 
-app.dock.hide();
+function getTargetName() {
+  const platform = os.platform();
+  const arch = os.arch();
+
+  if (platform === 'darwin' && arch === 'arm64') return 'wsc-server-node18-macos-arm64';
+  if (platform === 'darwin' && arch === 'x64') return 'wsc-server-node18-macos-x64';
+
+  if (platform === 'linux' && arch === 'x64') return 'wsc-server-node18-linux-x64';
+  if (platform === 'linux' && arch === 'arm64') return 'wsc-server-node18-linux-arm64';
+
+  if (platform === 'win32' && arch === 'x64') return 'wsc-server-node18-win-x64.exe';
+  if (platform === 'win32' && arch === 'arm64') return 'wsc-server-node18-win-arm64.exe';
+
+  throw new Error(`Unsupported platform: ${platform}-${arch}`);
+}
+
+function spawnWscServer() {
+  const isDev = !app.isPackaged;
+  const targetName = getTargetName();
+  const binaryPath = isDev
+    ? path.join(__dirname, 'src/electron/bin', targetName) // dev path
+    : path.join(process.resourcesPath, 'bin', targetName); // packaged path
+
+  wscServer = spawn(binaryPath, [], {
+    stdio: 'pipe',
+  });
+
+  wscServer.stdout.on('data', (data) => {
+    console.log(`[wsc stdout]: ${data}`);
+  });
+
+  wscServer.stderr.on('data', (data) => {
+    console.error(`[wsc stderr]: ${data}`);
+  });
+
+  wscServer.on('close', (code) => {
+    console.log(`wsc exited with code ${code}`);
+  });
+
+  wscServer.on('error', (err) => {
+    console.error('Failed to start wsc:', err);
+    showError('Failed to start WSC Gateway', err);
+  });
+}
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
+  // Start local WSC Gateway
+  spawnWscServer();
+
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron');
 
@@ -104,11 +179,19 @@ app.whenReady().then(() => {
   });
 });
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
+app.on('before-quit', () => {
+  BrowserWindow.getAllWindows().forEach((w) => {
+    w.destroy();
+  });
+});
+
+app.on('before-quit', () => {
+  protocol.unhandle('static');
+});
+
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
+  if (wscServer && !wscServer.killed) {
+    wscServer.kill('SIGTERM');
   }
+  app.quit();
 });

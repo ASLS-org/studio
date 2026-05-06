@@ -1,7 +1,7 @@
 appId: com.electron.app
 productName: ASLS Studio
 directories:
-  buildResources: public
+  buildResources:  public
 files:
   - './out/**/*'
   - '!**/.vscode/*'
@@ -10,8 +10,11 @@ files:
   - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
-asarUnpack:
-  - resources/**
+extraResources:
+  - from: src/electron/bin
+    to: bin
+# asarUnpack:
+#   - resources/**
 win:
   executableName: ASLS Studio
 nsis:
@@ -41,6 +44,7 @@ linux:
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
+beforePack: ./src/electron/prebuild.js
 publish:
   provider: generic
   url: https://example.com/auto-updates

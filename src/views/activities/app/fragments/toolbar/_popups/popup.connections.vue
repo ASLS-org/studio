@@ -24,13 +24,11 @@
           :auto-select="selectedOutputIndex"
           filterable
           class="list"
-          tall
           @select="selectOutput"
         />
         <uk-flex
           style="
             align-items: flex-end;
-            padding:10px;
             border-top:1px solid var(--primary-dark)
           "
           gap="8"
@@ -39,7 +37,7 @@
             label="add new connection"
             icon="new"
             square
-            style="width:100%;"
+            style="width:100%;height:28px"
             @click="addNewConnection"
           />
         </uk-flex>
@@ -54,16 +52,9 @@
           gap="8"
           style="padding: 10px;height:100%"
         >
-          <uk-flex gap="10">
-            <uk-select-input
-              :options="['WSC (Web Show Control)']"
-              label="Type / Protocol"
-              :disabled="!selectedOutput"
-            />
-          </uk-flex>
           <uk-flex
-            style="align-items: flex-end;"
-            gap="8"
+            col
+            gap="10"
           >
             <uk-txt-input
               v-model="formOutput.name"
@@ -72,10 +63,8 @@
               :disabled="!selectedOutput"
             />
             <uk-select-input
-              v-model="formOutput.universe"
-              :options="$show.universePool.universes.map(u=>u.name)"
-              label="Data"
-              style="width: 150px;"
+              :options="['WSC (Web Show Control)']"
+              label="Type / Protocol"
               :disabled="!selectedOutput"
             />
           </uk-flex>
@@ -138,28 +127,29 @@
         <uk-flex
           style="
             align-items: flex-end;
-            padding:10px;
+            /* padding:10px; */
             border-top:1px solid var(--primary-dark)
           "
-          gap="8"
+          gap="1"
         >
           <uk-button
-            squared
+            square
             label="delete"
-            style="width:100%;"
+            style="width:100%;height:28px"
             :disabled="!selectedOutput"
             color="red"
             @click="deleteOutput"
           />
           <uk-button
-            squared
+            square
             icon="patch"
             :label="
-              selectedOutput?.state > 1
+              selectedOutput?.client?.state > 1
                 ? 'disconnect'
                 : 'connect'
             "
-            style="width:100%;"
+            color="var(--accent-blue)"
+            style="width:100%;height:28px"
             :disabled="!selectedOutput"
             @click="connect"
           />
@@ -203,7 +193,7 @@ export default {
   },
   computed: {
     debug() {
-      return this.selectedOutput?.debug.map((log) => (
+      return this.selectedOutput?.client?.debug.map((log) => (
         `<span style="alignt-items: start;color: ${[
           'var(--accent-maroon)',
           'var(--secondary-lighter)',
@@ -212,7 +202,10 @@ export default {
             <span style="color: var(--secondary-lighter); opacity:.8">
               [${log.timestamp}] - 
             </span>
-            ${log.data}
+              ${log.data}
+            <span style="color: var(--accent-gold); display: ${log.context ? 'initial' : 'none'}">
+              ${log.context}
+            </span>
           </span>`
       )).join('\n')
       || '<p style="color: var(--secondary-lighter); opacity: .8">Waiting for connection...</p>';
@@ -227,7 +220,7 @@ export default {
           'Disconnected',
           'Connecting...',
           'Connected',
-        ][o.state + 1],
+        ][(o?.client?.state || 0) + 1],
       }));
     },
   },
@@ -244,7 +237,7 @@ export default {
         };
       }
     },
-    'selectedOutput.debug.length': function watchDebugOuptutLength() {
+    'selectedOutput.client.debug.length': function watchDebugOuptutLength() {
       this.$nextTick(() => {
         const debuggerEl = this.$refs.debugger;
         if (debuggerEl) {
@@ -260,11 +253,8 @@ export default {
         this.selectedOutputIndex = this.outputs.findIndex((o) => o.id === this.selectedOutput.id);
         this.formOutput = {
           ip: this.selectedOutput.remote.split('.'),
-          port: this.selectedOutput.port,
-          name: this.selectedOutput.name,
-          universe: this.$show.universePool.universes.findIndex(
-            (u) => u.id === this.selectedOutput.universe.id,
-          ),
+          port: this.selectedOutput?.port,
+          name: this.selectedOutput?.name,
         };
       } else {
         this.selectedOutput = null;
@@ -275,17 +265,13 @@ export default {
       const output = this.$show.outputPool.addRaw({
         name: `New Connection ${this.outputs.length + 1}`,
         remote: '127.0.0.1',
-        port: '5214',
-        universe: this.$show.universePool.universes[0] || null,
+        port: '4515',
       });
       this.selectOutput({ id: output.id });
     },
     connect() {
       this.selectedOutput.remote = this.formOutput.ip.join('.');
       this.selectedOutput.port = this.formOutput.port;
-      this.selectedOutput.universe = this.$show.universePool.getFromId(
-        this.$show.universePool.universes[this.formOutput.universe]?.id,
-      );
       this.selectedOutput.name = this.formOutput.name;
       this.selectedOutput.connect();
     },
@@ -296,7 +282,6 @@ export default {
           ip: [0, 0, 0, 0],
           port: 0,
           name: '',
-          universe: 0,
         };
         this.selectOutput(this.outputs[0]);
       }
@@ -323,8 +308,8 @@ export default {
   padding: 0px !important;
 }
 .list{
-  min-width:370px;
-  max-width: 370px;
+  min-width:270px;
+  max-width: 270px;
   overflow-y: auto;
 }
 .list_wrapper{
@@ -332,7 +317,7 @@ export default {
 }
 .form{
   border-left: 1px solid var(--primary-dark);
-  width: 280px;
+  width: 370px;
 }
 .stats{
   height: 100%;

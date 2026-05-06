@@ -69,6 +69,25 @@ export default defineConfig(async () => {
         lib: {
           entry: './src/electron/main.js',
         },
+        rollupOptions: {
+          external: [
+            'bufferutil',
+            'utf-8-validate',
+          ],
+        },
+        extraResources: [
+          {
+            from: 'src/electron/server-runner.js',
+            to: 'out/server-runner.js',
+          },
+          {
+            from: 'src/electron/bin',
+            to: 'out/bin',
+            filter: [
+              '**/*',
+            ],
+          },
+        ],
       },
     },
     preload: {
