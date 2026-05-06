@@ -7,7 +7,6 @@ import path from 'path';
 import util from 'util';
 import { exec } from 'child_process';
 
-// const util = require('util');
 const asyncExec = util.promisify(exec);
 
 async function prepareVersioningEnv() {
@@ -40,13 +39,16 @@ export default defineConfig(async () => {
   try {
     await prepareVersioningEnv();
     return {
-      plugins: [vue(), svgLoader()],
+      plugins: [
+        vue(),
+        svgLoader(),
+      ],
       resolve: {
         alias: {
           '@': path.resolve(pathSegments, './src'),
           '@root': path.resolve(pathSegments, './'),
         },
-        extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue'],
+        extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue', '*?raw'],
       },
     };
   } catch (err) {

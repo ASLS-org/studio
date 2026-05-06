@@ -1,4 +1,4 @@
-import WebShowSclient from '@/plugins/webshow';
+import WscConnection from '@/plugins/wsc.connection';
 
 /**
  * @class OutputPool
@@ -73,10 +73,9 @@ class OutputPool {
    */
   addRaw(outputData = {}) {
     try {
-      const output = new WebShowSclient(
+      const output = new WscConnection(
         outputData.remote,
         outputData.port,
-        outputData.universe,
         outputData.name,
       );
       output.id = this.genOutputId();

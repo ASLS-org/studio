@@ -5,7 +5,7 @@ import VOLUMETRIC_BEAM_VERTEX_SHADER from './shaders/beam.vertex.glsl?raw';
 import VOLUMETRIC_BEAM_FRAGMENT_SHADER from './shaders/beam.fragment.glsl?raw';
 
 const MODEL_MATERIAL = new THREE.MeshStandardMaterial({
-  color: 0xffffff,
+  color: 0x000000,
   transparent: false,
   flatShading: false,
   side: THREE.DoubleSide,
