@@ -4,6 +4,8 @@ import {
 } from '../utils/proxify.utils';
 import Cue, { CUE_LOOP_STYLES } from './cue.model';
 
+let fxFixtureId = 0;
+
 /**
  * Available color channels
  *
@@ -249,15 +251,22 @@ class FXFixture extends Proxify {
    *     phase: 0
    *   }] fixture preset instance
    */
-  constructor(fixture, fixturePreset = {
-    active: true,
-    phase: 0,
-  }) {
+  constructor(
+    fixture,
+    // eslint-disable-next-line default-param-last
+    fixturePreset = {
+      active: true,
+      phase: 0,
+    },
+    fxChannelHandle,
+  ) {
     super();
     this.handle = fixture;
+    this.channelHandle = fxChannelHandle;
     this.phase = fixturePreset.phase;
     this.active = fixturePreset.active;
     this.value = 0;
+    this.id = fxFixtureId++;
     return this.proxify();
   }
 
@@ -341,10 +350,15 @@ class FXChannel extends Proxify {
   set fixtures(fixtures) {
     this._fixtures = fixtures.map((fixture, index) => {
       const phase = 360 * (index / fixtures.length) * (Math.PI / 180);
-      return new FXFixture(fixture, {
-        active: true,
-        phase,
-      });
+      const fxFixture = new FXFixture(
+        fixture,
+        {
+          active: true,
+          phase,
+        },
+        this,
+      );
+      return fxFixture;
     });
   }
 
@@ -694,7 +708,12 @@ class FXChannel extends Proxify {
    * @param {Object} fixture Fixture instance handle
    */
   addFixture(fixture) {
-    this.fixtures.push(new FXFixture(fixture)); // TODO: replace with ..AndStackUndo once patched
+    const fxFixture = new FXFixture(
+      fixture,
+      null,
+      this,
+    );
+    this.fixtures.push(fxFixture); // TODO: replace with ..AndStackUndo once patched
     this.computeFixturesPhasing();
   }
 
@@ -1007,7 +1026,8 @@ class FX extends Cue {
   addChannel(channel) {
     if (!this.channels.find((fxChannel) => fxChannel.type === channel.type)) {
       // TODO: replace with ..AndStackUndo once patched
-      this.channels.push(new FXChannel(channel, this.fixtures, this.duration));
+      const fxChannel = new FXChannel(channel, this.fixtures, this.duration);
+      this.channels.push(fxChannel);
     } else {
       throw new Error('FX channel already in use');
     }
