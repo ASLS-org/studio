@@ -98,10 +98,7 @@ class Live {
       this.rafID = null;
       this.state = LIVE_STATES.PLAYING;
       this.w = new Worker();
-      this.animationMethod = ANIMATION_METHODS.RAF;
-      document.addEventListener('visibilitychange', () => {
-        this.animationMethod = document.visibilityState === 'visible' ? ANIMATION_METHODS.RAF : ANIMATION_METHODS.WW;
-      });
+      this.animationMethod = ANIMATION_METHODS.WW;
       // eslint-disable-next-line no-use-before-define
       liveInstance = this;
     }
