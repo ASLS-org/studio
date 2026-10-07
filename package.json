@@ -20,12 +20,18 @@
     "electron:build": " electron-vite build",
     "dist:linux": "npm run electron:build && cross-env TARGET_PLATFORM=linux TARGET_ARCH=arm64 electron-builder --linux --config ./src/electron/electron-builder.yml",
     "dist:mac": "npm run electron:build && cross-env TARGET_PLATFORM=darwin TARGET_ARCH=arm64 electron-builder --mac --config ./src/electron/electron-builder.yml",
-    "dist:win": "npm run electron:build && cross-env TARGET_PLATFORM=win32 TARGET_ARCH=x64 electron-builder --win --config ./src/electron/electron-builder.yml"
+    "dist:win": "npm run electron:build && cross-env TARGET_PLATFORM=win32 TARGET_ARCH=x64 electron-builder --win --config ./src/electron/electron-builder.yml",
+    "tauri:vite": "vite --port 5174",
+    "tauri:start": "tauri dev",
+    "tauri:build": "tauri build"
   },
   "dependencies": {
     "@asls/wsc-client": "^2.0.5",
     "@asls/wsc-sdk": "^2.0.5",
     "@electron-toolkit/utils": "^3.0.0",
+    "@tauri-apps/api": "^2.12.1",
+    "@tauri-apps/plugin-dialog": "^2.8.1",
+    "@tauri-apps/plugin-shell": "^2.4.0",
     "@vue/compat": "^3.3.0",
     "axios": "^0.26.1",
     "lodash": "^4.17.21",
@@ -44,6 +50,7 @@
   "devDependencies": {
     "@babel/core": "^7.18.6",
     "@babel/eslint-parser": "^7.12.16",
+    "@tauri-apps/cli": "^2.12.1",
     "@vitejs/plugin-vue": "^5.0.0",
     "@vue/compiler-sfc": "^3.3.4",
     "babel-loader": "^8.2.5",
