@@ -67,8 +67,13 @@ buffer; a `WscConnectionStream` sends the buffer to the gateway every tick.
   Details in skill `code-quality`.
 - JSDoc every class, public method, and getter/setter (`@public`, `@param`, `@type`). Docma builds
   the core docs from `src/models/**`.
-- Commits: Conventional Commits, path-like scopes. PRs always target `develop`.
-  Details in skill `git-collaboration`.
+- Commits: Conventional Commits, path-like scopes. Details in skill `git-collaboration`.
+- Branches: every implementation (every `/opsx:apply`) gets its own branch off `develop`, with a PR
+  into `develop`. A change the user calls a **hotfix** branches off `master` (PR into `master`, then
+  back-merge into `develop`). A change the user calls a **quickwin** is committed on `develop`
+  directly, with no branch and no PR.
+- **Never push to `develop`, `staging` or `master` unless the user explicitly asks, and confirm
+  that exact push with them before running it.**
 
 ## Workflow
 

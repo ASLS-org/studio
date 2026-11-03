@@ -36,8 +36,11 @@ context: |
   src/plugins/wsc.connection.js (output), src/electron, public/fixtures (OFL library),
   docs/manual (end-user manual). See CLAUDE.md and .claude/skills/* for procedures.
 
-  Team workflow: PRs always target `develop`; Conventional Commits with path scopes
-  (e.g. feat(models/DMX): ...); semantic-release on staging/master.
+  Team workflow: one branch per change off `develop`, PR into `develop`. Hotfixes branch off
+  `master` (PR into master, back-merge into develop). Quickwins are committed on `develop`
+  directly. Agents never push to develop/staging/master without the user's explicit validation.
+  Conventional Commits with path scopes (e.g. feat(models/DMX): ...); semantic-release on
+  staging/master.
 
 rules:
   proposal:
@@ -74,6 +77,10 @@ rules:
 operations:
   apply:
     guidance:
+      - "Before the first edit, get on the change's own branch (skill git-collaboration):
+        <type>/<change-name> off origin/develop by default; hotfix/<change-name> off origin/master
+        if the user called it a hotfix; stay on develop only if the user called it a quickwin.
+        Never push to develop, staging or master without the user's explicit validation."
       - Follow the matching project skill (dmx-model-change, vue-ui-change, wsc-output,
         fixture-library, code-quality) for each task.
       - Lint only the files you changed (npx eslint <files>); never run npm run lint (it --fixes

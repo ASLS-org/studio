@@ -1,5 +1,5 @@
 <!-- Title: <type>(<scope>): <summary>   e.g. feat(models/DMX): add fade-out curve to scenes -->
-<!-- Base branch: develop -->
+<!-- Base branch: develop (hotfix: master, then a back-merge PR into develop) -->
 
 ## What & why
 
@@ -24,7 +24,7 @@ Closes #
 
 ## Checklist
 
-- [ ] Targets `develop`
+- [ ] Targets `develop` (hotfix: `master` + back-merge PR)
 - [ ] `npx eslint` clean on touched files
 - [ ] User manual (`docs/manual`) updated, or n/a because:
 - [ ] AI context (`CLAUDE.md`, `.claude/skills`, `openspec/config.yaml`) updated, or n/a
