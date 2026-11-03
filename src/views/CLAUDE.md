@@ -1,0 +1,30 @@
+# Views (src/views)
+
+Use skill `vue-ui-change` for any UI work. This file is the map.
+
+```
+views/
+  activities/            top-level screens (router targets)
+    app/app.activity.vue   main shell: loads localStorage or demo showfile, lays out fragments
+    app/_popups/           app-level popups (splash, error)
+    app/fragments/<area>/  toolbar, patch-bay, group-pool, visualizer, modifiers/{universe,group,chase}
+      _widgets/            widgets scoped to that fragment
+      _popups/             popups scoped to that fragment
+    visualizer/            standalone visualizer route (/visualizer)
+  components/uikit/      `uk-*` design system, registered globally in main.js
+  mixins/                popup.mixin.js (v-model open/close), color.mixin.js
+  utils/                 palette, setCapture (exposed as this.$utils)
+```
+
+## Ground rules
+
+- Options API only (`name`, `compatConfig: { MODE: 3 }`, `components`, `props`, `emits`, `data`,
+  `computed`, `watch`, methods, hooks). No `<script setup>`, no Composition API.
+- Show state comes from `this.$show` (reactive singleton). Read it directly and call model methods.
+  Don't copy model state into local `data`. There is no Vuex/Pinia store.
+- Navigation: `this.$router.push(path).catch(() => {})`. Routes are in `plugins/router.js`.
+- Styling: `<style scoped>` plain CSS using the variables in `src/assets/styles/global.css`
+  (`--primary-*`, `--secondary-*`, …). No new hard-coded colours; palette lives in
+  `uikit/colors/uikit.colors.js` and `views/utils/palette.js`.
+- File names: `<area>.<kind>.<thing>.vue`, e.g. `group.modifier.widget.cuepool.vue`,
+  `popup.connections.vue`, `uikit.input.select.vue`.

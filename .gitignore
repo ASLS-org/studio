@@ -32,3 +32,6 @@ yarn-error.log*
 **/.vitepress/cache
 
 **/bin/
+
+# Claude Code (personal settings)
+.claude/settings.local.json

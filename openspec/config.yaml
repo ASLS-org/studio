@@ -1,0 +1,85 @@
+schema: spec-driven
+
+context: |
+  Product: ASLS Studio, an open-source DMX lighting control and real-time 3D visualizer for
+  lighting designers and operators. It runs as a static web app and as an Electron desktop app.
+  Show output goes to hardware over the WSC (Web Show Control) protocol via a gateway.
+
+  Stack: Vue 3 on @vue/compat (Options API only, compatConfig MODE 3), plain JavaScript (no TS),
+  Vite 5, Three.js r170, Electron 41 (electron-vite / electron-builder), @asls/wsc-client and
+  @asls/wsc-sdk 2.x, mitt event bus, ESLint airbnb-base + vue3-recommended. Node 18.
+  No automated tests: verification is manual in the running app, plus lint.
+
+  Domain vocabulary:
+  - Show: the whole project; persisted as a JSON showfile (and in localStorage).
+  - Universe: 512 DMX channels; fixtures are patched at addresses within it.
+  - Fixture: an OFL (Open Fixture Library) device instance with a mode, channels and capabilities.
+  - Group: a set of fixtures; owns the cues and chases.
+  - Cue: a Scene (static channel values + fade in/out curves) or an Effect (waveform modulation
+    with frequency, phase and spread). Trigger style toggle or temporary; loop or one-shot.
+  - Chase: a bar-grid timeline of cue items per group, with quantize, BPM sync, loop or one-shot.
+  - Master: triggers chase rows across groups.
+  - Live: the global clock (BPM, tap tempo, play/pause/stop) driving every animation.
+  - Output: a WSC gateway connection; each universe streams to it with a protocol/transport.
+  - Visualizer: the 3D viewport rendering fixtures from live channel data.
+
+  Architecture invariants every change must respect:
+  1. Save/load round-trip: persisted state goes through model `showData` getters and
+     Show.loadFromData/prepare*; older showfiles must keep loading (default missing keys).
+  2. Undo/redo through Proxify: user edits assign through proxies; arrays use
+     pushAndStackUndo/spliceAndStackUndo.
+  3. Live.add is always paired with Live.remove; durations are in bars, derived from BPM.
+  4. 60 fps budget shared by the engine and the visualizer; no allocations in per-tick code.
+  5. The browser build must keep working without Electron.
+
+  Repo map: src/models/DMX (engine), src/views (UI, uk-* uikit), src/plugins/visualizer,
+  src/plugins/wsc.connection.js (output), src/electron, public/fixtures (OFL library),
+  docs/manual (end-user manual). See CLAUDE.md and .claude/skills/* for procedures.
+
+  Team workflow: PRs always target `develop`; Conventional Commits with path scopes
+  (e.g. feat(models/DMX): ...); semantic-release on staging/master.
+
+rules:
+  proposal:
+    - Keep it under 400 words. State the user problem first, then the change.
+    - Always include an "Out of scope" list.
+    - "State the impact on: showfile format (and older-file compatibility), undo/redo, live
+      playback/timing, WSC output, visualizer, web vs Electron. Write 'none' where it doesn't apply."
+    - State whether the user manual needs updating and which pages.
+  specs:
+    - "Capabilities are organised by product area. Reuse these paths before inventing new ones:
+      patching, fixtures, grouping, scenes, effects, chases, live-engine, master, showfile,
+      undo-redo, output-wsc, visualizer, desktop-app, uikit."
+    - Requirements describe user-observable behaviour (what the operator sees or the hardware
+      receives), not class or file names.
+    - Use DMX/show terms from the context vocabulary consistently. Give units (bars, BPM, DMX 0-255,
+      degrees, ms).
+    - Spec only what this change touches; do not back-fill unrelated behaviour.
+  design:
+    - Only write design.md when the change touches more than one layer (engine/UI/visualizer/output)
+      or alters persistence, timing or protocol behaviour.
+    - Name the exact models, pools and components touched and how showData and the load path
+      change.
+    - "Address the per-tick cost of any new Live animation or visualizer work."
+    - For WSC changes, cite the @asls/wsc-* version and the packet/transport fields used.
+  tasks:
+    - "Group tasks by layer: engine (models/DMX), UI (views), visualizer, output, docs."
+    - "Every task ends with its verification: a concrete manual step in the running app
+      (npm start or npm run electron:start) or a lint/command check."
+    - Include a task to update docs/manual when user-facing behaviour changes, or state "Manual
+      n/a" in the last task.
+    - Include a task to update CLAUDE.md / skills when architecture or conventions change.
+    - Final task is always "npx eslint on all touched files is clean".
+
+operations:
+  apply:
+    guidance:
+      - Follow the matching project skill (dmx-model-change, vue-ui-change, wsc-output,
+        fixture-library, code-quality) for each task.
+      - Lint only the files you changed (npx eslint <files>); never run npm run lint (it --fixes
+        all of src).
+      - Keep diffs minimal and on the change's scope; note unrelated issues instead of fixing them.
+  archive:
+    guidance:
+      - Before archiving, confirm the manual and AI-context tasks are done or explicitly n/a.
+      - Summarise the user-facing change in one line suitable for a Conventional Commit subject.
