@@ -18,6 +18,7 @@ export default {
      * @returns {String} uikit color index of provided color string
      */
     getIndexFromColor(color = 'color') {
+      if (!ukColors[color]) ukColors[`Custom - ${color}`] = color;
       return Object.keys(ukColors).findIndex(
         (colorString) => ukColors[colorString] === color,
       );

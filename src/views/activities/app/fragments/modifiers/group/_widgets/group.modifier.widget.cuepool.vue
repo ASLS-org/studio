@@ -8,14 +8,7 @@
       col
       class="body"
     >
-      <uk-txt-input
-        v-model="searchString"
-        placeholder="Search Cues"
-        class="searchbox"
-        :outlined="false"
-      />
       <uk-flex
-        style="height: calc(100% - 25px)"
         class="body"
       >
         <uk-flex
@@ -169,11 +162,6 @@ export default {
         title: 'Cue Pool',
         icon: 'grid',
       },
-      /**
-       * Search string
-       * @todo implement cue search
-       */
-      searchString: '',
       /**
        * Cue creation popup display state
        */

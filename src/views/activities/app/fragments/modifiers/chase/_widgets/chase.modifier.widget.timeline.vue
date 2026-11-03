@@ -1,6 +1,6 @@
 <template>
   <uk-widget
-    :disabled="!pool.cues.length"
+    :disabled="!pool || !pool.cues.length"
     class="widget_pool_timeline"
     :header="header"
   >
@@ -55,7 +55,6 @@
             class="widget_pool_timeline_cursor"
             :style="computeCursorStyle()"
             @mousedown="startDragCursor"
-            @mouseup="stopDragCursor"
           />
         </div>
         <uk-flex
@@ -67,14 +66,12 @@
             :style="computeRowStyle()"
             @dblclick="resetZoom"
             @mousedown="startZoom"
-            @mouseup="stopZoom"
           >
             <div
               class="widget_pool_timeline_grid_label"
               :style="computeRowStyle()"
               @dblclick="resetZoom"
               @mousedown="startZoom"
-              @mouseup="stopZoom"
             />
             <div
               v-for="bar in pool.actualDuration * 4"
@@ -99,7 +96,7 @@
               @dblclick="(e) => addCueItem(e, cueItemPool)"
             >
               <div
-                :key="key"
+                :key="renderKey"
                 class="widget_pool_timeline_grid_row_sub"
                 style="width: 100%; position: relative; min-height: 1%"
                 :style="{
@@ -119,11 +116,6 @@
                     class="widget_pool_timeline_item_cue_body"
                     @contextmenu.prevent="deleteCueItem(cueItemPool, cueItem)"
                     @mousedown="(e) => startDragCue(
-                      e,
-                      `cue-${cueIndex}-${itemIndex}`,
-                      cueItem, cueItemPool.items
-                    )"
-                    @mouseup="(e) => stopDragCue(
                       e,
                       `cue-${cueIndex}-${itemIndex}`,
                       cueItem, cueItemPool.items
@@ -156,12 +148,6 @@
                       cueItem,
                       cueItemPool.items
                     )"
-                    @mouseup="(e) => stopResizeCue(
-                      e,
-                      `cue-${cueIndex}-${itemIndex}`,
-                      cueItem,
-                      cueItemPool.items
-                    )"
                   />
                 </div>
               </div>
@@ -187,16 +173,22 @@ export default {
   },
   props: {
     /**
-     * Handle to chase pool
+     * Handle to chase pool. Required: almost every render path (grid width,
+     * bar labels, cursor position...) dereferences `pool` directly, so a
+     * null pool would throw well before `uk-widget`'s disabled state could
+     * protect anything.
      */
     pool: {
       type: Object,
-      default: null,
+      required: true,
     },
   },
   data() {
     return {
-      key: 0,
+      /**
+       * Bumped to force a full remount of the grid rows (see forceReRender).
+       */
+      renderKey: 0,
       /**
        * Widget header data
        */
@@ -204,7 +196,7 @@ export default {
         title: 'Timeline',
       },
       /**
-       * Zomming amount
+       * Zooming amount
        */
       zoom: 0,
       /**
@@ -212,17 +204,13 @@ export default {
        */
       folded: false,
       /**
-       * Holds reference to cue item movement horizontal start position
+       * Holds reference to cue item movement / zoom drag start position
        */
       moveStart: 0,
       /**
        * Holds reference to zoom start position
        */
       zoomStart: 0,
-      /**
-       * Reference to the chase's ellapsed time
-       */
-      elapsed: this.pool.elapsedPerc,
       /**
        * Width of a cell. Will be recomputed depending on chase duration and zoom amount
        */
@@ -233,9 +221,15 @@ export default {
        */
       containerWidth: 0,
       /**
-       *
+       * Scroll offset captured when the playhead cursor drag starts.
        */
-      cueEls: [],
+      deltaCursor: 0,
+      /**
+       * Cleanup callbacks for any in-progress window-level drag session
+       * (cue drag/resize, cursor drag, zoom). Drained on unmount so we
+       * never leak listeners if the component is destroyed mid-drag.
+       */
+      activeSessions: [],
     };
   },
   watch: {
@@ -262,12 +256,54 @@ export default {
   mounted() {
     this.resetZoom();
     this.computeRowStyle();
-    window.addEventListener('resize', () => {
-      this.resetZoom();
-      this.computeRowStyle();
-    });
+    window.addEventListener('resize', this.handleWindowResize);
+  },
+  beforeUnmount() {
+    window.removeEventListener('resize', this.handleWindowResize);
+    // Drain any drag/zoom session still in flight so its window listeners
+    // don't outlive this component.
+    this.activeSessions.slice().forEach((cleanup) => cleanup());
   },
   methods: {
+    /**
+     * Window resize handler (kept as a bound method so it can be removed
+     * again in beforeUnmount - an inline arrow function couldn't be).
+     *
+     * @public
+     */
+    handleWindowResize() {
+      this.resetZoom();
+      this.computeRowStyle();
+    },
+    /**
+     * Starts a window-level mousemove/mouseup pointer session and takes care
+     * of removing both listeners on mouseup (or on component teardown).
+     * Centralises the add/remove-listener bookkeeping that used to be
+     * duplicated - and partly broken - across every drag/resize/zoom handler.
+     *
+     * @public
+     * @param {Function} onMove called with the mousemove event
+     * @param {Function} [onEnd] optional, called with the mouseup event
+     * @returns {Function} cleanup function, in case the caller needs to
+     *  cancel the session early
+     */
+    beginPointerSession(onMove, onEnd) {
+      const move = (e) => onMove(e);
+      const cleanup = () => {
+        window.removeEventListener('mousemove', move);
+        window.removeEventListener('mouseup', up);
+        const idx = this.activeSessions.indexOf(cleanup);
+        if (idx !== -1) this.activeSessions.splice(idx, 1);
+      };
+      const up = (e) => {
+        cleanup();
+        if (onEnd) onEnd(e);
+      };
+      window.addEventListener('mousemove', move);
+      window.addEventListener('mouseup', up);
+      this.activeSessions.push(cleanup);
+      return cleanup;
+    },
     /**
      * Computes a cue item's position, width and color
      *
@@ -283,7 +319,7 @@ export default {
       };
     },
     /**
-     * Computes row width and cell grid size based on duratio and zoom amount
+     * Computes row width and cell grid size based on duration and zoom amount
      *
      * @public
      * @returns {Object} css background size and width
@@ -291,13 +327,12 @@ export default {
     computeRowStyle() {
       let minCellWidth = 10;
       const cellWidth = minCellWidth + this.zoom * minCellWidth;
-      let containerWidth = cellWidth * this.pool.barSubDiv * this.pool.actualDuration + 0;
+      let containerWidth = cellWidth * this.pool.barSubDiv * this.pool.actualDuration;
       if (this.$el && containerWidth < this.$el.offsetWidth) {
-        // eslint-disable-next-line max-len
-        minCellWidth = (this.$el.offsetWidth - 0) / (this.pool.barSubDiv * this.pool.actualDuration);
+        minCellWidth = this.$el.offsetWidth / (this.pool.barSubDiv * this.pool.actualDuration);
       }
       this.cellWidth = Math.round(Math.max(cellWidth, minCellWidth));
-      containerWidth = this.cellWidth * this.pool.barSubDiv * this.pool.actualDuration + 0;
+      containerWidth = this.cellWidth * this.pool.barSubDiv * this.pool.actualDuration;
       this.containerWidth = containerWidth;
       return {
         backgroundSize: `${this.cellWidth}px`,
@@ -305,29 +340,42 @@ export default {
       };
     },
     /**
-     * Computes timeline's row cell width styling
+     * Computes cue item curve as svg path data
      *
      * @public
      */
-    computeBarStyle() {
-      return {
-        backgroundSize: `${this.cellWidth * 16}px`,
-      };
-    },
-    /**
-     * Computes cue item curve as svg path data
-     */
     computeCueItemCurve(cueItem, ref) {
-      if (this.$refs[ref] && this.$refs[ref][0]) {
-        let { height: cueHeight } = this.$refs[ref][0].getBoundingClientRect();
-        cueHeight -= 2;
+      // Check both components ($refs[ref]) and their native elements ($refs[ref][0])
+      const targetRef = (this.$refs[ref] && this.$refs[ref][0])
+        ? this.$refs[ref][0]
+        : this.$refs[ref];
+
+      if (targetRef) {
+        let { height: cueHeight } = targetRef.getBoundingClientRect();
+        cueHeight -= 2; // Accounting for top/bottom borders
+
         const cue = cueItem.handle;
-        if (cue.fadeIn) {
-          return `M0,0 C ${cue.fadeIn.controlPoints[0].x * this.cellWidth * cueItem.length}  ${cue.fadeIn.controlPoints[0].y * cueHeight}, ${cue.fadeIn.controlPoints[1].x * this.cellWidth * cueItem.length}  ${cue.fadeIn.controlPoints[1].y * cueHeight}, ${this.cellWidth * cueItem.length} ${cueHeight} l -${this.cellWidth * cueItem.length}, 0`;
+        const totalWidth = this.cellWidth * cueItem.length;
+
+        if (cue.fadeIn && cue.fadeIn.controlPoints) {
+          // Invert Y control points: (1 - controlPoint.y) * cueHeight
+          const cp0x = cue.fadeIn.controlPoints[0].x * totalWidth;
+          const cp0y = (1 - cue.fadeIn.controlPoints[0].y) * cueHeight;
+
+          const cp1x = cue.fadeIn.controlPoints[1].x * totalWidth;
+          const cp1y = (1 - cue.fadeIn.controlPoints[1].y) * cueHeight;
+
+          // Path Breakdown:
+          // 1. M 0,${cueHeight} -> Move to bottom-left corner
+          // 2. C ... ${totalWidth},0 -> Curve up to top-right corner
+          // 3. L ${totalWidth},${cueHeight} -> Line straight down to bottom-right corner
+          // 4. Z -> Close path back to bottom-left corner to form a filled shape
+          return `M 0,${cueHeight} C ${cp0x} ${cp0y}, ${cp1x} ${cp1y}, ${totalWidth} 0 L ${totalWidth},${cueHeight} Z`;
         }
       }
       return null;
     },
+
     /**
      * Computes timeline's cursor position
      *
@@ -336,7 +384,7 @@ export default {
      */
     computeCursorStyle() {
       return {
-        left: `${this.pool.elapsedPerc * (this.pool.duration * this.cellWidth * this.pool.barSubDiv) + 0}px`,
+        left: `${this.pool.elapsedPerc * (this.pool.duration * this.cellWidth * this.pool.barSubDiv)}px`,
       };
     },
     /**
@@ -346,7 +394,7 @@ export default {
      */
     computeDurationOverflowOverlayStyle() {
       return {
-        left: `${this.cellWidth * 16 * (this.pool.duration * 4) + 0}px`,
+        left: `${this.cellWidth * 16 * (this.pool.duration * 4)}px`,
         width: `${this.cellWidth * 16 * (this.pool.actualDuration - this.pool.duration) * 4}px`,
       };
     },
@@ -366,14 +414,10 @@ export default {
      * @param {Object} e mousedown event
      */
     startZoom(e) {
-      if (e.detail === 2) {
-        this.resetZoom();
-      }
       this.$utils.setCapture(e.currentTarget, 'row-resize');
       this.moveStart = e.clientY;
       this.zoomStart = this.zoom;
-      window.addEventListener('mousemove', this.handleZoom);
-      window.addEventListener('mouseup', this.stopZoom);
+      this.beginPointerSession((moveEvent) => this.handleZoom(moveEvent));
     },
     /**
      * Handles zooming procedure
@@ -386,15 +430,6 @@ export default {
         this.zoomStart + (this.moveStart - e.clientY) / this.$el.clientHeight,
         0,
       );
-    },
-    /**
-     * Terminates zooming procedure
-     *
-     * @public
-     */
-    stopZoom() {
-      window.removeEventListener('mousemove', this.handleZoom);
-      window.removeEventListener('mouseup', this.stopZoom);
     },
     /**
      * Deletes a cue item from the selected chase's cue item pool
@@ -418,8 +453,8 @@ export default {
       const gridElBox = gridEl.getBoundingClientRect();
       const leftOffset = gridEl.scrollLeft - gridElBox.left;
       const tick = Math.floor((e.clientX + leftOffset) / this.cellWidth);
-      let tickDuration = cueItemPool.cue.duration * this.pool.barSubDiv;
-      tickDuration = this.doesCollide(tick, tickDuration, cueItemPool.items);
+      const requestedDuration = cueItemPool.cue.duration * this.pool.barSubDiv;
+      const tickDuration = this.computeAvailableLength(tick, requestedDuration, cueItemPool.items);
       cueItemPool.addRaw({
         tickStart: tick,
         tickDuration,
@@ -436,55 +471,34 @@ export default {
      * @param {Array} neighbours list of cue items adjacent to the cue item being resized
      */
     startResizeCue(e, ref, handle, neighbours) {
+      const cueEl = this.$refs[ref] && this.$refs[ref][0];
+      if (!cueEl) return;
       this.$utils.setCapture(e.currentTarget, 'col-resize');
-      const cueEl = this.$refs[ref][0];
-      if (cueEl) {
-        const ctx = {
-          el: cueEl,
-          moveStart: e.clientX - cueEl.getBoundingClientRect().width,
-          snapWidth: this.cellWidth,
-          cue: handle,
-          neighbours,
-        };
-        const resize = (mouseMoveEvent) => {
-          this.resizeCue(mouseMoveEvent, ctx);
-        };
-        window.addEventListener('mousemove', resize);
-        window.addEventListener('mouseup', () => window.removeEventListener('mousemove', resize));
-      }
+      const ctx = {
+        moveStart: e.clientX - cueEl.getBoundingClientRect().width,
+        snapWidth: this.cellWidth,
+        cue: handle,
+        neighbours,
+      };
+      this.beginPointerSession((moveEvent) => this.resizeCue(moveEvent, ctx));
     },
     /**
      * Cue resizing procedure
-     * @todo: cellwidth is accessible from vm, it could be removed ?
      *
      * @public
      * @param {Object} e mousemove event
      * @param {Object} ctx context object holding references necessary for resize operation
-     * @param {Object} ctx.el handle to corresponding cue HTML element
-     * @param {Object} ctx.moveStart horizontal move offset
-     * @param {Object} ctx.snapWidth current cell width in order to snap resizing to grid
-     * @param {Object} ctx.cue  handle to cue item to be resized
-     * @param {Object} ctx.neighbours list of cue items adjacent to the cue item being resized
      */
     resizeCue(e, ctx) {
       const moveOffset = e.clientX - ctx.moveStart;
-      const length = Math.floor(moveOffset / ctx.snapWidth);
+      const requestedLength = Math.floor(moveOffset / ctx.snapWidth);
+      // NB: computeCueResizeCollision can legitimately return 0 (no room at
+      // all) - don't `|| requestedLength` that away, it would let the cue
+      // overlap its neighbour.
       ctx.cue.length = Math.max(
-        this.computeCueResizeCollision(
-          length,
-          ctx.cue,
-          ctx.neighbours,
-        ) || length,
+        this.computeCueResizeCollision(requestedLength, ctx.cue, ctx.neighbours),
         0,
       );
-    },
-    /**
-     * Terminates resizing procedure
-     *
-     * @public
-     */
-    stopResizeCue() {
-      window.removeEventListener('mousemove', this.resizeCue);
     },
     /**
      * Cue dragging procedure initialisation
@@ -493,66 +507,41 @@ export default {
      * @param {Object} e mousedown event
      * @param {String} ref cue reference string
      * @param {Object} handle handle to cue instance to be resized
-     * @param {Array} neighbours list of cue items adjacent to the cue item being resized
+     * @param {Array} neighbours list of cue items adjacent to the cue item being dragged
      */
     startDragCue(e, ref, handle, neighbours) {
       // TODO: find a way to successfully use setCapture with right click enabled
       // this.$utils.setCapture(e.currentTarget, "grab");
-      const cueEl = this.$refs[ref][0];
+      const cueEl = this.$refs[ref] && this.$refs[ref][0];
+      if (!cueEl) return;
       const ctx = {
-        el: cueEl,
         startX: e.clientX - cueEl.offsetLeft,
         snapWidth: this.cellWidth,
         cue: handle,
         neighbours,
       };
-      const drag = (mouseMoveEvent) => {
-        this.dragCue(mouseMoveEvent, ctx);
-      };
-      window.addEventListener('mousemove', drag);
-      window.addEventListener('mouseup', () => window.removeEventListener('mousemove', drag));
+      this.beginPointerSession((moveEvent) => this.dragCue(moveEvent, ctx));
     },
     /**
      * Cue dragging procedure
-     * @todo: cellwidth is accessible from vm, it could be removed ?
      *
      * @public
-     * @todo It seems to work fine, however, a recursion problem seems
-     * to be occuring when dealing with many neighbours
      * @param {Object} e mousemove event
      * @param {Object} ctx context object holding references necessary for drag operation
-     * @param {Object} ctx.el handle to corresponding cue HTML element
-     * @param {Object} ctx.startX horizontal move offset
-     * @param {Object} ctx.snapWidth current cell width in order to snap resizing to grid
-     * @param {Object} ctx.cue  handle to cue item to be dragged
-     * @param {Object} ctx.neighbours list of cue items adjacent to the cue item being dragged
      */
     dragCue(e, ctx) {
       const moveOffset = e.clientX - ctx.startX;
-      let tick = Math.floor(moveOffset / ctx.snapWidth);
-      tick = Math.max(this.computeCuePositionCollision(
-        tick,
+      const requestedTick = Math.floor(moveOffset / ctx.snapWidth);
+      // Collision resolution only needs to run once per move event - the
+      // previous version ran it twice and, since 0 is a valid resolved
+      // tick, `|| tick` could silently discard a correct collision result.
+      const resolvedTick = this.computeCuePositionCollision(
+        requestedTick,
         ctx.cue.length,
         ctx.cue,
         ctx.neighbours,
-      ), 0);
-      ctx.cue.tick = Math.max(
-        this.computeCuePositionCollision(
-          tick,
-          ctx.cue.length,
-          ctx.cue,
-          ctx.neighbours,
-        ) || tick,
-        0,
       );
-    },
-    /**
-     * Terminates dragging procedure
-     *
-     * @public
-     */
-    stopDragCue() {
-      window.removeEventListener('mousemove', this.drag);
+      ctx.cue.tick = Math.max(resolvedTick, 0);
     },
     /**
      * Cursor dragging procedure initialisation
@@ -563,14 +552,7 @@ export default {
       const { scrollLeft } = this.$refs.scrollable.$el;
       this.deltaCursor = scrollLeft;
       this.$utils.setCapture(this.$refs.cursor, 'col-resize');
-      window.addEventListener('mousemove', this.dragCursor);
-      window.addEventListener(
-        'mouseup',
-        () => window.removeEventListener(
-          'mousemove',
-          this.dragCursor,
-        ),
-      );
+      this.beginPointerSession((moveEvent) => this.dragCursor(moveEvent));
     },
     /**
      * Cursor dragging procedure
@@ -583,187 +565,90 @@ export default {
       this.pool.update(time);
     },
     /**
- * Computes cue items position collisions with improved magnetic behavior.
- * Creates a more natural-feeling drag experience with consistent collision handling.
- *
- * @param {Number} tick tick number to which the cue item should be moved
- * @param {Number} length width of the cue item being moved
- * @param {Object} cue handle to cue item instance being moved
- * @param {Array} neighbours list of cue items adjacent to the cue item being dragged
- * @returns {Number} new cue item tick value
- */
+     * Computes a cue item's position after resolving collisions with its
+     * neighbours: if the requested tick overlaps a neighbour, the cue snaps
+     * to whichever free side of that neighbour is closer, then falls back to
+     * "after the furthest neighbour" if that slot is itself occupied
+     * (chain-collision case).
+     *
+     * @public
+     * @param {Number} tick tick number to which the cue item should be moved
+     * @param {Number} length width of the cue item being moved
+     * @param {Object} cue handle to cue item instance being moved
+     * @param {Array} neighbours list of cue items adjacent to the cue item being dragged
+     * @returns {Number} new cue item tick value
+     */
     computeCuePositionCollision(tick, length, cue, neighbours) {
-      // Original requested position (desired position)
       const requestedTick = Math.max(tick, 0);
+      const requestedEnd = requestedTick + length;
+      const others = neighbours.filter((n) => n !== cue);
 
-      // Define a "magnetic threshold" - how close to a collision before the item jumps
-      // Smaller values make it more responsive, larger values require more deliberate movement
-      const magneticThreshold = 0; // in ticks
+      const collision = others.find(
+        (n) => requestedTick < n.tick + n.length && requestedEnd > n.tick,
+      );
+      if (!collision) return requestedTick;
 
-      // 1. First check if the current position is free from collisions
-      let hasCollision = false;
-      let collisionInfo = null;
+      const positionBefore = Math.max(0, collision.tick - length);
+      const positionAfter = collision.tick + collision.length;
+      let newPosition = Math.abs(positionBefore - requestedTick)
+        <= Math.abs(positionAfter - requestedTick)
+        ? positionBefore
+        : positionAfter;
 
-      for (let i = 0; i < neighbours.length; i++) {
-        const neighbourCue = neighbours[i];
-        // Skip if it's the same cue
-        // eslint-disable-next-line no-continue
-        if (neighbourCue === cue) continue;
-
-        const cueEnd = requestedTick + length;
-        const neighbourEnd = neighbourCue.tick + neighbourCue.length;
-
-        // Check if there's a collision or if we're within the magnetic threshold of a collision
-        const distanceToLeftEdge = Math.abs(neighbourCue.tick - cueEnd);
-        const distanceToRightEdge = Math.abs(requestedTick - neighbourEnd);
-        // eslint-disable-next-line max-len
-        const isWithinMagneticField = distanceToLeftEdge <= magneticThreshold || distanceToRightEdge <= magneticThreshold;
-
-        if (
-          (requestedTick < neighbourEnd && cueEnd > neighbourCue.tick)
-      || (isWithinMagneticField
-       // eslint-disable-next-line max-len
-       && ((requestedTick < neighbourCue.tick && neighbourCue.tick - (requestedTick + length) <= magneticThreshold)
-        || (cueEnd > neighbourEnd && requestedTick - neighbourEnd <= magneticThreshold)))
-        ) {
-          hasCollision = true;
-
-          // Store information about this collision
-          const newCollisionInfo = {
-            neighbor: neighbourCue,
-            distanceToLeft: Math.abs(neighbourCue.tick - requestedTick - length),
-            distanceToRight: Math.abs(requestedTick - (neighbourCue.tick + neighbourCue.length)),
-            positionBefore: neighbourCue.tick - length,
-            positionAfter: neighbourCue.tick + neighbourCue.length,
-          };
-
-          // If this is our first collision or it's closer than previous collisions
-          if (!collisionInfo
-          || Math.min(newCollisionInfo.distanceToLeft, newCollisionInfo.distanceToRight)
-          < Math.min(collisionInfo.distanceToLeft, collisionInfo.distanceToRight)) {
-            collisionInfo = newCollisionInfo;
-          }
-        }
-      }
-
-      // If no collision or magnetic snap, return the requested position
-      if (!hasCollision) {
-        return requestedTick;
-      }
-
-      // 2. Find the best position based on the collision
-      // Determine if it's better to place before or after the collision
-      let newPosition;
-
-      // Choose the position with the smallest distance to the requested position
-      // eslint-disable-next-line max-len
-      if (Math.abs(collisionInfo.positionBefore - requestedTick) <= Math.abs(collisionInfo.positionAfter - requestedTick)) {
-        // Prefer the before position if it's valid
-        newPosition = Math.max(0, collisionInfo.positionBefore);
-      } else {
-        // Otherwise use the after position
-        newPosition = collisionInfo.positionAfter;
-      }
-
-      // 3. Verify the new position doesn't create new collisions
-      for (let i = 0; i < neighbours.length; i++) {
-        const neighbourCue = neighbours[i];
-        // eslint-disable-next-line no-continue
-        if (neighbourCue === cue) continue;
-
-        if (
-          newPosition < neighbourCue.tick + neighbourCue.length
-      && newPosition + length > neighbourCue.tick
-        ) {
-          // We have a secondary collision
-          // For simplicity, in case of chain collisions, we'll just place it after all items
-          let furthestEnd = 0;
-          for (let j = 0; j < neighbours.length; j++) {
-            // eslint-disable-next-line no-continue
-            if (neighbours[j] === cue) continue;
-            const endTick = neighbours[j].tick + neighbours[j].length;
-            if (endTick > furthestEnd) furthestEnd = endTick;
-          }
-          return furthestEnd;
-        }
+      const stillColliding = others.some(
+        (n) => newPosition < n.tick + n.length && newPosition + length > n.tick,
+      );
+      if (stillColliding) {
+        // Chain collision - simplest correct fallback is to place the cue
+        // right after the furthest-reaching neighbour.
+        newPosition = others.reduce((furthest, n) => Math.max(furthest, n.tick + n.length), 0);
       }
 
       return newPosition;
     },
     /**
      * Computes the maximum allowable length for a cue item during resizing
-     * to avoid collisions with neighboring items.
+     * to avoid collisions with neighbouring items.
      *
+     * @public
      * @param {Number} desiredLength width that the cue item is being resized to
      * @param {Object} cue handle to cue item instance being resized
      * @param {Array} neighbours list of cue items adjacent to the cue item being resized
      * @returns {Number} maximum allowable length for the cue item
      */
     computeCueResizeCollision(desiredLength, cue, neighbours) {
-      // Start with the desired length
-      let maxLength = desiredLength;
-
-      // Find the closest neighbor to the right of the current cue
-      for (let i = 0; i < neighbours.length; i++) {
-        const neighbourCue = neighbours[i];
-
-        // Skip if it's the same cue
-        // eslint-disable-next-line no-continue
-        if (neighbourCue === cue) continue;
-
-        // Only consider neighbors that are to the right of the current cue
-        if (neighbourCue.tick > cue.tick) {
-          // Calculate the maximum possible length before hitting this neighbor
-          const possibleLength = neighbourCue.tick - cue.tick;
-
-          // Update maxLength if this neighbor is closer
-          if (possibleLength < maxLength) {
-            maxLength = possibleLength;
-          }
-        }
-      }
-
-      // Ensure we don't return a negative length
-      return Math.max(maxLength, 0);
-    },
-
-    /**
- * Determines the maximum allowable length for a new cue item at a specific tick position
- * without colliding with any existing cue items.
- *
- * @param {Number} tick cue item's starting tick position
- * @param {Number} requestedLength desired cue item's length in ticks
- * @param {Array} neighbours list of existing cue items
- * @returns {Number} maximum allowable length for the new cue item
- */
-    doesCollide(tick, requestedLength, neighbours) {
-      // Start with the requested length
-      let availableLength = requestedLength;
-
-      // Check all existing cue items for potential collisions
-      for (let i = 0; i < neighbours.length; i++) {
-        const neighbour = neighbours[i];
-
-        // Check if this neighbor would collide with the new cue
-        if (neighbour.tick <= tick + requestedLength && tick < neighbour.tick + neighbour.length) {
-          // Calculate how much space is available before this collision
-          const availableSpace = neighbour.tick - tick;
-
-          // If this offers less space than our current calculation, update availableLength
-          if (availableSpace >= 0 && availableSpace < availableLength) {
-            availableLength = availableSpace;
-          }
-        }
-      }
-
-      return availableLength;
+      return neighbours
+        .filter((n) => n !== cue && n.tick > cue.tick)
+        .reduce((maxLength, n) => Math.min(maxLength, n.tick - cue.tick), desiredLength);
     },
     /**
-     * Force full component re-render
+     * Determines the maximum allowable length for a new cue item at a
+     * specific tick position without colliding with any existing cue items.
+     *
+     * @public
+     * @param {Number} tick cue item's starting tick position
+     * @param {Number} requestedLength desired cue item's length in ticks
+     * @param {Array} neighbours list of existing cue items
+     * @returns {Number} maximum allowable length for the new cue item
+     */
+    computeAvailableLength(tick, requestedLength, neighbours) {
+      return neighbours
+        .filter((n) => n.tick <= tick + requestedLength && tick < n.tick + n.length)
+        .reduce((available, n) => {
+          const availableSpace = n.tick - tick;
+          return availableSpace >= 0 && availableSpace < available ? availableSpace : available;
+        }, requestedLength);
+    },
+    /**
+     * Force full component re-render (bumps renderKey to remount the grid
+     * rows - used after structural changes like switching pool/folding
+     * where cached $refs would otherwise go stale).
+     *
+     * @public
      */
     async forceReRender() {
       await nextTick();
-      this.key++;
+      this.renderKey += 1;
     },
   },
 };
@@ -843,7 +728,6 @@ export default {
 .widget_pool_timeline_cursor {
   width: 2px;
   background: var(--accent-maroon);
-  z-index: 0;
   position: absolute;
   height: 100%;
   margin-top: 12px;
@@ -851,7 +735,6 @@ export default {
   opacity: .8;
 }
 .widget_pool_timeline_cursor:hover, .widget_pool_timeline_cursor:active {
-  /* border: 1px solid var(--secondary-light); */
   opacity: 1;
 }
 .widget_pool_timeline_cursor:before {
@@ -860,7 +743,6 @@ export default {
   box-sizing: content-box;
   width: 10px;
   height: 10px;
-  /* border: 1px solid transparent; */
   background:
     linear-gradient(
       45deg,
@@ -869,8 +751,6 @@ export default {
       var(--accent-maroon) 50%,
       var(--accent-maroon) 100%
     );
-  /* background: var(--accent-maroon); */
-
   z-index: 10;
   transform: rotate(45deg);
   left: -5px;
@@ -915,44 +795,6 @@ export default {
 .widget_pool_timeline_grid_row:nth-child(odd) {
   background: var(--primary-light-alt);
 }
-.widget_pool_timeline_grid_row:nth-child(odd) > .widget_pool_timeline_grid_column {
-  background: var(--primary-light-alt);
-}
-.widget_pool_timeline_grid_tick {
-  flex: 1;
-  min-width: 10px;
-  border-left: 1px solid #ffffff1a;
-}
-.large_tick {
-  height: 100% !important;
-  margin-top: 0 !important;
-}
-.small_tick {
-  height: 25%;
-  margin-top: 18px;
-  box-sizing: border-box;
-  border-color: #2e302b;
-}
-.medium_tick {
-  height: 50%;
-  margin-top: 11.5px;
-  box-sizing: border-box;
-}
-.tick {
-  color: var(--secondary-lighter) !important;
-}
-.widget_pool_timeline_grid_column {
-  min-width: 10px;
-  flex: 1;
-  background: var(--primary-lighter-alt);
-  border-left: 1px solid var(--primary-dark);
-}
-.widget_pool_timeline_grid_row:nth-child(odd) .widget_pool_timeline_grid_column {
-  border-left: 1px solid var(--primary-light);
-}
-.bar {
-  border-left: 1.5px solid var(--secondary-dark) !important;
-}
 .widget_pool_timeline_item_cue {
   position: absolute;
   height: 100%;
@@ -992,22 +834,6 @@ export default {
   white-space: nowrap;
   font-family: roboto-medium;
 }
-.widget_pool_timeline_grid_bar {
-  position: absolute;
-  display: none;
-  height: 100%;
-  background-image:
-    linear-gradient(
-      to right,
-      var(--secondary-light) 0,
-      var(--secondary-light) 1px,
-      transparent 1px,
-      transparent 100%
-    ) !important;
-  z-index: 100;
-  width: 100%;
-  pointer-events: none;
-}
 .widget_pool_timeline_grid_label_bar {
   font-family: Roboto-medium;
   color: var(--secondary-lighter);
@@ -1042,8 +868,6 @@ export default {
   min-height: 25px;
   background-color: var(--primary-lighter-alt) !important;
   border-bottom: 1px solid var(--primary-dark);
-  cursor: -moz-zoom-in;
-  cursor: -webkit-zoom-in;
   cursor: zoom-in;
   overflow: hidden;
 }
@@ -1080,8 +904,7 @@ export default {
   width: 100%;
   z-index: 5;
 }
-
-.widget_pool_timeline_item_cue_body_curve{
+.widget_pool_timeline_item_cue_body_curve {
   position: absolute;
   left: 0;
   bottom: 0;
@@ -1089,13 +912,11 @@ export default {
   width: 100%;
   stroke: var(--secondary-lighter);
   fill: var(--secondary-light);
-  stroke-width: 1px;
-  /* stroke-dasharray: 2px; */
+  stroke-width: 1.5px;
   stroke-opacity: .8;
-  transform: rotateX(180deg);
-  transform: rotateY(180deg);
+  /* transform: rotateY(180deg); */
 }
-.widget_pool_timeline_grid_row_sub{
+.widget_pool_timeline_grid_row_sub {
   background-image: linear-gradient(
     to right,
     var(--secondary-light) 1px,

@@ -60,20 +60,22 @@ export default {
      * @param {Array} fixtureList list of fixture data object
      */
     selectMultipleFixtures(fixtureList) {
-      this.selectedFixtureValues = [this.scene.getFixtureValueFromId(0)];
-      if (fixtureList.length > 1) {
-        this.scene.getFixtureValueFromId(fixtureList[0].id).fixture.highlightSingle(false, true);
-        this.selectedFixtureValues = fixtureList.map((fixtureData, index) => {
-          const fixtureValue = this.scene.getFixtureValueFromId(fixtureData.id);
-          if (index) {
-            fixtureValue.fixture.highlight(true, true);
-          } else {
-            fixtureValue.fixture.highlightSingle(true, true);
-          }
-          return fixtureValue;
-        });
+      if (this.scene && this.scene.id) {
+        this.selectedFixtureValues = [this.scene.getFixtureValueFromId(0)];
+        if (fixtureList.length > 1) {
+          this.scene.getFixtureValueFromId(fixtureList[0].id).fixture.highlightSingle(false, true);
+          this.selectedFixtureValues = fixtureList.map((fixtureData, index) => {
+            const fixtureValue = this.scene.getFixtureValueFromId(fixtureData.id);
+            if (index) {
+              fixtureValue.fixture.highlight(true, true);
+            } else {
+              fixtureValue.fixture.highlightSingle(true, true);
+            }
+            return fixtureValue;
+          });
+        }
+        this.$emit('select', this.selectedFixtureValues);
       }
-      this.$emit('select', this.selectedFixtureValues);
     },
   },
 };

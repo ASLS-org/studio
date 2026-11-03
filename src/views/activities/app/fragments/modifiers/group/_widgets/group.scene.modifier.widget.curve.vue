@@ -212,7 +212,7 @@ export default {
     /**
      * Terminate control point dragging procedure.
      *
-       * @public
+     * @public
      */
     stopDragCp() {
       window.removeEventListener('mousemove', this.dragListener);
@@ -220,7 +220,7 @@ export default {
     /**
      * Setup HTML canvas
      *
-       * @public
+     * @public
      */
     prepareCanvas() {
       this.canvas = document.getElementById('curveModifier');
@@ -230,7 +230,7 @@ export default {
     /**
      * Update canvas curve
      *
-       * @public
+     * @public
      */
     update() {
       this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
