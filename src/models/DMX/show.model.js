@@ -5,9 +5,6 @@ import {
 import {
   parseStringPromise as XMLParse,
 } from 'xml2js';
-import {
-  ProxifySingleton,
-} from '../utils/proxify.utils';
 
 import Master from './master.model';
 import GroupPool from './group.pool.model';
@@ -43,6 +40,7 @@ class Show extends EventEmitter {
     super();
     this.name = '';
     this.isSaved = true;
+    this._savedSnapshot = null;
     this.rawOFLFixtures = [];
     this.fixturePool = new FixturePool();
     this.universePool = new UniversePool();
@@ -60,10 +58,6 @@ class Show extends EventEmitter {
     this.ready = false;
     this.artnetServerUrl = import.meta.env.VITE_APP_DMX2WS_SERVER_URL;
     this.visualizerHandle = null;
-    ProxifySingleton.on('changed', () => {
-      this.isSaved = false;
-      this.emit('saveState', this.isSaved);
-    });
     this.universePool.addRaw();
     this.preloadFixtureList();
   }
@@ -162,22 +156,6 @@ class Show extends EventEmitter {
   }
 
   /**
-   * @method undo
-   * forward undo instruction to prify instance
-   */
-  static undo() {
-    ProxifySingleton.undo();
-  }
-
-  /**
-   * @method redo
-   * forward redo instruction to prify instance
-   */
-  static redo() {
-    ProxifySingleton.redo();
-  }
-
-  /**
    * @method tapTempo
    * Forwards tap tempo request to live singleton
    */
@@ -192,9 +170,27 @@ class Show extends EventEmitter {
    * @public
    */
   persistLocally() {
-    localStorage.setItem(LOCALSTORAGE_SHOWFILE_KEY, JSON.stringify(this.showData));
+    const snapshot = this.genShowFile();
+    localStorage.setItem(LOCALSTORAGE_SHOWFILE_KEY, snapshot);
+    this._savedSnapshot = snapshot;
     this.isSaved = true;
     this.emit('saveState', this.isSaved);
+  }
+
+  /**
+   * Compares the current show data with the last saved version and emits
+   * `saveState` when the saved state changes. Playback never alters show data,
+   * so it never marks the show unsaved.
+   *
+   * @public
+   */
+  refreshSaveState() {
+    if (!this.ready || this._savedSnapshot === null) return;
+    const isSaved = this.genShowFile() === this._savedSnapshot;
+    if (isSaved !== this.isSaved) {
+      this.isSaved = isSaved;
+      this.emit('saveState', this.isSaved);
+    }
   }
 
   /**
@@ -352,6 +348,7 @@ class Show extends EventEmitter {
     const showData = await Show._parseShowData(data, extension);
     await this.loadFromData(showData);
     this.name = filename;
+    this.persistLocally();
   }
 
   /**

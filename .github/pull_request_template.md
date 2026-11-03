@@ -20,7 +20,7 @@ Closes #
 ## Impact
 
 - Showfile format: none / backward compatible / **breaking** (explain)
-- Undo/redo, live timing, WSC output, visualizer: none / describe
+- Unsaved marker, live timing, WSC output, visualizer: none / describe
 
 ## Checklist
 

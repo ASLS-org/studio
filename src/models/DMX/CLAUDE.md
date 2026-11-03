@@ -6,11 +6,11 @@ Use skill `dmx-model-change` for any change here. This file is the map.
 
 ```
 Show (show.model.js, singleton via singletons/show.singleton.js)
-├─ fixturePool  FixturePool → Fixture (Proxify) → Channel → Capability (capabilityManager)
+├─ fixturePool  FixturePool → Fixture → Channel → Capability (capabilityManager)
 ├─ universePool UniversePool → Universe        (patch map, 512-byte _dmxBuffer, .stream)
 ├─ groupPool    GroupPool → Group
 │                ├─ fixturePool (shared Fixture refs, via addExisting)
-│                ├─ cuePool  CuePool → Cue (Proxify) → Scene | Effect
+│                ├─ cuePool  CuePool → Cue → Scene | Effect
 │                │            Scene: per-fixture channel values + Fade (Bézier in/out)
 │                │            Effect: EffectPreset waves (sine/triangle/square), phase, spread
 │                └─ chasePool ChasePool → Chase → CueItemPool → CueItem (bar-grid timeline)
@@ -27,9 +27,11 @@ Enums live next to their model and are exported: `CUE_TYPES`, `CUE_STATES`,
 - **Serialization:** every persisted model exposes `get showData()`. `Show.showData` aggregates
   them; `Show.loadFromData()` rebuilds in this order: fixtures → universes (patch) → groups
   (fixtures, cues, chases) → outputs. References are serialized as ids and resolved through pools.
-- **Undo:** classes that extend `Proxify` call `return this.proxify([...except])` at the end of the
-  constructor. `except` lists keys that must not be tracked (handles, caches, runtime state).
-  Undo entries are batched per mouse-down/up (`ProxifySingleton.regenHash`).
+- **No undo:** models are plain classes; undo/redo is removed until change `add-undo-redo`.
+  The unsaved `*` compares `Show.showData` with the last save (`Show.refreshSaveState()`), so keep
+  playback/runtime state out of `showData`.
+- **Reactivity:** `$show` is deeply reactive. Wrap render objects stored on models (3D instances)
+  in `markRaw` where they are created.
 - **Live:** `Live.add(updateFn, quantize = 0, fps = 60, onReady)` returns an id. With `quantize`
   the callback starts on the next quantized bar boundary. Always pair it with `Live.remove(id)`.
   Time units: `Live.beatDuration` / `Live.barDuration` in ms, derived from BPM.

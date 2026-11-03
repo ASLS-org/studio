@@ -2,7 +2,6 @@ import Group from './group.model';
 
 /**
  * @class GroupPool
- * @extends {Proxify}
  * @classdesc Pool of group instances
  * @see Group
  */

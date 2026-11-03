@@ -26,8 +26,9 @@ context: |
   Architecture invariants every change must respect:
   1. Save/load round-trip: persisted state goes through model `showData` getters and
      Show.loadFromData/prepare*; older showfiles must keep loading (default missing keys).
-  2. Undo/redo through Proxify: user edits assign through proxies; arrays use
-     pushAndStackUndo/spliceAndStackUndo.
+  2. No undo/redo for now (removed; a fresh one comes with change add-undo-redo). The unsaved
+     marker compares showData with the last save, so playback state never goes in showData.
+     Render objects reachable from the reactive show are markRaw.
   3. Live.add is always paired with Live.remove; durations are in bars, derived from BPM.
   4. 60 fps budget shared by the engine and the visualizer; no allocations in per-tick code.
   5. The browser build must keep working without Electron.
@@ -46,7 +47,7 @@ rules:
   proposal:
     - Keep it under 400 words. State the user problem first, then the change.
     - Always include an "Out of scope" list.
-    - "State the impact on: showfile format (and older-file compatibility), undo/redo, live
+    - "State the impact on: showfile format (and older-file compatibility), unsaved marker, live
       playback/timing, WSC output, visualizer, web vs Electron. Write 'none' where it doesn't apply."
     - State whether the user manual needs updating and which pages.
   specs:

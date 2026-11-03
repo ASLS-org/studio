@@ -64,6 +64,19 @@ import NewshowPopup from './_popups/popup.newshow.vue';
 import SaveasPopup from './_popups/popup.saveas.vue';
 import ConnectionsPopup from './_popups/popup.connections.vue';
 
+/**
+ * Window events that end an edit gesture and trigger a save state check
+ *
+ * @constant {Array<String>} SAVE_STATE_EVENTS
+ */
+const SAVE_STATE_EVENTS = ['pointerup', 'keyup', 'change'];
+/**
+ * Delay in milliseconds before the save state is checked after an edit gesture
+ *
+ * @constant {Number} SAVE_STATE_REFRESH_DELAY
+ */
+const SAVE_STATE_REFRESH_DELAY = 250;
+
 export default {
   name: 'ToolbarFragment',
   compatConfig: {
@@ -168,28 +181,6 @@ export default {
           ],
         },
         {
-          name: 'Edit',
-          selected: false,
-          items: [
-            {
-              name: 'Undo',
-              shortcut: 'Ctrl+Z',
-              icon: 'undo',
-              callback: () => {
-                this.$show.undo();
-              },
-            },
-            {
-              name: 'Redo',
-              shortcut: 'Ctrl+Y',
-              icon: 'redo',
-              callback: () => {
-                this.$show.redo();
-              },
-            },
-          ],
-        },
-        {
           name: 'Preferences',
           selected: false,
           items: [
@@ -283,8 +274,29 @@ export default {
       window.removeEventListener('keydown', this.handleKeydownEvent);
       window.addEventListener('keydown', this.handleKeydownEvent);
     });
+    this.saveStateTimer = null;
+    SAVE_STATE_EVENTS.forEach((event) => {
+      window.addEventListener(event, this.scheduleSaveStateRefresh, true);
+    });
+  },
+  beforeUnmount() {
+    clearTimeout(this.saveStateTimer);
+    SAVE_STATE_EVENTS.forEach((event) => {
+      window.removeEventListener(event, this.scheduleSaveStateRefresh, true);
+    });
   },
   methods: {
+    /**
+     * Re-checks the show's saved state once an edit gesture has settled
+     *
+     * @public
+     */
+    scheduleSaveStateRefresh() {
+      clearTimeout(this.saveStateTimer);
+      this.saveStateTimer = setTimeout(() => {
+        this.$show.refreshSaveState();
+      }, SAVE_STATE_REFRESH_DELAY);
+    },
     /**
      * Toggle between show's play & pause states
      */

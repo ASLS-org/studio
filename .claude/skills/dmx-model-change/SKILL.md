@@ -1,6 +1,6 @@
 ---
 name: dmx-model-change
-description: Checklist for adding or changing anything in the DMX show engine (src/models/DMX, proxify, Live). Use for new model properties, new cue/effect/chase behaviour, new pools, or any change to what a showfile stores. It keeps save/load, undo/redo, Live animations and older showfiles working.
+description: Checklist for adding or changing anything in the DMX show engine (src/models/DMX, Live). Use for new model properties, new cue/effect/chase behaviour, new pools, or any change to what a showfile stores. It keeps save/load, the unsaved marker, Live animations and older showfiles working.
 ---
 
 # Changing the DMX engine
@@ -10,8 +10,8 @@ Read `src/models/DMX/CLAUDE.md` first for the object graph.
 ## 1. Locate the change
 
 - Find the owning model and every caller: `grep -rn "<prop or method>" src`.
-- Check whether the value is **persisted** (belongs in the showfile), **undoable** (user edit), or
-  **runtime-only** (playback state, handles, caches). Each kind gets different handling below.
+- Check whether the value is **persisted** (belongs in the showfile) or **runtime-only** (playback
+  state, handles, caches). Each kind gets different handling below.
 
 ## 2. Add or change a property
 
@@ -46,12 +46,13 @@ get fadeOut() {
 - [ ] If the field is useful in the demo, add it to `public/demo/showfiles/demo.showfile.json`.
 - [ ] Never rename or remove an existing showfile key without a fallback read of the old key.
 
-## 4. Undoable?
+## 4. Runtime-only?
 
-- [ ] If the class extends `Proxify`, a plain assignment through the instance is tracked.
-- [ ] Runtime-only keys (animation ids, handles, timers, caches) go into the `proxify([...])`
-      except list. Otherwise undo replays them.
-- [ ] Array edits from user actions use `arr.pushAndStackUndo(x)` / `arr.spliceAndStackUndo(i, n)`.
+- [ ] Keep it out of `get showData()`. The unsaved `*` compares `showData` with the last save, so a
+      playback value there would mark the show unsaved while it plays.
+- [ ] Render objects (3D instances, Three.js handles) stored on a model are wrapped in `markRaw`
+      where they are created, so Vue doesn't proxy them through `$show`.
+- [ ] There is no undo/redo to register with (removed until change `add-undo-redo`).
 
 ## 5. Time-based behaviour
 
@@ -70,7 +71,7 @@ cues → universe patch → pool. Stop its `Live` animations and WSC streams fir
 
 - [ ] JSDoc on every new class, method and accessor (docma builds `src/models/**`).
 - [ ] `npx eslint <touched files>` is clean.
-- [ ] Verify with skill `run-studio`: edit → save → reload page → value restored; undo restores
-      the previous value; playback starts and stops cleanly.
+- [ ] Verify with skill `run-studio`: edit → `*` appears → save → `*` clears → reload page → value
+      restored; playback starts and stops cleanly without setting `*`.
 - [ ] If users see the change: skill `user-manual`. If the architecture changed: skill
       `ai-context-maintenance`.

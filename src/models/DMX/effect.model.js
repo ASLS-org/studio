@@ -1,7 +1,4 @@
 import UkColors from '@/views/components/uikit/colors/uikit.colors';
-import {
-  Proxify,
-} from '../utils/proxify.utils';
 import Cue, { CUE_LOOP_STYLES } from './cue.model';
 
 let fxFixtureId = 0;
@@ -239,7 +236,7 @@ const FXPresets = [{
  * @class FXFixture
  * @classdesc Effect fixture instance
  */
-class FXFixture extends Proxify {
+class FXFixture {
   /**
    * Creates an instance of FXFixture.
    *
@@ -260,14 +257,12 @@ class FXFixture extends Proxify {
     },
     fxChannelHandle,
   ) {
-    super();
     this.handle = fixture;
     this.channelHandle = fxChannelHandle;
     this.phase = fixturePreset.phase;
     this.active = fixturePreset.active;
     this.value = 0;
     this.id = fxFixtureId++;
-    return this.proxify();
   }
 
   /**
@@ -305,7 +300,7 @@ class FXFixture extends Proxify {
  * @class FXChannel
  * @classdesc Effect channel instance
  */
-class FXChannel extends Proxify {
+class FXChannel {
   /**
    * Creates an instance of FXChannel.
    *
@@ -323,7 +318,6 @@ class FXChannel extends Proxify {
    * @param {Array} fixtures Array of fixture instances
    */
   constructor(channel, fixtures, duration) {
-    super();
     this.type = channel.type;
     this.fixtures = fixtures;
     this.direction = channel.direction;
@@ -343,7 +337,6 @@ class FXChannel extends Proxify {
     this._isColorChannel = COLOR_CHANNELS.includes(this.type);
     this.update(0);
     this.DMXData = 0;
-    return this.proxify(['time', 'DMXData']);
   }
 
   /**
@@ -721,7 +714,7 @@ class FXChannel extends Proxify {
       null,
       this,
     );
-    this.fixtures.push(fxFixture); // TODO: replace with ..AndStackUndo once patched
+    this.fixtures.push(fxFixture);
     this.computeFixturesPhasing();
   }
 
@@ -748,7 +741,7 @@ class FXChannel extends Proxify {
   deleteFixture(fixture) {
     const index = this.fixtures.findIndex((f) => f.handle.id === fixture.id);
     if (index > -1) {
-      this.fixtures.splice(index, 1); // TODO: replace with ..AndStackUndo once patched
+      this.fixtures.splice(index, 1);
     }
     this.computeFixturesPhasing();
   }
@@ -910,10 +903,8 @@ class FX extends Cue {
     this.loopStyle = data.loopStyle != null ? data.loopStyle : CUE_LOOP_STYLES.LOOP;
     this.type = CUE_TYPE_EFFECT;
     this._channels = [];
-    this.proxify();
     this.fixtures = data.fixtures;
     this.channels = data.channels;
-    return this.proxify();
   }
 
   /**
@@ -1010,7 +1001,7 @@ class FX extends Cue {
    */
   addFixture(fixture) {
     if (!this.fixtures.find((fxFixture) => fxFixture.id === fixture.id)) {
-      this.fixtures.push(fixture); // TODO: replace with ..AndStackUndo once patched
+      this.fixtures.push(fixture);
       this.channels.forEach((channel) => {
         channel.addFixture(fixture);
       });
@@ -1028,7 +1019,7 @@ class FX extends Cue {
   deleteFixture(fixture) {
     const index = this.fixtures.findIndex((f) => f.id === fixture.id);
     if (index > -1) {
-      this.fixtures.splice(index, 1); // TODO: replace with ..AndStackUndo once patched
+      this.fixtures.splice(index, 1);
     }
     this.channels.forEach((channel) => {
       channel.deleteFixture(fixture);
@@ -1044,7 +1035,6 @@ class FX extends Cue {
    * @param {Number} finalIndex Position index of the slot to be moved at
    */
   changeFixtureOrder(originalIndex, finalIndex) {
-    // TODO: replace with ..AndStackUndo once patched
     this.fixtures.splice(finalIndex, 0, this.fixtures.splice(originalIndex, 1)[0]);
     this.channels.forEach((channel) => {
       channel.changeFixtureOrder(originalIndex, finalIndex);
@@ -1059,7 +1049,6 @@ class FX extends Cue {
    */
   addChannel(channel) {
     if (!this.channels.find((fxChannel) => fxChannel.type === channel.type)) {
-      // TODO: replace with ..AndStackUndo once patched
       const fxChannel = new FXChannel(channel, this.fixtures, this.duration);
       this.channels.push(fxChannel);
     } else {
@@ -1076,7 +1065,7 @@ class FX extends Cue {
   deleteChannel(channel) {
     const channelIndex = this.channels.findIndex((item) => item.type === channel.type);
     if (channelIndex > -1) {
-      this.channels.splice(channelIndex, 1); // TODO: replace with ..AndStackUndo once patched
+      this.channels.splice(channelIndex, 1);
     }
   }
 
@@ -1125,7 +1114,6 @@ class FX extends Cue {
       const channelData = preset.channels[channelName];
       const existing = this.channels.find((fxChannel) => fxChannel.type === channelName);
       if (!existing) {
-        // TODO: replace with ..AndStackUndo once patched
         this.channels.push(new FXChannel(Object.assign(channelData, {
           type: channelName,
         }), this.fixtures, this.duration));

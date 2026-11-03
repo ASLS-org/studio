@@ -1,18 +1,12 @@
-import {
-  Proxify,
-} from '../utils/proxify.utils';
 import Chase from './chase.model';
 
 /**
  * @class ChasePool
- * @extends {Proxify}
  * @classdesc Pool of chase instances
  */
-class ChasePool extends Proxify {
+class ChasePool {
   constructor() {
-    super();
     this.chases = [];
-    return this.proxify();
   }
 
   /**
@@ -48,7 +42,7 @@ class ChasePool extends Proxify {
    * @param {Object} chase chase instance
    */
   addExisting(chase) {
-    this.chases.push(chase); // TODO: replace with pushAndStackUndo once patched
+    this.chases.push(chase);
   }
 
   /**
@@ -62,7 +56,7 @@ class ChasePool extends Proxify {
   addRaw(chaseData) {
     const chase = new Chase(chaseData);
     chase.id = chaseData.id !== undefined ? chaseData.id : this.genChaseId();
-    this.chases.push(chase); // TODO: replace with ..AndStackUndo once patched
+    this.chases.push(chase);
     return chase;
   }
 
@@ -75,7 +69,7 @@ class ChasePool extends Proxify {
   delete(chase) {
     const chaseIndex = this.chases.findIndex((item) => item.id === chase.id);
     if (chaseIndex > -1) {
-      this.chases.splice(chaseIndex, 1); // TODO: replace with ..AndStackUndo once patched
+      this.chases.splice(chaseIndex, 1);
       Chase.deleteInstance(chase);
     } else {
       throw new Error('Could not find chase in chase pool');

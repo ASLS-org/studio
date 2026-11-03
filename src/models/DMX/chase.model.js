@@ -1,7 +1,4 @@
 import ukColors from '@/views/components/uikit/colors/uikit.colors';
-import {
-  Proxify,
-} from '../utils/proxify.utils';
 import Live from './live.model';
 import CueItemPool from './cue.item.pool.model';
 import Cue from './cue.model';
@@ -44,10 +41,9 @@ const DEFAULT_CHASE_DATA = {
 
 /**
  * @class Chase
- * @extends {Proxify}
  * @classdesc Chases are collections of cues to be triggered over time
  */
-class Chase extends Proxify {
+class Chase {
   /**
    * Creates an instance of Chase.
    * @param {Object} [data={}] chase configuration object
@@ -60,7 +56,6 @@ class Chase extends Proxify {
    * @param {Object} data.cues the chase's cue list
    */
   constructor(data = {}) {
-    super();
     this.id = data.id;
     this.quantize = 4;
     this.onEnd = () => {};
@@ -73,10 +68,8 @@ class Chase extends Proxify {
     this._cues = [];
     this.state = CHASE_STATES.STOPPED;
     // this.actualDuration = 0;
-    this.proxify(['elapsed', 'animationId', 'deltaStart']);
     this.cues = data.cues;
     this.deltaStart = null;
-    return this.proxify(['elapsed', 'animationId', 'deltaStart']);
   }
 
   /**
@@ -307,7 +300,7 @@ class Chase extends Proxify {
     let cueItemPool = this.cues.find((pool) => pool.cue.id === data.cue.id);
     if (!cueItemPool) {
       cueItemPool = new CueItemPool(data);
-      this.cues.push(cueItemPool); // TODO: replace with pushAndStackUndo once patched
+      this.cues.push(cueItemPool);
     }
   }
 
@@ -322,7 +315,7 @@ class Chase extends Proxify {
       (cueItemPool) => cueItemPool.cue.id === cueItemData.id,
     );
     this.cues[cueItemPoolIndex].clearAll();
-    this.cues.splice(cueItemPoolIndex, 1); // TODO: replace with ..AndStackUndo once patched
+    this.cues.splice(cueItemPoolIndex, 1);
   }
 
   /**

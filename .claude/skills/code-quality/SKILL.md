@@ -60,7 +60,7 @@ description: ASLS Studio coding style, linting and cleanliness rules covering ES
 ## Review checklist
 
 - [ ] Lint clean on touched files.
-- [ ] Save/load, undo and Live invariants hold (see root `CLAUDE.md` § Rules).
+- [ ] Save/load, save-state and Live invariants hold (see root `CLAUDE.md` § Rules).
 - [ ] No new globals, console calls, disabled rules or commented-out code.
 - [ ] JSDoc present and accurate.
 - [ ] The change is the smallest one that solves the problem.

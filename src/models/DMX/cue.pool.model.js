@@ -1,4 +1,3 @@
-import { Proxify } from '../utils/proxify.utils';
 import Effect from './effect.model';
 import Scene from './scene.model';
 
@@ -15,14 +14,11 @@ const CUE_TYPES = {
 
 /**
  * @class CuePool
- * @extends {Proxify}
  * @classdesc Pool of cue instances
  */
-class CuePool extends Proxify {
+class CuePool {
   constructor() {
-    super();
     this.cues = [];
-    return this.proxify();
   }
 
   /**
@@ -58,7 +54,7 @@ class CuePool extends Proxify {
    * @param {Object} cue cue instance
    */
   addExisting(cue) {
-    this.cues.push(cue); // TODO: replace with ..AndStackUndo once patched
+    this.cues.push(cue);
   }
 
   /**
@@ -82,7 +78,7 @@ class CuePool extends Proxify {
         throw new Error('Unsupported cue type provided.');
     }
     cue.id = cueData.id !== undefined ? cueData.id : this.genCueId();
-    this.cues.push(cue); // TODO: replace with ..AndStackUndo once patched
+    this.cues.push(cue);
     return cue;
   }
 
@@ -95,7 +91,7 @@ class CuePool extends Proxify {
   delete(cue) {
     const cueIndex = this.cues.findIndex((item) => item.id === cue.id);
     if (cueIndex > -1) {
-      this.cues.splice(cueIndex, 1); // TODO: replace with ..AndStackUndo once patched
+      this.cues.splice(cueIndex, 1);
     } else {
       throw new Error('Could not find cue in cue pool');
     }

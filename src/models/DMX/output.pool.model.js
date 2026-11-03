@@ -2,7 +2,6 @@ import WscConnection from '@/plugins/wsc.connection';
 
 /**
  * @class OutputPool
- * @extends {Proxify}
  * @classdesc Pool of output instances
  */
 class OutputPool {
