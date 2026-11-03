@@ -216,6 +216,33 @@ class Universe {
   }
 
   /**
+   * Switches a patched fixture to another mode and moves its address range to the new mode's
+   * channel count. Refuses the change when the new range would overlap another fixture or pass
+   * the end of the universe.
+   *
+   * @public
+   * @param {Object} fixture Fixture instance (or reactive proxy) patched in this universe
+   * @param {Number} modeIndex Index of the new mode in the fixture's modes
+   */
+  changeFixtureMode(fixture, modeIndex) {
+    const chCount = fixture.modes[modeIndex].channels.length;
+    const chStop = fixture.chStart + chCount;
+    const overlaps = Object.values(this._patch).some((patched) => (
+      patched.id !== fixture.id && chStop > patched.chStart && fixture.chStart < patched.chStop
+    ));
+    if (overlaps || chStop > DMX_UNIVERSE_LENGTH) {
+      throw new Error(`Mode "${fixture.modeNames[modeIndex]}" needs ${chCount} channels and would overlap another fixture or exceed the universe`);
+    }
+    for (let i = fixture.chStart; i < fixture.chStop; i++) {
+      this._addressMap[i] = undefined;
+    }
+    fixture.modeIndex = modeIndex;
+    for (let i = fixture.chStart; i < fixture.chStop; i++) {
+      this._addressMap[i] = fixture.chStart;
+    }
+  }
+
+  /**
    * Check whether or not a configuration is patchable
    *
    * @public

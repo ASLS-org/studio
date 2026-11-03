@@ -12,6 +12,8 @@ import UniversePool from './universe.pool.model';
 import FixturePool from './fixture.pool.model';
 import Live from './live.model';
 import OutputPool from './output.pool.model';
+import FixtureLibrary from '../fixtures/fixture.library';
+import { PROFILE_SOURCES } from '../fixtures/fixture.profile';
 
 const LOCALSTORAGE_SHOWFILE_KEY = 'ASLS_STUDIO_SHOWFILE';
 const DEFAULT_PROJECT_NAME = 'new_project.asls';
@@ -21,8 +23,6 @@ const SHOWFILE_EXTENSIONS = {
   QLC: 'qxw',
   ASLS: 'json',
 };
-
-const fixtureDataCache = {};
 
 /**
  * Storage for show definitions
@@ -409,13 +409,12 @@ class Show extends EventEmitter {
   async prepareFixtures(showData) {
     for (let i = 0; i < showData.fixtures.length; i++) {
       const fixtureData = showData.fixtures[i];
-      fixtureData.OFLData = JSON.parse(fixtureDataCache[`${fixtureData.manufacturer}/${fixtureData.model}`] || null);
-      if (!fixtureData.OFLData) {
-        const res = await axios.get(`${import.meta.env.VITE_STATIC_URL}fixtures/${fixtureData.manufacturer}/${fixtureData.model}.json`);
-        fixtureData.OFLData = res.data;
-        fixtureDataCache[`${fixtureData.manufacturer}/${fixtureData.model}`] = JSON.stringify(fixtureData.OFLData);
-      }
-      this.fixturePool.addRaw(fixtureData);
+      const profile = await FixtureLibrary.getProfile(
+        fixtureData.source || PROFILE_SOURCES.OFL,
+        fixtureData.manufacturer,
+        fixtureData.model,
+      );
+      this.fixturePool.addRaw({ ...fixtureData, profile });
     }
   }
 
