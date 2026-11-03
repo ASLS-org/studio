@@ -268,7 +268,7 @@ export default {
       const freq = Math.max(Number(this.channel.frequency) || 0, 0.0001);
       // Same scaling as the original implementation — this is what produces
       // visible separation between fixtures across the canvas width.
-      const phaseFraction = ((Number(fixture.phase) || 0) / freq) * (180 / Math.PI) / 360;
+      const phaseFraction = ((((Number(fixture.phase) || 0) / freq) * (180 / Math.PI)) / 360);
       let t = (this.channel.time || 0) + phaseFraction;
       t -= Math.floor(t); // wrap into [0, 1) safely for negative values
 

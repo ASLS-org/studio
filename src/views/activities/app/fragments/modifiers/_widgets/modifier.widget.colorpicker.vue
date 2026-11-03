@@ -53,7 +53,7 @@
             ref="lightness_preview"
             class="lightness_preview"
             :style="{
-              background: `rgb(${modes[1].channels[0].val},${modes[1].channels[1].val},${modes[1].channels[2].val})`,
+              background: `rgb(${modes[1].channels.map((c) => c.val).slice(0, 3).join(',')})`,
             }"
           >
             <div class="lightness_preview_arrow" />
@@ -618,7 +618,7 @@ export default {
       if (!(e.key in dirs)) return;
       e.preventDefault();
       const step = (e.shiftKey ? 10 : 1) * dirs[e.key];
-      const hue = ((this.modes[0].channels[0].val + step) % 360 + 360) % 360;
+      const hue = ((((this.modes[0].channels[0].val + step) % 360) + 360) % 360);
       const { r, g, b } = hsvToRgb(
         hue,
         this.modes[0].channels[1].val,
