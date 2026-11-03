@@ -16,10 +16,18 @@ public/fixtures/
   <manufacturer-key>/<fixture-key>.json
 ```
 
-Keys are kebab-case and match the OFL repo. A showfile stores `manufacturer: <manufacturer-key>`
-and `model: <fixture-key>` (no `.json`). The loader fetches
+Keys are kebab-case and match the OFL repo. A showfile stores `manufacturer: <manufacturer-key>`,
+`model: <fixture-key>` (no `.json`), `mode: <mode name>` and `source: 'ofl'`.
+`FixtureLibrary.getProfile()` (`src/models/fixtures/fixture.library.js`) fetches
 `${VITE_STATIC_URL}fixtures/<manufacturer>/<model>.json`, so **renaming a file breaks every
 showfile that uses it**.
+
+The engine never reads OFL JSON directly: `ofl.adapter.js` turns it into a fixture profile
+(modes, channels with a `type` key, a standard `attribute`, fine pairing, precomputed
+capabilities). Channel `type` keys and their order are stored in showfile scenes, so the adapter
+must keep deriving them exactly as before. To check the whole library after touching the
+adapter, compare every fixture's channel `type`, `color`, fine pairing and `qaIndex` with the
+previous build's output.
 
 ## Add a fixture
 
@@ -39,19 +47,21 @@ showfile that uses it**.
   Others throw `This fixture type is not supported yet.` in `Fixture.prepare3DModelInstance()`.
   Supporting a new category is an engine and visualizer feature (OpenSpec change), not a library
   task.
-- **Capabilities.** Supported capability types are the keys of `CAPABILITY_TYPES` in
-  `src/models/DMX/channel.model.js` / `fixture.model.js` and the entities in
-  `capabilityManager.model.js`. Unknown types load but do nothing in the visualizer. Check with:
+- **Modes.** A fixture with no `modes` is rejected by the library ("defines no modes").
+- **Capabilities.** Channel type keys come from the rules in `src/models/fixtures/ofl.adapter.js`;
+  value handling comes from `CAPABILITY_TYPES` in `capabilityManager.model.js` and the cases in
+  `Fixture.setChannel()`. Unknown types load but do nothing in the visualizer. Check with:
   `node -e "const f=require('./public/fixtures/<m>/<f>.json');console.log([...new Set(Object.values(f.availableChannels).flatMap(c=>c.capabilities||[c.capability]).map(c=>c.type))])"`
 - **Physical.** `physical.lens.degreesMinMax` sets the beam angle (defaults 10–25°), and
   `physical.bulb.colorTemperature` the default white. Colour and gobo wheels are read from
   `wheels` ("Color Wheel" is rendered; gobos aren't yet).
-- **Fine channels.** They are detected by the `" fine"` suffix in mode channel names. Keep OFL
-  naming.
+- **Fine channels.** They are detected by the `" fine"` suffix in mode channel names and paired
+  through `fineChannelAliases`. Keep OFL naming. A coarse channel takes the integer part of a
+  value and its fine channel the fraction (16-bit).
 
 ## Don't
 
-- Don't hand-edit vendored OFL files to "fix" Studio bugs. Fix the parser instead.
+- Don't hand-edit vendored OFL files to "fix" Studio bugs. Fix the adapter instead.
 - Don't bulk-reformat the library. Diffs must stay reviewable (`refactor(fixtures)` only when
   asked).
 - Commit scope is `fixtures`: `feat(fixtures): add <manufacturer> <model>`.
