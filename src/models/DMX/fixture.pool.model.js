@@ -85,16 +85,21 @@ class FixturePool extends Proxify {
   }
 
   /**
-   * Creates a new fixture instance from provided configuraion data and pushes it to the pool
+   * Creates a new fixture instance from provided configuraion data and pushes it to the pool.
+   * Keeps the provided id when it is free (showfile load), so universes and groups that
+   * reference it resolve to the same fixture. Generates one otherwise.
    *
    * @public
-   * @param {Object} chaseData fixture configuration object
+   * @param {Object} fixtureData fixture configuration object
    * @return {Object} Fixture instance
    * @see Fixture
    */
   addRaw(fixtureData) {
     const fixture = new Fixture(fixtureData);
-    fixture.id = this.genFixtureId();
+    const savedId = parseInt(fixtureData.id, 10);
+    fixture.id = Number.isInteger(savedId) && !this.checkIfExists(savedId)
+      ? savedId
+      : this.genFixtureId();
     this.fixtures.push(fixture); // TODO: replace with ..AndStackUndo once patched
     return fixture;
   }
@@ -134,20 +139,13 @@ class FixturePool extends Proxify {
   }
 
   /**
-   * Generates fixture unique ID
+   * Generates fixture unique ID, one above the highest id in the pool
    *
    * @public
    * @returns {Number} The fixture's unique ID
    */
   genFixtureId() {
-    return this.fixtures.reduce(
-      (prev, current) => (
-        (prev && prev.id > current.id)
-          ? prev.id
-          : current.id
-      ),
-      -1,
-    ) + 1;
+    return this.fixtures.reduce((maxId, fixture) => Math.max(maxId, fixture.id), -1) + 1;
   }
 }
 
