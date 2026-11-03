@@ -413,15 +413,6 @@ class Scene extends Cue {
     });
 
     this.duration = sceneData.duration;
-
-    return this.proxify([
-      'time',
-      'deltaStart',
-      'animationId',
-      'state',
-      '_state',
-      'DMXActivity',
-    ]);
   }
 
   /**

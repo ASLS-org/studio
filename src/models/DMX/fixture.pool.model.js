@@ -1,19 +1,15 @@
-import { Proxify } from '../utils/proxify.utils';
 import Fixture from './fixture.model';
 
 /**
  * @class FixturePool
- * @extends {Proxify}
  * @classdesc Pool of fixture instances
  * @todo It really feels like there could be a parent pool class
  * as many of the pools mostly implement the same functionalities.
  */
-class FixturePool extends Proxify {
+class FixturePool {
   constructor() {
-    super();
     this.fixtures = [];
     this.selected = null;
-    return this.proxify();
   }
 
   /**
@@ -81,7 +77,7 @@ class FixturePool extends Proxify {
    * @param {Object} fixture fixture instance
    */
   addExisting(fixture) {
-    this.fixtures.push(fixture); // TODO: replace with ..AndStackUndo once patched
+    this.fixtures.push(fixture);
   }
 
   /**
@@ -95,7 +91,7 @@ class FixturePool extends Proxify {
   addRaw(fixtureData) {
     const fixture = new Fixture(fixtureData);
     fixture.id = this.genFixtureId();
-    this.fixtures.push(fixture); // TODO: replace with ..AndStackUndo once patched
+    this.fixtures.push(fixture);
     return fixture;
   }
 
@@ -113,7 +109,7 @@ class FixturePool extends Proxify {
     const index = this.fixtures.findIndex((item) => item.id === fixture.id);
     if (index > -1) {
       this.fixtures[index].highlight(false, true);
-      this.fixtures.splice(index, 1); // TODO: replace with ..AndStackUndo once patched
+      this.fixtures.splice(index, 1);
       if (destroy) {
         Fixture.deleteInstance(fixture);
       }

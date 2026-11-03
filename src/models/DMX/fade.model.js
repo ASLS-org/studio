@@ -1,6 +1,3 @@
-import {
-  Proxify,
-} from '../utils/proxify.utils';
 import Live from './live.model';
 
 /**
@@ -95,10 +92,9 @@ function cloneControlPoints(points) {
 
 /**
  * @class Fade
- * @extends {Proxify}
  * @classdesc Fades are used in order to fade in or out cues.
  */
-class Fade extends Proxify {
+class Fade {
   /**
    * Creates an instance of Fade.
    *
@@ -108,7 +104,6 @@ class Fade extends Proxify {
    * @param {Number} data.type fade preset type
    */
   constructor(data = {}) {
-    super();
     this.duration = data.duration || 1000;
     this.controlPoints = data.controlPoints;
     this.type = data.type;
@@ -118,7 +113,6 @@ class Fade extends Proxify {
     this.t = 0;
     this.x = 0;
     this.y = 0;
-    return this.proxify(['t', 'x', 'y', 'value']);
   }
 
   /**

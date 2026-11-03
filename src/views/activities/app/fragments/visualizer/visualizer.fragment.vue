@@ -67,6 +67,7 @@
 </template>
 
 <script>
+import { markRaw } from 'vue';
 import Visualizer from '@/plugins/visualizer/visualizer';
 import EventBus from '@/plugins/eventbus';
 
@@ -128,7 +129,7 @@ export default {
   },
 
   async mounted() {
-    this.$show.visualizerHandle = new Visualizer(this.$refs.visualizer);
+    this.$show.visualizerHandle = markRaw(new Visualizer(this.$refs.visualizer));
     await this.$show.visualizerHandle.init();
     new ResizeObserver(
       this.$show.visualizerHandle.resize.bind(this.$show.visualizerHandle),

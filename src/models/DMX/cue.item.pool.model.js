@@ -1,12 +1,10 @@
-import { Proxify } from '../utils/proxify.utils';
 import CueItem from './cue.item.model';
 
 /**
  * @class CueItemPool
- * @extends {Proxify}
  * @classdesc Pool of cueItem instances
  */
-class CueItemPool extends Proxify {
+class CueItemPool {
   /**
    * Creates an instance of CueItemPool.
    *
@@ -14,10 +12,8 @@ class CueItemPool extends Proxify {
    * @param {Obejct} data.cue Handle to reference cue instance
    */
   constructor(data) {
-    super();
     this.cue = data.cue;
     this._items = [];
-    this.proxify();
     this.items = data.items || [];
     return this;
   }
@@ -98,7 +94,7 @@ class CueItemPool extends Proxify {
    * @param {Object} cueItem cueItem instance
    */
   addExisting(cueItem) {
-    this.items.push(cueItem); // TODO: replace with ..AndStackUndo once patched
+    this.items.push(cueItem);
     this.duration = Math.max(this.duration, cueItem.tickDuration + cueItem.tick);
   }
 
@@ -113,7 +109,7 @@ class CueItemPool extends Proxify {
   addRaw(cueItemData) {
     const cueItem = new CueItem(Object.assign(cueItemData, { cue: this.cue }));
     cueItem.id = cueItemData.id !== undefined ? cueItemData.id : this.genCueItemId();
-    this._items.push(cueItem); // TODO: replace with ..AndStackUndo once patched
+    this._items.push(cueItem);
     this._items.sort((a, b) => a.tick - b.tick);
     return cueItem;
   }
@@ -127,7 +123,7 @@ class CueItemPool extends Proxify {
   delete(cueItem) {
     const cueItemIndex = this.items.findIndex((item) => item.id === cueItem.id);
     if (cueItemIndex > -1) {
-      this.items.splice(cueItemIndex, 1); // TODO: replace with ..AndStackUndo once patched
+      this.items.splice(cueItemIndex, 1);
     } else {
       throw new Error('Could not find cueItem in cueItem pool');
     }
