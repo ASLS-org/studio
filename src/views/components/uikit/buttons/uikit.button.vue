@@ -147,7 +147,7 @@ export default {
 }
 .uikit_button.disabled {
   background: var(--secondary-darker)!important;
-  cursor: unset!important;
+  cursor: not-allowed!important;
 }
 .disabled h4{
   color: var(--secondary-light)!important;

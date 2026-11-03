@@ -150,6 +150,6 @@ export default {
   background: var(--secondary-dark);
 }
 .disabled .uikit_checkbox_tickbox {
-  cursor: unset !important;
+  cursor: not-allowed !important;
 }
 </style>

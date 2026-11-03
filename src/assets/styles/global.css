@@ -64,7 +64,6 @@
   --secondary-darker: #0000001D;
 }
 
-
 /** App's main containers initialisation **/
 * {
   user-select: none;
@@ -214,6 +213,35 @@ button {
 
 .label.disabled {
   color: var(--secondary-light);
+}
+
+input:disabled, *.disabled{
+  cursor: not-allowed!important;
+}
+
+.text_autoscroll{
+  text-overflow: unset!important;
+  overflow: visible!important;
+}
+
+.text_autoscroll:hover {
+  animation: scroll-text 3s linear forwards;
+}
+
+
+[data-tooltip]:hover::after {
+  opacity: 1;
+  transform: translateY(0);
+  transition-duration: 300ms;
+}
+
+@keyframes scroll-text {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
 }
 
 /** Global Scrollbar styling */

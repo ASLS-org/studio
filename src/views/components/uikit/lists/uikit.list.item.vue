@@ -2,13 +2,13 @@
   <div
     class="uikit_list_item"
     :class="{
-      highlighted: highlighted && !noHighlight,
-      selected: selected,
-      unfold: value.unfold,
-      unfolded: unfolded && value.unfold.length,
+      highlighted: item.highlighted && !noHighlight,
+      selected: item.selected,
+      unfold: item.value.unfold,
+      unfolded: item.unfolded && item.value.unfold?.length,
       deletable: deletable,
       focused: focused,
-      disabled: value.disabled || disabled,
+      disabled: item.value.disabled || disabled,
       empty: empty,
       tall: tall,
       noSelect: noSelect,
@@ -17,43 +17,43 @@
   >
     <uk-checkbox
       v-if="toggleable"
-      v-model="toggled"
-      :disabled="value.disabled"
+      v-model="item.toggled"
+      :disabled="item.value.disabled"
     />
     <span
-      v-if="!value.icon && colored && value.color"
+      v-if="!item.value.icon && colored && item.value.color"
       class="uikit_list_item_colored_dot"
       :style="{
-        backgroundColor: unfolded ? value.color : 'transparent',
-        borderColor: value.color
+        backgroundColor: item.unfolded ? item.value.color : 'transparent',
+        borderColor: item.value.color
       }"
     />
     <uk-icon
-      v-if="value.icon"
+      v-if="item.value.icon"
       class="uikit_list_item_icon"
-      :name="value.icon"
+      :name="item.value.icon"
     />
-    <h4>{{ value.name }}</h4>
+    <h4>{{ item.value.name }}</h4>
     <div style="flex: 1" />
     <h4
-      v-if="value.more"
+      v-if="item.value.more"
       class="uikit_list_item_more"
     >
-      {{ value.more }}
+      {{ item.value.more }}
     </h4>
     <uk-button
-      v-if="value.action"
-      :icon="value.action.icon"
-      :label="value.action.label"
-      @click="value.action.callback"
+      v-if="item.value.action"
+      :icon="item.value.action.icon"
+      :label="item.value.action.label"
+      @click="item.value.action.callback"
     />
     <uk-icon
-      v-if="value.unfold && !unfolded"
+      v-if="item.value.unfold && !item.unfolded"
       class="uikit_list_item_icon_small"
       name="arrow_down"
     />
     <uk-icon
-      v-if="value.unfold && unfolded"
+      v-if="item.value.unfold && item.unfolded"
       class="uikit_list_item_icon_small"
       style="opacity: .5"
       name="arrow_up"
@@ -70,95 +70,35 @@
 export default {
   name: 'UkListItem',
   compatConfig: {
-    // or, for full vue 3 compat in this component:
     MODE: 3,
   },
   props: {
     /**
-     * Handle to the list item
+     * Handle to the list item. This is a reactive object owned by the
+     * parent UkList — we read and write its fields directly rather than
+     * mirroring them into local state, so the parent's tree stays the
+     * single source of truth (no sync watcher needed).
      */
     item: {
       type: Object,
       default: null,
     },
-    /**
-     * Whether the list item is toggleable or not (appends checkbox to item)
-     */
     toggleable: Boolean,
-    /**
-     * Whether item highlighting should be disabled orr not
-     */
     noHighlight: Boolean,
-    /**
-     * Whether alternative colored styling should be applied
-     */
     colored: Boolean,
-    /**
-     * Whether the item is deletable
-     */
     deletable: Boolean,
-    /**
-     * Item's focus state
-     */
     focused: Boolean,
-    /**
-     * Whether the item is disabled
-     */
     disabled: Boolean,
-    /**
-     * Whether alternative "tall" styling t=should be applied (40px height)
-     */
     tall: Boolean,
-    /**
-     * Whether item selected styling should be disabled whatsoever
-     */
     noSelect: Boolean,
-    /**
-     * Whether the item is an empty placehoder
-     */
     empty: Boolean,
   },
   emits: ['click'],
-  data() {
-    return {
-      /**
-       * The item's value
-       */
-      value: this.item.value,
-      /**
-       * Whether the item is currently selected or not
-       */
-      selected: this.item.selected,
-      /**
-       * Whether the item is currently highlighted or not
-       */
-      highlighted: this.item.highlighted,
-      /**
-       * Whether the item is currently toggled or not
-       */
-      toggled: this.item.toggled,
-      /**
-       * Whether the item is currently unfolded or not
-       */
-      unfolded: this.item.unfolded,
-    };
-  },
-  watch: {
-    item: {
-      deep: true,
-      handler() {
-        this.value = this.item.value;
-        this.selected = this.item.selected;
-        this.highlighted = this.item.highlighted;
-        this.unfolded = this.item.unfolded;
-        this.toggled = this.item.toggled;
-      },
-    },
-  },
 };
 </script>
 
 <style scoped>
+/* unchanged */
 .uikit_list_item {
   display: flex;
   flex-direction: row;
@@ -208,9 +148,7 @@ export default {
   opacity: 1;
 }
 .selected.focused:not(.noSelect) {
-  /* background: #2d6ba2 !important; */
   background-color: var(--accent-blue)!important;
-  /* border-color: var(--secondary-darker); */
   border-color: var(--accent-blue)!important;
   opacity: 1;
 }
@@ -225,7 +163,6 @@ export default {
   background: var(--secondary-dark) !important;
 }
 .uikit_list_item_icon {
-  /* margin-right: 10px; */
   width: 14px !important;
   height: 14px !important;
   fill: var(--secondary-lighter) !important;
@@ -249,11 +186,9 @@ export default {
   width: 8px;
   border-radius: 50%;
   background: #533aaa;
-  /* margin-right: 8px; */
   border: 1px solid;
 }
 .uikit_list_item_more {
-  /* width: 62px; */
   color: var(--secondary-light-alt);
   font-family: roboto-regular!important;
 }
@@ -268,7 +203,7 @@ export default {
 }
 .disabled:hover {
   background: unset;
-  cursor: unset;
+  cursor: not-allowed;
 }
 .empty {
   background: var(--primary-light) repeating-linear-gradient(

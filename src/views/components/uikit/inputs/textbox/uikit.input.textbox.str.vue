@@ -167,6 +167,5 @@ export default {
 }
 .uikit_txt_input_textbox::placeholder {
   font-size: 10px;
-  /* color: var(--secondary-light); */
 }
 </style>

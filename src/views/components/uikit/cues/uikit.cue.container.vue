@@ -167,16 +167,16 @@
         />
         <uk-button
           v-model="group.solo"
-          style="width: 85px"
+          style="width: 90px"
           color="var(--accent-blue)"
-          label="solo"
+          label="isolate"
           toggleable
         />
         <uk-button
           v-model="group.disabled"
-          style="width: 85px"
+          style="width: 90px"
           color="var(--accent-maroon)"
-          label="disabled"
+          label="blackout"
           toggleable
         />
       </uk-flex>

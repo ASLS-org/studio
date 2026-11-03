@@ -25,7 +25,8 @@
         <!-- eslint-disable vue/no-v-html, vue/no-v-text-v-html-on-component -->
         <uk-flex
           class="uikit_select_textbox"
-          v-html="options[selected] || placeholder"
+          :class="{placeholder: isEmpty}"
+          v-html="value"
         />
         <!-- eslint-enable vue/no-v-html, vue/no-v-text-v-html-on-component -->
         <span class="uikit_select_button">
@@ -129,6 +130,25 @@ export default {
       optionListStyle: {},
     };
   },
+  computed: {
+    value: {
+      get() {
+        return this.isEmpty
+          ? this.placeholder
+          : this.options[this.selected];
+      },
+    },
+    isEmpty: {
+      get() {
+        return (
+          this.selected === null
+          || this.selected === undefined
+          || Number.isNaN(this.selected)
+          || this.selected < 0
+        );
+      },
+    },
+  },
   watch: {
     modelValue(newValue) {
       this.select(parseInt(newValue, 10));
@@ -138,10 +158,12 @@ export default {
     /**
      * Selects a value from the option list
      *
-       * @param {Number} index index of the selected option within te option list
+     * @param {Number} index index of the selected option within te option list
      */
     select(index) {
-      if (!this.disabled) {
+      const previous = this.selected;
+
+      if (!this.disabled && index !== previous) {
         this.selected = index;
         /**
          * Selected value changed
@@ -150,8 +172,8 @@ export default {
          */
         this.$emit('update:modelValue', index);
         this.$emit('input', index);
-        this.hide();
       }
+      this.hide();
     },
     /**
      * Hides the input's option list
@@ -238,6 +260,9 @@ export default {
   align-items: center;
   cursor: pointer;
 }
+.uikit_select_textbox.placeholder{
+  color: var(--secondary-light-alt);
+}
 .uikit_select_button {
   background: var(--secondary-dark);
   min-width: 14px;
@@ -262,7 +287,10 @@ export default {
 .disabled .uikit_select_textbox {
   background: var(--secondary-darker);
   color: var(--secondary-light);
-  cursor: unset;
+  cursor: not-allowed;
+}
+.disabled.label{
+  color: var(--secondary-lighter)!important;
 }
 .disabled {
   color: var(--secondary-light) !important;

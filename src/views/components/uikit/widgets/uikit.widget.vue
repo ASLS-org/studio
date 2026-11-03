@@ -191,7 +191,7 @@ export default {
 .disabled .header_icon,
 .disabled .widget_action {
   fill: var(--secondary-light) !important;
-  cursor: unset;
+  cursor: not-allowed;
 }
 .disabled h3 {
   color: var(--secondary-light) !important;
