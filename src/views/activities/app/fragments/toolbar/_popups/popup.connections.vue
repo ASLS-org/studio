@@ -151,7 +151,7 @@
             color="var(--accent-blue)"
             style="width:100%;height:28px"
             :disabled="!selectedOutput"
-            @click="connect"
+            @click="selectedOutput?.client?.state > 1 ? disconnect() : connect()"
           />
         </uk-flex>
       </uk-flex>
@@ -162,6 +162,8 @@
 <script>
 
 import PopupMixin from '@/views/mixins/popup.mixin';
+
+import { DEFAULT_WSC_PORT, DEFAULT_REMOTE_ADDRESS } from '@/plugins/wsc.connection';
 
 export default {
   name: 'UkPopupConnections',
@@ -264,8 +266,11 @@ export default {
     addNewConnection() {
       const output = this.$show.outputPool.addRaw({
         name: `New Connection ${this.outputs.length + 1}`,
-        remote: '127.0.0.1',
-        port: '4515',
+        // remote: '127.0.0.1',
+        remote: process.env.NODE_ENV === 'embed'
+          ? window.location
+          : DEFAULT_REMOTE_ADDRESS,
+        port: DEFAULT_WSC_PORT,
       });
       this.selectOutput({ id: output.id });
     },
@@ -274,6 +279,9 @@ export default {
       this.selectedOutput.port = this.formOutput.port;
       this.selectedOutput.name = this.formOutput.name;
       this.selectedOutput.connect();
+    },
+    disconnect() {
+      this.selectedOutput.disconnect();
     },
     deleteOutput() {
       if (this.selectedOutput) {

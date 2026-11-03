@@ -1,6 +1,9 @@
 import liveInstance from '@/models/DMX/live.model';
-import WscClientManager from '@asls/wsc-client';
+import WscClientManager, { WSC_REMOTE_STATE } from '@asls/wsc-client';
 import { WscPacket, WscTransport } from '@asls/wsc-sdk';
+
+export const DEFAULT_REMOTE_ADDRESS = '127.0.0.1';
+export const DEFAULT_WSC_PORT = 4515;
 
 const connectionManager = new WscClientManager();
 
@@ -36,6 +39,15 @@ export class WscConnectionStream {
     return this._protocol;
   }
 
+  set interface(iface) {
+    this._interface = iface;
+    this._rebuildTransport();
+  }
+
+  get interface() {
+    return this._interface;
+  }
+
   set address(address) {
     this._address = {
       ...this._address,
@@ -50,15 +62,18 @@ export class WscConnectionStream {
 
   _rebuildTransport() {
     switch (this._protocol) {
-      case WscTransport.Protocol.ARTNET:
-        this.transport = WscTransport.udp(
-          this._protocol,
-          this._address?.ip || '127.0.0.1',
-          this._address?.port || 6454,
-        );
+      case WscTransport.Protocol.ARTNET: {
+        const ip = this._address?.ip || '127.0.0.1';
+        const port = this._address?.port || 6454;
+
+        this.transport = WscTransport.udp(this._protocol, ip, port);
+        this._address = { ip, port };
+      } break;
+      case WscTransport.Protocol.DMX512:
+        this.transport = WscTransport.serial(this._protocol);
         break;
       default:
-        this.transport = new WscTransport(this._protocol);
+        this.transport = new WscTransport(this._protocol, this._interface);
     }
   }
 
@@ -73,7 +88,9 @@ export class WscConnectionStream {
     let packet = null;
 
     switch (this.protocol) {
+      case WscTransport.Protocol.DMX512:
       case WscTransport.Protocol.ARTNET:
+        // eslint-disable-next-line no-case-declarations
         packet = WscPacket.create(
           WscPacket.Type.STREAM_CHANNELS,
           { universe: this.targetId, startChannel: 0, values: this.getFrame() },
@@ -101,6 +118,7 @@ class WscConnection {
   constructor(remote, port, name) {
     this.remote = remote;
     this.port = port;
+    this.streams = [];
     this.name = name;
     this.client = null;
   }
@@ -115,13 +133,17 @@ class WscConnection {
    * @param {Number} protocol
    */
   setupStream(targetId, protocol, address, dataStreamHandle) {
-    return new WscConnectionStream(
+    const stream = new WscConnectionStream(
       this,
       targetId,
       dataStreamHandle,
       protocol,
       address,
     );
+
+    this.streams.push(stream);
+
+    return stream;
   }
 
   async connect() {
@@ -133,6 +155,13 @@ class WscConnection {
       this.onError,
     );
     await this.client.connect();
+  }
+
+  async disconnect() {
+    if (this?.client?.state === WSC_REMOTE_STATE.CONNECTED) {
+      this.streams.forEach((s) => s.stop());
+      this.client.close();
+    }
   }
 
   /**

@@ -23,21 +23,19 @@
             label="ID"
           />
         </uk-flex>
-        <uk-select-input
-          label="Color"
-          :model-value="getIndexFromColor(universe.color)"
-          :options="colorOptions"
-          @input="setUniverseColor"
-        />
         <uk-flex
           gap="10"
           center-both
           style="width:100%;"
         >
           <uk-select-input
-            :model-value="universe?.stream?.client?.name"
+            :model-value="universe?.stream?.client?.name ?? null"
             label="Output"
-            placeholder="Universe output"
+            :placeholder="
+              $show.outputPool.outputs.length
+                ? 'No output selected'
+                : 'No available outputs'
+            "
             :options="outputOptions"
             :disabled="!$show.outputPool.outputs.length"
             @input="setOutput"
@@ -48,6 +46,13 @@
             style="height:25px; min-width: 75px; margin-top:22px"
           />
         </uk-flex>
+        <uk-select-input
+          label="Color"
+          color="var(--accent-blue)"
+          :model-value="getIndexFromColor(universe.color)"
+          :options="colorOptions"
+          @input="setUniverseColor"
+        />
       </uk-flex>
     </template>
     <h3
