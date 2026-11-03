@@ -1,0 +1,132 @@
+# Epic: GDTF fixtures and a new rendering pipeline
+
+Branch: `epic/gdtf-render-pipeline` (from `develop`). Workflow: skill `git-collaboration` § Epics.
+
+## Goal
+
+Support a wide range of fixtures through GDTF, in both the DMX engine and the visualizer, and
+replace the light rendering with a pipeline that looks much better (volumetric beams, gobos,
+complex effects) while staying smooth on weak hardware. Along the way, untangle the models from
+the visualizer, the view and the fixture-library format so the engine stops stalling the app.
+
+## Targets
+
+- Must run well on a 2015 laptop with integrated graphics (Intel HD 5500/6000 class).
+- Stretch: Raspberry Pi 5 (VideoCore VII, GLES 3.1 through Mesa V3D) in Chromium/Electron. The
+  arm64 Linux desktop build already exists (`dist:linux`).
+- The lower the better, provided resolution and rendering complexity are configurable and adapt
+  automatically. The browser build stays first-class.
+
+## Findings that shaped the plan (2026-11-03)
+
+- Stalls came mostly from bookkeeping, not DMX maths: every playback write went through the
+  Proxify undo trap and Vue reactivity. Fixed by `remove-proxify-undo` (archived separately).
+- `Fixture` is four things at once: OFL parser, show document, runtime DMX state, and 3D driver
+  (`_3DModel`, `Controls`). Every `setChannel` resolves a capability (`Array.find`, a fresh object
+  from `getValue`) and pushes into Three.js synchronously.
+- Only `Moving Head` fixtures render: `Fixture.prepare3DModelInstance()` switches on the OFL
+  category and builds a hard-coded `MovingHead`.
+- Current renderer costs: one `THREE.SpotLight` per fixture (every lit fragment loops over all of
+  them; shader recompiles when the count changes; low-end GPUs hit uniform limits), 4-octave 3D
+  simplex noise per beam fragment with additive overdraw, `rgb2hsv`/`hsv2rgb` per fragment, beams
+  at full resolution with MSAA, all on the main thread next to the engine and Vue. Instancing with
+  shared per-instance buffers is the part worth keeping as an idea.
+- The fixture mode is not persisted: `Fixture.showData` writes `mode: this.modeNam` (typo), so
+  every reload falls back to the first mode.
+
+## Target architecture
+
+```
+ +-----------+   +-----------+
+ | OFL json  |   | .gdtf zip |      source formats (adapters only)
+ +-----+-----+   +-----+-----+
+        \             /
+         v           v
+  +---------------------------+
+  | FixtureProfile (internal) |     modes -> channels -> attributes + DMX ranges,
+  | + geometry tree (optional)|     fine/coarse resolved, wheels, physical data
+  +-------------+-------------+
+                |
+  +-------------v-------------+        +--------------------------+
+  | Show document             |        | Runtime engine           |
+  | patch, groups, cues,      | -----> | flat per-universe state, |
+  | chases (Vue, save/load)   |        | no reactivity in the tick|
+  +---------------------------+        +------------+-------------+
+                                                    | DMX frames (512 B / universe)
+                                   +----------------+----------------+
+                                   v                                 v
+                          +-----------------+             +----------------------+
+                          | WSC output      |             | Visualizer           |
+                          +-----------------+             | decodes DMX through  |
+                                                          | the profile into a   |
+                                                          | per-beam state buffer|
+                                                          +----------------------+
+```
+
+Rendering: every beam is a projector (pose, field angle, iris, cookie = gobos x animation wheel,
+focus/frost = cookie mip level, colour, prism = sub-beams, intensity). All tiers read the same
+per-beam state; they differ only in how they draw it.
+
+```
+          Beams (in air)                 Surface light (floor/set)        Geometry
+ T0  none / outline cone             footprint decal with cookie       low-poly proxy
+ T1  analytic "airlight" cone,       deferred light volumes + cookie   GDTF gltf_low
+     1/4-res target                  (cost per covered pixel)
+ T2  raymarched cone, 8-16 steps,    + more lights at full quality     GDTF gltf
+     gobo in haze, 1/2-res target
+ T3  32+ steps, shadows, froxel      + gobo shadows for top-N beams    gltf_high
+     fog (WebGPU)                    (later)
+```
+
+A governor picks the starting tier from device capabilities (WebGL2, software renderer detection,
+`deviceMemory`, `hardwareConcurrency`) and steps tier, raymarch steps and resolution scale from
+measured frame time. The user can override it.
+
+## Decisions
+
+Confirmed by the user:
+- Decouple first, GDTF after.
+- Fresh rendering design. The current `moving_head.js` look is a benchmark to match or beat on the
+  same rig, not a template.
+- Several light-rendering strategies selected per device; resolution and complexity configurable
+  and adaptive.
+
+Proposed defaults (to confirm in the relevant unit):
+- WebGL2 baseline, no WebGL1 path. WebGPU/TSL only as a later T3 path.
+- Per-beam state buffer as the only input to every rendering tier.
+- Visualizer in a Worker with `OffscreenCanvas`, same-thread fallback.
+- Keep an OFL adapter so existing showfiles and the bundled library keep working.
+- No float render targets in T0-T1 (not guaranteed on V3D).
+
+Open (answer in the unit that needs it):
+- Where GDTF files come from: user import, GDTF Share (account + API, likely through Electron for
+  CORS), or a curated bundle; redistribution terms of Share files.
+- Showfile embeds imported fixture files or references a local library (IndexedDB / disk).
+- Realistic show size (fixtures, universes, simultaneous effects): decides whether the engine
+  itself must move to a Worker.
+
+## Units, in order
+
+| # | Change | Depends on | Status |
+|---|---|---|---|
+| 1 | `add-fixture-profile` | none | proposed |
+| 2 | `decouple-visualizer-from-models` | 1 | proposed |
+| 3 | `add-projector-lighting` (starts with a performance spike) | 2 | proposed |
+| 4 | `add-volumetric-beams` | 3 | proposed |
+| 5 | `add-gdtf-fixtures` | 1, 2, 3 | proposed |
+
+Status values: proposed, refining, applying, archived.
+
+Proposed changes hold a proposal and a draft design only, so `openspec validate` reports them as
+failing (no spec deltas) until their unit writes specs and tasks. That is expected.
+
+## Backlog (not scheduled in this epic)
+
+- T3 tier: high step counts, shadows, froxel fog, WebGPU/TSL renderer.
+- Engine runtime in a Worker (only if measurements after unit 2 still show stalls on target).
+- 2D plan view (Canvas2D) as the lowest tier for machines without a usable GPU.
+- MVR (whole-rig scene) import.
+- Fresh undo/redo (`add-undo-redo`), opt-in edit transactions on the new show document. Outside
+  this epic but designed against its show document.
+- Electron is partly broken (seen during `remove-proxify-undo`); fix before units that need the
+  desktop build (GDTF Share access).
