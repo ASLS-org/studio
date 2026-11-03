@@ -73,6 +73,10 @@ buffer; a `WscConnectionStream` sends the buffer to the gateway every tick.
   into `develop`. A change the user calls a **hotfix** branches off `master` (PR into `master`, then
   back-merge into `develop`). A change the user calls a **quickwin** is committed on `develop`
   directly, with no branch and no PR.
+- Epics (complex work made of several changes): `epic/<name>` off `develop` holds the plan
+  (`openspec/epics/<name>.md` plus each change's proposal). Each change gets a unit branch off the
+  epic branch, where its artifacts are refined, applied and archived, then a PR back into the epic
+  branch. The epic branch goes into `develop` when all its changes are archived.
 - **Never push to `develop`, `staging` or `master` unless the user explicitly asks, and confirm
   that exact push with them before running it.**
 

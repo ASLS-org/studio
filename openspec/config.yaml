@@ -39,7 +39,10 @@ context: |
 
   Team workflow: one branch per change off `develop`, PR into `develop`. Hotfixes branch off
   `master` (PR into master, back-merge into develop). Quickwins are committed on `develop`
-  directly. Agents never push to develop/staging/master without the user's explicit validation.
+  directly. Epics (work spanning several changes): `epic/<name>` off develop holds the plan
+  (openspec/epics/<name>.md + change proposals); each change gets a unit branch off the epic
+  branch, is refined, applied and archived there, and returns by PR into the epic branch.
+  Agents never push to develop/staging/master without the user's explicit validation.
   Conventional Commits with path scopes (e.g. feat(models/DMX): ...); semantic-release on
   staging/master.
 
@@ -81,6 +84,8 @@ operations:
       - "Before the first edit, get on the change's own branch (skill git-collaboration):
         <type>/<change-name> off origin/develop by default; hotfix/<change-name> off origin/master
         if the user called it a hotfix; stay on develop only if the user called it a quickwin.
+        If the change is listed in an openspec/epics/*.md doc, branch off that epic's branch
+        (epic/<name>) instead, and refine the change's specs/design/tasks there before coding.
         Never push to develop, staging or master without the user's explicit validation."
       - Follow the matching project skill (dmx-model-change, vue-ui-change, wsc-output,
         fixture-library, code-quality) for each task.
@@ -91,3 +96,5 @@ operations:
     guidance:
       - Before archiving, confirm the manual and AI-context tasks are done or explicitly n/a.
       - Summarise the user-facing change in one line suitable for a Conventional Commit subject.
+      - For an epic change, archive in its unit branch before the PR into the epic branch, and
+        update the status table in openspec/epics/<name>.md.
