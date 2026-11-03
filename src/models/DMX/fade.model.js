@@ -78,6 +78,22 @@ const FADE_DIRECTIONS = {
 };
 
 /**
+ * Cheap 2-point control-point clone. Control points are always a fixed-shape
+ * pair of {x, y} objects, so a manual copy is far cheaper than round-tripping
+ * through JSON.stringify/JSON.parse (which was the only reason this needed
+ * to allocate a string just to allocate an object again).
+ *
+ * @param {Array<Object>} points
+ * @return {Array<Object>}
+ */
+function cloneControlPoints(points) {
+  return [
+    { x: points[0].x, y: points[0].y },
+    { x: points[1].x, y: points[1].y },
+  ];
+}
+
+/**
  * @class Fade
  * @extends {Proxify}
  * @classdesc Fades are used in order to fade in or out cues.
@@ -113,7 +129,7 @@ class Fade extends Proxify {
    */
   set type(type) {
     if (FADE_PRESETS_INDICES[type] && type !== 0) {
-      this.controlPoints = JSON.parse(JSON.stringify(FADE_PRESETS_INDICES[type]));
+      this.controlPoints = FADE_PRESETS_INDICES[type];
       this._type = type;
     } else {
       this._type = 0;
@@ -131,7 +147,7 @@ class Fade extends Proxify {
    */
   set controlPoints(controlPoints) {
     this._type = 0; // FADE_PRESETS.DEFAULT;
-    this._controlPoints = JSON.parse(JSON.stringify(controlPoints || FADE_PRESETS.CUSTOM));
+    this._controlPoints = cloneControlPoints(controlPoints || FADE_PRESETS.CUSTOM);
   }
 
   get controlPoints() {
@@ -201,39 +217,47 @@ class Fade extends Proxify {
   }
 
   /**
-   * Returns fade's percented value at any given time
+   * Returns fade's percented value at any given time.
+   *
+   * Computes X and Y from a single set of cached bezier powers instead of the
+   * previous two-pass getValue()+getX() (which each re-derived (1-t)^2/(1-t)^3
+   * independently). Also returns a plain number instead of a toFixed(3)
+   * string - the string conversion allocated on every single frame for no
+   * benefit, since this.value already holds the precise numeric value and any
+   * display rounding belongs in the UI layer, not the per-frame update loop.
    *
    * @param {Number} time time value in milliseconds
+   * @param {Number} duration
    * @return {Number} Percented value over time
    */
   getValue(time, duration) {
-    this.t = time / duration;// this.durationMS;
-    this.getX();
-    const val = (
-      (1 - this.t) ** 3 * 0
-      + 3 * (1 - this.t) ** 2 * this.t * this.controlPoints[0].y
-      + 3 * (1 - this.t) * this.t ** 2 * this.controlPoints[1].y
-      + this.t ** 3
-    );
+    const t = time / duration;
+    this.t = t;
+
+    const mt = 1 - t;
+    const mt2 = mt * mt;
+    const t2 = t * t;
+    const a = 3 * mt2 * t;
+    const b = 3 * mt * t2;
+    const c = t2 * t;
+
+    const cp = this._controlPoints;
+
+    this.x = a * cp[0].x + b * cp[1].x + c;
+
+    const val = a * cp[0].y + b * cp[1].y + c;
     this.value = val;
-    return val?.toFixed(3) || 0;
+    return val || 0;
   }
 
   /**
-   * Returns fade's X value at any given time
+   * Returns fade's X value from the last getValue() call.
    *
    * @return {Number} X value over time
    * @todo pass time as argument, it is a bit confusing to use local time object
    */
   getX() {
-    const xVal = (
-      (1 - this.t) ** 3 * 0
-      + 3 * (1 - this.t) ** 2 * this.t * this.controlPoints[0].x
-      + 3 * (1 - this.t) * this.t ** 2 * this.controlPoints[1].x
-      + this.t ** 3 * 1
-    );
-    this.x = xVal;
-    return xVal;
+    return this.x;
   }
 }
 

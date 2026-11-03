@@ -337,6 +337,10 @@ class FXChannel extends Proxify {
     this.time = 0;
     this.duration = duration;
     this.directionFlag = 0;
+    // Cache whether this channel drives a color component - avoids an
+    // includes() scan on the hot per-frame path (previously re-checked for
+    // every single fixture, every frame, even though the type never changes).
+    this._isColorChannel = COLOR_CHANNELS.includes(this.type);
     this.update(0);
     this.DMXData = 0;
     return this.proxify(['time', 'DMXData']);
@@ -640,26 +644,39 @@ class FXChannel extends Proxify {
   /**
    * Compute fixtures phase based on fixturePhaseStart/Stop values
    *
+   * Rewritten from flatMap()+forEach() to a manual for-loop: flatMap()
+   * allocates an intermediate array just to flatten single-element arrays,
+   * and the span/start values in radians were being recomputed on every
+   * iteration even though they don't depend on the loop index.
+   *
    * @public
    */
   computeFixturesPhasing() {
-    const activeFixtures = this.fixtures.flatMap((fixture) => (fixture.active ? fixture : []));
-    activeFixtures.forEach((fixture, index) => {
+    const { fixtures } = this;
+    const activeFixtures = [];
+
+    for (let i = 0; i < fixtures.length; i++) {
+      if (fixtures[i].active) {
+        activeFixtures.push(fixtures[i]);
+      }
+    }
+
+    const len = activeFixtures.length;
+    const startRad = this.fixturePhaseStart * (Math.PI / 180);
+    const spanRad = (this.fixturePhaseStop - this.fixturePhaseStart) * (Math.PI / 180);
+
+    for (let index = 0; index < len; index++) {
+      const fixture = activeFixtures[index];
+
       switch (this.direction) {
         case FX_CHANNEL_DIRECTIONS.LTR:
-          fixture.phase = (
-            (this.fixturePhaseStop - this.fixturePhaseStart)
-            * (index / activeFixtures.length)
-            * (Math.PI / 180) + this.fixturePhaseStart * (Math.PI / 180)
-          );
+          fixture.phase = spanRad * (index / len) + startRad;
           break;
         case FX_CHANNEL_DIRECTIONS.RTL:
-          fixture.phase = -(this.fixturePhaseStop - this.fixturePhaseStart)
-          * (index / activeFixtures.length) * (Math.PI / 180)
-          + this.fixturePhaseStart * (Math.PI / 180);
+          fixture.phase = -spanRad * (index / len) + startRad;
           break;
         case FX_CHANNEL_DIRECTIONS.SYM: {
-          const normalizedIndex = index / (activeFixtures.length - 1);
+          const normalizedIndex = index / (len - 1);
           let phaseOffset;
 
           if (normalizedIndex <= 0.5) {
@@ -670,35 +687,26 @@ class FXChannel extends Proxify {
             phaseOffset = (1 - normalizedIndex) * 2;
           }
 
-          fixture.phase = (
-            (this.fixturePhaseStop - this.fixturePhaseStart)
-            * phaseOffset
-            * (Math.PI / 180) + this.fixturePhaseStart * (Math.PI / 180)
-          );
+          fixture.phase = spanRad * phaseOffset + startRad;
         }
           break;
-        case FX_CHANNEL_DIRECTIONS.SYMREV:
-          /* eslint-disable */
-          const halfLength = activeFixtures.length / 2;
+        case FX_CHANNEL_DIRECTIONS.SYMREV: {
+          const halfLength = len / 2;
 
           if (index < halfLength) {
             // First half: spread from 0 to π
             const phaseOffset = index / (halfLength - 1);
-            fixture.phase = (
-              phaseOffset * Math.PI
-            );
+            fixture.phase = phaseOffset * Math.PI;
           } else {
             // Second half: spread from 2π to π
             const normalizedIndex = (index - halfLength) / (halfLength - 1);
-            fixture.phase = (
-              (2 * Math.PI) - (normalizedIndex * Math.PI)
-            );
+            fixture.phase = (2 * Math.PI) - (normalizedIndex * Math.PI);
           }
-          /* eslint-enable */
+        }
           break;
         default: break;
       }
-    });
+    }
   }
 
   /**
@@ -819,7 +827,21 @@ class FXChannel extends Proxify {
   }
 
   /**
-   * Updates channel value over time
+   * Updates channel value over time.
+   *
+   * Rewritten from forEach() to a for-loop on this per-frame hot path, with
+   * three concrete fixes:
+   *  - COLOR_CHANNELS.includes(this.type) is now computed once at
+   *    construction (see _isColorChannel) instead of once per fixture per
+   *    frame - it can never change per-fixture since it only depends on the
+   *    channel's own type.
+   *  - The `[...fixture.handle.color]` spread was cloning an array that the
+   *    `color` getter had *already* freshly allocated, i.e. two allocations
+   *    for one read. Now only one.
+   *  - Fixed DMXData accumulation: it was unconditionally adding
+   *    `this.fixtures[0].value` (always fixture 0) instead of the fixture
+   *    actually being processed, which meant the exported DMX activity value
+   *    was wrong for any effect with more than one fixture.
    *
    * @private
    * @param {Number} t update time
@@ -828,32 +850,44 @@ class FXChannel extends Proxify {
   update(t) {
     this.time = t;
     this.DMXData = 0;
-    this.fixtures.forEach((fixture, index) => {
-      if (fixture.active) {
-        this.fixtures[index].value = this.getValue(this.time, fixture.phase) || 0;
-        this.DMXData += this.fixtures[0].value;
-        if (!COLOR_CHANNELS.includes(this.type)) {
-          fixture.handle.setQuickAccessor({
-            type: this.type,
-          }, this.fixtures[index].value);
-        } else {
-          const currentColorValue = [...fixture.handle.color];
-          switch (this.type) {
-            case 'Red':
-              currentColorValue[0] = this.fixtures[index].value;
-              break;
-            case 'Green':
-              currentColorValue[1] = this.fixtures[index].value;
-              break;
-            case 'Blue':
-              currentColorValue[2] = this.fixtures[index].value;
-              break;
-            default: break;
-          }
-          fixture.handle.color = currentColorValue;
-        }
+
+    const fixtures = this._fixtures || [];
+    const isColor = this._isColorChannel;
+
+    for (let i = 0; i < fixtures.length; i++) {
+      const fixture = fixtures[i];
+
+      if (!fixture.active) {
+        // eslint-disable-next-line no-continue
+        continue;
       }
-    });
+
+      const value = this.getValue(this.time, fixture.phase) || 0;
+      fixture.value = value;
+      this.DMXData += value;
+
+      if (!isColor) {
+        fixture.handle.setQuickAccessor({
+          type: this.type,
+        }, value);
+      } else {
+        const currentColorValue = fixture.handle.color;
+
+        switch (this.type) {
+          case 'Red':
+            currentColorValue[0] = value;
+            break;
+          case 'Green':
+            currentColorValue[1] = value;
+            break;
+          case 'Blue':
+            currentColorValue[2] = value;
+            break;
+          default: break;
+        }
+        fixture.handle.color = currentColorValue;
+      }
+    }
   }
 }
 
@@ -1105,7 +1139,10 @@ class FX extends Cue {
   }
 
   /**
-   * Updates effect's channels individually using provided time in milliseconds
+   * Updates effect's channels individually using provided time in milliseconds.
+   *
+   * Rewritten from forEach() to a for-loop, and `t % this.durationMS` is now
+   * computed once and reused for both this.time and percent instead of twice.
    *
    * @public
    * @param {Number} t Live animation time in milliseconds
@@ -1113,13 +1150,20 @@ class FX extends Cue {
    * @todo memoisation could be an option too ? It might be memory expensive though ?
    */
   update(t) {
-    this.time = t % this.durationMS;
+    const time = t % this.durationMS;
+    this.time = time;
     this.DMXActivity = 0;
-    const percent = (t % this.durationMS) / this.durationMS;
-    this.channels.forEach((channel) => {
-      channel.update(percent);
-      this.DMXActivity += channel.DMXData;
-    });
+    const percent = time / this.durationMS;
+
+    const { channels } = this;
+    let activity = 0;
+
+    for (let i = 0; i < channels.length; i++) {
+      channels[i].update(percent);
+      activity += channels[i].DMXData;
+    }
+
+    this.DMXActivity = activity;
   }
 }
 
