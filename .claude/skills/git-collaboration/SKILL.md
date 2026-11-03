@@ -65,7 +65,7 @@ Decide this before the first edit of any implementation (including `/opsx:apply`
 | any + `BREAKING CHANGE:` footer or `!` | major | incompatible showfile or behaviour change |
 
 Scopes are path-like and match recent history:
-`models/DMX`, `models/utils`, `views/uikit`, `views/modifiers`, `views/toolbar`, `views/app`,
+`models/DMX`, `views/uikit`, `views/modifiers`, `views/toolbar`, `views/app`,
 `views/group-pool`, `plugins/visualizer`, `plugins/wsc`, `router`, `electron`, `fixtures`,
 `docs/manual`, `docs/dev`, `ai` (CLAUDE.md, `.claude/`, `openspec/`), `deps`, `build`, `ci`.
 

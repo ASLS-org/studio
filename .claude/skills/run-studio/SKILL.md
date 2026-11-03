@@ -34,7 +34,7 @@ playing.
 | Area changed | Check |
 |---|---|
 | Model / showfile | Edit the value → Toolbar → Save as (downloads JSON) → reload the page (localStorage) → value restored. Then load the downloaded file → value restored. Load the **old** demo showfile → no errors. |
-| Undo/redo | Edit a value → Toolbar **Edit → Undo** → previous value and route restored → **Edit → Redo** → reapplied. As of 2026-11-03 these menu items throw (see root `CLAUDE.md` § Known traps), so test from DevTools with the Show class's static `undo()`/`redo()` until that's fixed. The Ctrl+Z / Ctrl+Y labels aren't bound; only <kbd>Space</kbd> (play/pause) is. |
+| Unsaved marker | Edit a value → `*` appears before the project name → <kbd>Ctrl+S</kbd> → `*` clears. Set the value back by hand → `*` clears. Play cues and chases on a saved show → `*` never appears. (Undo/redo is removed until change `add-undo-redo`; only <kbd>Space</kbd> play/pause is bound.) |
 | Cues / effects / chases | Trigger, stop and retrigger. Change BPM / tap tempo during playback and check it stays in sync. Pause/resume. Delete while running → no leftover animation (channels stop moving). |
 | Patching / fixtures | Patch N fixtures (auto-address) → channel faders move the visualizer → delete → references gone from groups. |
 | UI widget | Interact at speed (drag faders and knobs), resize and dock the widget, check the empty/disabled state. |

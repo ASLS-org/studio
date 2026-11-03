@@ -27,7 +27,6 @@ src/
   main.js                 app bootstrap: registers uikit globally, $show/$utils/$http globals
   singletons/show.singleton.js   the one Show instance (exposed as this.$show)
   models/DMX/             show engine (pure-ish JS classes)  → see models/DMX/CLAUDE.md
-  models/utils/proxify.utils.js  undo/redo via Proxy
   plugins/router.js       memory-history router; modifiers are routes
   plugins/eventbus.js     mitt bus (app_error, app_ready, visualizer_*)
   plugins/wsc.connection.js  WSC output (connections + per-universe streams) → skill wsc-output
@@ -52,8 +51,10 @@ buffer; a `WscConnectionStream` sends the buffer to the gateway every tick.
 1. **Save/load round-trip.** Persistent state is serialized through `get showData()` on each model
    and rebuilt in `Show.loadFromData()` → `prepare*()` / pool `addRaw()`. A new persistent field
    needs both sides and a default for older showfiles that don't have it.
-2. **Undo/redo.** Undoable models extend `Proxify` and return `this.proxify()`. Assign through the
-   proxy. On proxified arrays use `pushAndStackUndo` / `spliceAndStackUndo`, not `push` / `splice`.
+2. **Save state and reactivity.** There is no undo/redo (removed until change `add-undo-redo`).
+   The toolbar's unsaved `*` comes from `Show.refreshSaveState()`, which compares `showData` with
+   the last save, so playback state must never be part of `showData`. Render objects reachable
+   from `$show` (3D instances, the visualizer) are created with `markRaw`.
 3. **Live animations.** Anything that runs over time registers with `Live.add(fn, quantize, fps)`
    and must `Live.remove(id)` on stop/delete. Durations are in bars (`Live.barDuration`), not ms.
 4. **Pools.** `getFromId` throws when the id is missing, so wrap it when absence is legal.
@@ -94,8 +95,6 @@ buffer; a `WscConnectionStream` sends the buffer to the gateway every tick.
 - Only OFL fixtures whose first category is `Moving Head` can be patched. Other categories throw
   in `Fixture.prepare3DModelInstance()`.
 - `fixture.model.js` imports visualizer classes, so models are not runnable headless.
-- `Show.undo()` / `Show.redo()` are `static`, but the toolbar calls `this.$show.undo()`, which
-  throws. Their Ctrl+Z / Ctrl+Y labels aren't bound to keys.
 - The WSC output path has several known bugs. Read skill `wsc-output` § Known issues first.
 - Components set `compatConfig: { MODE: 3 }` (the app runs on `@vue/compat`). Keep it on new ones.
 - `.env` is committed and holds public URLs only. Never put secrets in it; use `.env.local`.
