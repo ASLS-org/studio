@@ -183,9 +183,11 @@ class Universe {
    *
    * @public
    * @param {Object} fixture Fixture instance
+   * @param {Boolean} [allowOverlap=false] Skip the overlap check, used when loading a showfile so
+   * shows saved with overlapping fixtures keep loading
    */
-  patchFixture(fixture) {
-    if (this.checkPatchCapability(fixture.chStart, fixture.chCount)) {
+  patchFixture(fixture, allowOverlap = false) {
+    if (allowOverlap || this.checkPatchCapability(fixture.chStart, fixture.chCount)) {
       fixture.universe = this.id;
       this._patch[fixture.chStart] = fixture;
       this.fixturePool.addExisting(fixture);
@@ -223,14 +225,10 @@ class Universe {
    */
   checkPatchCapability(chStart, chCount) {
     const chStop = chStart + chCount;
-    // eslint-disable-next-line consistent-return
-    Object.keys(this._patch).forEach((fixtureAddress) => {
-      const fixture = this._patch[fixtureAddress];
-      if (chStart <= fixture.chStop && fixture.chStart <= chStop) {
-        return false;
-      }
-    });
-    return true;
+    // chStop is exclusive on both sides, so back-to-back fixtures don't overlap
+    return Object.values(this._patch).every(
+      (fixture) => chStop <= fixture.chStart || chStart >= fixture.chStop,
+    );
   }
 
   /**
