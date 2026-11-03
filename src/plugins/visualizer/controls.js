@@ -207,8 +207,9 @@ class Controls {
       this.mode = CONTROL_MODES.DISCRETE;
       this.showHelpers();
       this.handle.setMode('translate');
-      this.detachAll();
-      this.setFocus(false);
+      // TODO: this is redundant and shouldn't happen here so comenting out ATM
+      // this.detachAll();
+      // this.setFocus(false);
       MovingHead.clearHiglighting();
     } else if (e.key.toLowerCase() === 't') {
       this.mode = CONTROL_MODES.NORMAL;
@@ -228,7 +229,7 @@ class Controls {
   }
 
   setFocus(state) {
-    if (!state || this.autoFocus) {
+    if (this.autoFocus) {
       this.cameraHandle.updateMatrixWorld();
       const startPos = new THREE.Vector3();
       startPos.setFromMatrixPosition(this.cameraHandle.matrixWorld);
@@ -313,7 +314,8 @@ class Controls {
       this.boundingBoxMesh = new THREE.Mesh(boundingBoxGeometry, boundingBoxMaterial);
       this.boundingBoxMesh.add(boundingBoxEdges); // Adding bounding box edges to bounding box mesh
 
-      SceneManager.add(this.groupedInstances, this.boundingBoxMesh);
+      // SceneManager.add(this.groupedInstances, this.boundingBoxMesh);
+      SceneManager.add(this.groupedInstances);
 
       this.pooledInstances.forEach((i) => {
         this.groupedInstances.add(i._3DModel._dummy);
@@ -356,7 +358,7 @@ class Controls {
       if (this.mode !== CONTROL_MODES.DISCRETE) {
         this.handle.attach(this.groupedInstances);
       }
-      this.groupedInstances.attach(this.boundingBoxMesh);
+      // this.groupedInstances.attach(this.boundingBoxMesh);
 
       this.setFocus(true);
     }

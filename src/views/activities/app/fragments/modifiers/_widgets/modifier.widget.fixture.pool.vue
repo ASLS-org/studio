@@ -125,6 +125,10 @@ export default {
           }
           fixture.highlight(true, true);
         });
+      } else if (this.pool?.fixtures?.length) {
+        // TODO: it's time to have an actual store for UI states
+        // This is clearly a hack mushing all model, view and 3D context together and it's very bad
+        this.pool.fixtures[0].highlightSingle(false, true);
       }
       this.$emit('highlight', fixtures);
     },

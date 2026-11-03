@@ -4,36 +4,13 @@ import ModelInstancer from './model_instancer';
 import VOLUMETRIC_BEAM_VERTEX_SHADER from './shaders/beam.vertex.glsl?raw';
 import VOLUMETRIC_BEAM_FRAGMENT_SHADER from './shaders/beam.fragment.glsl?raw';
 
-const MODEL_MATERIAL = new THREE.MeshStandardMaterial({
-  color: 0x000000,
-  transparent: false,
+import InstanceHighlight from './instance_highlight';
+
+const MODEL_MATERIAL = new THREE.MeshPhongMaterial({
+  color: 0Xffffff,
   flatShading: false,
   side: THREE.DoubleSide,
-  clippingPlanes: true,
 });
-
-MODEL_MATERIAL.onBeforeCompile = (shader) => {
-  // the rest is the same
-  shader.vertexShader = shader.vertexShader.replace(
-    '#define STANDARD\n',
-    `#define STANDARD
-         attribute float highlight;
-         varying float vHighlight;`,
-  );
-  shader.vertexShader = shader.vertexShader.replace(
-    '#include <clipping_planes_vertex>\n\t',
-    '#include <clipping_planes_vertex>\nvHighlight = highlight;\n',
-  );
-  shader.fragmentShader = shader.fragmentShader.replace(
-    'varying vec3 vViewPosition;\n',
-    'varying vec3 vViewPosition;\nvarying float vHighlight;\n',
-  );
-  shader.fragmentShader = shader.fragmentShader.replace(
-    'totalEmissiveRadiance = emissive;\n',
-    'totalEmissiveRadiance = vHighlight == 0.0 ? emissive : vec3(.658,.176,.345);\n',
-  );
-  MODEL_MATERIAL.userData.shader = shader;
-};
 
 const MAX_INSTANCES = 100;
 const vector_cam = new THREE.Vector3();
@@ -126,6 +103,16 @@ let scene_handle = null;
 
 const instances = [];
 let instanceCount = 0;
+
+const highlight = new InstanceHighlight(MAX_INSTANCES);
+let highlightMeshes = [];
+
+// One helper instead of the repeated six-line blocks
+function syncInstanceCounts() {
+  [baseMesh, yokeMesh, headMesh, beamMesh, capMesh, boundingBoxMesh]
+    .forEach((mesh) => { mesh.count = instanceCount; });
+  highlight.setCount(instanceCount);
+}
 
 /**
  * Defines a 3D moving head instance
@@ -406,16 +393,9 @@ class MovingHead {
     return this._strobeFrequency;
   }
 
-  /**
-   * Beam instance highlighting state
-   *
-   * @type {Boolean}
-   * @private
-   */
   set highlighted(state) {
     this._highlighted = state;
-    emissive_buffer_attribute.setX(this._id, this._highlighted ? 1.0 : 0.0);
-    emissive_buffer_attribute.needsUpdate = true;
+    highlight.set(this._id, state);
   }
 
   get highlighted() {
@@ -427,11 +407,12 @@ class MovingHead {
     instance.highlighted = true;
   }
 
-  static clearHiglighting() {
-    instances.forEach((instance) => {
-      instance.highlighted = false;
-    });
+  static clearHighlighting() {
+    instances.forEach((instance) => { instance._highlighted = false; });
+    highlight.clear();
   }
+
+  static set highlightXray(value) { highlight.xray = value; }
 
   set zoom(zoomValue) {
     const angle = this._maxAngle * (zoomValue / 100);
@@ -590,12 +571,7 @@ class MovingHead {
 
     this._spotLight.target = this._targetDummy;
 
-    baseMesh.count = instanceCount;
-    yokeMesh.count = instanceCount;
-    headMesh.count = instanceCount;
-    beamMesh.count = instanceCount;
-    capMesh.count = instanceCount;
-    boundingBoxMesh.count = instanceCount;
+    syncInstanceCounts();
 
     scene_handle.add(this._dummy);
     instances.push(this);
@@ -668,6 +644,63 @@ class MovingHead {
     return degAngle * (Math.PI / 180);
   }
 
+  static prepareBeamMaterial() {
+    return new THREE.ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      clipping: true,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+      vertexShader: VOLUMETRIC_BEAM_VERTEX_SHADER,
+      fragmentShader: VOLUMETRIC_BEAM_FRAGMENT_SHADER,
+      fog: false,
+      toneMapped: false,
+      dithering: false,
+      uniforms: {
+        cameraDir: {
+          type: 'v3',
+          value: vector_cam,
+        },
+        cameraPos: {
+          type: 'v3',
+          value: vector_cam_pos,
+        },
+        vertexCount: {
+          type: 'f',
+          value: beamGeo.attributes?.position?.count,
+        },
+        topRadius: {
+          type: 'f',
+          value: BEAM_TOP_RADIUS,
+        },
+        length: {
+          type: 'f',
+          value: BEAM_LENGTH,
+        },
+        time: {
+          type: 'f',
+          value: 0.0,
+        },
+        fogState: {
+          type: 'b',
+          value: true,
+        },
+        fogFactor: {
+          type: 'f',
+          value: 1.0,
+        },
+        fogTurbulence: {
+          type: 'f',
+          value: 1.0,
+        },
+        glowFactor: {
+          type: 'f',
+          value: 1.0,
+        },
+      },
+    });
+  }
+
   static prepareModelInstance() {
     const model = ModelInstancer.models.visualizer.models.scenography.beam.scene.children[0];
     const base = model.children[0];
@@ -692,6 +725,7 @@ class MovingHead {
     baseMesh = new THREE.InstancedMesh(baseGeo, MODEL_MATERIAL, MAX_INSTANCES);
     yokeMesh = new THREE.InstancedMesh(yokeGeo, MODEL_MATERIAL, MAX_INSTANCES);
     headMesh = new THREE.InstancedMesh(headGeo, MODEL_MATERIAL, MAX_INSTANCES);
+    highlightMeshes = [baseMesh, yokeMesh, headMesh].flatMap((mesh) => highlight.attach(mesh));
 
     baseMesh.frustumCulled = false;
     yokeMesh.frustumCulled = false;
@@ -746,60 +780,7 @@ class MovingHead {
     beamGeo.setAttribute('intensity', intensity_buffer_attribute);
     beamGeo.setAttribute('angle', angle_buffer_attribute);
 
-    beamMesh = new THREE.InstancedMesh(beamGeo, new THREE.ShaderMaterial({
-      transparent: true,
-      depthWrite: false,
-      clipping: true,
-      side: THREE.DoubleSide,
-      blending: THREE.AdditiveBlending,
-      vertexShader: VOLUMETRIC_BEAM_VERTEX_SHADER,
-      fragmentShader: VOLUMETRIC_BEAM_FRAGMENT_SHADER,
-      fog: false,
-      toneMapped: false,
-      dithering: false,
-      uniforms: {
-        cameraDir: {
-          type: 'v3',
-          value: vector_cam,
-        },
-        cameraPos: {
-          type: 'v3',
-          value: vector_cam_pos,
-        },
-        vertexCount: {
-          type: 'f',
-          value: beamGeo.attributes.position.count,
-        },
-        topRadius: {
-          type: 'f',
-          value: BEAM_TOP_RADIUS,
-        },
-        length: {
-          type: 'f',
-          value: BEAM_LENGTH,
-        },
-        time: {
-          type: 'f',
-          value: 0.0,
-        },
-        fogState: {
-          type: 'b',
-          value: true,
-        },
-        fogFactor: {
-          type: 'f',
-          value: 1.0,
-        },
-        fogTurbulence: {
-          type: 'f',
-          value: 1.0,
-        },
-        glowFactor: {
-          type: 'f',
-          value: 1.0,
-        },
-      },
-    }), MAX_INSTANCES);
+    beamMesh = new THREE.InstancedMesh(beamGeo, MovingHead.prepareBeamMaterial(), MAX_INSTANCES);
 
     beamMesh.count = instanceCount;
     beamMesh.frustumCulled = false;
@@ -852,7 +833,7 @@ class MovingHead {
     MovingHead.prepareCapInstance();
     MovingHead.prepareBoxHelperInstance();
 
-    scene.add(baseMesh, yokeMesh, headMesh, beamMesh, capMesh, boundingBoxMesh);
+    scene.add(baseMesh, yokeMesh, headMesh, beamMesh, capMesh, boundingBoxMesh, ...highlightMeshes);
   }
 
   static update(t) {
@@ -880,12 +861,7 @@ class MovingHead {
     instance = null;
     instanceCount--;
 
-    baseMesh.count = instanceCount;
-    yokeMesh.count = instanceCount;
-    headMesh.count = instanceCount;
-    beamMesh.count = instanceCount;
-    capMesh.count = instanceCount;
-    boundingBoxMesh.count = instanceCount;
+    syncInstanceCounts();
   }
 
   static getBA() {

@@ -328,7 +328,7 @@ class Visualizer {
     const width = this.domElement.offsetWidth;
     const height = this.domElement.clientHeight;
     const aspect = width / height;
-    this.camera = new THREE.PerspectiveCamera(45, aspect, 0.01, 1000);
+    this.camera = new THREE.PerspectiveCamera(50, aspect, 0.01, 1000);
     this.camera.up.set(0, 0, 1);
     this.camera.position.y = 40;
     this.camera.position.z = 10;
@@ -346,7 +346,7 @@ class Visualizer {
     this.controls.screenSpacePannning = false;
     this.controls.minDistance = 5;
     this.controls.maxDistance = 100;
-    this.controls.maxPolarAngle = Math.PI / 2.1;
+    this.controls.maxPolarAngle = Math.PI;
     this.controls.autoRotate = this.autoRotate;
     this.controls.autoRotateSpeed = 5
     AnimationManager.add(() => {
