@@ -9,6 +9,7 @@
     "build": "vite build",
     "build:embed": "vite build --config vite.config.embed.mjs",
     "lint": "eslint --ext .js,.vue --ignore-path .gitignore --fix src",
+    "lint:check": "eslint --ext .js,.vue --ignore-path .gitignore src",
     "docs:build": "npm run docs:manual:build & npm run docs:dev:ui:build & npm run docs:dev:core:build",
     "docs:dev:core:build": "docma --config ./docs/developer/core/docma.json",
     "docs:dev:core:serve": "docma --config ./docs/developer/core/docma.json && docma serve ./docs/developer/core/dist",

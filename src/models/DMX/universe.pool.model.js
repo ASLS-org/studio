@@ -2,7 +2,6 @@ import Universe from './universe.model';
 
 /**
  * @class UniversePool
- * @extends {Proxify}
  * @classdesc Pool of universe instances
  */
 class UniversePool {

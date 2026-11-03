@@ -1,6 +1,6 @@
 # Navigation Menu
 
-Show properties may be saved, edited and loaded through the toolbar's navigation menu. It is sliced into four subsections:
+Show properties may be saved, edited and loaded through the toolbar's navigation menu. It is sliced into three subsections:
 
 <Video src="/interface/toolbar.webm"/>
 
@@ -47,27 +47,9 @@ In order to keep a persistent copy of your project, you may choose to generate a
 
 <img style="border-radius:5px" src="/interface/toolbar_nav_file_export.png" alt="export showfile" width="300"/>
 
-## Edit Menu
-
-The edit menu may be accessed in order to [Undo](#undo) and [Redo](#redo) actions.
-
-<img style="border-radius:5px" src="/interface/toolbar_nav_edit.png" alt="edit menu" width="300"/>
-
-::: info 
-The app's undo feature listens for user click events in order to record new stashable actions. Actions triggered through keypresses such as input definitions will not be recorded until a new click action is recorded (e.g. click outside of the input box).
+::: info
+Undo and Redo are not available in this version of ASLS Studio. Remember to [save](#save-showfile-locally) or [export](#export-showfile) your show regularly.
 :::
-
-### Undoing Actions
-
-Most actions may be undone by selecting the `edit > undo` submenu or simply by hitting the <kbd>`Ctrl+Z`</kbd> shortcut keys.
-
-<img style="border-radius:5px" src="/interface/toolbar_nav_edit_undo.png" alt="undo action" width="300"/>
-
-### Redoing Actions
-
-Once an action has been [undone](#undoing-actions), it is pooled into a redo stack. Therefore, undone actions may be restored by selecting the `edit > redo` submenu or simply by hitting the <kbd>`Ctrl+Y`</kbd> shortcut keys.
-
-<img style="border-radius:5px" src="/interface/toolbar_nav_edit_redo.png" alt="redo action" width="300"/>
 
 ## Preferences Menu
 

@@ -1,7 +1,5 @@
 import ukColors from '@/views/components/uikit/colors/uikit.colors';
 import Live from './live.model';
-import { Proxify } from '../utils/proxify.utils';
-
 /**
  * Cue types enumeration
  *
@@ -58,13 +56,12 @@ const DEFAULT_CUE_DATA = {
 
 /**
  * @class Cue
- * @extends {Proxify}
  * @classdesc Cues are collections of DMX channels manipulation function bound to specific sets of
  * fixtures. They come in varying types, Currently implemented types include Scene and Effect
  * @see Scene
  * @see Effect
  */
-class Cue extends Proxify {
+class Cue {
   /**
    * Creates an instance of Cue.
    *
@@ -79,7 +76,6 @@ class Cue extends Proxify {
    * @param {Number} data.relative Cue startup configuration
    */
   constructor(data) {
-    super();
     if (!data.isStub) {
       this.id = data.id;
       this.type = data.type;

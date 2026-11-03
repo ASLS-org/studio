@@ -3,9 +3,6 @@ import {
   createRouter,
 } from 'vue-router';
 import ShowSingleton from '@/singletons/show.singleton';
-import {
-  ProxifySingleton,
-} from '@/models/utils/proxify.utils';
 
 import GroupModifier from '@/views/activities/app/fragments/modifiers/group/group.modifier.fragment.vue';
 import AppActivity from '@/views/activities/app/app.activity.vue';
@@ -65,10 +62,6 @@ router.beforeEach(async (from, to, next) => {
     });
   }
   return next();
-});
-
-ProxifySingleton.on('undo', (data) => {
-  router.push(data.path).catch(() => {});
 });
 
 export default router;

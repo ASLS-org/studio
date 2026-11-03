@@ -3,7 +3,6 @@
  *
  * @constant {Number} DEFAULT_CUE_FADEIN
  */
-import { Proxify } from '../utils/proxify.utils';
 import Live from './live.model';
 
 const DEFAULT_CUE_FADEIN = 0;
@@ -16,10 +15,9 @@ const DEFAULT_CUE_FADEOUT = 0;
 
 /**
  * @class CueItem
- * @extends {Proxify}
  * @classdesc CueItems are references to a chase's cue instance activity overtime
  */
-class CueItem extends Proxify {
+class CueItem {
   /**
    * Creates an instance of CueItem.
    *
@@ -34,7 +32,6 @@ class CueItem extends Proxify {
    * @param {Number} data.subDiv CueItem's bar subdivision data TODO: remove this ??
    */
   constructor(data) {
-    super();
     this.id = data.id;
     this.handle = data.cue;
     this.fadeIn = data.fadeIn;
@@ -44,7 +41,6 @@ class CueItem extends Proxify {
     this.timeStart = data.timeStart;
     this.tickStart = data.tickStart;
     this._subDiv = data.subDiv;
-    return this.proxify(['handle']);
   }
 
   /**

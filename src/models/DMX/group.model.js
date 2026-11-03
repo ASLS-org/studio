@@ -18,7 +18,6 @@ const MODIFIER_TYPES = [
 
 /**
  * @class Group
- * @extends {Proxify}
  * @classdesc Chases are collections of cues to be triggered over time
  */
 class Group {

@@ -1,0 +1,109 @@
+---
+name: vue-ui-change
+description: How to build or change UI in ASLS Studio. Covers uk-* uikit components, activity fragments, modifier widgets, and popups under src/views, plus Options API with @vue/compat, global registration, styling variables, naming, and JSDoc/story tags. Use for any .vue file work.
+---
+
+# UI changes (src/views)
+
+Read `src/views/CLAUDE.md` for the folder map.
+
+## Pick the right place
+
+| You need | Put it in | Name |
+|---|---|---|
+| Reusable control used in 2+ places | `components/uikit/<family>/` | `uikit.<family>.<variant>.vue`, `name: 'Uk<Family><Variant>'` |
+| Panel inside a modifier | `activities/app/fragments/modifiers/<area>/_widgets/` | `<area>.modifier.widget.<thing>.vue` |
+| Widget shared by several modifiers | `fragments/modifiers/_widgets/` | `modifier.widget.<thing>.vue` |
+| Modal | the owning fragment's `_popups/` | `popup.<thing>.vue` or `<area>.modifier.popup.<thing>.vue` |
+| New screen region | `activities/app/fragments/<area>/` | `<area>.fragment.vue` |
+
+Reuse before creating. List the existing kit with
+`ls -R src/views/components/uikit | grep .vue`: buttons, inputs (checkbox, select, textbox
+num/str, range fader/knob/gauge/vumeter), lists, menus, popups, widgets, cues, containers
+(`uk-flex`, `uk-spacer`), icons, loaders.
+
+## Component skeleton (match existing files)
+
+```vue
+<template>
+  <uk-widget :header="{ title: 'Cue Settings', icon: 'settings' }" dockable>
+    ...
+  </uk-widget>
+</template>
+
+<script>
+/**
+ * @component Short description of what the component does.
+ * @namespace uikit/inputs/<family>        (uikit only)
+ * @story Default {"label":"default"}      (uikit only: one per notable prop combo)
+ */
+export default {
+  name: 'GroupModifierWidgetCueSettings',
+  compatConfig: {
+    // or, for full vue 3 compat in this component:
+    MODE: 3,
+  },
+  props: {
+    /**
+     * Handle to the edited cue instance
+     */
+    cue: { type: Object, default: null },
+  },
+  emits: ['update:modelValue', 'select'],
+  data() {
+    return {
+      /**
+       * Currently selected tab index
+       */
+      tab: 0,
+    };
+  },
+  methods: {
+    /**
+     * Selects ...
+     *
+     * @public
+     */
+    select() {},
+  },
+};
+</script>
+
+<style scoped>
+.cue_settings { background: var(--primary-light); }
+</style>
+```
+
+## Rules
+
+- **Registration.** A new uikit component must be exported from its family `index.js`, and a new
+  family added to `components/uikit/index.js`. `main.js` registers recursively by `name`, so a
+  missing `name` means it isn't registered. Fragment-local widgets are imported and listed in
+  `components` instead.
+- **State.** Read and mutate show state through `this.$show` and the model instances passed as
+  props. Call model methods; don't reimplement engine logic in components. Mutating a model
+  instance passed as a prop is allowed (`vue/no-mutating-props` is shallow-only). Reassigning the
+  prop is not.
+- **v-model.** Use `modelValue` + `update:modelValue`. Popups use `mixins: [PopupMixin]`, which
+  provides `state`, `update()` and `close()`.
+- **Events.** Prefer props/emits. Use `EventBus` (`@/plugins/eventbus`) only for app-wide signals
+  (`app_error`, `app_ready`, `visualizer_*`), and remove listeners in `beforeUnmount`.
+- **Errors.** Throwing in a handler reaches `app.config.errorHandler`, which shows the error popup.
+  Don't swallow errors silently.
+- **Hot paths.** Faders, knobs, timelines and colour pickers fire at pointer rate. Throttle with
+  `requestAnimationFrame`, and don't create reactive data for values written every frame.
+- **Style.** Scoped plain CSS, snake_case class names, CSS variables from
+  `src/assets/styles/global.css`. No inline hard-coded colours except data-driven ones
+  (group/universe/cue colours).
+- **Icons.** `<uk-icon name="...">` maps to `components/uikit/icons/images/*.svg`. Add new SVGs
+  there.
+- **Keyboard.** Reuse the existing patterns: Ctrl/Shift multi-select in lists, Del/Backspace
+  delete, and Space play/pause (global, in `toolbar.fragment.vue` `handleKeydownEvent`). The
+  menu's Ctrl+Z / Ctrl+Y labels aren't bound yet. Bind new global shortcuts there, and don't fire
+  them while a text input has focus.
+
+## Finish
+
+- [ ] `npx eslint <touched .vue files>` is clean.
+- [ ] Verified in the browser (skill `run-studio`), including resize/dock behaviour if it's a widget.
+- [ ] The interaction changed? Update the manual page for that screen (skill `user-manual`).

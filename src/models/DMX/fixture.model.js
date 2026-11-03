@@ -1,6 +1,4 @@
-import {
-  Proxify,
-} from '../utils/proxify.utils';
+import { markRaw } from 'vue';
 import Channel from './channel.model';
 import MovingHead from '../../plugins/visualizer/moving_head';
 import Controls from '../../plugins/visualizer/controls';
@@ -125,7 +123,7 @@ const DEFAULT_FIXTURE_DATA = {
  * @class
  * @classdesc Definition of a DMX512 Fixture model
  */
-class Fixture extends Proxify {
+class Fixture {
   /**
    * @param {Object} data Fixture initialisation data
    * @param {Object} data.OFLData OFL Object fixture configuration
@@ -141,7 +139,6 @@ class Fixture extends Proxify {
    * @param {Object} data.OFLData Fixture's rotation in 3D space
    */
   constructor(data = DEFAULT_FIXTURE_DATA) {
-    super();
     if (!data.isStub) {
       this.OFLData = data.OFLData;
       this.id = parseInt(data.id, 10);
@@ -181,7 +178,6 @@ class Fixture extends Proxify {
         this.setChannel(channel.id - 1, 0);
       });
     }
-    return this.proxify(['_3DModel']);
   }
 
   /** *******************************************
@@ -727,7 +723,7 @@ class Fixture extends Proxify {
         });
         movingHead.position = this._position; // Setting moving head's position in 3D space
         movingHead.rotation = this._rotation; // Setting moving head's rotation in 3D space
-        this._3DModel = movingHead; // Binding moving head instance to this fixture instance
+        this._3DModel = markRaw(movingHead); // Binding moving head instance, kept out of Vue reactivity
         break;
       }
       default: { // Do nothing for every other fixture types.
