@@ -91,6 +91,9 @@ function createWindow() {
     mainWindow.loadFile('./out/renderer/index.html');
   }
 
+  const menu = new Menu();
+  Menu.setApplicationMenu(menu);
+
   mainWindow.on('ready-to-show', () => {
     mainWindow.maximize();
     mainWindow.show();
