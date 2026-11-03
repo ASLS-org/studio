@@ -57,11 +57,13 @@ A selected fixture's [Settings](#fixture-settings) can be modified by modifying 
 <Video src="/interface/modifier_universe_fixture_settings_widget.webm"/>
 
 
-| Setting | Description                           |
-| ------- | ------------------------------------- |
-| Name    | The fixture's nickname                |
-| Address | The fixture's address on the universe |
-| Mode    | The fixture's operating mode          |
+| Setting | Description                                                         |
+| ------- | ------------------------------------------------------------------- |
+| Name    | The fixture's nickname                                              |
+| Address | The fixture's address on the universe                               |
+| Mode    | The fixture's operating mode. It is saved with the show and restored when the show is reopened. |
+
+When you change a fixture's mode, channels that exist in both modes (for example Dimmer or Pan) keep their current value and channels new to the mode start at 0. The fixture's address range grows or shrinks to the new mode's channel count. If the new mode needs more addresses than are free after the fixture, or would go past address 512, the change is refused and the fixture stays in its current mode.
 
 ## Fixture Position Tool
 
