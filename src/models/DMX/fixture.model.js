@@ -1,28 +1,20 @@
 import { markRaw } from 'vue';
 import Channel from './channel.model';
+import { PROFILE_SOURCES, resolveModeName } from '../fixtures/fixture.profile';
 import MovingHead from '../../plugins/visualizer/moving_head';
 import Controls from '../../plugins/visualizer/controls';
 
 /**
- * Splitting pattern for parsing fine channels
+ * Highest DMX channel value
  *
  * @constant
- * @type {String}
+ * @type {Number}
  * @default
  */
-const FINE_CHANNEL_SPLIT_PATERN = ' fine';
+const MAX_DMX_VALUE = 255;
 
 /**
- * Fine channel terminology to be used for fine channel detection
- *
- * @constant
- * @type {String}
- * @default
- */
-const FINE_CHANNEL_TERMINOLOGY = 'Fine';
-
-/**
- * OFL Capability types strings for parsing OFL Fixture channels
+ * Capability types strings handled when pushing channel values to the 3D model
  *
  * @constant
  * @type {String}
@@ -100,10 +92,10 @@ const CMY_CHANNELS = ['Cyan', 'Magenta', 'Yellow'];
  * @default
  */
 const DEFAULT_FIXTURE_DATA = {
-  OFLData: undefined,
+  profile: undefined,
   manufacturer: undefined,
   model: undefined,
-  modeName: undefined,
+  mode: undefined,
   id: 0,
   chStart: 0,
   universe: 0,
@@ -126,26 +118,25 @@ const DEFAULT_FIXTURE_DATA = {
 class Fixture {
   /**
    * @param {Object} data Fixture initialisation data
-   * @param {Object} data.OFLData OFL Object fixture configuration
+   * @param {Object} data.profile Fixture profile (see models/fixtures/fixture.profile.js)
    * @param {Object} data.id Fixture's unique identifier
    * @param {Object} data.universe Fixture's DMX512 Universe
    * @param {Object} data.manufacturer Fixture manufacturer name as described in fixture_list.json
    * @param {Object} data.model Manufacturer's fixture model name as described in fixture_list.json
-   * @param {Object} data.modeName Mode name of the fixture's selected running mode
-   * @param {Object} data.wheels Fixture's wheels data
-   * @param {Object} data.category Fixture category as parsed from OFL data
+   * @param {String|Number} data.mode Name (or index) of the fixture's selected running mode
    * @param {Object} data.chStart FIxture's universe address/starting channel
    * @param {Object} data.position Fixture's position in 3D space
-   * @param {Object} data.OFLData Fixture's rotation in 3D space
+   * @param {Object} data.rotation Fixture's rotation in 3D space
    */
   constructor(data = DEFAULT_FIXTURE_DATA) {
     if (!data.isStub) {
-      this.OFLData = data.OFLData;
+      this.profile = data.profile;
+      this.source = data.profile.source || PROFILE_SOURCES.OFL;
       this.id = parseInt(data.id, 10);
       this.universe = parseInt(data.universe, 10);
       this.manufacturer = data.manufacturer;
       this.model = data.model;
-      this.modeName = data.mode;
+      this.modeName = resolveModeName(data.profile, data.mode);
       this.wheels = {};
       this.name = data.name || DEFAULT_FIXTURE_NAME;
       this.category = data.category;
@@ -173,7 +164,7 @@ class Fixture {
         y: 0,
         z: 0,
       };
-      this.parseFromOFLData();
+      this.parseFromProfile();
       this.channels.forEach((channel) => {
         this.setChannel(channel.id - 1, 0);
       });
@@ -217,7 +208,8 @@ class Fixture {
       name: this.name,
       universe: this.universe,
       chStart: this.chStart,
-      mode: this.modeNam,
+      mode: this.modeName,
+      source: this.source,
       position: this.position,
       rotation: this.rotation,
     };
@@ -407,13 +399,22 @@ class Fixture {
    * @type {Number}
    */
   set modeIndex(modeIndex) {
+    const previousValues = {};
+    this.channels.forEach((channel) => {
+      previousValues[`${channel.type}#${channel.qaIndex}`] = channel.value.DMX;
+    });
     this.channels = [];
     this.quickChannelsAccessors = {};
     this.modeName = this.modeNames[modeIndex];
-    // this.parseFromOFLData();
     this.prepareChannels();
     this.setupFineChannels();
     this.setupQuickAccessors();
+    // Coarse channels first: writing a coarse channel resets its fine byte
+    const restore = (channel) => {
+      this.setChannel(channel.id - 1, previousValues[`${channel.type}#${channel.qaIndex}`] || 0);
+    };
+    this.channels.filter((channel) => !channel.isFine).forEach(restore);
+    this.channels.filter((channel) => channel.isFine).forEach(restore);
   }
 
   get modeIndex() {
@@ -630,40 +631,37 @@ class Fixture {
   }
 
   /**
-   *
-   * @param {Object} fixtureData
-   * @todo check and remove this, it's not used anymore.
-   */
-  init(fixtureData) {
-    this.parseFromOFLData(fixtureData);
-  }
-
-  /**
-   * Sets specified channel value for given fixture channel index.
+   * Sets specified channel value for given fixture channel index. A channel with a fine
+   * companion takes the integer part and its fine channel the fractional part (16-bit);
+   * other channels take the value rounded to the nearest step.
    *
    * @param {Number} id fixture's channel index
-   * @param {Number} value channel value (0-255)
+   * @param {Number} value channel value (0-255, fractional values allowed)
    */
   /* eslint-disable max-len */
   setChannel(id, value) {
     const channel = this.channels[id]; // Getting channel instance from ID
+    const clampedValue = Math.min(Math.max(Number(value) || 0, 0), MAX_DMX_VALUE); // Clamping value between 0 and 255
+    let DMXValue;
     if (channel.fineChannels.length > 0) { // Channel has fine capabilities ?
-      this.setChannel(channel.fineChannels[0].id - 1, (value % 1) * 255); // Setting fine channel values recursively
+      this.setChannel(channel.fineChannels[0].id - 1, (clampedValue % 1) * MAX_DMX_VALUE); // Fine channel takes the fractional part
+      DMXValue = Math.floor(clampedValue);
+    } else {
+      DMXValue = Math.round(clampedValue);
     }
-    value = Math.ceil(Math.min(Math.max(value, 0), 255)); // Clamping value between 0 and 255
-    const capability = channel.getCapability(value); // Fetching channel's capability from value
-    this.channels[id].value = value; // Setting channel's value
+    const capability = channel.getCapability(DMXValue); // Fetching channel's capability from value
+    channel.value = DMXValue; // Setting channel's value
     if (id === 0) { // If channel is first
       this._3DModel.colorPreset = null; // Defaulting color preset to null
     }
     if (capability) { // Making sure channel's capability is defined
-      const values = capability.getValue(value); // Fetching values from capability value
+      const values = capability.getValue(DMXValue); // Fetching values from capability value (reused object)
       switch (capability.type) { // Checking capability type
         case CAPABILITY_TYPES.ColorIntensity: // Capability is color
           this._3DModel.colorIntensity = values; // Updating fixture 3D model color intensity with provided color value
           break;
         case CAPABILITY_TYPES.WheelSlot: { // Capability is wheelSlot
-          const slot = Math.floor(capability.getValue(value).slotNumber) - 1.0; // Parsing slot number from value
+          const slot = Math.floor(values.slotNumber) - 1.0; // Parsing slot number from value
           switch (channel.type) { // Dtermining wheel type
             case WHEEL_CHANNEL_TYPES.COLOR_WHEEL: // Wheel is color wheel
               this._3DModel.colorWheelSlot = slot; // Updating 3D model's color wheel slot in use
@@ -678,30 +676,32 @@ class Fixture {
         case CAPABILITY_TYPES.ColorPreset:
           this._3DModel.colorPreset = values.color ? values.color[0] : null;
           break;
-        default:
-          Object.keys(values).forEach((val) => {
-            this._3DModel[val] = values[val];
-          });
+        default: {
+          const { valueKeys } = capability;
+          for (let i = 0; i < valueKeys.length; i++) {
+            this._3DModel[valueKeys[i]] = values[valueKeys[i]];
+          }
           break;
+        }
       }
     }
   }
   /* eslint-disable max-len */
 
   /**
-   * Parses OFL data and rpepares fixture parameters and channels
+   * Prepares fixture parameters and channels from the fixture's profile
    *
    * @public
    * @todo improve error handling.
    * @todo Implement other fixure categories
    */
-  parseFromOFLData() {
-    // eslint-disable-next-line prefer-destructuring
-    this.category = this.OFLData.categories[0]; // We're only interested in the first category asset ATM.
-    this.wheels = this.OFLData.wheels; // Isolating and setting fixture's wheels configuration from OFL data
-    this.bulb = this.OFLData.physical.bulb; // Isolating and setting fixture's bulb configuration from OFL data
-    this._name = this.OFLData.name; // Isolating and setting fixture's default name from OFL data
-    this.modes = this.OFLData.modes; // Isolating and setting fixture's modes configuration from OFL data
+  parseFromProfile() {
+    const { profile } = this;
+    this.category = profile.category; // Main category of the fixture type
+    this.wheels = profile.wheels; // Fixture's wheels configuration
+    this.bulb = profile.physical.bulb; // Fixture's bulb configuration
+    this._name = profile.name; // Fixture type's default name
+    this.modes = profile.modes; // Fixture's modes, shared with every fixture of this type
     this.prepareChannels(); // Prepare fixture's channels
     this.setupFineChannels();
     this.setupQuickAccessors();
@@ -718,18 +718,18 @@ class Fixture {
     switch (this.category) { // Checking fixture category
       case FIXTURE_TYPES.MOVING_HEAD: { // Fixture is a moving head
         const movingHead = new MovingHead({ // Creating new moving head instance
-          minAngle: this.OFLData.physical.lens ? this.OFLData.physical.lens.degreesMinMax[0] : 10, // Setting moving head's minimum beam angle
-          maxAngle: this.OFLData.physical.lens ? this.OFLData.physical.lens.degreesMinMax[1] : 25, // Setting moving head's maximum beam angle
+          minAngle: this.profile.physical.lens ? this.profile.physical.lens.degreesMinMax[0] : 10, // Setting moving head's minimum beam angle
+          maxAngle: this.profile.physical.lens ? this.profile.physical.lens.degreesMinMax[1] : 25, // Setting moving head's maximum beam angle
           minTilt: this.quickChannelsAccessors.Tilt ? this.quickChannelsAccessors.Tilt[0].minVal : 0,
           maxTilt: this.quickChannelsAccessors.Tilt ? this.quickChannelsAccessors.Tilt[0].maxVal : 0,
           minPan: this.quickChannelsAccessors.Pan ? this.quickChannelsAccessors.Pan[0].minVal : 0,
           maxPan: this.quickChannelsAccessors.Pan ? this.quickChannelsAccessors.Pan[0].maxVal : 0,
-          colorTemp: this.OFLData.physical.bulb.colorTemperature, // Setting moving head's default bulb color temperature
+          colorTemp: this.profile.physical.bulb.colorTemperature, // Setting moving head's default bulb color temperature
           intensity: 0.0, // Setting moving head's default intensity
           pan: 128, // Setting moving head's default pan value
           tilt: 128, // Setting moving head's default tilt value
-          colorWheel: this.OFLData.wheels && this.OFLData.wheels['Color Wheel'] ? this.OFLData.wheels['Color Wheel'].slots : [], // Providing color wheel data (if necessary)
-          goboWheel: this.OFLData.wheels && this.OFLData.wheels['Gobo Wheel'] ? this.OFLData.wheels['Gobo Wheel'].slots : [], // Providing gobo wheel data (if necessary) (not supported in renderer yet...)
+          colorWheel: this.wheels['Color Wheel'] ? this.wheels['Color Wheel'].slots : [], // Providing color wheel data (if necessary)
+          goboWheel: this.wheels['Gobo Wheel'] ? this.wheels['Gobo Wheel'].slots : [], // Providing gobo wheel data (if necessary) (not supported in renderer yet...)
         });
         movingHead.position = this._position; // Setting moving head's position in 3D space
         movingHead.rotation = this._rotation; // Setting moving head's rotation in 3D space
@@ -743,40 +743,16 @@ class Fixture {
   }
 
   /**
-   * Prepare fixture's channel from provided OFL configuration data
+   * Prepares fixture's channels from the selected mode of its profile
    *
    * @public
    */
   prepareChannels() {
-    const OFLData = JSON.parse(JSON.stringify(this.OFLData));
-    this.channels = [];
-    let channelId = 0; // Initialising channel index to 0
-    this.mode = OFLData.modes[this.modeIndex] || OFLData.modes[0]; // Parsing and setting fixture channel mode
-    this.mode.channels.forEach((channel) => { // Looping through channel modes
-      if (channel && typeof channel === 'string') { // Making sure the OFL mode data contains a channel value
-        const split = channel.split(FINE_CHANNEL_SPLIT_PATERN); // Looking for and parsing fine channel aliases
-        const channelName = split[0]; // Getting channel name from split result
-        const isFine = split.length > 1; // Checking if split result contains a result for fine alias
-        const channelData = OFLData.availableChannels[channelName]; // Isolating channel data
-        if (channelData && channelData.capability && isFine) { // Checking if the channel has a fine alias
-          channelData.capability.type = `${channelName}${FINE_CHANNEL_TERMINOLOGY}`; // Setting fine terminology to channel's capability type
-        }
-        const chn = new Channel({ // Instanciating new channel
-          id: ++channelId, // Channel's ID is set and incremented for the next loop occurence
-          type: channelName, // Setting channel type name @see channel.model.js
-          name: `${channelName}${isFine ? FINE_CHANNEL_TERMINOLOGY : ''}`, // Setting channel name and fine terminology @see channel.model.js
-          OFLData: channelData, // Providing channel data
-          isFine, // Setting fine flag
-        });
-        this.channels.push(chn); // Instanciating channel in the fixture's channel pool
-      } else { // In case the OFL channel configuration is emty/undefined
-        const chn = new Channel({ // Instanciating a new empty channel
-          type: 'Unset',
-          id: ++channelId, // Setting channel's ID and incrementing for the next loop occurence
-        });
-        this.channels.push(chn); // Pushing empty channel in to the fixture's channel pool
-      }
-    });
+    this.mode = this.modes[this.modeIndex] || this.modes[0]; // Selected profile mode
+    this.channels = this.mode.channels.map((profileChannel, index) => new Channel({
+      id: index + 1,
+      profileChannel,
+    }));
   }
 
   /**
@@ -803,13 +779,7 @@ class Fixture {
    */
   setupFineChannels() {
     this.channels.forEach((channel) => {
-      if (channel.fineChannelAliases && !channel.isFine) {
-        channel.fineChannels = channel.fineChannelAliases.flatMap((alias) => {
-          const standardizedAlias = alias.replace(' ', '').toLowerCase();
-          const fineChannel = this.channels.find((item) => item.type.replace(' ', '').toLowerCase() === standardizedAlias);
-          return fineChannel || [];
-        });
-      }
+      channel.fineChannels = channel.fineIndexes.map((index) => this.channels[index]);
     });
   }
 

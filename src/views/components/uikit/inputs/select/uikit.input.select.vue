@@ -36,24 +36,26 @@
           />
         </span>
       </uk-flex>
-      <uk-flex
-        v-show="displayed"
-        ref="options"
-        tabindex="0"
-        col
-        class="uikit_select_option_list"
-        :style="optionListStyle"
-      >
-        <!--eslint-disable vue/no-v-html-->
-        <h4
-          v-for="(option, index) in options"
-          :key="index"
-          class="uikit_select_option"
-          @click="select(index)"
-          v-html="option"
-        />
-        <!--eslint-enable vue/no-v-html-->
-      </uk-flex>
+      <Teleport to="body">
+        <uk-flex
+          v-show="displayed"
+          ref="options"
+          tabindex="0"
+          col
+          class="uikit_select_option_list"
+          :style="optionListStyle"
+        >
+          <!--eslint-disable vue/no-v-html-->
+          <h4
+            v-for="(option, index) in options"
+            :key="index"
+            class="uikit_select_option"
+            @click="select(index)"
+            v-html="option"
+          />
+          <!--eslint-enable vue/no-v-html-->
+        </uk-flex>
+      </Teleport>
     </div>
   </uk-flex>
 </template>
@@ -153,6 +155,17 @@ export default {
     modelValue(newValue) {
       this.select(parseInt(newValue, 10));
     },
+    displayed(displayed) {
+      if (displayed) {
+        window.addEventListener('scroll', this.computeOptionListStyle, true);
+        window.addEventListener('resize', this.computeOptionListStyle);
+      } else {
+        this.removeListeners();
+      }
+    },
+  },
+  beforeUnmount() {
+    this.removeListeners();
   },
   methods: {
     /**
@@ -197,18 +210,23 @@ export default {
      */
     show() {
       if (!this.disabled) {
-        const { body } = document;
         this.displayed = !this.displayed;
         if (this.displayed) {
-          body.appendChild(this.$refs.options.$el);
           this.$nextTick(this.computeOptionListStyle);
-        } else {
-          body.removeChild(this.$refs.options.$el);
         }
       }
     },
     /**
-     * Computes the option list styling.
+     * Stops following scroll and resize events
+     *
+     */
+    removeListeners() {
+      window.removeEventListener('scroll', this.computeOptionListStyle, true);
+      window.removeEventListener('resize', this.computeOptionListStyle);
+    },
+    /**
+     * Computes the option list styling. Also runs on scroll and resize while the list is
+     * displayed so it follows the input.
      *
      */
     computeOptionListStyle() {
@@ -299,7 +317,7 @@ export default {
   background: var(--secondary-darker);
 }
 .uikit_select_option_list {
-  position: absolute;
+  position: fixed;
   bottom: 26px;
   z-index: 1000;
   width: inherit;

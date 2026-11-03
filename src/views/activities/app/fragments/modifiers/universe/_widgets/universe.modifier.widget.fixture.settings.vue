@@ -30,15 +30,19 @@
       />
       <uk-select-input
         v-if="fixture.modeIndex != null"
-        v-model="fixture.modeIndex"
+        :key="modeSelectKey"
+        :model-value="fixture.modeIndex"
         label="Mode"
         :options="fixture.modeNames"
+        @update:model-value="changeMode"
       />
     </uk-flex>
   </uk-widget>
 </template>
 
 <script>
+import EventBus from '@/plugins/eventbus';
+
 export default {
   name: 'UniverseModifierWidgetFixtureSettings',
   compatConfig: {
@@ -63,7 +67,28 @@ export default {
         title: 'Fixture Settings',
         icon: 'wrench',
       },
+      /**
+       * Re-renders the mode select so it shows the current mode after a refused change
+       */
+      modeSelectKey: 0,
     };
+  },
+  methods: {
+    /**
+     * Switches the fixture's mode through its universe so the patch stays consistent
+     *
+     * @public
+     * @param {Number} modeIndex Index of the selected mode
+     */
+    changeMode(modeIndex) {
+      try {
+        this.$show.universePool.getFromId(this.fixture.universe)
+          .changeFixtureMode(this.fixture, modeIndex);
+      } catch (err) {
+        this.modeSelectKey++;
+        EventBus.emit('app_error', err);
+      }
+    },
   },
 };
 </script>

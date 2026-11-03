@@ -27,6 +27,7 @@ src/
   main.js                 app bootstrap: registers uikit globally, $show/$utils/$http globals
   singletons/show.singleton.js   the one Show instance (exposed as this.$show)
   models/DMX/             show engine (pure-ish JS classes)  → see models/DMX/CLAUDE.md
+  models/fixtures/        fixture profiles: library loader + source adapters (OFL), pure data
   plugins/router.js       memory-history router; modifiers are routes
   plugins/eventbus.js     mitt bus (app_error, app_ready, visualizer_*)
   plugins/wsc.connection.js  WSC output (connections + per-universe streams) → skill wsc-output
@@ -99,6 +100,9 @@ buffer; a `WscConnectionStream` sends the buffer to the gateway every tick.
 - Only OFL fixtures whose first category is `Moving Head` can be patched. Other categories throw
   in `Fixture.prepare3DModelInstance()`.
 - `fixture.model.js` imports visualizer classes, so models are not runnable headless.
+- Channel `type` keys (`Dimmer`, `Pan`, ...) and their index are stored in showfile scenes. The
+  OFL adapter in `src/models/fixtures/` must keep deriving them exactly; see skill
+  `fixture-library`.
 - The WSC output path has several known bugs. Read skill `wsc-output` § Known issues first.
 - Components set `compatConfig: { MODE: 3 }` (the app runs on `@vue/compat`). Keep it on new ones.
 - `.env` is committed and holds public URLs only. Never put secrets in it; use `.env.local`.

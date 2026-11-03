@@ -229,6 +229,8 @@
 
 <script>
 import PopupMixin from '@/views/mixins/popup.mixin';
+import FixtureLibrary from '@/models/fixtures/fixture.library';
+import { PROFILE_SOURCES } from '@/models/fixtures/fixture.profile';
 
 const NO_FIXTURE_STR = 'No fixture model selected';
 const DEFAULT_FIXTURE_AMOUNT = 1;
@@ -334,11 +336,18 @@ export default {
                 y: rotation_tmp.y + this.rotationOffsets.y * i,
                 z: rotation_tmp.z + this.rotationOffsets.z * i,
               };
-              const fixture = this.$show.fixturePool.addRaw(
-                JSON.parse(
-                  JSON.stringify(this.fixture),
-                ),
-              );
+              const fixture = this.$show.fixturePool.addRaw({
+                profile: this.fixture.profile,
+                manufacturer: this.fixture.manufacturer,
+                model: this.fixture.model,
+                name: this.fixture.name,
+                category: this.fixture.category,
+                mode: this.fixture.modeNames[this.fixture.mode],
+                universe: this.fixture.universe,
+                chStart: this.fixture.chStart,
+                position: { ...this.fixture.position },
+                rotation: { ...this.fixture.rotation },
+              });
               this.universe.patchFixture(fixture);
             }
             this.loading = false;
@@ -363,15 +372,20 @@ export default {
     async loadFixture(item) {
       const { manufacturer } = item;
       const { fixture } = item;
-      const res = await this.$http.get(`${import.meta.env.VITE_STATIC_URL}fixtures/${manufacturer.name}/${fixture}`);
+      const profile = await FixtureLibrary.getProfile(
+        PROFILE_SOURCES.OFL,
+        manufacturer.name,
+        fixture,
+      );
       Object.assign(this.fixture, {
-        OFLData: res.data,
-        modes: res.data.modes,
-        modeNames: res.data.modes.map((mode) => mode.name),
-        name: res.data.name,
+        profile,
+        modes: profile.modes,
+        modeNames: profile.modes.map((mode) => mode.name),
+        name: profile.name,
         model: fixture,
         manufacturer: manufacturer.name,
-        category: res.data.categories[0],
+        category: profile.category,
+        mode: 0,
         loaded: true,
       });
       this.patchError = false;

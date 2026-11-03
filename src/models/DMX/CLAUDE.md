@@ -6,7 +6,9 @@ Use skill `dmx-model-change` for any change here. This file is the map.
 
 ```
 Show (show.model.js, singleton via singletons/show.singleton.js)
-├─ fixturePool  FixturePool → Fixture → Channel → Capability (capabilityManager)
+├─ fixturePool  FixturePool → Fixture → Channel (runtime value per fixture)
+│                Fixture.profile → shared, frozen FixtureProfile (src/models/fixtures/):
+│                modes → channels { type, attribute, fine, capabilities, lookup }
 ├─ universePool UniversePool → Universe        (patch map, 512-byte _dmxBuffer, .stream)
 ├─ groupPool    GroupPool → Group
 │                ├─ fixturePool (shared Fixture refs, via addExisting)
@@ -21,6 +23,17 @@ Show (show.model.js, singleton via singletons/show.singleton.js)
 
 Enums live next to their model and are exported: `CUE_TYPES`, `CUE_STATES`,
 `CUE_TRIGGER_STYLES`, `CUE_LOOP_STYLES` (cue.model.js), `LIVE_STATES` (live.model.js).
+
+## Fixture profiles (src/models/fixtures)
+
+- `fixture.library.js` (`FixtureLibrary.getProfile(source, manufacturer, model)`) is the only way
+  to get a fixture definition; it caches one frozen profile per fixture type. Never fetch library
+  JSON elsewhere.
+- Source adapters (`ofl.adapter.js`, later GDTF) and `fixture.profile.js` stay pure: no Vue,
+  Three.js or `import.meta`, so they run in Node and workers.
+- **Channel `type` keys and `qaIndex` are stored in showfile scenes.** The OFL adapter reproduces
+  the original derivation exactly (typos included); changing it breaks saved shows.
+- `Capability.getValue()` returns one reused object per capability: read it immediately.
 
 ## Invariants
 

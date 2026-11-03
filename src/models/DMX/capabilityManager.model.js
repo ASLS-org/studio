@@ -461,6 +461,10 @@ class Capability {
     this.parameters = {};
     this.isFine = false;
     this.init(capabilityData);
+    this._entityNames = Object.keys(this.entities);
+    this._parameterNames = Object.keys(this.parameters);
+    this.valueKeys = this._entityNames.concat(this._parameterNames);
+    this._value = {};
   }
 
   /**
@@ -548,23 +552,23 @@ class Capability {
   }
 
   /**
-   * Returns capability value from DMX channel value
+   * Returns capability value from DMX channel value. The returned object is reused by every
+   * call (capabilities are shared by every fixture of a type): read it right away, don't keep it.
    *
    * @public
    * @param {Number} DMXValue DMX channel value
+   * @returns {Object} Values keyed by `valueKeys`
    */
   getValue(DMXValue) {
-    const value = {};
-    Object.keys(this.entities).forEach((entityName) => {
-      value[entityName] = this.getEntityValue(
-        this.entities[entityName],
-        DMXValue,
-        this.isFine,
-      );
-    });
-    Object.keys(this.parameters).forEach((parameterName) => {
+    const value = this._value;
+    for (let i = 0; i < this._entityNames.length; i++) {
+      const entityName = this._entityNames[i];
+      value[entityName] = this.getEntityValue(this.entities[entityName], DMXValue, this.isFine);
+    }
+    for (let i = 0; i < this._parameterNames.length; i++) {
+      const parameterName = this._parameterNames[i];
       value[parameterName] = this.parameters[parameterName];
-    });
+    }
     return value;
   }
 
