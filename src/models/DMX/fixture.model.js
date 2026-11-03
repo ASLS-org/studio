@@ -597,6 +597,16 @@ class Fixture {
     return this.chStart + this.channels.length;
   }
 
+  /**
+   * The fixture's number of DMX channels in its current mode
+   *
+   * @type {Number}
+   * @readonly
+   */
+  get chCount() {
+    return this.channels.length;
+  }
+
   get highlighted() {
     return this._3DModel.highlighted;
   }

@@ -203,7 +203,7 @@ class Show extends EventEmitter {
       const universe = this.universePool.addRaw(universeData);
       universeData.fixtures.forEach((fixtureData) => {
         const fixture = this.fixturePool.getFromId(fixtureData.id);
-        universe.patchFixture(fixture);
+        universe.patchFixture(fixture, true);
       });
     });
   }
