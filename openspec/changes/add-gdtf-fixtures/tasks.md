@@ -9,12 +9,15 @@
       `~/Downloads/GDTF_fixtures_04_11_2026_19-_part_1`: GDTF 1.0 (70), 1.1 (24) and 1.2 (104),
       plus 4 with a zip CRC error. They include LED washes of up to 217 cells, a 400-cell LED
       wall, and 1313 wheel slot images (design.md decisions 1 and 5).
-- [ ] 1.2 `scripts/gdtf/generate-generic.js` writes the five generic fixtures of design.md
+- [x] 1.2 `scripts/gdtf/generate-generic.mjs` writes the five generic fixtures of design.md
       decision 2 into `public/gdtf/` with `gdtf_list.json`. Their wheel PNGs are rendered from
       the `gobos.js` patterns, under CC0, with a `LICENSE` file.
       Verify: the script reproduces the same files when run twice; each file unzips to a
       `description.xml` that conforms to the GDTF 1.2 schema (`xmllint --schema`, using the
       schema from the GDTF spec).
+      Note (2026-11-04): five files validate against `gdtf.xsd` from mvrdevelopment/tools; two
+      runs give identical bytes. The gobo patterns moved to `gobo_patterns.js` (no Three.js) so
+      the script can render them. `fflate` 0.8.2 added.
 
 ## 2. Engine: profiles, library, showfile (models)
 

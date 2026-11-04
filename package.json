@@ -30,6 +30,7 @@
     "@electron-toolkit/utils": "^3.0.0",
     "@vue/compat": "^3.3.0",
     "axios": "^0.26.1",
+    "fflate": "^0.8.2",
     "lodash": "^4.17.21",
     "mitt": "^3.0.1",
     "node-polyfill-webpack-plugin": "^2.0.1",

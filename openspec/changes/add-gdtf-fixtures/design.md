@@ -125,7 +125,7 @@ Four of the files fail the zip CRC check. Import rejects such a file with a mess
 - **Bundle.** It lives in `public/gdtf/` with a `gdtf_list.json` index, kept out of
   `public/fixtures/`, which is the vendored OFL snapshot. Bundled files are fetched through
   `VITE_STATIC_URL` when used, and never copied into IndexedDB.
-- **Generic fixtures.** A Node script, `scripts/gdtf/generate-generic.js`, writes the bundle
+- **Generic fixtures.** A Node script, `scripts/gdtf/generate-generic.mjs`, writes the bundle
   from code (the `description.xml` plus wheel PNGs rendered from the `gobos.js` patterns), so the
   files are reproducible and wholly the project's own. The manufacturer is "ASLS Generic":
 
@@ -291,8 +291,9 @@ Cost per frame:
 - **Image format.** `gobos.js` keeps its procedural patterns as the first layers. A profile's
   wheel slots with an `image` are decoded once per type (`createImageBitmap` from the zip entry),
   drawn into 128×128 single-channel layers, then appended to the array. A layer is the image's
-  luminance, inverted when the image is dark-on-light (GDTF gobo images are black where light
-  passes, white where it is blocked, so this is checked on the border pixels). Mipmaps are
+  luminance. GDTF gobo images are white where light passes and black outside, as in the test
+  set. A file drawn the other way round is detected on its border pixels (bright border) and
+  inverted. Mipmaps are
   rebuilt so that focus and frost blur still works.
 - **Layer cap.** The array is rebuilt when a new type adds layers, with a cap of 64 layers in
   total. Past the cap, a slot falls back to `goboLayer(slots, i)`, the built-in pattern as today.
