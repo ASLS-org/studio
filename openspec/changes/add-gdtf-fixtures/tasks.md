@@ -98,9 +98,17 @@
         channel (spec "OFL pixel bar footprint").
 
       The list shows the manufacturer as secondary text (screenshot `pp-list.png`).
-- [ ] 3.2 Missing fixtures popup at show open: lists the missing types, imports files, and offers
+- [x] 3.2 Missing fixtures popup at show open: lists the missing types, imports files, and offers
       Open anyway with a note that their data is kept. Verify: spec "Import the missing fixture"
       holds after clearing IndexedDB and reopening a saved GDTF show.
+      Note (2026-11-04): `popup.missing.fixtures.vue`, mounted in the app shell, listens to
+      `fixtures_missing`. Checked at boot with the test spot removed from IndexedDB:
+      - the show waits with the popup listing the spot;
+      - after a dropped file the button reads Open, and the show opens with the real fixture,
+        not marked unsaved;
+      - closing the popup from its header works like Open anyway (placeholder).
+
+      Screenshot `mf-ask2.png`.
 - [ ] 3.3 With GDTF fixtures, scenes, effects and faders. Verify: spec "Dimmer and position",
       "Fine channel" and "Pixel bar cells" hold (output checked in the universe view).
 

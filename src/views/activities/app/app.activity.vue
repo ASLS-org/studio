@@ -16,6 +16,7 @@
       v-model="loader.state"
       :loader="loader"
     />
+    <missing-fixtures-popup style="z-index: 999" />
     <error-popup
       v-model="errPopup.state"
       style="z-index: 1000"
@@ -35,6 +36,7 @@ import Modifier from './fragments/modifiers/modifier.fragment.vue';
 
 import PopupSplash from './_popups/popup.splash.vue';
 import ErrorPopup from './_popups/popup.error.vue';
+import MissingFixturesPopup from './_popups/popup.missing.fixtures.vue';
 
 export default {
   name: 'AppActivity',
@@ -50,6 +52,7 @@ export default {
     Modifier,
     PopupSplash,
     ErrorPopup,
+    MissingFixturesPopup,
   },
   data() {
     return {
