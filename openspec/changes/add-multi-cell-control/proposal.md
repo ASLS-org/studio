@@ -22,8 +22,9 @@ controls only reach the first one:
 
 ## What Changes
 
-- **Cells.** A fixture's cells come from its channels' `geometry` (GDTF geometry instances such as
-  heads and cells, OFL pixel keys). Channels without one belong to the whole fixture.
+- **Cells.** A fixture's cells are the parts that repeat a set of channels: GDTF geometries
+  (heads, pixels, arrays) and OFL pixels. Channels outside any cell (master dimmer, strobe, OFL
+  pixel groups) belong to the whole fixture.
 - **Model.** `Fixture` and the scene's fixture values get a `cells` list and cell-aware colour and
   Pan/Tilt access (one cell, several, or all). The current `color` / `panTilt` getters and setters
   stay as the all-cells form, so existing callers keep working.
@@ -40,10 +41,12 @@ controls only reach the first one:
 ## Capabilities
 
 ### New Capabilities
-- `cell-control`: cells of a fixture, the cell selector, scenes and effects per cell, RGBW.
+- `scenes`: scene controls per cell.
+- `effects`: effects drive every cell, phase across cells.
 
 ### Modified Capabilities
-- `fixtures`: cell-aware colour and Pan/Tilt access.
+- `fixtures`: a fixture's cells, the universe view's controls per cell, RGBW from the colour
+  picker.
 - `showfile`: the effect's cell phase option.
 
 ## Impact
