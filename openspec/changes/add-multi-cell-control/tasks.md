@@ -50,13 +50,14 @@
       selected cells, writes to every target; the `type`/`color` dedup goes. Verify in the running
       app: cell 7's dimmer at 200 is stored and played for cell 7 only; **All cells** sets all of
       them; the demo show's scenes show the same faders as before.
-- [x] 4.4 Effect wave widget: **Across cells** checkbox next to Phase start / Phase stop. Verify
+- [x] 4.4 Effect wave widget: **Spread over** select (Fixtures / Cells) under Direction, Phase
+      start and stop side by side (a checkbox there was squeezed, review 2026-11-05). Verify
       in the running app: toggling it marks the show unsaved and changes the running effect.
 
 ## 5. Docs
 
 - [x] 5.1 Manual: universe and group modifier pages (cell selector, per-cell scenes, effects
-      across cells and the **Across cells** option, RGBW from the colour picker, older shows'
+      across cells and the **Spread over** option, RGBW from the colour picker, older shows'
       effects moving every cell). Verify with `npm run docs:manual:serve`: pages render, media
       TODOs listed.
 - [x] 5.2 AI context: `src/models/DMX/CLAUDE.md` (cells, `cell.access.js`, effect targets) and

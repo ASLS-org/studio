@@ -21,18 +21,19 @@ colour channels of every cell (cyan, magenta and yellow inverted).
 - **THEN** every cell of the fixture moves, not only the first
 
 ### Requirement: Phase across cells
-An effect channel SHALL have an **Across cells** option, off by default. When it is on, the
+An effect channel SHALL have a **Spread over** option, **Fixtures** (the default) or **Cells**.
+With **Cells**, the
 effect SHALL spread its phase over every cell of its fixtures, in fixture order then cell order,
-with the same direction and phase start and stop as across fixtures. When it is off, every cell
-of a fixture SHALL take that fixture's phase.
+with the same direction and phase start and stop as across fixtures. With **Fixtures**, every
+cell of a fixture SHALL take that fixture's phase.
 
 #### Scenario: Pixel chase
 - **GIVEN** an effect on Dimmer for one 8-cell bar, square wave, phase start 0, phase stop 360,
-  direction left to right, **Across cells** on
+  direction left to right, **Spread over** set to **Cells**
 - **WHEN** the effect plays
 - **THEN** each cell's dimmer is offset by 45° from the previous one, so the light runs along
   the bar
 
 #### Scenario: Option off
-- **WHEN** **Across cells** is off
+- **WHEN** **Spread over** is set to **Fixtures**
 - **THEN** the 8 cells move together, offset only against the group's other fixtures

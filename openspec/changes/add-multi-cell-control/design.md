@@ -124,8 +124,9 @@ doesn't mark the show unsaved.
 ### 5. Showfile
 
 `FXChannel.showData` adds `cellPhase`. The constructor reads `channel.cellPhase === true`, so older
-files open with it off. Scenes and fixtures don't change. The **Across cells** checkbox sits in the
-effect wave widget, next to Phase start and Phase stop.
+files open with it off. Scenes and fixtures don't change. The **Spread over** select (Fixtures /
+Cells) sits in the effect wave widget under Direction, with Phase start and Phase stop side by
+side below it.
 
 ## Risks / Trade-offs
 

@@ -54,7 +54,7 @@
           </uk-flex>
         </uk-flex>
         <uk-flex
-          style="width: 80px"
+          style="width: 120px"
           col
           :gap="8"
         >
@@ -64,25 +64,29 @@
             label="Direction"
             :options="channel.directionOptions"
           />
-          <uk-num-input
-            v-model="channel.fixturePhaseStart"
+          <uk-select-input
+            :model-value="channel.cellPhase ? 1 : 0"
             :disabled="!channel.type"
-            :min="-360"
-            :max="360"
-            label="Phase start"
+            label="Spread over"
+            :options="spreadOptions"
+            @update:model-value="channel.cellPhase = $event === 1"
           />
-          <uk-num-input
-            v-model="channel.fixturePhaseStop"
-            :disabled="!channel.type"
-            :min="-360"
-            :max="360"
-            label="Phase stop"
-          />
-          <uk-checkbox
-            v-model="channel.cellPhase"
-            :disabled="!channel.type"
-            label="Across cells"
-          />
+          <uk-flex :gap="8">
+            <uk-num-input
+              v-model="channel.fixturePhaseStart"
+              :disabled="!channel.type"
+              :min="-360"
+              :max="360"
+              label="Phase start"
+            />
+            <uk-num-input
+              v-model="channel.fixturePhaseStop"
+              :disabled="!channel.type"
+              :min="-360"
+              :max="360"
+              label="Phase stop"
+            />
+          </uk-flex>
         </uk-flex>
       </uk-flex>
       <div class="widget_wave_modifier">
@@ -148,6 +152,10 @@ export default {
   },
   data() {
     return {
+      /**
+       * What the phase spreads over (index 1 spreads it across every cell of the fixtures)
+       */
+      spreadOptions: ['Fixtures', 'Cells'],
       /**
        * Handle to the canvas element
        */

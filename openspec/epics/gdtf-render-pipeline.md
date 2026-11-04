@@ -134,6 +134,10 @@ failing (no spec deltas) until their unit writes specs and tasks. That is expect
 
 ## Backlog (not scheduled in this epic)
 
+- Effect spreading over cells and the cell selection in the universe and scene views: 5c ships a
+  minimum viable version (Spread over: Fixtures / Cells, a cell list); the user wants a better
+  spreading model and cell selection, to design in a next epic (2026-11-05).
+
 - T3 tier: high step counts, shadows, froxel fog, WebGPU/TSL renderer.
 - Engine runtime in a Worker, with universe buffers as the only value storage (see
   `decouple-visualizer-from-models` design § Next evolution). Likely the next evolution after

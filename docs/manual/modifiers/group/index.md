@@ -259,8 +259,8 @@ This widget is highly configurable and comes with many features:
 | Direction   | Direction of the channel animation (`Left To Right`,`Right To Left`,`Symetrical`) |
 | Phase Start | Phase shift value of the first fixture in the activity group                      |
 | Phase Stop  | Phase shift value of the last fixture in the activity group                       |
-| Across cells | Spreads the phase over every cell of the fixtures (fixture order, then cell order) instead of over the fixtures, so the effect runs along a pixel bar |
+| Spread over | `Fixtures` spreads the phase over the active fixtures; `Cells` spreads it over every cell of the fixtures (fixture order, then cell order), so the effect runs along a pixel bar |
 
 > **Note:** Phase shifting for fixture that are in between the start/stop interval is automatically calculated to be spread around evenly between the whole channel's active fixtures.
 
-> **Note:** An effect moves its channel in every cell of a fixture (each pixel's dimmer, each head's pan). Without **Across cells**, the cells of a fixture move together. Shows saved with an earlier version moved only the first cell; they now move every cell.
+> **Note:** An effect moves its channel in every cell of a fixture (each pixel's dimmer, each head's pan). With **Spread over** set to **Fixtures**, the cells of a fixture move together. Shows saved with an earlier version moved only the first cell; they now move every cell.
