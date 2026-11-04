@@ -92,6 +92,11 @@ export default {
   Don't swallow errors silently.
 - **Hot paths.** Faders, knobs, timelines and colour pickers fire at pointer rate. Throttle with
   `requestAnimationFrame`, and don't create reactive data for values written every frame.
+- **Live values.** Playback writes bypass Vue (raw channels, raw cue/chase callbacks), so a widget
+  showing channel values, cue state or progress, chase playheads or activity uses
+  `views/mixins/live.mixin.js`: read them through `live(value)` (template) or a computed that calls
+  `this.live(...)`, and call `this.$liveTicker.bump()` after an operator edit. A plain reactive
+  binding to those fields stops updating during playback.
 - **Style.** Scoped plain CSS, snake_case class names, CSS variables from
   `src/assets/styles/global.css`. No inline hard-coded colours except data-driven ones
   (group/universe/cue colours).

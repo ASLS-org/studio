@@ -9,7 +9,7 @@ Show (show.model.js, singleton via singletons/show.singleton.js)
 ├─ fixturePool  FixturePool → Fixture → Channel (runtime value per fixture)
 │                Fixture.profile → shared, frozen FixtureProfile (src/models/fixtures/):
 │                modes → channels { type, attribute, fine, capabilities, lookup }
-├─ universePool UniversePool → Universe        (patch map, 512-byte _dmxBuffer, .stream)
+├─ universePool UniversePool → Universe        (patch map, 512-byte frame, .stream)
 ├─ groupPool    GroupPool → Group
 │                ├─ fixturePool (shared Fixture refs, via addExisting)
 │                ├─ cuePool  CuePool → Cue → Scene | Effect
@@ -45,6 +45,10 @@ Enums live next to their model and are exported: `CUE_TYPES`, `CUE_STATES`,
   playback/runtime state out of `showData`.
 - **Reactivity:** `$show` is deeply reactive. Wrap render objects stored on models (3D instances)
   in `markRaw` where they are created.
+- **Frames:** `Live.onFrame(fn)` callbacks run after the animations on every tick, also while
+  paused or stopped. `UniversePool` uses one to pack each universe's persistent `frame`
+  (`Uint8Array(512)`) and send it on running streams. Output, and later the visualizer, read
+  frames, never channel objects.
 - **Live:** `Live.add(updateFn, quantize = 0, fps = 60, onReady)` returns an id. With `quantize`
   the callback starts on the next quantized bar boundary. Always pair it with `Live.remove(id)`.
   Time units: `Live.beatDuration` / `Live.barDuration` in ms, derived from BPM.

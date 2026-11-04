@@ -61,6 +61,11 @@ get fadeOut() {
       so guard on state.
 - [ ] Express durations in bars and convert with `Live.barDuration` so BPM changes stay in sync.
 - [ ] Per-tick code: no allocations, no `console`, no Vue-reactive writes in hot loops.
+- [ ] `Live` callbacks run on the raw object (`toRaw` from `src/models/utils/reactivity.js`, as in
+      `Cue.cue()`): fields they write don't notify Vue. If the UI shows such a field, the widget
+      reads it through the live mixin (`$liveTicker`); never rely on reactivity for playback fields.
+- [ ] Work that must run every tick whatever the play state (packing, output) uses
+      `Live.onFrame(fn)` / `Live.offFrame(id)`, not `Live.add`.
 
 ## 6. Deletion paths
 
