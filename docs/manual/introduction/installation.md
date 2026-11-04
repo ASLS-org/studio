@@ -10,7 +10,6 @@
   <a href="https://github.com/ASLS-org/studio/?tab=GPL-3.0-1-ov-file" target="_blank">
     <img src="https://img.shields.io/github/license/asls-org/studio" alt="License" />
   </a>
-  </a>
   <a href="https://github.com/ASLS-org/studio/releases" target="_blank">
     <img src="https://img.shields.io/github/v/tag/asls-org/studio?include_prereleases&sort=semver&style=flat&label=version" alt="Version" />
   </a>

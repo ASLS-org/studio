@@ -1,6 +1,8 @@
 export default {
   title: "ASLS Studio",
   description: "Open-source, web-based DMX lighting control software.",
+  // The installation page links to the local dev server
+  ignoreDeadLinks: 'localhostLinks',
   head:[
     ['link', { rel: "icon", type: "image/png", sizes: "32x32", href: "/studio_standalone_logo.png"}],
   ],
