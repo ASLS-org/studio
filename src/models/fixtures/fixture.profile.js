@@ -1,8 +1,8 @@
 /**
- * Internal fixture profile shared by every fixture source (OFL today, GDTF later).
+ * Internal fixture profile shared by every fixture source (OFL, GDTF).
  *
  * Profiles are plain, immutable data built once per fixture type by an adapter
- * (see ofl.adapter.js) and shared by every patched instance of that type. This
+ * (see ofl.adapter.js, gdtf.adapter.js) and shared by every patched instance of that type. This
  * module must stay free of Vue, Three.js and `import.meta` so adapters can run in
  * Node or a worker.
  */
@@ -19,12 +19,27 @@
  * @property {Number} qaIndex Index of the channel among the mode's channels of the same type
  * @property {Array<Object>} capabilities Capability instances (see capabilityManager.model.js)
  * @property {Int16Array} lookup Capability index for each DMX value 0-255, NO_CAPABILITY if none
+ * @property {?String} geometry Name of the geometry node the channel drives (see GeometryNode),
+ * null for the whole fixture
+ */
+
+/**
+ * @typedef {Object} GeometryNode
+ * @property {String} name Unique node name; channels refer to it by `geometry`
+ * @property {String} kind `body`, `axis` or `beam`
+ * @property {Array<Number>} matrix 4×4 placement relative to the parent, row-major, meters
+ * @property {Array<Number>} size Length, width and height in meters (0 when unknown)
+ * @property {?String} shape Source shape hint (GDTF primitive type), or null
+ * @property {?Object} beam Beam data on `beam` nodes: `beamAngle`, `fieldAngle` (degrees),
+ * `radius` (m), `type` (GDTF beam type), `flux` (lm), `colorTemperature` (K)
+ * @property {Array<GeometryNode>} children Child nodes
  */
 
 /**
  * @typedef {Object} ProfileMode
  * @property {String} name Mode name
  * @property {Array<ProfileChannel>} channels Channels in DMX order
+ * @property {?GeometryNode} geometry Geometry tree of the mode (GDTF), or null
  */
 
 /**
@@ -37,6 +52,7 @@
  * @property {Object} physical Physical data (lens, bulb, dimensions) as given by the source
  * @property {Object} wheels Wheel definitions keyed by wheel name
  * @property {Array<ProfileMode>} modes Available modes
+ * @property {?Object} gdtf GDTF identity: `fixtureTypeId`, `revision`, `dataVersion`
  */
 
 /**
@@ -47,6 +63,7 @@
  */
 export const PROFILE_SOURCES = {
   OFL: 'ofl',
+  GDTF: 'gdtf',
 };
 
 /**

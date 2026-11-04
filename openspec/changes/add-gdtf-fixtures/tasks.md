@@ -28,13 +28,20 @@
       Note (2026-11-04): moved to `channel.types.js`. Checked over the whole library instead of
       the demo only: a Node snapshot of every channel's name, type, qaIndex, attribute, colour and
       fine pairing for all 480 OFL fixtures is byte-identical before and after.
-- [ ] 2.2 `gdtf.adapter.js` (pure, see design.md decision 1): modes, coarse and fine channels,
+- [x] 2.2 `gdtf.adapter.js` (pure, see design.md decision 1): modes, coarse and fine channels,
       functions mapped to OFL-shaped capabilities, geometry references expanded per instance,
       geometry tree, `physical`, `wheels`, derived category. Add `fflate` and the
       `PROFILE_SOURCES.GDTF` source. Verify: in Node, the adapter runs on the generic bundle and
       on all 198 readable test files without errors. The 4 damaged files are rejected with a
       message naming them. Unmapped attributes are counted, and the most common ones are
-      reviewed (blades, animation wheel and mode attributes are expected). For the pixel bar, the mode lists one set of colour channels per cell; for
+      reviewed (blades, animation wheel and mode attributes are expected).
+      Note (2026-11-04): `gdtf.archive.js` (unzip, XML) and `gdtf.adapter.js`. All 202 test
+      files import, including the 4 with a wrong CRC but intact content (design.md decision 1).
+      The categories come out as 100 Moving Head, 72 Color Changer and 30 Pixel Bar; the largest
+      mode has 480 channels and 400 cells. The most common unmapped attributes are Control1,
+      PositionMSpeed, ColorMacro1, Tint, DimmerMode, Blade*, AnimationWheel1 and ColorMixMode.
+      The `Entity.parseValueUnit` fix is recorded in design.md. The OFL snapshot from 2.1 is
+      unchanged. For the pixel bar, the mode lists one set of colour channels per cell; for
       the moving head, Pan and Tilt have fine channels and the angle ranges match the file.
 - [ ] 2.3 OFL adapter expands `matrixChannels` insert blocks per pixel (`repeatFor`,
       `channelOrder`, `$pixelKey` names, `geometry` = pixel key). On load, report fixtures whose

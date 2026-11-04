@@ -83,7 +83,7 @@ channel to profile channels:
   the standard GDTF expansion.
 
 The profile gains:
-- **`geometry`**, a tree of nodes `{ name, kind, matrix, size, beam, children }`:
+- **`geometry`** on each mode (see "One tree per mode" below), a tree of nodes `{ name, kind, matrix, size, beam, children }`:
   - `kind` is one of `body`, `axis` or `beam`.
   - `matrix` is the 4×4 position and orientation from GDTF, which is in metres.
   - `size` comes from the referenced model's length, width and height.
@@ -111,7 +111,23 @@ dropped.
 - in 1.0, the channel's geometry and default value can sit on different elements;
 - `Break` offsets differ.
 
-Four of the files fail the zip CRC check. Import rejects such a file with a message naming it.
+Four of the files fail the zip CRC check, but their content is complete and well formed (only the
+stored checksum is wrong). They import. A file counts as damaged, and is rejected with a message,
+when it doesn't unzip, has no `description.xml`, or its XML doesn't parse.
+
+Found while building the adapter (2026-11-04):
+- **Virtual channels.** Channels with an empty `Offset` have no DMX address and are skipped. A
+  cell whose only dimmer is virtual is lit by its colour channels.
+- **Functions without an attribute.** These take their logical channel's attribute;
+  `NoFeature` functions become `NoFunction`.
+- **Root geometry.** In some 1.0 files a mode names a nested geometry, or none at all. The
+  adapter then searches the whole tree, then falls back to the first top-level geometry.
+- **One tree per mode.** Modes can have different root geometries (one zone or twelve, for
+  example), so the geometry tree lives on each mode (`mode.geometry`), not on the profile.
+- **Unit parsing fix.** `Entity.parseValueUnit` read `-12.5deg` as the unit `-.deg`, which
+  scaled the value by 1000. It now strips the signed decimal number. That bug already hit 511
+  values in the OFL library (strobe rates such as `33.3Hz`, angles such as `12.8deg`). Those now
+  decode correctly. Saved scenes are unaffected, since they store DMX values.
 
 ### 2. Local library in IndexedDB, plus a static bundle
 

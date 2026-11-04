@@ -376,7 +376,8 @@ class Entity {
    * @return {String} unit string
    */
   static parseValueUnit(value) {
-    return value.toString().replace(/[0-9]/g, '') || null;
+    // Strip the leading number, sign and decimals included (`-12.5deg` → `deg`)
+    return value.toString().replace(/^[-+]?(\d+\.?\d*|\.\d+)/, '') || null;
   }
 }
 
