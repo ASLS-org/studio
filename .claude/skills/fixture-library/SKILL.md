@@ -44,7 +44,7 @@ previous build's output.
 ## Support check
 
 - **Category.** Only fixtures whose `categories[0]` is `"Moving Head"` can be patched today.
-  Others throw `This fixture type is not supported yet.` in `Fixture.prepare3DModelInstance()`.
+  Others throw `This fixture type is not supported yet.` in `Fixture.parseFromProfile()`.
   Supporting a new category is an engine and visualizer feature (OpenSpec change), not a library
   task.
 - **Modes.** A fixture with no `modes` is rejected by the library ("defines no modes").

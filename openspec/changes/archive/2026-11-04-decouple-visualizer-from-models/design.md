@@ -71,9 +71,9 @@ See proposal.md and the epic doc § Target architecture. Current state (2026-11-
 7. **Gizmo writes back through an event.** `Controls` works on renderer instances keyed by fixture
    id and emits `fixture_transformed { id, position, rotation }` after a drag; the visualizer
    fragment applies it to the fixture (`position`/`rotation` setters, which emit `fixture_pose`).
-8. **Patching stays Moving Head only** in this unit: the check moves from
-   `Fixture.prepare3DModelInstance()` to the patch path (`FixtureLibrary` profile category), with
-   the same error message.
+8. **Patching stays Moving Head only** in this unit: `Fixture.parseFromProfile()` throws the same
+   `This fixture type is not supported yet.` error that `prepare3DModelInstance()` used to, at the
+   same moment (fixture construction), without any 3D code.
 
 9. **Chase-driven cues get their own runtime flag.** Chases call `CueItem.update()` directly, so
    `cue.state` never reflects chase playback (and `Chase.update()` resets it to 0 for items outside

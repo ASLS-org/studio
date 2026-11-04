@@ -60,5 +60,4 @@ Enums live next to their model and are exported: `CUE_TYPES`, `CUE_STATES`,
 
 - `show.model.js` is flagged `@todo Refactor whole class`. Keep additions minimal and well placed.
 - `modifier.model.js` is marked for removal. Don't build on it.
-- `fixture.model.js` builds its `MovingHead` 3D instance itself (models → visualizer coupling).
 - Several `console.log` calls remain; new code reports errors via `throw` or `EventBus.emit('app_error', err)`.
