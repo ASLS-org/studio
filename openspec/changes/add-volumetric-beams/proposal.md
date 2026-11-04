@@ -11,16 +11,17 @@ the old renderer.
 
 ## What Changes
 
-- New in-air beams built on the unit 3 projectors, one technique per tier:
-  - T0: no air beam, or a cheap outline cone.
-  - T1: closed-form scattering for a cone in uniform haze (no steps), soft gobo approximation.
-  - T2: raymarching inside the cone with 8-16 samples, gobo sampled at each step (visible gobo
-    shafts), drifting haze from a baked 3D noise texture.
-- Beams render into a reduced-resolution buffer (1/4 at T1, 1/2 at T2) composited with a
-  depth-aware upsample. The governor lowers step count before lowering the tier.
+- New in-air beams built on the unit 3 beam state, by quality level:
+  - Guides: no air beam.
+  - Low: closed-form scattering for a cone in uniform haze (no steps), no gobo.
+  - Medium: the same with a soft gobo approximation, plus bloom.
+  - High: raymarching inside the cone with 8-16 samples, gobo sampled at each step (visible gobo
+    shafts), drifting haze from a baked 3D noise texture, plus bloom.
+- Beams render into a reduced-resolution buffer (1/4 at Low and Medium, 1/2 at High) composited
+  with a depth-aware upsample. The governor lowers step count before lowering the level.
 - Haze replaces Fogging in the visualizer settings: density and movement, mapped from the existing
   fog settings so older showfiles look the same or close.
-- Lens glow and bloom from T1.
+- Lens glow and bloom at Medium and High, from a small built-in bloom pass.
 - The old beam shaders and `MovingHead` beam meshes are removed.
 
 ## Capabilities
