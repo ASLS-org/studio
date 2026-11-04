@@ -112,3 +112,17 @@ keep overlapping beams from washing the view out.
 - **WHEN** the quality is Low
 - **THEN** beam edges in the air are soft, without visible steps
 
+### Requirement: Light from several beams mixes like real light
+The system SHALL add the light of overlapping beams on a surface before applying the scene's tone
+curve, so overlapping red, green and blue beams make white, red and green make yellow, and no
+footprint shows a visible step where it overlaps another, at every level that lights surfaces.
+
+#### Scenario: RGB overlap
+- **GIVEN** three fixtures in red, green and blue whose footprints overlap on the floor
+- **WHEN** the quality is Low, Medium or High
+- **THEN** the overlap is white, pairs show yellow, cyan and magenta, and no layered edges show
+
+#### Scenario: Grazing beam
+- **WHEN** a fixture lights the floor at a grazing angle
+- **THEN** its footprint shows in full, up to the end of the beam, without being cut
+

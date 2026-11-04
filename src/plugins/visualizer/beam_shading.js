@@ -25,7 +25,8 @@ mat4 beamMatrix(int id, int base) {
     beamTexel(id, base + 3));
 }
 
-// uv: position in the beam's unit disk; g: gobo layer, rotation, blur (mip level)
+// uv: position in the beam's unit disk; g: gobo layer, rotation, blur (mip level). The rim fades
+// over the outer 22% of the radius, more with focus or frost blur.
 float goboAt(vec2 uv, vec4 g) {
   float r = length(uv);
   if (r >= 1.0) return 0.0;
@@ -33,7 +34,8 @@ float goboAt(vec2 uv, vec4 g) {
   float s = sin(g.y);
   vec2 q = vec2(c * uv.x - s * uv.y, s * uv.x + c * uv.y);
   float v = textureLod(uGobos, vec3(q * 0.5 + 0.5, g.x), g.z).r;
-  return v * (1.0 - smoothstep(0.8, 1.0, r));
+  float rim = min(0.22 + 0.1 * g.z, 0.8);
+  return v * (1.0 - smoothstep(1.0 - rim, 1.0, r));
 }
 
 // Intensity per solid angle: a fixture spreads the same light over its cone, so a wider beam is
@@ -50,7 +52,9 @@ vec3 beamLight(int id, vec3 P, out vec3 L) {
   L = normalize(o.xyz - P);
   vec4 loc = beamMatrix(id, 4) * vec4(P, 1.0);
   if (loc.z <= 0.0 || loc.z > 1.0) return vec3(0.0);
-  float g = goboAt(loc.xy / loc.z, beamTexel(id, 9));
+  vec2 uv = loc.xy / loc.z;
+  // Field falloff: brightest on the axis, about 60% towards the rim, like a real beam
+  float g = goboAt(uv, beamTexel(id, 9)) * (1.0 - 0.4 * dot(uv, uv));
   float d = loc.z * o.w;
   return beamTexel(id, 8).rgb * (beamPower(id) * g * uGain / (4.0 + d * d));
 }

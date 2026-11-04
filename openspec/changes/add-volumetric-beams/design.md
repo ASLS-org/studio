@@ -92,6 +92,20 @@ Visualizer preferences today: `globalFoggingState`, `globalFoggingDensity`,
       only below full resolution; profile rim 0.55-1.0; phase g = 0.3 (about 3× head-on); air
       gain 0.35, extinction 0.008 /m; dithering only on 8-bit buffers; lens glow rolls off.
 
+11. **Surface light mixing** (2026-11-04, third review: RGB mixing looked layered, light cut,
+    edges too hard):
+    - Beam light sums in linear space (half-float light buffers where supported). The composite
+      computes albedo × (ambient + light), tone-maps and encodes it exactly like the main pass
+      draws the unlit floor, and adds only the difference. Before, encoded light was added on top
+      of the tone-mapped scene, and each 8-bit channel clipped on its own (hue shifts).
+    - Low accumulates its footprints into a 1/2 light buffer, then a floor overlay (depth-tested)
+      applies the same formula, so overlapping footprints mix like at Medium and High.
+    - Footprint extent: a grazing beam is bounded by its length, not a fixed 1.45 rad cap (it cut
+      the far end of the ellipse); maximum half size 60 m.
+    - Beam profile on surfaces: field falloff to about 60% at the rim, and a rim fade over the
+      outer 22% of the radius plus 10% per mip level of focus or frost blur.
+    - Light buffers clear to black (three.js leaves the scene background as clear colour).
+
 ## Risks / Trade-offs
 
 - [Upsample halos at depth edges] → bilateral (depth-aware) upsample; full resolution at T3.

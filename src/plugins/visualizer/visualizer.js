@@ -213,6 +213,7 @@ class Visualizer {
     if (this.floorMaterial) {
       this.floorMaterial.color.setScalar(this._globalBrightness * FLOOR_AMBIENT);
     }
+    if (this.lighting) this.lighting.setAmbient(this._globalBrightness * FLOOR_AMBIENT);
     this.invalidate();
   }
 
@@ -463,6 +464,7 @@ class Visualizer {
     this.lighting = new StageLighting(this.renderer, SceneManager, this.camera, this.beamState);
     this.applyQuality();
     this.applyHaze();
+    this.lighting.setAmbient(this._globalBrightness * FLOOR_AMBIENT);
     this.domElement.addEventListener('pointermove', this.invalidate);
     this.domElement.addEventListener('pointerdown', this.invalidate);
     this.domElement.addEventListener('pointerup', this.invalidate);

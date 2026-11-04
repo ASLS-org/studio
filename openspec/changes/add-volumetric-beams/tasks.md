@@ -108,6 +108,16 @@
       tighter profile rim, brighter air, dithering only on 8-bit buffers. Verify: no shader
       errors in the console; `npx eslint` clean on the touched files.
 
+## 9. Surface light (third review)
+
+- [x] 9.1 Linear light summing with one tone pass (composite at Medium/High, floor overlay at
+      Low), half-float light buffers, black clears. Verify: spec "RGB overlap" holds at High,
+      Medium and Low (screenshots `cr-b-*.png`).
+- [x] 9.2 Footprint extent bounded by the beam length; softer beam profile on surfaces. Verify:
+      spec "Grazing beam" holds; footprints show a bright core and soft rim.
+- [x] 9.3 Playback at every level shows no console errors; `npx eslint` clean on the touched
+      files.
+
 ## Workflow follow-up
 
 - Archive the change on the unit branch, set unit 4 to `archived` in the epic doc, then open a PR
