@@ -109,8 +109,14 @@
       - closing the popup from its header works like Open anyway (placeholder).
 
       Screenshot `mf-ask2.png`.
-- [ ] 3.3 With GDTF fixtures, scenes, effects and faders. Verify: spec "Dimmer and position",
+- [x] 3.3 With GDTF fixtures, scenes, effects and faders. Verify: spec "Dimmer and position",
       "Fine channel" and "Pixel bar cells" hold (output checked in the universe view).
+      Note (2026-11-04): checked on universe 1's output frame:
+      - a scene on the bundled spot and 12-cell bar puts 255 on the spot's Dimmer address, 128 on
+        its Pan coarse, and 255 only on cell 3's Red;
+      - a fader-style half value on the 16-bit Tilt gives coarse 127, fine 128;
+      - a demo effect (Dimmer/Pan/Tilt/colour/Zoom) drives the bundled RGBW wash (10 different
+        frames out of 10 samples).
 
 ## 4. Visualizer
 
