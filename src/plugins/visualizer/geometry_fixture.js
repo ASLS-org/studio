@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { LIGHT_LAYERS } from './stage_lighting';
 import { goboLayer, goboImageLayer } from './gobos';
+import InstanceHighlight from './instance_highlight';
 import { SHAPE_ROLES, assignRoles } from './fixture_shapes';
 import { NO_CAPABILITY } from '../../models/fixtures/fixture.profile';
 
@@ -44,14 +45,10 @@ const SUBTRACTIVE = { Cyan: 0, Magenta: 1, Yellow: 2 };
 const BLACK = [0, 0, 0];
 
 const BODY_MATERIAL = new THREE.MeshPhongMaterial({ color: 0xffffff, side: THREE.DoubleSide });
-const HIGHLIGHT_MATERIAL = new THREE.MeshPhongMaterial({
-  color: 0xffffff,
-  emissive: new THREE.Color(0x5a71d3),
-  emissiveIntensity: 0.6,
-  side: THREE.DoubleSide,
-});
 const LENS_MATERIAL = new THREE.MeshBasicMaterial({ color: 0x0d0d0d, side: THREE.DoubleSide });
 const CELL_MATERIAL = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
+const POOL_CAPACITY = 4096; // body pieces per shape, for the whole rig
+const ZERO_MATRIX = new THREE.Matrix4().makeScale(0, 0, 0);
 
 // Shared unit shapes, centered on the origin (Z up)
 const BOX = new THREE.BoxGeometry(1, 1, 1);
@@ -144,39 +141,108 @@ function angleCenter(channel) {
 }
 
 /**
- * Builds the body meshes of a node by role, scaled to its size
+ * @class ShapePool
+ * @classdesc One instanced mesh per unit shape (box, cylinder) holding every fixture body piece,
+ * with the selection highlight of MovingHead (InstanceHighlight) attached: one draw per shape for
+ * the whole rig, and the same highlight look for every fixture.
+ */
+class ShapePool {
+  /**
+   * @param {THREE.BufferGeometry} geometry Unit shape
+   * @param {THREE.Scene} scene Scene
+   */
+  constructor(geometry, scene) {
+    this.geometry = new THREE.InstancedBufferGeometry();
+    THREE.BufferGeometry.prototype.copy.call(this.geometry, geometry);
+    this.mesh = new THREE.InstancedMesh(this.geometry, BODY_MATERIAL, POOL_CAPACITY);
+    this.mesh.count = 0;
+    this.mesh.frustumCulled = false;
+    this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    this.mesh.layers.enable(LIGHT_LAYERS.OCCLUDER);
+    this.highlight = new InstanceHighlight(POOL_CAPACITY);
+    const overlays = this.highlight.attach(this.mesh);
+    this.free = [];
+    this.used = 0;
+    scene.add(this.mesh, ...overlays);
+  }
+
+  /**
+   * Takes a slot
+   *
+   * @returns {Number} Slot index, or -1 when the pool is full
+   */
+  alloc() {
+    if (this.free.length) return this.free.pop();
+    if (this.used >= POOL_CAPACITY) return -1;
+    this.used += 1;
+    this.mesh.count = this.used;
+    this.highlight.setCount(this.used);
+    return this.used - 1;
+  }
+
+  /**
+   * Frees a slot (hidden until reused)
+   *
+   * @param {Number} index Slot index
+   */
+  release(index) {
+    if (index < 0) return;
+    this.mesh.setMatrixAt(index, ZERO_MATRIX);
+    this.mesh.instanceMatrix.needsUpdate = true;
+    this.highlight.set(index, false);
+    this.free.push(index);
+  }
+
+  /**
+   * Places a slot
+   *
+   * @param {Number} index Slot index
+   * @param {THREE.Matrix4} matrix World matrix
+   */
+  setMatrix(index, matrix) {
+    if (index < 0) return;
+    this.mesh.setMatrixAt(index, matrix);
+    this.mesh.instanceMatrix.needsUpdate = true;
+  }
+}
+
+const pools = {};
+
+/**
+ * Body pieces of a node by role, as unit shapes placed in the node's frame
  *
  * @param {String} role Body role
  * @param {Array<Number>} size Length, width, height
  * @param {Array<Number>} [offset] Body centre relative to the node's origin
- * @returns {Array<THREE.Mesh>} Meshes, in the node's frame
+ * @returns {Array<{shape: String, local: THREE.Matrix4}>} Pieces
  */
-function bodyMeshes(role, size, offset = [0, 0, 0]) {
+function bodyPieces(role, size, offset = [0, 0, 0]) {
   const [length, width, height] = size;
-  const mesh = (geometry, sx, sy, sz, x = 0, y = 0, z = 0) => {
-    const m = new THREE.Mesh(geometry, BODY_MATERIAL);
-    m.scale.set(Math.max(sx, 1e-3), Math.max(sy, 1e-3), Math.max(sz, 1e-3));
-    m.position.set(x + offset[0], y + offset[1], z + offset[2]);
-    m.layers.enable(LIGHT_LAYERS.OCCLUDER);
-    return m;
-  };
+  const piece = (shape, sx, sy, sz, x = 0, y = 0, z = 0) => ({
+    shape,
+    local: new THREE.Matrix4().compose(
+      new THREE.Vector3(x + offset[0], y + offset[1], z + offset[2]),
+      new THREE.Quaternion(),
+      new THREE.Vector3(Math.max(sx, 1e-3), Math.max(sy, 1e-3), Math.max(sz, 1e-3)),
+    ),
+  });
   switch (role) {
     case SHAPE_ROLES.YOKE: {
       const t = length * YOKE_THICKNESS;
       return [
-        mesh(BOX, length, width, t, 0, 0, height / 2 - t / 2),
-        mesh(BOX, t, width, height, -length / 2 + t / 2, 0, 0),
-        mesh(BOX, t, width, height, length / 2 - t / 2, 0, 0),
+        piece('box', length, width, t, 0, 0, height / 2 - t / 2),
+        piece('box', t, width, height, -length / 2 + t / 2, 0, 0),
+        piece('box', t, width, height, length / 2 - t / 2, 0, 0),
       ];
     }
     case SHAPE_ROLES.HEAD:
     case SHAPE_ROLES.CAN:
-      return [mesh(CYLINDER, Math.min(length, width), Math.min(length, width), height)];
+      return [piece('cylinder', Math.min(length, width), Math.min(length, width), height)];
     case SHAPE_ROLES.BASE:
     case SHAPE_ROLES.BAR:
     case SHAPE_ROLES.PANEL:
     case SHAPE_ROLES.BOX:
-      return [mesh(BOX, length, width, height)];
+      return [piece('box', length, width, height)];
     default:
       return [];
   }
@@ -239,7 +305,7 @@ class GeometryFixture {
     this._nodes = new Map();
     this._axes = [];
     this._beams = [];
-    this._meshes = [];
+    this._pieces = [];
     const roles = assignRoles(geometry);
     this.buildNode(geometry, this._frame, 0, roles, null);
 
@@ -284,9 +350,11 @@ class GeometryFixture {
     };
     if (parentEntry) parentEntry.children.push(entry);
     this._nodes.set(data.name, entry);
-    bodyMeshes(roles.get(data), data.size, data.offset).forEach((mesh) => {
-      object.add(mesh);
-      this._meshes.push(mesh);
+    bodyPieces(roles.get(data), data.size, data.offset).forEach((piece) => {
+      const pool = pools[piece.shape];
+      this._pieces.push({
+        object, local: piece.local, pool, index: pool.alloc(),
+      });
     });
     if (data.kind === 'axis') this._axes.push(entry);
     if (data.kind === 'beam') {
@@ -710,8 +778,9 @@ class GeometryFixture {
    */
   set highlighted(state) {
     this._highlighted = Boolean(state);
-    const material = this._highlighted ? HIGHLIGHT_MATERIAL : BODY_MATERIAL;
-    this._meshes.forEach((mesh) => { mesh.material = material; });
+    this._pieces.forEach((p) => {
+      if (p.index >= 0) p.pool.highlight.set(p.index, this._highlighted);
+    });
   }
 
   get highlighted() {
@@ -747,6 +816,10 @@ class GeometryFixture {
       this._cells.setMatrixAt(b, cellMatrix);
     }
     this._cells.instanceMatrix.needsUpdate = true;
+    for (let i = 0; i < this._pieces.length; i++) {
+      const p = this._pieces[i];
+      p.pool.setMatrix(p.index, cellMatrix.multiplyMatrices(p.object.matrixWorld, p.local));
+    }
   }
 
   /**
@@ -901,6 +974,7 @@ class GeometryFixture {
    * @public
    */
   dispose() {
+    this._pieces.forEach((p) => p.pool.release(p.index));
     sceneHandle.remove(this._dummy, this._cells);
     this._cells.dispose();
     const index = instances.indexOf(this);
@@ -915,6 +989,8 @@ class GeometryFixture {
    */
   static prepareInstanciation(scene) {
     sceneHandle = scene;
+    pools.box = new ShapePool(BOX, scene);
+    pools.cylinder = new ShapePool(CYLINDER, scene);
   }
 
   /**

@@ -242,4 +242,8 @@
       Files that name the head or the yoke for both, or that don't declare the head an axis,
       still pan the yoke and tilt the head. Checked over the test set: in 295 of 296 moving-head
       modes, Pan's node sits above Tilt's; the exception is a laser with no axes.
+- [x] 6.6 Selection uses the MovingHead highlight (`InstanceHighlight`: fill and outline, X-ray)
+      for every fixture. Body pieces are drawn from two shared instanced pools (box, cylinder)
+      with the highlight attached, one draw per shape for the whole rig. Checked in Node: slots
+      are allocated, highlighted and reused after a fixture is removed.
 
