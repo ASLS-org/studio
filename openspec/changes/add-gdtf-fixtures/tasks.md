@@ -155,10 +155,18 @@
       Medium and in the haze at High, and full frost blurs it (`gobo-*.png`). Fixed in the
       adapter on the way: prism wheels (Prism1 with Open / facet slots) now decode as wheel
       slots, so DMX 0 takes the prism out; before, the whole channel read as "prism in".
-- [ ] 4.4 Frame cost check: a rig of 20 pixel bars and 10 Robin 600 LEDWash plus the demo rig
+- [x] 4.4 Frame cost check: a rig of 20 pixel bars and 10 Robin 600 LEDWash plus the demo rig
       plays a chase. Verify: with
       render on demand, a still show draws 0 frames over 3 s, and Auto quality does not step down
       on the M1 at High (Stats panel).
+      Note (2026-11-04): checked in headless Chrome on the M1, measured in the page rather than
+      with the Stats panel.
+      - **Rig:** the demo rig plus 20 Generic Pixel Bars and 10 real Robin 600 LEDWash GDTFs,
+        all lit (266 beam rows).
+      - **Still:** with playback stopped, the visualizer drew 0 frames over 3 s.
+      - **Playing:** with the demo chase and an effect on Auto, about 52 frames per second at
+        2.1 ms of draw time per frame. Quality stayed at High, full resolution, 16 samples, for
+        12 s.
 
 ## 5. Docs and context
 
