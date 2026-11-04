@@ -56,10 +56,14 @@
       `channelCount` opens with 37 channels and the message, and saves `channelCount: 37`; after a
       reload there is no message and the show is not marked unsaved. Fixtures now save
       `channelCount`.
-- [ ] 2.4 `gdtf.store.js` (IndexedDB) and the bundle list. `FixtureLibrary.getProfile('gdtf',
+- [x] 2.4 `gdtf.store.js` (IndexedDB) and the bundle list. `FixtureLibrary.getProfile('gdtf',
       ...)` looks in the library, then the bundle, and rejects with `MissingFixtureError`; wheel
       images are decoded per type. Verify: in the page, importing the same file twice keeps one
       record; `getProfile` for an unknown ID rejects with that error.
+      Note (2026-11-04): checked in the page. Importing the generic spot twice leaves one record.
+      An unknown ID rejects with `MissingFixtureError`. The bundled pixel bar loads without
+      import (modes of 38 and 5 channels). The spot's 7 gobo images decode at 256 px
+      (`FixtureLibrary.wheelImages`).
 - [ ] 2.5 `Show.prepareFixtures` resolves profiles first. It handles missing GDTF types (the
       popup hook, and Open anyway), and keeps their fixture, group and scene data aside and
       written back unchanged. The patch keeps their addresses reserved. `Fixture.parseFromProfile`
