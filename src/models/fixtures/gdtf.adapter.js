@@ -2,6 +2,7 @@ import Capability from '../DMX/capabilityManager.model';
 import { PROFILE_SOURCES, buildCapabilityLookup } from './fixture.profile';
 import { FINE_CHANNEL_TERMINOLOGY, deriveTypeKey } from './channel.types';
 import { GDTFError } from './gdtf.archive';
+import modelCenter from './gdtf.meshes';
 
 /**
  * GDTF (`description.xml`) to fixture profile adapter, for GDTF 1.0, 1.1 and 1.2.
@@ -217,12 +218,22 @@ function buildWheels(fixtureType, usage) {
         else if (image || (use === 'Gobo' && !/^(default|empty|white)?$/i.test(name.trim()))) {
           type = 'Gobo';
         } else if (use === 'Gobo') type = 'Open';
-        return {
+        const entry = {
           type,
           name,
           colors: color ? [color] : [],
           image: slot.attrs.MediaFileName || null,
         };
+        if (facets) {
+          // Each facet's direction is the third row of its rotation, {x, y, 1}: keep the
+          // deflection as tangents across the beam
+          entry.facets = childrenOf(slot, 'Facet').map((facet) => {
+            const m = (facet.attrs.Rotation || '').match(/-?\d*\.?\d+(e[-+]?\d+)?/gi) || [];
+            const [x, y, z] = m.slice(6, 9).map(Number);
+            return z > 0 ? [x / z, y / z] : [0, 0];
+          });
+        }
+        return entry;
       }),
     };
   });
@@ -272,6 +283,9 @@ function buildNode(element, context, prefix = '', reference = null) {
     kind,
     matrix: matrix(element.attrs.Position),
     size: model ? [model.length, model.width, model.height] : [0, 0, 0],
+    // Where the body sits around the node's origin (see gdtf.meshes.js)
+    offset: model ? model.center.map((c, k) => c * [model.length, model.width, model.height][k])
+      : [0, 0, 0],
     shape: model ? model.primitive : null,
     beam: null,
     children: [],
@@ -699,10 +713,12 @@ function buildPhysical(geometry, channels) {
  *
  * @public
  * @param {Object} description `GDTF` root element (see gdtf.archive.js readGDTF)
+ * @param {Object} [files] Files of the archive
+ * @param {Map<String, Object>} [files.models] Mesh files by model file name (body placement)
  * @returns {Object} Fixture profile (see fixture.profile.js)
  * @throws {GDTFError} When the description has no fixture type or no usable DMX mode
  */
-export default function profileFromGDTF(description) {
+export default function profileFromGDTF(description, { models: meshes = new Map() } = {}) {
   const fixtureType = child(description, 'FixtureType');
   if (!fixtureType || !fixtureType.attrs.FixtureTypeID) {
     throw new GDTFError('The GDTF description has no fixture type');
@@ -712,6 +728,11 @@ export default function profileFromGDTF(description) {
     width: float(m.attrs.Width),
     height: float(m.attrs.Height),
     primitive: m.attrs.PrimitiveType || null,
+    center: modelCenter(
+      m.attrs.PrimitiveType,
+      m.attrs.File ? meshes.get(m.attrs.File) : null,
+      [float(m.attrs.Length), float(m.attrs.Width), float(m.attrs.Height)],
+    ),
   }]));
   const geometries = new Map(
     (child(fixtureType, 'Geometries') || { children: [] }).children.map((g) => [g.attrs.Name, g]),

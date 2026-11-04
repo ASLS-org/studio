@@ -223,4 +223,19 @@
       quirks.
 - [x] 6.2 Beams and cells follow a fixture moved with the gizmo (world matrix checked every
       frame, as `MovingHead` does).
+- [x] 6.3 GDTF bodies sit where the fixture puts them.
+      - **Placement:** each model's mesh (glTF, else 3DS) is read at import for its box centre;
+        meshes whose proportions don't match the model, or that sit off the origin, are skipped.
+        Models without a mesh use the GDTF primitive conventions (1.0 centred, 1.1 hanging).
+        Over the test set, 0 implausible centres remain.
+      - **Roles:** a body holding an axis below the root is a yoke; pigtails get no body.
+      - **Pan/Tilt** turn the geometry they name (20 channels in the test set name a plain
+        geometry, for example the ACME XP-260 yoke).
+- [x] 6.4 Prisms:
+      - real facet layouts from GDTF, at most 16 facets; the spread scale is normalised, since
+        exporters disagree on it;
+      - a 4° minimum spread, so narrow beams split visibly;
+      - the light is shared between facets.
+
+      Prism rotation is not drawn (as before).
 

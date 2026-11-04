@@ -29,6 +29,7 @@
  * @property {String} kind `body`, `axis` or `beam`
  * @property {Array<Number>} matrix 4×4 placement relative to the parent, row-major, meters
  * @property {Array<Number>} size Length, width and height in meters (0 when unknown)
+ * @property {Array<Number>} [offset] Centre of the body relative to the node's origin, meters
  * @property {?String} shape Source shape hint (GDTF primitive type), or null
  * @property {?Object} beam Beam data on `beam` nodes: `beamAngle`, `fieldAngle` (degrees),
  * `radius` (m), `type` (GDTF beam type), `flux` (lm), `colorTemperature` (K)

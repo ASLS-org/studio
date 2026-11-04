@@ -169,19 +169,23 @@ export function synthesizeGeometry(profile, channels) {
  *
  * @param {Object} geometryNode Geometry node
  * @param {Boolean} containsAxis Whether an axis sits below the node
+ * @param {Boolean} isRoot Whether the node is the fixture's root
  * @returns {String} Body role (SHAPE_ROLES)
  */
-function roleOf(geometryNode, containsAxis) {
+function roleOf(geometryNode, containsAxis, isRoot) {
   const { kind, shape } = geometryNode;
   const [length, width, height] = geometryNode.size;
   if (kind === 'beam') return SHAPE_ROLES.LENS;
   if (!(length > 0 && width > 0 && height > 0)) return SHAPE_ROLES.NONE;
   const hint = shape || '';
+  if (/^Pigtail/.test(hint)) return SHAPE_ROLES.NONE; // cable stub
   if (/^Base/.test(hint)) return SHAPE_ROLES.BASE;
   if (/^Yoke/.test(hint)) return SHAPE_ROLES.YOKE;
   if (/^Head/.test(hint) || /^Scanner/.test(hint)) return SHAPE_ROLES.HEAD;
   if (kind === 'axis') return containsAxis ? SHAPE_ROLES.YOKE : SHAPE_ROLES.HEAD;
-  if (containsAxis) return SHAPE_ROLES.BASE;
+  // A body holding an axis is the base at the root, a yoke below it (some files don't make the
+  // yoke an axis)
+  if (containsAxis) return isRoot ? SHAPE_ROLES.BASE : SHAPE_ROLES.YOKE;
   if (/^Bar/.test(hint)) return SHAPE_ROLES.BAR;
   if (/^Panel/.test(hint)) return SHAPE_ROLES.PANEL;
   if (/^(Cylinder|Conventional)/.test(hint)) return SHAPE_ROLES.CAN;
@@ -201,14 +205,14 @@ function roleOf(geometryNode, containsAxis) {
  */
 export function assignRoles(geometry) {
   const roles = new Map();
-  const visit = (n) => {
+  const visit = (n, isRoot) => {
     let containsAxis = false;
     n.children.forEach((c) => {
-      if (visit(c) || c.kind === 'axis') containsAxis = true;
+      if (visit(c, false) || c.kind === 'axis') containsAxis = true;
     });
-    roles.set(n, roleOf(n, containsAxis));
+    roles.set(n, roleOf(n, containsAxis, isRoot));
     return containsAxis;
   };
-  visit(geometry);
+  visit(geometry, true);
   return roles;
 }

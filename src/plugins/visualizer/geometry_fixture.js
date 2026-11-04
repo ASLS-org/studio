@@ -14,9 +14,12 @@ const CLUSTER_COS = Math.cos((5 * Math.PI) / 180); // cells within 5° point the
 const PROJECTING_TYPES = ['Wash', 'Spot', 'PC', 'Fresnel'];
 const FROST_BLUR = 3; // gobo blur at full frost, in mip levels
 const FOCUS_BLUR = 1; // gobo blur at focus 0, in mip levels
-const PRISM_FACETS = 3;
-const PRISM_SPREAD = 1.6; // facet offset, in half field angles
-const PRISM_FACET_INTENSITY = 0.6;
+const PRISM_FACETS = 3; // prisms without facet data (OFL, image-only GDTF slots)
+const PRISM_SPREAD = 1.6; // their facet offset, in half field angles
+const PRISM_MIN_SPREAD = Math.tan((4 * Math.PI) / 180); // at least 4°, so narrow beams split
+const PRISM_FACET_INTENSITY = 0.6; // most light per facet (3 facets, as MovingHead)
+const PRISM_TOTAL = 1.8;
+const PRISM_MAX_FACETS = 16;
 const CELL_OFF = 0.04; // brightness of an unlit cell
 const YOKE_THICKNESS = 0.18; // arm thickness, share of the yoke length
 
@@ -145,14 +148,15 @@ function angleCenter(channel) {
  *
  * @param {String} role Body role
  * @param {Array<Number>} size Length, width, height
+ * @param {Array<Number>} [offset] Body centre relative to the node's origin
  * @returns {Array<THREE.Mesh>} Meshes, in the node's frame
  */
-function bodyMeshes(role, size) {
+function bodyMeshes(role, size, offset = [0, 0, 0]) {
   const [length, width, height] = size;
   const mesh = (geometry, sx, sy, sz, x = 0, y = 0, z = 0) => {
     const m = new THREE.Mesh(geometry, BODY_MATERIAL);
     m.scale.set(Math.max(sx, 1e-3), Math.max(sy, 1e-3), Math.max(sz, 1e-3));
-    m.position.set(x, y, z);
+    m.position.set(x + offset[0], y + offset[1], z + offset[2]);
     m.layers.enable(LIGHT_LAYERS.OCCLUDER);
     return m;
   };
@@ -224,6 +228,7 @@ class GeometryFixture {
     this._poseDirty = true;
     this._colorsDirty = true;
     this._lastWorld = new THREE.Matrix4();
+    this._facetCache = new Map();
 
     this._dummy = new THREE.Object3D();
     // GDTF trees hang with beams down; flip them so rotation conventions match MovingHead
@@ -279,7 +284,7 @@ class GeometryFixture {
     };
     if (parentEntry) parentEntry.children.push(entry);
     this._nodes.set(data.name, entry);
-    bodyMeshes(roles.get(data), data.size).forEach((mesh) => {
+    bodyMeshes(roles.get(data), data.size, data.offset).forEach((mesh) => {
       object.add(mesh);
       this._meshes.push(mesh);
     });
@@ -322,27 +327,27 @@ class GeometryFixture {
   }
 
   /**
-   * The axis a Pan or Tilt channel turns: the node itself when it is the right axis, otherwise
-   * the outermost (Pan) or innermost (Tilt) axis below it. Files without axes turn the channel's
-   * own geometry (not the fixture root)
+   * The node a Pan or Tilt channel turns: the geometry it names (an axis, or a plain geometry in
+   * files that don't declare axes). Channels on the fixture root (OFL, a few GDTF files) turn the
+   * outermost (Pan) or innermost (Tilt) axis below it.
    *
    * @private
    * @param {Object} entry Channel's node entry
    * @param {Boolean} tilt Whether the channel is a Tilt channel
-   * @returns {?Object} Axis entry
+   * @returns {?Object} Node entry to turn
    */
   axisFor(entry, tilt) {
+    if (entry.parent) {
+      if (!this._axes.includes(entry)) this._axes.push(entry);
+      return entry;
+    }
     const chain = [];
     let e = entry;
     while (e) {
       if (e.data.kind === 'axis') chain.push(e);
       e = e.children.find((c) => this.subtreeHasAxis(c)) || null;
     }
-    if (!chain.length) {
-      if (!entry.parent) return null;
-      if (!this._axes.includes(entry)) this._axes.push(entry);
-      return entry;
-    }
+    if (!chain.length) return null;
     return tilt ? chain[chain.length - 1] : chain[0];
   }
 
@@ -581,7 +586,7 @@ class GeometryFixture {
         } else if (slot.type === 'Gobo') {
           s.gobo = this._slotLayers[wheelName][index];
         } else if (slot.type === 'Prism') {
-          s.prism = true;
+          s.prism = this.facetsOf(slot);
         }
         break;
       }
@@ -620,6 +625,28 @@ class GeometryFixture {
       default:
         break;
     }
+  }
+
+  /**
+   * Facet layout of a prism slot, cached per slot: directions around the beam scaled so the
+   * furthest facet is 1 (exporters disagree on the deflection's scale, so only the layout is
+   * kept), at most PRISM_MAX_FACETS. Slots without a usable layout give `true` (3 facets).
+   *
+   * @private
+   * @param {Object} slot Prism wheel slot
+   * @returns {Array<Array<Number>>|Boolean} Facet layout, or true
+   */
+  facetsOf(slot) {
+    if (this._facetCache.has(slot)) return this._facetCache.get(slot);
+    let layout = true;
+    const facets = slot.facets || [];
+    const reach = Math.max(0, ...facets.map(([x, y]) => Math.hypot(x, y)));
+    if (facets.length > 1 && reach > 0) {
+      const step = Math.max(1, Math.ceil(facets.length / PRISM_MAX_FACETS));
+      layout = facets.filter((_, i) => i % step === 0).map(([x, y]) => [x / reach, y / reach]);
+    }
+    this._facetCache.set(slot, layout);
+    return layout;
   }
 
   /**
@@ -790,13 +817,18 @@ class GeometryFixture {
       beamState.push(row);
       return;
     }
-    row.intensity *= PRISM_FACET_INTENSITY;
-    for (let k = 0; k < PRISM_FACETS; k++) {
-      const a = (k / PRISM_FACETS) * 2 * Math.PI;
-      const offset = row.tanHalf * PRISM_SPREAD;
+    // One beam per facet: the fixture's facet layout when it has one, else three around the axis
+    const facets = Array.isArray(lead.prism) ? lead.prism : null;
+    const count = facets ? facets.length : PRISM_FACETS;
+    const spread = Math.max(row.tanHalf * PRISM_SPREAD, PRISM_MIN_SPREAD);
+    row.intensity *= Math.min(PRISM_FACET_INTENSITY, PRISM_TOTAL / count);
+    for (let k = 0; k < count; k++) {
+      const a = (k / count) * 2 * Math.PI;
+      const dx = (facets ? facets[k][0] : Math.cos(a)) * spread;
+      const dy = (facets ? facets[k][1] : Math.sin(a)) * spread;
       row.direction.copy(axis)
-        .addScaledVector(right, Math.cos(a) * offset)
-        .addScaledVector(up, Math.sin(a) * offset)
+        .addScaledVector(right, dx)
+        .addScaledVector(up, dy)
         .normalize();
       row.up.copy(up).addScaledVector(row.direction, -up.dot(row.direction)).normalize();
       row.right.crossVectors(row.up, row.direction);

@@ -130,8 +130,8 @@ async function decodeWheelImages(profile, images) {
  * @returns {Promise<Object>} Fixture profile
  */
 async function buildGDTFProfile(file) {
-  const { description, images } = await readGDTF(file);
-  const profile = profileFromGDTF(description);
+  const { description, images, models } = await readGDTF(file);
+  const profile = profileFromGDTF(description, { models });
   wheelImages.set(profile, await decodeWheelImages(profile, images));
   return freezeProfile(profile);
 }
