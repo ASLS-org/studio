@@ -62,6 +62,8 @@ Show preferences may be adjusted from the [preferences](#preferences-menu) menu.
 You may want to edit some of the [visualizer's](/interface/visualizer/) properties, either for aesthetic reasons or due to performance issue. You can do so through the `preferences > visualizer` submenu or simply by hitting the <kbd>`Ctrl+Shift+V`</kbd> shortcut keys. Please refer to the [Visualizer Settings](/interface/visualizer/#settings) section for further information regarding the list of the visualizer's editable preferences
 
 <img style="border-radius:5px" src="/interface/toolbar_nav_preferences_visualizer.png" alt="visdualizer preferences" width="300"/>
+
+<!-- TODO media: recapture toolbar_nav_preferences_visualizer.png with the Quality section -->
 <br>
 
 #### Fixture Library
