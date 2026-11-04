@@ -6,7 +6,7 @@ import Worker from '@/worker?worker';
  * @constant {Object} LIVE_STATES
  * @enum {Number}
  */
-const LIVE_STATES = {
+export const LIVE_STATES = {
   IDLE: 0,
   PLAYING: 1,
   PAUSED: 2,
@@ -95,6 +95,8 @@ class Live {
       this.pauseTimeOffset = 0;
       this.bpm = DEFAULT_LIVE_BPM;
       this.animations = [];
+      this.frameCallbacks = [];
+      this.frameCallbackId = 0;
       this.rafID = null;
       this.state = LIVE_STATES.PLAYING;
       this.w = new Worker();
@@ -232,6 +234,10 @@ class Live {
     } else {
       this.pauseTimeOffset = time - this.pauseStartTime;
     }
+    // Frame phase: runs on every tick, after the animations and whatever the play state
+    for (let i = 0; i < this.frameCallbacks.length; i++) {
+      this.frameCallbacks[i].fn(this.time);
+    }
     this.processing = false;
     if (this.animationMethod === ANIMATION_METHODS.RAF) {
       this.rafID = requestAnimationFrame(this.update.bind(this));
@@ -280,6 +286,33 @@ class Live {
       this.animations.splice(animationIndex, 1);
     } else {
       throw new Error('Could not find animation in animation pool');
+    }
+  }
+
+  /**
+   * Registers a frame callback. Frame callbacks run on every tick after the animations,
+   * whether the show is playing, paused or stopped (packing universes, sending output).
+   *
+   * @public
+   * @param {Function} fn callback receiving the current Live time in milliseconds
+   * @returns {Number} Frame callback ID, to be passed to offFrame()
+   */
+  onFrame(fn) {
+    const id = this.frameCallbackId++;
+    this.frameCallbacks.push({ id, fn });
+    return id;
+  }
+
+  /**
+   * Removes a frame callback
+   *
+   * @public
+   * @param {Number} id Frame callback ID returned by onFrame()
+   */
+  offFrame(id) {
+    const index = this.frameCallbacks.findIndex((callback) => callback.id === id);
+    if (index > -1) {
+      this.frameCallbacks.splice(index, 1);
     }
   }
 

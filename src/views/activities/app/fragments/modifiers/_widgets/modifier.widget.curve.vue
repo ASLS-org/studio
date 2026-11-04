@@ -75,12 +75,15 @@
 </template>
 
 <script>
+import LiveMixin from '@/views/mixins/live.mixin';
+
 export default {
   name: 'ModifierWidgetCurve',
   compatConfig: {
     // or, for full vue 3 compat in this component:
     MODE: 3,
   },
+  mixins: [LiveMixin],
   props: {
     /**
      * Handle to Fade instance
@@ -160,9 +163,11 @@ export default {
      * Control Point 3 (play state) css positioning
      */
     cp3Style() {
+      // fade.value and fade.x are written by playback outside Vue: refresh with the ticker
+      const value = this.live(this.fade.value);
       const bottomOffset = !this.fade.direction
-        ? this.fade.value
-        : (1.0 - this.fade.value);
+        ? value
+        : (1.0 - value);
       return {
         bottom: `calc(${(Math.min(bottomOffset, 1) % 1) * 100}% - 6px)`,
         left: `calc(${(Math.min(this.fade.x, 1) % 1) * (this.canvasDimensions.width / this.canvasDimensions.height) * 100}% - 6px)`,

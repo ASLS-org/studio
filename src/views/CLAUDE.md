@@ -22,6 +22,9 @@ views/
   `computed`, `watch`, methods, hooks). No `<script setup>`, no Composition API.
 - Show state comes from `this.$show` (reactive singleton). Read it directly and call model methods.
   Don't copy model state into local `data`. There is no Vuex/Pinia store.
+- Live values (channel values, cue state/progress, chase playheads, DMX activity) are written by
+  playback outside Vue: read them through `views/mixins/live.mixin.js` (`live(value)`), which
+  refreshes with `$liveTicker` (25 Hz while playing; `$liveTicker.bump()` after edits).
 - Navigation: `this.$router.push(path).catch(() => {})`. Routes are in `plugins/router.js`.
 - Styling: `<style scoped>` plain CSS using the variables in `src/assets/styles/global.css`
   (`--primary-*`, `--secondary-*`, …). No new hard-coded colours; palette lives in

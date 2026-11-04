@@ -161,6 +161,7 @@
 
 <script>
 import { nextTick } from 'vue';
+import LiveMixin from '@/views/mixins/live.mixin';
 
 /**
  * @todo Document this
@@ -171,6 +172,7 @@ export default {
     // or, for full vue 3 compat in this component:
     MODE: 3,
   },
+  mixins: [LiveMixin],
   props: {
     /**
      * Handle to chase pool. Required: almost every render path (grid width,
@@ -384,7 +386,7 @@ export default {
      */
     computeCursorStyle() {
       return {
-        left: `${this.pool.elapsedPerc * (this.pool.duration * this.cellWidth * this.pool.barSubDiv)}px`,
+        left: `${this.live(this.pool.elapsedPerc) * (this.pool.duration * this.cellWidth * this.pool.barSubDiv)}px`,
       };
     },
     /**

@@ -110,7 +110,7 @@ Open (answer in the unit that needs it):
 | # | Change | Depends on | Status |
 |---|---|---|---|
 | 1 | `add-fixture-profile` | none | archived |
-| 2 | `decouple-visualizer-from-models` | 1 | proposed |
+| 2 | `decouple-visualizer-from-models` | 1 | refining |
 | 3 | `add-projector-lighting` (starts with a performance spike) | 2 | proposed |
 | 4 | `add-volumetric-beams` | 3 | proposed |
 | 5 | `add-gdtf-fixtures` | 1, 2, 3 | proposed |
@@ -123,7 +123,10 @@ failing (no spec deltas) until their unit writes specs and tasks. That is expect
 ## Backlog (not scheduled in this epic)
 
 - T3 tier: high step counts, shadows, froxel fog, WebGPU/TSL renderer.
-- Engine runtime in a Worker (only if measurements after unit 2 still show stalls on target).
+- Engine runtime in a Worker, with universe buffers as the only value storage (see
+  `decouple-visualizer-from-models` design § Next evolution). Likely the next evolution after
+  unit 2; needs the show document split from runtime state and SharedArrayBuffer (COOP/COEP)
+  or per-frame transfers.
 - 2D plan view (Canvas2D) as the lowest tier for machines without a usable GPU.
 - MVR (whole-rig scene) import.
 - Fresh undo/redo (`add-undo-redo`), opt-in edit transactions on the new show document. Outside

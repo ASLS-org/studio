@@ -110,6 +110,7 @@
 
 <script>
 import colorMixin from '@/views/mixins/color.mixin';
+import LiveMixin from '@/views/mixins/live.mixin';
 
 export default {
   name: 'GroupEffectModifierWidgetWave',
@@ -117,7 +118,7 @@ export default {
     // or, for full vue 3 compat in this component:
     MODE: 3,
   },
-  mixins: [colorMixin],
+  mixins: [colorMixin, LiveMixin],
   props: {
     channel: {
       type: Object,
@@ -260,6 +261,8 @@ export default {
      * @param {Number} index index of the fixture within channel.fixtures
      */
     getTickPosition(fixture) {
+      // channel.time and fixture.value are written by playback outside Vue: refresh with the ticker
+      this.live();
       const { width: w, height: h } = this.canvasSize;
       if (!w || !h) {
         return { left: '0px', top: '0px' };

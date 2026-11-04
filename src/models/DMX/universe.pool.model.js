@@ -1,4 +1,5 @@
 import Universe from './universe.model';
+import Live from './live.model';
 
 /**
  * @class UniversePool
@@ -8,6 +9,23 @@ class UniversePool {
   constructor() {
     this.universes = [];
     this.selected = [0];
+    this.frameCallbackId = Live.onFrame(this.processFrame.bind(this));
+  }
+
+  /**
+   * Live frame phase: packs every universe's frame, then sends it on its running stream.
+   * Runs after the animations of every tick, also while the show is paused or stopped.
+   *
+   * @public
+   */
+  processFrame() {
+    for (let i = 0; i < this.universes.length; i++) {
+      const universe = this.universes[i];
+      const frame = universe.packFrame();
+      if (universe.stream && universe.stream.isRunning) {
+        universe.stream.forward(frame);
+      }
+    }
   }
 
   /**

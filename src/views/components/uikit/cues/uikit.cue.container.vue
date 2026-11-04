@@ -95,7 +95,7 @@
             :key="'B' + chaseIndex"
             class="uikit_chase"
             :style="{ background: chase.color, top: `${chase.id * 26}px` }"
-            :class="{ playing: chase.state, selected: selectedChaseId === chase.id }"
+            :class="{ playing: live(chase.state), selected: selectedChaseId === chase.id }"
             @mousedown="(e) => startDragChase(e, chase)"
             @mouseup="(e) => stopDragChase(e, chase)"
             @click.stop="selectChase(chase)"
@@ -107,7 +107,7 @@
               @click.stop="toggle(chase)"
             >
               <uk-icon
-                v-if="chase.state"
+                v-if="live(chase.state)"
                 class="uikit_chase_icon"
                 :name="'stop'"
               />
@@ -119,7 +119,7 @@
             </div>
             <div
               class="uikit_chase_loader"
-              :style="{ width: chase.elapsedPerc * 100 + '%' }"
+              :style="{ width: live(chase.elapsedPerc) * 100 + '%' }"
             />
             <h4 class="uikit_chase_title">
               {{ chase.name }}
@@ -185,12 +185,15 @@
 </template>
 
 <script>
+import LiveMixin from '@/views/mixins/live.mixin';
+
 export default {
   name: 'UkCueContainer',
   compatConfig: {
     // or, for full vue 3 compat in this component:
     MODE: 3,
   },
+  mixins: [LiveMixin],
   props: {
     /**
      * Handle to group instance
@@ -239,11 +242,19 @@ export default {
       masterPlayingRow: this.$show.master.test,
     };
   },
+  computed: {
+    /**
+     * Group's DMX activity, refreshed by the live ticker (playback writes bypass Vue)
+     */
+    liveActivity() {
+      return this.live(this.group ? this.group.DMXActivity : 0);
+    },
+  },
   watch: {
     scrollTo() {
       this.$refs.cue_list.scrollTo(0, this.scrollTo);
     },
-    'group.DMXActivity': function groupeDMXActivityWatcher(val) {
+    liveActivity: function liveActivityWatcher(val) {
       let n = Math.round(val * 100).toString(2);
       n = ('00000'.substring(n.length) + n).slice(0, 5);
       this.binDisplay = n.split('').sort((a, b) => b - a);

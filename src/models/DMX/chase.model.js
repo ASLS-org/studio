@@ -1,5 +1,6 @@
 import ukColors from '@/views/components/uikit/colors/uikit.colors';
 import Live from './live.model';
+import { toRaw } from '../utils/reactivity';
 import CueItemPool from './cue.item.pool.model';
 import Cue from './cue.model';
 
@@ -218,11 +219,14 @@ class Chase {
     if (state) {
       this.elapsed = 0;
       this.deltaStart = null;
-      this.animationId = Live.add(this.update.bind(this), this.quantize, 60, onReadyCallback);
+      // Playback runs on the raw chase (see Cue.cue)
+      const raw = toRaw(this);
+      this.animationId = Live.add(raw.update.bind(raw), this.quantize, 60, onReadyCallback);
     } else if (this.animationId != null) {
       this.elapsed = 0;
       this.cues.forEach((cueItemPool) => {
         cueItemPool.cue.state = 0;
+        cueItemPool.cue.chaseActive = false;
         cueItemPool.cue.cue(false);
       });
       Live.remove(this.animationId);
@@ -262,16 +266,20 @@ class Chase {
      * break a lot of things. Have a look into it.
      */
     this.cues.forEach((cueItemPool) => {
+      let active = false;
       cueItemPool.items.forEach((item) => {
         if (
           t >= item.tick * this.tickDuration
           && t <= (item.tick + item.length) * this.tickDuration
         ) {
           item.update(t - (item.tick * this.tickDuration));
+          active = true;
         } else {
           cueItemPool.cue.state = 0;
         }
       });
+      // Play indicator and activity meter: `state` can't be used (see Scene relative fades)
+      cueItemPool.cue.chaseActive = active;
     });
   }
 
