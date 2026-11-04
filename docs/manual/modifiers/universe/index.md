@@ -70,6 +70,17 @@ When you change a fixture's mode, channels that exist in both modes (for example
 While a fixture can be positionned through the [visualizer's tranform controls](/interface/visualizer/#transform-controls) feature, it's position may be fine-tuned by using the [universe modifier's](#universe-modifier) position tool widget. Fixture's position in space can be specified with cm accuracy while rotation in every axes can be specified in steps of 1 degrees.
 
 
+## Cells
+
+Some fixtures are made of several cells: the pixels of a bar or a matrix, the heads of a multi-head fixture. When the selected fixture has cells, the **Cells** widget lists them, after **All cells**.
+
+- Select **All cells** (the default) to control every cell at once.
+- Select a cell to control it on its own, or several cells by holding <kbd>`Ctrl`</kbd> or <kbd>`Shift`</kbd>.
+
+The [channels](#fixture-channels) widget then shows the channels of the selected cells, plus the channels that belong to the whole fixture (a master dimmer, a strobe). The [Color Picker](#color-picker) and [Pan & Tilt](#pan--tilt) widgets set the selected cells only. Fixtures without cells don't show the widget.
+
+<!-- TODO media: universe modifier with an 8-pixel bar, cell 3 selected and set to blue -->
+
 ## Fixture Channels
 A selected fixture's [channels](#fixture-channels) can be modified on the fly by playing around with the channel faders available through the [channels widget](#fixture-channels).
 
@@ -129,7 +140,7 @@ All channel types are virtually supported. However, some might not have been imp
 
 ## Color Picker
 
-The color picker widget can be used to manipulate a fixture's [color intensity channels](#supported-channel-types). Color systems can differ from one fixture to another (RGB, CMY, HSV...). To ease color manipulation, the chosen color value is automatically converted to match the fixture's color system.
+The color picker widget can be used to manipulate a fixture's [color intensity channels](#supported-channel-types). Color systems can differ from one fixture to another (RGB, CMY, HSV...). To ease color manipulation, the chosen color value is automatically converted to match the fixture's color system. On a fixture with a white channel (RGBW), the white channel takes the part shared by red, green and blue: picking red 255, green 128, blue 128 sets white 128 and red 127. Amber, UV and lime are left to their faders.
 
 <Video src="/interface/modifier_universe_colorpicker_widget.webm"/>
 

@@ -104,6 +104,7 @@ Scene cues can be edited and manipulated through the scene-specific widgets list
 
 - [Fade Editor](#fade-editor)
 - [Scene Fixtures](#scene-fixtures)
+- [Cells](#cells)
 - [Fixture Channels](#scene-fixture-channels)
 - [Color Picker](#color-picker)
 - [Pan & Tilt](#pan--tilt)
@@ -153,9 +154,20 @@ In order to be selected for scene modulation, a fixture's channel must be define
 :::
 
 
+### Cells
+
+When the selected fixtures have cells (the pixels of a bar or a matrix, the heads of a multi-head fixture), the **Cells** widget lists them after **All cells**.
+
+- With **All cells** (the default), the channels widget shows one fader per kind of channel (for example one **Dimmer** and one **Red**) for every cell, and moving it sets that channel in every cell.
+- Select a cell to set it on its own, or several cells by holding <kbd>`Ctrl`</kbd> or <kbd>`Shift`</kbd>.
+
+Channels that belong to the whole fixture (a master dimmer, a strobe) are always shown. The [Color Picker](#color-picker) and [Pan & Tilt](#pan--tilt) widgets also set the selected cells only. The scene keeps every cell's value, so a scene can give each pixel its own colour.
+
+<!-- TODO media: scene modifier with a pixel bar, the Cells widget and cell 7's dimmer -->
+
 ### Color Picker
 
-The color picker widget can be used to manipulate a fixture's [color intensity channels](#supported-channel-types). Color systems can differ from one fixture to another (RGB, CMY, HSV...). To ease color manipulation, the chosen color value is automatically converted to match the fixture's color system. Similarly to the channels widget, the color picker widget may be used in to set the color value of **one or multiple** selected fixtures at a time.
+The color picker widget can be used to manipulate a fixture's [color intensity channels](#supported-channel-types). Color systems can differ from one fixture to another (RGB, CMY, HSV...). To ease color manipulation, the chosen color value is automatically converted to match the fixture's color system. On a fixture with a white channel (RGBW), the white channel takes the part shared by red, green and blue. Similarly to the channels widget, the color picker widget may be used in to set the color value of **one or multiple** selected fixtures at a time.
 
 <Video src="/interface/modifier_universe_colorpicker_widget.webm" style="margin-bottom:16px;"/>
 
@@ -247,5 +259,8 @@ This widget is highly configurable and comes with many features:
 | Direction   | Direction of the channel animation (`Left To Right`,`Right To Left`,`Symetrical`) |
 | Phase Start | Phase shift value of the first fixture in the activity group                      |
 | Phase Stop  | Phase shift value of the last fixture in the activity group                       |
+| Across cells | Spreads the phase over every cell of the fixtures (fixture order, then cell order) instead of over the fixtures, so the effect runs along a pixel bar |
 
 > **Note:** Phase shifting for fixture that are in between the start/stop interval is automatically calculated to be spread around evenly between the whole channel's active fixtures.
+
+> **Note:** An effect moves its channel in every cell of a fixture (each pixel's dimmer, each head's pan). Without **Across cells**, the cells of a fixture move together. Shows saved with an earlier version moved only the first cell; they now move every cell.
