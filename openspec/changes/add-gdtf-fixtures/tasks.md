@@ -120,17 +120,32 @@
 
 ## 4. Visualizer
 
-- [ ] 4.1 `fixture_shapes.js`: parametric body shapes by role from GDTF trees, and synthetic
+- [x] 4.1 `fixture_shapes.js`: parametric body shapes by role from GDTF trees, and synthetic
       OFL trees from category, dimensions, axes, beam and matrix cells (design.md decisions 4
       and 5). Verify: a page script builds and renders one fixture per OFL category plus each
       generic GDTF fixture, and the screenshot shows each one recognisably (yoke and head, can,
       bar, panel).
-- [ ] 4.2 `geometry_fixture.js`: node tree with generated shapes on the OCCLUDER layer, axis
+- [x] 4.2 `geometry_fixture.js`: node tree with generated shapes on the OCCLUDER layer, axis
       rotation from Pan/Tilt, per-node decoding with inheritance from ancestors, and `writeBeams`
       for projector clusters (at most 8 per fixture); every cell is an instanced lit disc. OFL Moving Heads
       without pixel blocks keep `MovingHead`. Verify: spec "OFL PAR", "OFL pixel bar", "GDTF
       moving head", "Beam colours", "LED wash" and "Pixel cells" hold at every quality level. The demo show
       looks as before (screenshot against the epic branch).
+      Note (2026-11-04): checked in the app on a test rig, every fixture hanging at 6 m:
+      - **Fixtures:** the bundled spot, beam bar and pixel bar, the real Robin 600 LEDWash GDTF,
+        an OFL PAR, the OFL LED PIX-144 and the OFL Robin LEDWash 600.
+      - **Results:**
+        - the spot casts its gobo and turns through −270°…270° with Pan;
+        - the beam bar's heads are red, blue and green;
+        - the pixel bar's cells glow with no beams;
+        - the Robin GDTF's 37 cells make one wash;
+        - the OFL PAR casts red;
+        - only pixel 3 of the OFL bar is blue.
+      - **Quality levels:** checked at High, Low and Guides (`gf-high.png`, `gf-low.png`,
+        `gf-guides.png`).
+      - **Bodies:** base, yoke and head, a can, bars (`gf-bodies*.png`).
+      - **Demo show:** renders as before (`gf-demo.png`); the only `MovingHead` change moves
+        `BeamState.begin`/`end` to the visualizer.
 - [ ] 4.3 Gobo array grows with wheel images, up to 64 layers, and falls back to the built-in
       patterns past that; slots map to layers at patch time (design.md decision 6). Verify: spec
       "Real gobo" holds on the floor at Medium and in the haze at High; focus and frost still

@@ -317,6 +317,20 @@ Some examples:
 - A Tarantula (6 tilting bars) projects up to 8.
 - A spot has one cell, so one projector, as before.
 
+Built as (2026-11-04):
+- **Clustering.** Cells are clustered when they move with the same axis, or with the fixture
+  body if no axis is above them, rather than when they share a parent. Real LED washes split
+  their rings into separate zone geometries, so the parent rule gave three projectors at the same
+  spot; the Robin 600 LEDWash now casts one.
+- **Cluster light.** A cluster's intensity is the mean of its cells' intensities, so a fully lit
+  wash reads like one full beam, not 37 summed.
+- **Glow-only cells.** They write a row 1 mm long, which gives a lens glow but no surface or air
+  light.
+- **Unlit colour mixing.** A beam whose colour mixing channels are all at 0 stays dark instead of
+  falling back to white.
+- **OFL Pan/Tilt.** OFL ranges start at 0, so they are turned around their middle, as
+  `MovingHead` does.
+
 So a rig's lighting cost is bounded by its fixture count, not its cell count. Cell colours change
 on the lens at full detail.
 

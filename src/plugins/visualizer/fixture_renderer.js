@@ -1,4 +1,6 @@
 import MovingHead from './moving_head';
+import GeometryFixture from './geometry_fixture';
+import { synthesizeGeometry } from './fixture_shapes';
 import Controls from './controls';
 import EventBus from '../eventbus';
 import { NO_CAPABILITY } from '../../models/fixtures/fixture.profile';
@@ -156,6 +158,11 @@ class FixtureRenderer {
    */
   createInstance(entry) {
     const { channels, physical, wheels } = entry;
+    // OFL moving heads keep their model; everything else is drawn from a geometry tree
+    const pixels = channels.some((channel) => channel.geometry);
+    if (entry.geometry || entry.category !== 'Moving Head' || pixels) {
+      return this.createGeometryInstance(entry);
+    }
     // Only one gobo wheel is drawn: the fixture's first
     const goboWheel = findWheel(wheels, /gobo/i);
     const tilt = channels.find((channel) => channel.type === 'Tilt');
@@ -197,6 +204,37 @@ class FixtureRenderer {
   }
 
   /**
+   * Creates the 3D instance of a fixture drawn from its geometry tree (GDTF, or built from its
+   * OFL facts)
+   *
+   * @private
+   * @param {Object} entry Patch snapshot entry
+   * @returns {Object} Rendered fixture
+   */
+  createGeometryInstance(entry) {
+    const { channels, wheels, matrix } = entry;
+    const geometry = entry.geometry || synthesizeGeometry(entry, channels);
+    const model = new GeometryFixture({
+      geometry, channels, wheels, matrix, centerAngles: !entry.geometry,
+    });
+    model.position = { ...entry.position };
+    model.rotation = { ...entry.rotation };
+    const instance = {
+      id: entry.id,
+      model,
+      handle: new FixtureHandle(entry.id, model),
+      channels,
+      goboWheel: null,
+      last: new Uint8Array(channels.length),
+      frame: entry.frame,
+      chStart: entry.chStart,
+      force: true,
+    };
+    this.instances.set(entry.id, instance);
+    return instance;
+  }
+
+  /**
    * Whether a zoom channel's values are a percentage of the lens range (OFL "narrow" / "wide"
    * presets decode to 1 / 100) rather than field angles in degrees
    *
@@ -226,7 +264,8 @@ class FixtureRenderer {
       instance.handle.silent = true;
       Controls.detachAll();
     }
-    MovingHead.deleteInstance(instance.model);
+    if (instance.model instanceof GeometryFixture) instance.model.dispose();
+    else MovingHead.deleteInstance(instance.model);
     this.instances.delete(instance.id);
   }
 
@@ -276,7 +315,8 @@ class FixtureRenderer {
     const instance = this.instances.get(id);
     if (!instance) return;
     if (single) {
-      instance.model.setSinglyHighlighted(state);
+      this.instances.forEach((other) => { other.model.highlighted = false; });
+      instance.model.highlighted = state;
       if (state && center) {
         Controls.detachAll();
         Controls.attach(instance.handle);
@@ -335,6 +375,10 @@ class FixtureRenderer {
     const {
       model, channels, last, goboWheel,
     } = instance;
+    if (model instanceof GeometryFixture) {
+      model.decode(last);
+      return;
+    }
     model.colorPreset = null;
     model.resetCapabilityValues();
     for (let id = 0; id < channels.length; id++) {

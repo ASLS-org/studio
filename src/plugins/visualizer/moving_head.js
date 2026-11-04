@@ -792,21 +792,19 @@ class MovingHead {
   }
 
   /**
-   * Updates every instance and rewrites the beam state
+   * Updates every instance and appends their beams (between BeamState begin and end)
    *
    * @public
    * @param {Number} t Time in seconds
-   * @param {BeamState} beamState Beam state to rewrite
+   * @param {BeamState} beamState Beam state being written
    * @returns {Boolean} Whether a beam animates on its own (strobe, rotating gobo)
    */
   static update(t, beamState) {
     let animating = false;
-    beamState.begin();
     for (let i = 0; i < instances.length; i++) {
       instances[i].update(t, beamState);
       animating = animating || instances[i].animating;
     }
-    beamState.end();
     return animating;
   }
 
