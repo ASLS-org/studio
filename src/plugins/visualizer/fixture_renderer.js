@@ -212,10 +212,12 @@ class FixtureRenderer {
    * @returns {Object} Rendered fixture
    */
   createGeometryInstance(entry) {
-    const { channels, wheels, matrix } = entry;
+    const {
+      channels, wheels, matrix, images,
+    } = entry;
     const geometry = entry.geometry || synthesizeGeometry(entry, channels);
     const model = new GeometryFixture({
-      geometry, channels, wheels, matrix, centerAngles: !entry.geometry,
+      geometry, channels, wheels, matrix, images, centerAngles: !entry.geometry,
     });
     model.position = { ...entry.position };
     model.rotation = { ...entry.rotation };

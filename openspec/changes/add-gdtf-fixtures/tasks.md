@@ -146,10 +146,15 @@
       - **Bodies:** base, yoke and head, a can, bars (`gf-bodies*.png`).
       - **Demo show:** renders as before (`gf-demo.png`); the only `MovingHead` change moves
         `BeamState.begin`/`end` to the visualizer.
-- [ ] 4.3 Gobo array grows with wheel images, up to 64 layers, and falls back to the built-in
+- [x] 4.3 Gobo array grows with wheel images, up to 64 layers, and falls back to the built-in
       patterns past that; slots map to layers at patch time (design.md decision 6). Verify: spec
       "Real gobo" holds on the floor at Medium and in the haze at High; focus and frost still
       blur it.
+      Note (2026-11-04): checked with the real Ayrton Diablo GDTF. Its "Infinite stairs" slot
+      uses image layer 13 (the texture grows from 10 to 19 layers); it shows on the floor at
+      Medium and in the haze at High, and full frost blurs it (`gobo-*.png`). Fixed in the
+      adapter on the way: prism wheels (Prism1 with Open / facet slots) now decode as wheel
+      slots, so DMX 0 takes the prism out; before, the whole channel read as "prism in".
 - [ ] 4.4 Frame cost check: a rig of 20 pixel bars and 10 Robin 600 LEDWash plus the demo rig
       plays a chase. Verify: with
       render on demand, a still show draws 0 frames over 3 s, and Auto quality does not step down

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { LIGHT_LAYERS } from './stage_lighting';
-import { goboLayer } from './gobos';
+import { goboLayer, goboImageLayer } from './gobos';
 import { SHAPE_ROLES, assignRoles } from './fixture_shapes';
 import { NO_CAPABILITY } from '../../models/fixtures/fixture.profile';
 
@@ -168,12 +168,22 @@ class GeometryFixture {
    * @param {Array<Object>} data.channels Profile channels of the patched mode
    * @param {Object} data.wheels Profile wheels
    * @param {?Object} data.matrix Profile pixel groups (OFL), or null
+   * @param {Map<String, ImageBitmap>} [data.images] Wheel slot images by media file name (GDTF)
    * @param {Boolean} [data.centerAngles=false] Whether Pan/Tilt ranges start at 0 (OFL) and are
    * turned around their middle, as GDTF ranges are
    */
   constructor({
-    geometry, channels, wheels, matrix, centerAngles = false,
+    geometry, channels, wheels, matrix, centerAngles = false, images = new Map(),
   }) {
+    // Gobo layer of each wheel slot: its image when it has one, else a built-in pattern
+    this._slotLayers = {};
+    Object.entries(wheels || {}).forEach(([name, wheel]) => {
+      this._slotLayers[name] = wheel.slots.map((slot, i) => {
+        const image = slot.image && images.get(slot.image);
+        const layer = image ? goboImageLayer(image) : -1;
+        return layer >= 0 ? layer : goboLayer(wheel.slots, i);
+      });
+    });
     this._centerAngles = centerAngles;
     this._wheels = wheels || {};
     this._groups = (matrix && matrix.groups) || {};
@@ -518,7 +528,7 @@ class GeometryFixture {
           s.filter[1] *= cellColor.g;
           s.filter[2] *= cellColor.b;
         } else if (slot.type === 'Gobo') {
-          s.gobo = { slots: wheel.slots, index };
+          s.gobo = this._slotLayers[value.wheel][index];
         } else if (slot.type === 'Prism') {
           s.prism = true;
         }
@@ -706,7 +716,7 @@ class GeometryFixture {
     const half = glow ? GLOW_HALF_ANGLE : Math.min(Math.max(field / n, 0.5) / 2, MAX_HALF_ANGLE);
     row.tanHalf = Math.tan(degToRad(half));
     row.length = glow ? GLOW_LENGTH : LIGHT_LENGTH;
-    row.goboLayer = lead.gobo ? goboLayer(lead.gobo.slots, lead.gobo.index) : 0;
+    row.goboLayer = lead.gobo || 0;
     row.goboRotation = lead.goboAngle;
     row.blur = (lead.frost / 100) * FROST_BLUR + (1 - lead.focus / 100) * FOCUS_BLUR;
     if (glow || !lead.prism) {

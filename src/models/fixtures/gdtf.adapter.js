@@ -446,7 +446,7 @@ function channelCapabilities(functions, bytes, context) {
       .filter((s) => parseInt(s.attrs.WheelSlotIndex, 10) > 0)
       .map((s) => ({ set: s, from: dmxValue(s.attrs.DMXFrom, bytes) }))
       .sort((a, b) => a.from - b.from);
-    if (wheel && sets.length && /^(Color|Gobo)\d/.test(fn.attrs.Attribute || '')) {
+    if (wheel && sets.length && /^(Color|Gobo|Prism)\d(Select\w*)?$/.test(fn.attrs.Attribute || '')) {
       sets.forEach(({ set, from: setFrom }, j) => {
         const setEnd = j + 1 < sets.length ? sets[j + 1].from - 1 : end;
         if (setFrom > end || setEnd < setFrom) return;
