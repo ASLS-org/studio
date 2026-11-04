@@ -43,8 +43,8 @@ per fixture, Three.js r170.
 
 ## Risks / Trade-offs
 
-- [Pi 5 fill rate too low even for T1] → T0 plus resolution scale down to about 0.35; record the
-  floor in the epic doc.
+- [Pi 5 fill rate too low even for T1] → T0 plus resolution scale down to about 0.35, with beam
+  guides kept at full resolution; Guides tier as the floor. Record it in the epic doc.
 - [Gizmo and orbit feel laggy through the worker] → measure input latency in the spike; keep
   controls on the main thread if needed.
 - [Losing the current look before unit 4 lands] → the existing beam cones stay drawn on top until
@@ -57,6 +57,15 @@ per fixture, Three.js r170.
    not used.
 10. **No per-showfile Quality override** (confirmed 2026-11-04). Quality is a device setting only;
     a presentation machine sets its own.
+11. **Beam guides** (confirmed 2026-11-04). Per beam, line segments for the centre line from the
+    lens to where it meets the floor or the end of the beam, 8 cone edges, and a 32-segment
+    footprint ring, all computed in the vertex shader from the per-beam state: one instanced draw,
+    82 vertices per beam. Colour comes from the beam; brightness scales with intensity down to a
+    faint floor (25%), so a beam with the dimmer at 0 still shows where it points. Guides draw
+    after the lighting, at the canvas's full resolution even when the lighting renders scaled
+    down, so they stay sharp as resolution drops. They form the lowest tier ("Guides": unlit stage
+    plus guides) and are also a Visualizer setting (Auto follows the tier, On, Off) usable at any
+    tier. Lines are 1 px (WebGL ignores line width) and stop at the floor plane, not at set pieces.
 
 ## Spike
 
@@ -80,7 +89,8 @@ Results, page version 1 (2026-11-04), on two strong devices rather than the targ
 
 Version 2 replaces load × 3 with a load ramp per variant at 40 beams (doubling until a frame misses
 refresh), which ranks variants without the GPU timer, and starts the Worker from blob URLs when its
-URL is refused. Tier boundaries still need the 2015 laptop and the Pi 5: pending.
+URL is refused. Version 3 adds two variants: guides only (unlit stage), and T1 at 0.5 resolution
+with guides at full resolution. Tier boundaries still need the 2015 laptop and the Pi 5: pending.
 
 ## Open Questions (resolve while refining this unit)
 

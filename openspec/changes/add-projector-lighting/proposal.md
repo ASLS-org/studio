@@ -18,6 +18,9 @@ renderer shares the main thread with the engine and the UI. The target is smooth
   iris, gobo cookie (rotation, shake), focus/frost as blur, colour, prism sub-beams, intensity.
 - Light on surfaces uses one strategy per tier: footprint decals (T0) or deferred light volumes
   with cookies (T1-T2). Gobos show on the floor and set at every tier. No real lights per fixture.
+- Beam guides: thin lines for each beam's axis, cone edges and floor footprint, sharp at any
+  resolution scale and cheap enough for the weakest machines. They are the lowest tier (Guides)
+  and a Visualizer setting (Auto, On, Off) at every tier.
 - A quality governor picks the starting tier from the device and steps tier and resolution scale
   from measured frame time. A Quality setting (Auto, Low, Medium, High, plus resolution scale) in
   the visualizer settings overrides it, stored per device, not in the showfile.
