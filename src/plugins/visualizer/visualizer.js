@@ -49,7 +49,6 @@ THREE.Vector3.prototype.round = function vector3RoundPolyfill(digits) {
  */
 const DEFAULT_PREFERENCES = {
   HAZE_DENSITY: 50,
-  HAZE_MOVEMENT: 0,
   EXPOSURE: 100,
   GLOBAL_BRIGHTNESS: 80,
 };
@@ -103,7 +102,6 @@ class Visualizer {
     this.governor = null;
     this.floorMaterial = null;
     this._hazeDensity = DEFAULT_PREFERENCES.HAZE_DENSITY;
-    this._hazeMovement = DEFAULT_PREFERENCES.HAZE_MOVEMENT;
     this._exposure = DEFAULT_PREFERENCES.EXPOSURE;
     /**
      * Whether something changed since the last drawn frame (render on demand)
@@ -151,15 +149,9 @@ class Visualizer {
     if (preferences) {
       this.globalBrightness = preferences.globalBrightness;
       this.exposure = preferences.exposure;
-      if (preferences.hazeDensity !== undefined) {
-        this.hazeDensity = preferences.hazeDensity;
-        this.hazeMovement = preferences.hazeMovement;
-      } else {
-        // Showfiles from before Haze: their beams always showed, fogging only added moving noise
-        this.hazeDensity = DEFAULT_PREFERENCES.HAZE_DENSITY;
-        this.hazeMovement = preferences.globalFoggingState
-          ? preferences.globalFoggingTurbulences : 0;
-      }
+      // Showfiles from before Haze (fog settings only) open with the default density: their beams
+      // always showed, fogging only added moving noise
+      this.hazeDensity = preferences.hazeDensity;
     }
   }
 
@@ -176,21 +168,6 @@ class Visualizer {
 
   get hazeDensity() {
     return this._hazeDensity;
-  }
-
-  /**
-   * Haze movement, 0 to 100 (drift speed of the haze in the beams)
-   *
-   * @type {Number}
-   */
-  set hazeMovement(value) {
-    const movement = Number.isFinite(value) ? value : DEFAULT_PREFERENCES.HAZE_MOVEMENT;
-    this._hazeMovement = Math.min(Math.max(movement, 0), 100);
-    this.applyHaze();
-  }
-
-  get hazeMovement() {
-    return this._hazeMovement;
   }
 
   /**
@@ -216,7 +193,7 @@ class Visualizer {
    * @private
    */
   applyHaze() {
-    if (this.lighting) this.lighting.setHaze(this._hazeDensity, this._hazeMovement);
+    if (this.lighting) this.lighting.setHaze(this._hazeDensity);
     this.invalidate();
   }
 
@@ -378,7 +355,6 @@ class Visualizer {
   get showData() {
     return {
       hazeDensity: this.hazeDensity,
-      hazeMovement: this.hazeMovement,
       exposure: this.exposure,
       globalBrightness: this.globalBrightness,
       autoRotate: this.autoRotate,
@@ -578,7 +554,7 @@ class Visualizer {
    */
   render(t) {
     if (this.fixtureRenderer && this.fixtureRenderer.update()) this.needsRender = true;
-    if (MovingHead.update(t, this.beamState) || this.lighting.animating) this.needsRender = true;
+    if (MovingHead.update(t, this.beamState)) this.needsRender = true;
     this.camera.updateMatrixWorld();
     if (Visualizer.matrixMoved(this.lastView, this.camera.matrixWorld)
       || Visualizer.matrixMoved(this.lastProjection, this.camera.projectionMatrix)) {
@@ -592,7 +568,7 @@ class Visualizer {
     }
     this.needsRender = false;
     const now = performance.now();
-    this.lighting.render(t);
+    this.lighting.render();
     const work = performance.now() - now;
     if (this.governor && this.lastFrameAt !== null
       && this.qualitySettings.quality === QUALITY_SETTINGS.AUTO

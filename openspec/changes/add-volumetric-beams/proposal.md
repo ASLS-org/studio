@@ -16,11 +16,11 @@ the old renderer.
   - Low: closed-form scattering for a cone in uniform haze (no steps), no gobo.
   - Medium: the same with a soft gobo approximation, plus bloom.
   - High: raymarching inside the cone with 8-16 samples, gobo sampled at each step (visible gobo
-    shafts), drifting haze from a baked 3D noise texture, plus bloom.
+    shafts) in uniform haze, plus bloom.
 - Beams render into a reduced-resolution buffer (1/4 at Low and Medium, 1/2 at High) composited
   with a depth-aware upsample. The governor lowers step count before lowering the level.
-- Haze replaces Fogging in the visualizer settings: density and movement, mapped from the existing
-  fog settings so older showfiles look the same or close.
+- Haze replaces Fogging in the visualizer settings: one static density (no shape or motion);
+  older showfiles open at the default density so their beams still show.
 - Lens glow and bloom at Medium and High, from a small built-in bloom pass.
 - The old beam shaders and `MovingHead` beam meshes are removed.
 

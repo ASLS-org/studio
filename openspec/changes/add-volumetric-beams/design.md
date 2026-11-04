@@ -115,6 +115,18 @@ Visualizer preferences today: `globalFoggingState`, `globalFoggingDensity`,
       Movement 100 (was 25 m tiles, 0.7-1.3 contrast, 0.5 m/s: averaged away along each ray).
       Measured in the page at High: 0 changed pixels per second at Movement 0, about 37,000 at 50.
 
+13. **Static haze, gentler angle compensation, zoom decoding** (2026-11-04, fifth review):
+    - The user didn't want visible haze shapes: the noise texture, Movement and the drift are
+      removed (decision 3 withdrawn, Movement in decisions 5 and 12 withdrawn). Haze is one
+      uniform density; the High raymarch only carries the gobo. Nothing animates the view.
+    - Angle compensation uses exponent 1.5 (was the physical 2), clamped 0.25-4, and the field
+      falloff is 20% at the rim (was 40%), floor gain 110: wide beams looked too dull on the floor
+      next to their haze, which grows with path length.
+    - Zoom decoding: OFL "narrow" / "wide" presets decode to 1 / 100 (a percentage), but the
+      `zoom` setter took it as a fraction of the maximum angle only, so a MAC Aura zoomed narrow
+      became a 0.6 degree pinpoint at full angle boost. Zoom channels whose values are only
+      presets (0, 1, 100) now span the lens range; other zoom values are degrees.
+
 ## Risks / Trade-offs
 
 - [Upsample halos at depth edges] → bilateral (depth-aware) upsample; full resolution at T3.

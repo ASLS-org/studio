@@ -53,7 +53,7 @@ const AIR_LEVELS = {
 
 // Low level's floor light buffer, as a fraction of the canvas (before the resolution scale)
 const LOW_LIGHT_SCALE = 0.5;
-const GAIN = 80; // light reaching a surface 1 m away, before the 4 m² falloff offset
+const GAIN = 110; // light reaching a surface 1 m away, before the 4 m² falloff offset
 const GUIDE_EDGES = 8;
 const GUIDE_RING = 32;
 const GUIDE_FLOOR = 0.25; // guide brightness of a beam at intensity 0
@@ -417,19 +417,9 @@ class StageLighting {
    *
    * @public
    * @param {Number} density Haze density, 0 to 100
-   * @param {Number} movement Haze movement, 0 to 100
    */
-  setHaze(density, movement) {
-    this.air.setHaze(density, movement);
-  }
-
-  /**
-   * Whether the picture changes on its own (drifting haze)
-   *
-   * @type {Boolean}
-   */
-  get animating() {
-    return this._level === QUALITY_LEVELS.HIGH && this.air.drifting;
+  setHaze(density) {
+    this.air.setHaze(density);
   }
 
   set guides(state) {
@@ -559,9 +549,8 @@ class StageLighting {
    * then the guides
    *
    * @public
-   * @param {Number} time Time in seconds (haze drift)
    */
-  render(time) {
+  render() {
     const { renderer, scene, camera } = this;
     renderer.setRenderTarget(null);
     renderer.render(scene, camera);
@@ -582,7 +571,7 @@ class StageLighting {
       }
       if (AIR_LEVELS[this._level]) {
         if (this.air.visible) {
-          this.air.render(camera, this._targets ? this._targets.scene.depthTexture : null, time);
+          this.air.render(camera, this._targets ? this._targets.scene.depthTexture : null);
         }
         this.bloom.renderGlow(camera);
         if (this._targets) this.bloom.render(camera, this.air.visible ? this.air.texture : null);

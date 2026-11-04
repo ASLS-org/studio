@@ -160,6 +160,7 @@ class FixtureRenderer {
     const goboWheel = findWheel(wheels, /gobo/i);
     const tilt = channels.find((channel) => channel.type === 'Tilt');
     const pan = channels.find((channel) => channel.type === 'Pan');
+    const zoom = channels.find((channel) => channel.type === 'Zoom');
     const range = (channel) => (channel && channel.capabilities.length
       ? [channel.capabilities[0].min, channel.capabilities[channel.capabilities.length - 1].max]
       : [0, 0]);
@@ -176,6 +177,7 @@ class FixtureRenderer {
       tilt: 128,
       colorWheel: wheels['Color Wheel'] ? wheels['Color Wheel'].slots : [],
       goboWheel: goboWheel ? wheels[goboWheel].slots : [],
+      zoomInPercent: FixtureRenderer.zoomInPercent(zoom),
     });
     model.position = { ...entry.position };
     model.rotation = { ...entry.rotation };
@@ -192,6 +194,24 @@ class FixtureRenderer {
     };
     this.instances.set(entry.id, instance);
     return instance;
+  }
+
+  /**
+   * Whether a zoom channel's values are a percentage of the lens range (OFL "narrow" / "wide"
+   * presets decode to 1 / 100) rather than field angles in degrees
+   *
+   * @private
+   * @param {?Object} channel Zoom channel
+   * @returns {Boolean} Whether zoom values are percentages
+   */
+  static zoomInPercent(channel) {
+    if (!channel) return false;
+    const presets = [0, 1, 100];
+    return channel.capabilities.every((capability) => {
+      const entity = capability.entities && capability.entities.zoom;
+      return !entity || [entity.start, entity.end, entity.value]
+        .every((v) => v === undefined || presets.includes(v));
+    });
   }
 
   /**

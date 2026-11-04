@@ -16,9 +16,8 @@ Three.js r170 WebGL renderer for the rig. It is instantiated by
 | `stage_lighting.js` | quality levels: Guides (unlit), Low (floor decals), Medium/High (deferred light volumes on receivers at a resolution scale), beam guides; object layers RECEIVER/OCCLUDER |
 | `gobos.js` | built-in gobo patterns drawn in code into a mipmapped texture array; wheel slot → layer |
 | `beam_shading.js` | GLSL shared by every beam pass (beam state reads, gobo lookup, light falloff), cone hull geometry, `ACCUM` |
-| `air_beams.js` | beams in the haze: closed form (Low, Medium + soft gobo) or raymarch with gobo and haze noise (High), 1/4 or 1/2 buffer, depth-aware upsample |
+| `air_beams.js` | beams in the haze: closed form (Low, Medium + soft gobo) or raymarch with the gobo (High), uniform haze, 1/4 or 1/2 buffer, depth-aware upsample |
 | `bloom.js` | lens glow sprites (Low and up) and bloom from the air buffer and lens glows (Medium, High) |
-| `haze.js` | baked tileable 3D noise for drifting haze |
 | `quality.js` | quality settings in `localStorage` (never in `showData`), starting level from the device, `QualityGovernor` for Auto |
 | `controls.js` | TransformControls (translate/rotate) for fixture placement |
 | `instance_highlight.js` | selection outline |
@@ -39,7 +38,7 @@ Three.js r170 WebGL renderer for the rig. It is instantiated by
   and materials. Dispose geometries, materials and textures when removing instances.
 - Render on demand: `Visualizer.render()` draws only when `needsRender` is set (DMX change, camera
   move, gizmo `change`, pointer/key input, settings, patch/pose/highlight via `FixtureRenderer`'s
-  `onChange`) or something animates (strobe, gobo rotation, drifting haze at High). Anything new that changes
+  `onChange`) or something animates (strobe, gobo rotation). Anything new that changes
   the picture must call `visualizer.invalidate()`.
 - There are no three.js lights for fixtures. Beam light comes from `stage_lighting.js`; a surface
   lit by beams registers with `lighting.addReceiver(mesh, albedoMaterial)`, and fixture bodies sit on
@@ -48,7 +47,7 @@ Three.js r170 WebGL renderer for the rig. It is instantiated by
   Electron). Never hard-code `/`.
 - Many files are `/* eslint-disable */`. Don't spread that: new modules lint clean, and imports from
   `three/examples/jsm/*` keep the explicit `.js` extension (lint override is in `.eslintrc.js`).
-- Haze settings (`hazeDensity`, `hazeMovement`) are in the visualizer `showData`; showfiles without
-  them map the old `globalFogging*` keys in `Visualizer.preferences`. Quality settings are not.
+- `hazeDensity` and `exposure` are in the visualizer `showData` (older showfiles without them open
+  at 50 and 100; their `globalFogging*` keys are ignored). Quality settings are not.
 - Only `Moving Head` fixtures have a 3D type (`Fixture` refuses other categories). New fixture
   types add a class here, created by `FixtureRenderer.createInstance()` from the patch entry.

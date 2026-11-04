@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import {
   BEAM_GLSL, ACCUM, createConeGeometry, sceneOf,
 } from './beam_shading';
-import { createHazeTexture } from './haze';
 
 /**
  * Air beam techniques: closed form without gobo, closed form with a soft gobo, raymarch
@@ -28,9 +27,6 @@ const EXTINCTION = 0.008; // haze extinction toward the camera, per meter
 const LENS_RADIUS = 0.1; // meters
 const AIR_PIECES = 4; // closed-form pieces per ray
 const PHASE = 0.3; // forward scattering (Henyey-Greenstein g): about 3× brighter head-on
-const HAZE_SCALE = 0.09; // haze noise: one texture tile per 11 m
-const MOVEMENT_SPEED = 0.12; // haze drift at Movement 100, in noise texture units per second
-// (about 1.3 m/s)
 
 const AIR_VERTEX = /* glsl */`
 ${BEAM_GLSL}
@@ -50,7 +46,7 @@ void main() {
 // single-scattering estimate along that segment: point source with inverse-square falloff
 // (closed form), soft radial beam profile, forward-scattering phase and extinction, all taken
 // where the ray passes closest to the beam axis. MODE (AIR_MODES) then modulates it: nothing,
-// the gobo at that point, or the gobo and haze noise averaged over STEPS raymarch samples.
+// the gobo at that point, or the gobo averaged over STEPS raymarch samples. The haze is uniform.
 const AIR_FRAGMENT = /* glsl */`
 ${BEAM_GLSL}
 uniform highp sampler2D uDepth;
@@ -62,9 +58,6 @@ uniform float uAccum;
 uniform float uFalloff;
 uniform float uExtinction;
 uniform float uPhase;
-uniform highp sampler3D uNoise;
-uniform vec3 uDrift;
-uniform float uNoiseScale;
 flat in int vId;
 in vec3 vWorld;
 out highp vec4 outColor;
@@ -169,7 +162,7 @@ void main() {
   vec3 closest = c0 + v * tc;
   light *= 0.4 + 0.6 * goboAt(closest.xy / max(closest.z, 1e-4), g + vec4(0.0, 0.0, 2.5, 0.0));
 #elif MODE == 2
-  // Gobo and haze variation, averaged with the same falloff weights as the base
+  // Gobo variation, averaged with the same falloff weights as the base
   float dt = (tExit - tEnter) / float(STEPS);
   // Offset per beam, so overlapping beams don't stack the same sampling pattern
   float jitter = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))
@@ -183,10 +176,7 @@ void main() {
     float dist = q.z * o.w;
     vec2 disk = q.xy / q.z;
     float w = profile(length(disk)) / (1.0 + uFalloff * dist * dist);
-    float n = texture(uNoise, (C + dir * t) * uNoiseScale + uDrift).r;
-    // Haze clouds: thin between them, dense inside
-    float cloud = 0.25 + 1.5 * smoothstep(0.3, 0.7, n);
-    sum += w * goboAt(disk, g + vec4(0.0, 0.0, 1.0, 0.0)) * cloud;
+    sum += w * goboAt(disk, g + vec4(0.0, 0.0, 1.0, 0.0));
     weight += w;
   }
   light *= weight > 0.0 ? sum / weight : 0.0;
@@ -272,7 +262,7 @@ void main() {
  * @class AirBeams
  * @classdesc Beams in the haze, drawn from the beam state into a reduced-resolution buffer and
  * added to the canvas: closed-form scattering (plain or with a soft gobo) or a raymarch with the
- * gobo and drifting haze at each sample.
+ * gobo at each sample, in uniform haze.
  */
 class AirBeams {
   /**
@@ -293,11 +283,8 @@ class AirBeams {
     this._fraction = 0.25;
     this._target = null;
     this._size = new THREE.Vector2();
-    this._drift = new THREE.Vector3();
-    this._movement = 0;
     this._density = 0;
     this._exposure = 1;
-    this._lastTime = null;
     this.uniforms = {
       ...shared,
       uDepth: { value: null },
@@ -309,9 +296,6 @@ class AirBeams {
       uFalloff: { value: FALLOFF },
       uExtinction: { value: EXTINCTION },
       uPhase: { value: PHASE },
-      uNoise: { value: createHazeTexture() },
-      uDrift: { value: this._drift },
-      uNoiseScale: { value: HAZE_SCALE },
     };
     this.geometry = createConeGeometry();
     this.materials = new Map();
@@ -405,16 +389,14 @@ class AirBeams {
   }
 
   /**
-   * Haze density and movement, 0 to 100
+   * Haze density, 0 to 100
    *
    * @public
    * @param {Number} density Haze density
-   * @param {Number} movement Haze movement
    */
-  setHaze(density, movement) {
+  setHaze(density) {
     this._density = density;
     this.uniforms.uHaze.value = (density / 100) * AIR_GAIN * this._exposure;
-    this._movement = movement / 100;
   }
 
   /**
@@ -426,16 +408,6 @@ class AirBeams {
   setExposure(exposure) {
     this._exposure = exposure;
     this.uniforms.uHaze.value = (this._density / 100) * AIR_GAIN * exposure;
-  }
-
-  /**
-   * Whether the haze drifts (the view must keep drawing)
-   *
-   * @type {Boolean}
-   */
-  get drifting() {
-    return this._mode === AIR_MODES.RAYMARCH && this._movement > 0
-      && this.uniforms.uHaze.value > 0;
   }
 
   /**
@@ -501,16 +473,10 @@ class AirBeams {
    * @public
    * @param {THREE.PerspectiveCamera} camera View camera
    * @param {?THREE.DepthTexture} depth Scene depth (receivers and occluders), or none
-   * @param {Number} time Time in seconds
    */
-  render(camera, depth, time) {
+  render(camera, depth) {
     const { renderer } = this;
     if (!this._target) this.resize();
-    if (this._lastTime !== null) {
-      this._drift.z += this._movement * MOVEMENT_SPEED * (time - this._lastTime);
-      this._drift.x += this._movement * MOVEMENT_SPEED * 0.4 * (time - this._lastTime);
-    }
-    this._lastTime = time;
     this.uniforms.uDepth.value = depth;
     this.uniforms.uUseDepth.value = depth ? 1 : 0;
     this.uniforms.uInvViewProj.value

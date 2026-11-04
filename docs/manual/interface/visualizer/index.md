@@ -62,13 +62,13 @@ Quality settings belong to the computer you're on, not to the show: they are kep
 | guides | The stage unlit, with beam guides, and no beams in the air. For computers without a usable graphics card. |
 | low    | Light on the floor, plain beams in the air and lens glow. Beams aren't hidden behind fixtures. |
 | medium | Light on every lit surface at reduced resolution; beams in the air softened by their gobo; bloom. |
-| high   | Light on every lit surface at full resolution; gobo shafts and drifting haze in the beams; bloom. |
+| high   | Light on every lit surface at full resolution; gobo shafts in the beams; bloom. |
 
 With **auto**, the visualizer first lowers the detail of the beams in the air at **high**, then the resolution, then the level.
 
 Beam guides are thin lines in each beam's colour: the beam's centre line from the lens to the floor, its edges, and the outline of its footprint on the floor. They stay sharp at any resolution. A fixture with its dimmer at 0 keeps a faint guide, so you can set its position without opening the dimmer.
 
-> **Note:** Nothing is redrawn while nothing changes, so an idle visualizer costs almost nothing. Drifting haze (at **high** quality), strobes and rotating gobos keep it drawing.
+> **Note:** Nothing is redrawn while nothing changes, so an idle visualizer costs almost nothing. Strobes and rotating gobos keep it drawing.
 
 ### Global Scene Illumination
 
@@ -83,11 +83,10 @@ Global scene illumination may be adjusted to fit your needs.
 
 ### Haze
 
-Haze is what makes beams visible in the air. It's saved with the show.
+Haze is what makes beams visible in the air: one even haze across the stage. It's saved with the show.
 
 | Setting  | Description |
 | -------- | ----------- |
 | Density  | How bright beams look in the air, 0 to 100. **0** hides beams in the air; light on the floor stays. |
-| Movement | How fast the haze drifts in the beams, 0 to 100. Shows at **high** quality only. |
 
-> **Note:** Shows saved before haze existed open with a density of 50. Their fog turbulence becomes the movement, or 0 if their fogging was disabled.
+> **Note:** Shows saved before haze existed open with a density of 50.

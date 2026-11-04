@@ -123,8 +123,18 @@
 - [x] 10.1 Exposure setting (visualizer `showData`, popup, manual). Verify: spec "Brighter view"
       and "Showfile without Exposure" hold (Exposure 200 vs 100 screenshots `ce200.png`,
       `ce100.png`; a fresh demo load reads 100).
-- [x] 10.2 Visible haze drift at High. Verify: rendering two frames 1 s apart in the page changes
+- [x] 10.2 (Withdrawn in group 11: haze movement removed.) Visible haze drift at High. Verify: rendering two frames 1 s apart in the page changes
       0 pixels at Movement 0 and about 37,000 at Movement 50.
+
+## 11. Static haze, angle balance and zoom (fifth review)
+
+- [x] 11.1 Remove the haze noise texture, Movement and drift (`haze.js`, popup, `showData`,
+      manual). Verify: spec "Still haze" holds; `grep -rn hazeMovement src` finds nothing.
+- [x] 11.2 Angle compensation exponent 1.5, softer field falloff, floor gain 110; zoom presets
+      span the lens range. Verify: spec "Preset zoom" holds (MAC Aura reads 59 and 12.5 degrees
+      at zoom 0 and 255); wide and narrow beams side by side read balanced on the floor and in
+      the air (`cz-high.png`).
+- [x] 11.3 `npx eslint` clean on the touched files; no console errors.
 
 ## Workflow follow-up
 

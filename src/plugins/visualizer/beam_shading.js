@@ -9,7 +9,8 @@ export const ACCUM = 0.25;
 
 // Solid-angle normalisation of beam intensity (see beamPower)
 const TAN_REFERENCE = Math.tan((12.5 * Math.PI) / 180);
-const MIN_SPREAD = 0.15;
+const SPREAD_EXPONENT = 1.5;
+const MIN_SPREAD = 0.25;
 const MAX_SPREAD = 4;
 
 // Shared by every pass: reads one beam's row of the state texture (see beam_state.js)
@@ -38,11 +39,12 @@ float goboAt(vec2 uv, vec4 g) {
   return v * (1.0 - smoothstep(1.0 - rim, 1.0, r));
 }
 
-// Intensity per solid angle: a fixture spreads the same light over its cone, so a wider beam is
-// dimmer and a narrower one brighter (relative to a 25 degree beam, within limits)
+// Intensity per solid angle: a fixture spreads its light over its cone, so a wider beam is
+// dimmer and a narrower one brighter (relative to a 25 degree beam). The exponent is 1.5 instead
+// of the physical 2, since eyes adapt and wide fixtures usually have more output.
 float beamPower(int id) {
-  float tanHalf = beamTexel(id, 9).w;
-  float spread = (${TAN_REFERENCE.toFixed(4)} * ${TAN_REFERENCE.toFixed(4)}) / max(tanHalf * tanHalf, 1e-4);
+  float tanHalf = max(beamTexel(id, 9).w, 1e-3);
+  float spread = pow(${TAN_REFERENCE.toFixed(4)} / tanHalf, ${SPREAD_EXPONENT.toFixed(2)});
   return beamTexel(id, 8).a * clamp(spread, ${MIN_SPREAD.toFixed(2)}, ${MAX_SPREAD.toFixed(2)});
 }
 
@@ -53,8 +55,8 @@ vec3 beamLight(int id, vec3 P, out vec3 L) {
   vec4 loc = beamMatrix(id, 4) * vec4(P, 1.0);
   if (loc.z <= 0.0 || loc.z > 1.0) return vec3(0.0);
   vec2 uv = loc.xy / loc.z;
-  // Field falloff: brightest on the axis, about 60% towards the rim, like a real beam
-  float g = goboAt(uv, beamTexel(id, 9)) * (1.0 - 0.4 * dot(uv, uv));
+  // Field falloff: brightest on the axis, about 80% towards the rim, like a real beam
+  float g = goboAt(uv, beamTexel(id, 9)) * (1.0 - 0.2 * dot(uv, uv));
   float d = loc.z * o.w;
   return beamTexel(id, 8).rgb * (beamPower(id) * g * uGain / (4.0 + d * d));
 }

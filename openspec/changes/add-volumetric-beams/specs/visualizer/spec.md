@@ -34,18 +34,18 @@ with focus or frost. At Medium the gobo SHALL only soften the beam.
 - **THEN** the shafts in the haze turn with the pattern on the floor
 
 ### Requirement: Haze settings
-The system SHALL replace the Fogging settings with Haze settings, Density and Movement (each
-0-100), saved in the showfile. Density 0 SHALL hide every air beam; higher density makes beams
-brighter in the air. Movement above 0 SHALL make the haze drift over time.
+The system SHALL replace the Fogging settings with a Haze Density setting (0-100), saved in the
+showfile: one uniform haze, without shape or motion. Density 0 SHALL hide every air beam; higher
+density makes beams brighter in the air.
 
 #### Scenario: No haze
 - **WHEN** the operator sets haze Density to 0
 - **THEN** no beam shows in the air, and light on the floor is unchanged
 
-#### Scenario: Drifting haze
-- **GIVEN** quality High and haze Movement above 0
-- **WHEN** the show is stopped and the camera still
-- **THEN** the haze in the beams keeps drifting
+#### Scenario: Still haze
+- **GIVEN** the show stopped and the camera still
+- **WHEN** a few seconds pass at any quality level
+- **THEN** the visualizer draws no new frames, whatever the haze density
 
 #### Scenario: Haze saved with the show
 - **WHEN** the operator sets Density to 40, saves and reloads the show
@@ -53,18 +53,17 @@ brighter in the air. Movement above 0 SHALL make the haze drift over time.
 
 ### Requirement: Older showfiles keep their fog look
 The system SHALL open showfiles saved before Haze existed with haze Density 50, since their beams
-always showed in the air, and SHALL map their fog settings to Movement: fogging enabled gives the
-fog turbulence, fogging disabled gives 0 (still haze).
+always showed in the air; their fog settings are ignored.
 
 #### Scenario: Fog disabled in an old showfile
 - **GIVEN** a showfile saved with fogging disabled
 - **WHEN** it is opened
-- **THEN** beams show in the air with haze Density 50 and Movement 0
+- **THEN** beams show in the air with haze Density 50
 
 #### Scenario: Demo show
-- **GIVEN** the demo showfile (fogging enabled, turbulence 50)
+- **GIVEN** the demo showfile (fog settings only)
 - **WHEN** it is opened
-- **THEN** haze Density is 50, Movement is 50, and saving it writes the haze settings
+- **THEN** haze Density is 50, and saving it writes the haze setting
 
 ### Requirement: Bloom and lens glow
 The system SHALL draw a glow on the lens of each lit fixture, scaled by its intensity, at the Low,
@@ -138,4 +137,14 @@ on surfaces through the scene's tone curve. 100 SHALL give the physically scaled
 #### Scenario: Showfile without Exposure
 - **WHEN** a showfile saved before Exposure existed is opened
 - **THEN** Exposure is 100
+
+### Requirement: Zoom follows the fixture's lens
+The system SHALL turn a fixture's Zoom channel into its field angle within the fixture's lens
+range: zoom values given as "narrow" / "wide" presets or percentages SHALL span the lens's
+minimum to maximum angle, and zoom values given in degrees SHALL be used as the field angle.
+
+#### Scenario: Preset zoom
+- **GIVEN** a MAC Aura (lens 11-58 degrees, Zoom "wide" to "narrow")
+- **WHEN** its Zoom channel goes from 0 to 255
+- **THEN** its beam narrows from about 58 to about 11 degrees, never to a pinpoint
 

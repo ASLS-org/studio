@@ -149,6 +149,7 @@ class MovingHead {
     this._rotation = new THREE.Vector3();
     this._minAngle = data.minAngle + 1.0;
     this._maxAngle = data.maxAngle + 1.0;
+    this._zoomInPercent = Boolean(data.zoomInPercent);
     this._shutter = SHUTTER_VALUE.OPEN;
     this._goboWheel = data.goboWheel;
     this._colorWheel = data.colorWheel;
@@ -373,10 +374,17 @@ class MovingHead {
 
   static set highlightXray(value) { highlight.xray = value; }
 
+  /**
+   * Zoom: the field angle in degrees, or with `zoomInPercent` a percentage of the lens range
+   * (OFL "narrow" / "wide" presets decode to 1 / 100)
+   *
+   * @type {Number}
+   */
   set zoom(zoomValue) {
-    const angle = this._maxAngle * (zoomValue / 100);
-    const clampedAngleValue = Math.min(angle / 2, BEAM_MAX_ANGLE);
-    this._angle = clampedAngleValue;
+    const angle = this._zoomInPercent
+      ? this._minAngle + (this._maxAngle - this._minAngle) * (zoomValue / 100)
+      : zoomValue;
+    this._angle = Math.min(Math.max(angle, 0.5) / 2, BEAM_MAX_ANGLE);
   }
 
   /**

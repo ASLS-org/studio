@@ -90,21 +90,6 @@
           style="width: 100px"
         />
       </uk-flex>
-      <uk-flex center-h>
-        <div>
-          <h4>Movement:</h4>
-          <p class="subtitle">
-            How fast the haze drifts (high quality only).
-          </p>
-        </div>
-        <uk-spacer />
-        <uk-num-input
-          v-model="$show.visualizerHandle.hazeMovement"
-          :min="0"
-          :max="100"
-          style="width: 100px"
-        />
-      </uk-flex>
       <div class="separator" />
       <uk-flex
         :gap="8"
@@ -204,7 +189,6 @@ export default {
      */
     resetInitialValues() {
       this.$show.visualizerHandle.hazeDensity = this.initialValues.hazeDensity;
-      this.$show.visualizerHandle.hazeMovement = this.initialValues.hazeMovement;
       this.$show.visualizerHandle.globalBrightness = this.initialValues.globalBrightness;
       this.$show.visualizerHandle.exposure = this.initialValues.exposure;
       if (this.initialQuality) {
