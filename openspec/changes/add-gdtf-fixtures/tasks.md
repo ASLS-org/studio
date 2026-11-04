@@ -21,10 +21,13 @@
 
 ## 2. Engine: profiles, library, showfile (models)
 
-- [ ] 2.1 Move `deriveTypeKey`, `deriveAttribute` and the attribute tables out of `ofl.adapter.js`
+- [x] 2.1 Move `deriveTypeKey`, `deriveAttribute` and the attribute tables out of `ofl.adapter.js`
       into a shared module, unchanged. Verify: with the demo show, the channel `type`, `qaIndex`
       and `attribute` of every patched fixture match a snapshot taken before the move (JSON diff
       in the page).
+      Note (2026-11-04): moved to `channel.types.js`. Checked over the whole library instead of
+      the demo only: a Node snapshot of every channel's name, type, qaIndex, attribute, colour and
+      fine pairing for all 480 OFL fixtures is byte-identical before and after.
 - [ ] 2.2 `gdtf.adapter.js` (pure, see design.md decision 1): modes, coarse and fine channels,
       functions mapped to OFL-shaped capabilities, geometry references expanded per instance,
       geometry tree, `physical`, `wheels`, derived category. Add `fflate` and the
