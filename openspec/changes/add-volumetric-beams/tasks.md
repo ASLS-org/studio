@@ -83,6 +83,19 @@
       at every level.
 - [x] 6.2 `npx eslint` on all touched files is clean.
 
+## 7. Look tuning (after the user's review)
+
+- [x] 7.1 Scale surface and air light by the beam's solid angle (design.md decision 9). Verify:
+      spec "Zoom out" holds; the demo's wide floor fixture is faint, narrow beams brighter.
+- [x] 7.2 Air beams: closed-form base at every level with soft profile, phase and extinction; the
+      High raymarch only modulates it; 5-tap blur of the air buffer. Verify: spec "Low level
+      edges" holds; High shows smooth gobo shafts without grain (screenshots `ct-b-*.png`).
+- [x] 7.3 Subtler haze noise, bloom threshold 1.2 at 0.25 strength, ring-free lens glow; surface
+      gain 80, air gain 0.2. Verify: spec "Looking into a beam" holds; the demo rig no longer
+      washes out at High.
+- [x] 7.4 `npx eslint` on the touched visualizer files is clean; playback at every level shows no
+      console errors.
+
 ## Workflow follow-up
 
 - Archive the change on the unit branch, set unit 4 to `archived` in the epic doc, then open a PR

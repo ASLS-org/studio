@@ -87,3 +87,28 @@ beams before lowering the lighting resolution or the level.
 - **GIVEN** quality on Auto at High with full resolution
 - **WHEN** frames stay slow for several seconds
 - **THEN** the air beams lose detail first, and the resolution drops only if frames are still slow
+
+### Requirement: Wider beams spread the same light
+The system SHALL keep a beam's total light constant across its field angle: zooming a fixture wider
+SHALL make its footprint and its beam in the air dimmer per area, and zooming narrower SHALL make
+them brighter, within limits so very narrow or very wide beams stay visible.
+
+#### Scenario: Zoom out
+- **GIVEN** a fixture lighting the floor with its dimmer at 255
+- **WHEN** its zoom goes from its narrowest to its widest field angle
+- **THEN** its footprint grows and gets dimmer, and its beam in the air gets fainter
+
+### Requirement: Beams look smooth and directional
+The system SHALL draw beams in the air with soft edges and without visible grain or blocky steps at
+every level, brighter when looked at from in front of the fixture than from the side, and SHALL
+keep overlapping beams from washing the view out.
+
+#### Scenario: Looking into a beam
+- **GIVEN** a beam in haze
+- **WHEN** the camera moves from the side of the beam to in front of the fixture
+- **THEN** the beam and its lens glow get brighter
+
+#### Scenario: Low level edges
+- **WHEN** the quality is Low
+- **THEN** beam edges in the air are soft, without visible steps
+

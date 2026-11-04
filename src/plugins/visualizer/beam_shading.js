@@ -7,6 +7,11 @@ import * as THREE from 'three';
  */
 export const ACCUM = 0.25;
 
+// Solid-angle normalisation of beam intensity (see beamPower)
+const TAN_REFERENCE = Math.tan((12.5 * Math.PI) / 180);
+const MIN_SPREAD = 0.15;
+const MAX_SPREAD = 4;
+
 // Shared by every pass: reads one beam's row of the state texture (see beam_state.js)
 export const BEAM_GLSL = /* glsl */`
 uniform highp sampler2D uBeams;
@@ -28,7 +33,15 @@ float goboAt(vec2 uv, vec4 g) {
   float s = sin(g.y);
   vec2 q = vec2(c * uv.x - s * uv.y, s * uv.x + c * uv.y);
   float v = textureLod(uGobos, vec3(q * 0.5 + 0.5, g.x), g.z).r;
-  return v * (1.0 - smoothstep(0.92, 1.0, r));
+  return v * (1.0 - smoothstep(0.8, 1.0, r));
+}
+
+// Intensity per solid angle: a fixture spreads the same light over its cone, so a wider beam is
+// dimmer and a narrower one brighter (relative to a 25 degree beam, within limits)
+float beamPower(int id) {
+  float tanHalf = beamTexel(id, 9).w;
+  float spread = (${TAN_REFERENCE.toFixed(4)} * ${TAN_REFERENCE.toFixed(4)}) / max(tanHalf * tanHalf, 1e-4);
+  return beamTexel(id, 8).a * clamp(spread, ${MIN_SPREAD.toFixed(2)}, ${MAX_SPREAD.toFixed(2)});
 }
 
 // Light a beam casts on world point P, before the surface's angle term; L: direction to the lens
@@ -39,8 +52,7 @@ vec3 beamLight(int id, vec3 P, out vec3 L) {
   if (loc.z <= 0.0 || loc.z > 1.0) return vec3(0.0);
   float g = goboAt(loc.xy / loc.z, beamTexel(id, 9));
   float d = loc.z * o.w;
-  vec4 c = beamTexel(id, 8);
-  return c.rgb * (c.a * g * uGain / (4.0 + d * d));
+  return beamTexel(id, 8).rgb * (beamPower(id) * g * uGain / (4.0 + d * d));
 }
 `;
 

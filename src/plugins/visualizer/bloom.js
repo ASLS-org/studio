@@ -1,11 +1,11 @@
 import * as THREE from 'three';
 import { BEAM_GLSL, ACCUM, sceneOf } from './beam_shading';
 
-const GLOW_SIZE = 0.35; // lens glow radius at full intensity, in meters
+const GLOW_SIZE = 0.18; // lens glow radius at full intensity, in meters
 const GLOW_OFFSET = 0.05; // glow centre in front of the lens, in meters
 const BLOOM_LEVELS = 4;
-const BLOOM_THRESHOLD = 0.35; // light below this doesn't bloom
-const BLOOM_STRENGTH = 0.5;
+const BLOOM_THRESHOLD = 1.2; // light below this doesn't bloom (only beam cores and lenses)
+const BLOOM_STRENGTH = 0.25;
 
 // One camera-facing quad per beam at its lens, brighter when looking into the beam
 const GLOW_VERTEX = /* glsl */`
@@ -20,11 +20,12 @@ void main() {
   vec4 c = beamTexel(gl_InstanceID, 8);
   vec3 centre = o.xyz + axis * uOffset;
   float facing = max(dot(axis, normalize(cameraPosition - centre)), 0.0);
-  float size = uSize * (0.4 + 0.6 * c.a) * (0.5 + 0.5 * facing);
+  float facing3 = facing * facing * facing;
+  float size = uSize * (0.5 + 0.5 * c.a) * (0.6 + 1.4 * facing3);
   vec4 view = viewMatrix * vec4(centre, 1.0);
   view.xy += position.xy * size;
   vDisk = position.xy;
-  vColor = c.rgb * c.a * (0.3 + 0.7 * facing);
+  vColor = c.rgb * c.a * (0.15 + 0.85 * facing3);
   gl_Position = projectionMatrix * view;
   if (c.a <= 0.0) gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
 }
@@ -38,7 +39,9 @@ out highp vec4 outColor;
 void main() {
   float r2 = dot(vDisk, vDisk);
   if (r2 > 1.0) discard;
-  vec3 light = vColor * exp(-r2 * 5.0) * 2.0;
+  // Gaussian that reaches exactly 0 at the sprite's edge, so no ring shows
+  float glow = max(exp(-r2 * 6.0) - exp(-6.0), 0.0) / (1.0 - exp(-6.0));
+  vec3 light = vColor * glow * 1.5;
 #ifdef TO_SCREEN
   outColor = linearToOutputTexel(vec4(light, 1.0));
 #else

@@ -51,7 +51,7 @@ const AIR_LEVELS = {
   [QUALITY_LEVELS.HIGH]: { mode: AIR_MODES.RAYMARCH, fraction: 0.5 },
 };
 
-const GAIN = 160; // light reaching a surface 1 m away, before the 4 m² falloff offset
+const GAIN = 80; // light reaching a surface 1 m away, before the 4 m² falloff offset
 const GUIDE_EDGES = 8;
 const GUIDE_RING = 32;
 const GUIDE_FLOOR = 0.25; // guide brightness of a beam at intensity 0

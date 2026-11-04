@@ -62,6 +62,21 @@ Visualizer preferences today: `globalFoggingState`, `globalFoggingDensity`,
 8. **Governor:** at High it first drops raymarch samples from 16 to 8, then follows unit 3's
    resolution and level steps.
 
+9. **Look tuning** (2026-11-04, after the user's review: the first pass looked raw, grainy and
+   overexposed):
+   - Intensity per solid angle: beam power × (tan 12.5° / tan half-angle)², clamped to 0.15-4,
+     for surface and air light alike, so a wider zoom is dimmer and a narrower one brighter.
+   - Every air technique starts from the closed-form estimate, taken where the view ray passes
+     closest to the beam axis, with a soft radial profile (full core, 0 at the rim), a
+     Henyey-Greenstein phase (g = 0.55: brighter looking into a beam) and extinction toward the
+     camera (0.015 /m). The High raymarch only averages the gobo and haze variation (0.7-1.3)
+     with the same falloff weights, so its noise never changes the beam's overall brightness.
+   - A separable 5-tap blur on the air buffer before upsampling removes raymarch grain and the
+     steps of the 1/4 buffer.
+   - Haze noise tiles every 25 m and drifts slowly. Bloom only takes light above 1.2, at 0.25
+     strength. Lens glow is a small Gaussian reaching 0 at the sprite edge (no ring), strongest
+     looking into the fixture. Surface gain 80, air gain 0.2, gobo rim softened (0.8-1.0).
+
 ## Risks / Trade-offs
 
 - [Upsample halos at depth edges] → bilateral (depth-aware) upsample; full resolution at T3.

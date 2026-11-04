@@ -22,10 +22,12 @@ export const AIR_MODES = {
  */
 export const AIR_SAMPLES = [16, 8];
 
-const AIR_GAIN = 1; // air light per unit of haze density, before falloff
+const AIR_GAIN = 0.2; // air light per unit of haze density, before falloff
 const FALLOFF = 0.04; // inverse-square falloff: 1 / (1 + FALLOFF × distance²)
-const HAZE_SCALE = 0.08; // haze noise texture repeats every 1 / HAZE_SCALE / 64 × 64 meters
-const MOVEMENT_SPEED = 0.05; // haze drift at Movement 100, in noise texture units per second
+const EXTINCTION = 0.015; // haze extinction toward the camera, per meter
+const PHASE = 0.55; // forward scattering (Henyey-Greenstein g): brighter looking into a beam
+const HAZE_SCALE = 0.04; // haze noise: one texture tile per 25 m
+const MOVEMENT_SPEED = 0.02; // haze drift at Movement 100, in noise texture units per second
 
 const AIR_VERTEX = /* glsl */`
 ${BEAM_GLSL}
@@ -41,7 +43,11 @@ void main() {
 `;
 
 // Back faces of the cone hull: the view ray enters the cone analytically and leaves at the back
-// face, the floor, or (with depth) the first surface. MODE picks the technique (AIR_MODES).
+// face, the floor, or (with depth) the first surface. Every technique starts from the same smooth
+// single-scattering estimate along that segment: point source with inverse-square falloff
+// (closed form), soft radial beam profile, forward-scattering phase and extinction, all taken
+// where the ray passes closest to the beam axis. MODE (AIR_MODES) then modulates it: nothing,
+// the gobo at that point, or the gobo and haze noise averaged over STEPS raymarch samples.
 const AIR_FRAGMENT = /* glsl */`
 ${BEAM_GLSL}
 uniform highp sampler2D uDepth;
@@ -51,6 +57,8 @@ uniform mat4 uInvViewProj;
 uniform float uHaze;
 uniform float uAccum;
 uniform float uFalloff;
+uniform float uExtinction;
+uniform float uPhase;
 uniform highp sampler3D uNoise;
 uniform vec3 uDrift;
 uniform float uNoiseScale;
@@ -60,6 +68,16 @@ out highp vec4 outColor;
 
 // Beams fade out well before the end of their cone, so the far cap never shows
 float endFade(float z) { return 1.0 - smoothstep(0.25, 0.9, z); }
+
+// Soft beam edge: full in the core, fading to 0 at the cone's rim (r = 1)
+float profile(float r) { return 1.0 - smoothstep(0.3, 1.0, r); }
+
+// Henyey-Greenstein phase, relative to a side view (1 at 90 degrees)
+float phase(float cosTheta) {
+  float g = uPhase;
+  float side = (1.0 - g * g) / pow(1.0 + g * g, 1.5);
+  return (1.0 - g * g) / pow(1.0 + g * g - 2.0 * g * cosTheta, 1.5) / side;
+}
 
 void main() {
   vec2 uv = gl_FragCoord.xy / uTargetSize;
@@ -95,43 +113,73 @@ void main() {
     }
   }
   if (tEnter >= tExit) discard;
-  vec4 col = beamTexel(vId, 8);
   vec4 g = beamTexel(vId, 9);
   vec4 o = beamTexel(vId, 11);
-  float light;
-#if MODE == 2
-  float dt = (tExit - tEnter) / float(STEPS);
-  float jitter = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
-  float acc = 0.0;
-  for (int i = 0; i < STEPS; i++) {
-    float t = tEnter + (float(i) + jitter) * dt;
-    vec3 q = c0 + v * t;
-    if (q.z <= 0.0 || q.z > 1.0) continue;
-    float dist = q.z * o.w;
-    float n = texture(uNoise, (C + dir * t) * uNoiseScale + uDrift).r;
-    acc += goboAt(q.xy / q.z, g + vec4(0.0, 0.0, 1.0, 0.0)) * (0.3 + 1.4 * n)
-      * endFade(q.z) / (1.0 + uFalloff * dist * dist);
-  }
-  light = acc * dt;
-#else
-  // Point source with inverse-square falloff, integrated along the ray inside the cone
+  vec3 axis = normalize(beamTexel(vId, 2).xyz);
+
+  // In-scattering of a point source with 1 / (1 + k d^2) falloff, integrated over the segment
   vec3 ao = C - o.xyz;
   float b = dot(ao, dir);
   float h2 = max(dot(ao, ao) - b * b, 0.0);
   float sk = sqrt(uFalloff);
   float sa = sqrt(1.0 + uFalloff * h2);
-  light = (atan(sk * (tExit + b) / sa) - atan(sk * (tEnter + b) / sa)) / (sk * sa);
-  vec3 qm = c0 + v * (0.5 * (tEnter + tExit));
-  vec2 disk = qm.xy / max(qm.z, 1e-4);
-  light *= (1.0 - smoothstep(0.7, 1.0, length(disk))) * endFade(qm.z);
+  float base = (atan(sk * (tExit + b) / sa) - atan(sk * (tEnter + b) / sa)) / (sk * sa);
+
+  // Where the ray passes closest to the beam axis, inside the segment
+  float dd = dot(dir, axis);
+  float denom = 1.0 - dd * dd;
+  float tc = denom > 1e-4 ? (dd * dot(axis, ao) - b) / denom : 0.5 * (tEnter + tExit);
+  tc = clamp(tc, tEnter, tExit);
+  vec3 lc = C + dir * tc - o.xyz;
+  float along = max(dot(lc, axis), 1e-3);
+  float r = length(lc - axis * along) / (along * g.w);
+  float light = base * profile(r) * phase(dot(normalize(lc), -dir)) * exp(-uExtinction * tc)
+    * endFade(along / o.w);
+
 #if MODE == 1
-  light *= 0.35 + 0.65 * goboAt(disk, g + vec4(0.0, 0.0, 2.5, 0.0));
+  vec3 qc = c0 + v * tc;
+  light *= 0.4 + 0.6 * goboAt(qc.xy / max(qc.z, 1e-4), g + vec4(0.0, 0.0, 2.5, 0.0));
+#elif MODE == 2
+  // Gobo and haze variation, averaged with the same falloff weights as the base
+  float dt = (tExit - tEnter) / float(STEPS);
+  float jitter = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+  float sum = 0.0;
+  float weight = 0.0;
+  for (int i = 0; i < STEPS; i++) {
+    float t = tEnter + (float(i) + jitter) * dt;
+    vec3 q = c0 + v * t;
+    if (q.z <= 0.0 || q.z > 1.0) continue;
+    float dist = q.z * o.w;
+    vec2 disk = q.xy / q.z;
+    float w = profile(length(disk)) / (1.0 + uFalloff * dist * dist);
+    float n = texture(uNoise, (C + dir * t) * uNoiseScale + uDrift).r;
+    sum += w * goboAt(disk, g + vec4(0.0, 0.0, 1.0, 0.0)) * (0.7 + 0.6 * n);
+    weight += w;
+  }
+  light *= weight > 0.0 ? sum / weight : 0.0;
 #endif
-#endif
+  vec3 color = beamTexel(vId, 8).rgb * (beamPower(vId) * light * uHaze * uAccum);
   // Dither below one 8-bit step, so faint beam ends fade instead of banding
   float dither = (fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.0671, 0.0058)))) - 0.5)
     / 255.0;
-  outColor = vec4(max(col.rgb * (col.a * light * uHaze * uAccum) + dither, 0.0), 1.0);
+  outColor = vec4(max(color + dither, 0.0), 1.0);
+}
+`;
+
+// Small separable blur of the air buffer (5 taps), before upsampling: removes raymarch grain
+// and the steps of a low-resolution buffer
+const BLUR_FRAGMENT = /* glsl */`
+uniform sampler2D uSource;
+uniform vec2 uStep;
+in vec2 vUv;
+out highp vec4 outColor;
+void main() {
+  vec3 c = texture(uSource, vUv).rgb * 0.375;
+  c += texture(uSource, vUv + uStep).rgb * 0.25;
+  c += texture(uSource, vUv - uStep).rgb * 0.25;
+  c += texture(uSource, vUv + uStep * 2.0).rgb * 0.0625;
+  c += texture(uSource, vUv - uStep * 2.0).rgb * 0.0625;
+  outColor = vec4(c, 1.0);
 }
 `;
 
@@ -219,6 +267,8 @@ class AirBeams {
       uHaze: { value: 0 },
       uAccum: { value: ACCUM },
       uFalloff: { value: FALLOFF },
+      uExtinction: { value: EXTINCTION },
+      uPhase: { value: PHASE },
       uNoise: { value: createHazeTexture() },
       uDrift: { value: this._drift },
       uNoiseScale: { value: HAZE_SCALE },
@@ -252,6 +302,19 @@ class AirBeams {
       }),
     ));
     this.screenCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+    this.blurUniforms = { uSource: { value: null }, uStep: { value: new THREE.Vector2() } };
+    this.blurScene = sceneOf(new THREE.Mesh(
+      new THREE.PlaneGeometry(2, 2),
+      new THREE.ShaderMaterial({
+        glslVersion: THREE.GLSL3,
+        depthTest: false,
+        depthWrite: false,
+        uniforms: this.blurUniforms,
+        vertexShader: COMPOSITE_VERTEX,
+        fragmentShader: BLUR_FRAGMENT,
+      }),
+    ));
   }
 
   /**
@@ -333,7 +396,10 @@ class AirBeams {
    * @public
    */
   resize() {
-    if (this._target) this._target.dispose();
+    if (this._target) {
+      this._target.dispose();
+      this._blurTarget.dispose();
+    }
     this.renderer.getDrawingBufferSize(this._size);
     const w = Math.max(1, Math.round(this._size.x * this._fraction));
     const h = Math.max(1, Math.round(this._size.y * this._fraction));
@@ -341,8 +407,27 @@ class AirBeams {
     const type = this.renderer.extensions.has('EXT_color_buffer_float')
       ? THREE.HalfFloatType : THREE.UnsignedByteType;
     this._target = new THREE.WebGLRenderTarget(w, h, { depthBuffer: false, type });
+    this._blurTarget = new THREE.WebGLRenderTarget(w, h, { depthBuffer: false, type });
     this.uniforms.uTargetSize.value.set(w, h);
     this.compositeUniforms.uAir.value = this._target.texture;
+  }
+
+  /**
+   * Blurs the air buffer in place: horizontal into the second buffer, vertical back
+   *
+   * @private
+   */
+  blur() {
+    const { renderer } = this;
+    const { width, height } = this._target;
+    this.blurUniforms.uSource.value = this._target.texture;
+    this.blurUniforms.uStep.value.set(1 / width, 0);
+    renderer.setRenderTarget(this._blurTarget);
+    renderer.render(this.blurScene, this.screenCamera);
+    this.blurUniforms.uSource.value = this._blurTarget.texture;
+    this.blurUniforms.uStep.value.set(0, 1 / height);
+    renderer.setRenderTarget(this._target);
+    renderer.render(this.blurScene, this.screenCamera);
   }
 
   /**
@@ -379,6 +464,7 @@ class AirBeams {
     renderer.setRenderTarget(this._target);
     renderer.clear();
     renderer.render(this.scene, camera);
+    this.blur();
     renderer.setRenderTarget(null);
     renderer.render(this.compositeScene, this.screenCamera);
   }
