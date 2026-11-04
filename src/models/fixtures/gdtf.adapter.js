@@ -213,6 +213,7 @@ function buildWheels(fixtureType, usage) {
         let type = 'Color';
         if (/^open/i.test(name)) type = 'Open';
         else if (/^closed?$/i.test(name)) type = 'Closed';
+        else if (use === 'Prism' && !facets && !image && PRISM_OUT.test(name)) type = 'Open';
         else if (facets || (use === 'Prism' && (image || /prism|facet/i.test(name)))) type = 'Prism';
         else if (use === 'Prism') type = 'Open';
         else if (image || (use === 'Gobo' && !/^(default|empty|white)?$/i.test(name.trim()))) {
@@ -477,9 +478,13 @@ function capabilityData(fn, range, context) {
     };
   }
   if (attribute === 'Iris') {
-    // Physical values are the aperture ratio (1 open)
+    // Files write the aperture ratio or the share closed: the iris is open at the channel's home
+    // value, so the end of the range nearest to it is the open one
+    const home = context.home || 0;
+    const openAtFrom = Math.abs(home - range[0]) <= Math.abs(home - range[1]);
+    const open = (openAtFrom ? from >= to : to >= from) ? [from, to] : [1 - from, 1 - to];
     return {
-      ...base, type: 'Iris', openPercentStart: percent(from), openPercentEnd: percent(to),
+      ...base, type: 'Iris', openPercentStart: percent(open[0]), openPercentEnd: percent(open[1]),
     };
   }
   if (attribute === 'CTO' || attribute === 'CTC' || attribute === 'CTB') {
@@ -520,8 +525,8 @@ function channelCapabilities(functions, bytes, context) {
       .filter((s) => parseInt(s.attrs.WheelSlotIndex, 10) > 0)
       .map((s) => ({ set: s, from: dmxValue(s.attrs.DMXFrom, bytes) }))
       .sort((a, b) => a.from - b.from);
-    // A prism channel without a wheel takes its "open" channel sets as prism out
-    if (!wheel && sets.length === 0 && /^Prism\d$/.test(fn.attrs.Attribute || '')) {
+    // A prism function without slot channel sets takes its "open" channel sets as prism out
+    if (sets.length === 0 && /^Prism\d$/.test(fn.attrs.Attribute || '')) {
       const openSets = childrenOf(fn, 'ChannelSet')
         .map((s) => ({ set: s, from: dmxValue(s.attrs.DMXFrom, bytes) }))
         .sort((a, b) => a.from - b.from);
@@ -553,7 +558,39 @@ function channelCapabilities(functions, bytes, context) {
       });
       return;
     }
-    result.push(capabilityData(fn, [coarse(from), coarse(end)], context));
+    if (sets.length && /^Prism\d(Pos|PosRotate|SelectSpin)$/.test(fn.attrs.Attribute || '')) {
+      // On the prism channel, index and rotation sets name the slot they work with: the prism is
+      // in on a prism slot
+      sets.forEach(({ set, from: setFrom }, j) => {
+        const setEnd = j + 1 < sets.length ? sets[j + 1].from - 1 : end;
+        if (setFrom > end || setEnd < setFrom) return;
+        const physical = set.attrs.PhysicalFrom !== undefined
+          ? { PhysicalFrom: set.attrs.PhysicalFrom, PhysicalTo: set.attrs.PhysicalTo } : {};
+        const capability = capabilityData(
+          { ...fn, attrs: { ...fn.attrs, ...physical, Name: set.attrs.Name || fn.attrs.Name } },
+          [coarse(setFrom), coarse(Math.min(setEnd, end))],
+          context,
+        );
+        const index = parseInt(set.attrs.WheelSlotIndex, 10);
+        const slot = context.wheels[wheel] && context.wheels[wheel].slots[index - 1];
+        // Only on the prism channel itself: a separate rotation channel's sets just name the
+        // prism they turn
+        if (capability.type === 'PrismRotation' && capability.prismIn) {
+          capability.prismIn = slot ? slot.type === 'Prism' : index > 1;
+        }
+        result.push(capability);
+      });
+      return;
+    }
+    const capability = capabilityData(fn, [coarse(from), coarse(end)], context);
+    const [low, high] = capability.dmxRange;
+    if (capability.type === 'Prism' && float(fn.attrs.PhysicalFrom) === 0 && high > low) {
+      // A prism function from 0 to 1 inserts the prism above its first value
+      result.push({ ...capability, type: 'NoFunction', dmxRange: [low, low] });
+      result.push({ ...capability, dmxRange: [low + 1, high] });
+      return;
+    }
+    result.push(capability);
   });
   // Coarse ranges of fine functions can collapse onto one value: keep the first per start
   return result.filter((c, i) => i === 0 || c.dmxRange[0] > result[i - 1].dmxRange[0]
@@ -640,12 +677,12 @@ function buildMode(mode, context) {
     // A function without an attribute takes its logical channel's
     const functions = logical.flatMap((l) => childrenOf(l, 'ChannelFunction').map((fn) => (
       fn.attrs.Attribute ? fn : { ...fn, attrs: { ...fn.attrs, Attribute: l.attrs.Attribute } })));
+    const home = homeBytes(dmxChannel, functions, offsets.length);
     const capabilities = channelCapabilities(functions, offsets.length, {
-      ...context, channelAttribute: attribute,
+      ...context, channelAttribute: attribute, home: home[0],
     });
     const baseName = CHANNEL_NAMES[attribute] || MIXING_COLORS[attribute]
       || context.pretty[attribute] || attribute;
-    const home = homeBytes(dmxChannel, functions, offsets.length);
 
     const geometryName = dmxChannel.attrs.Geometry || null;
     const instances = geometryName ? instancesOf(geometryName) : [];
@@ -806,8 +843,9 @@ export default function profileFromGDTF(description, { models: meshes = new Map(
     });
   });
 
+  const wheels = buildWheels(fixtureType, wheelUse);
   const context = {
-    models, geometries, pretty, wheelOf,
+    models, geometries, pretty, wheelOf, wheels,
   };
   const modes = childrenOf(child(fixtureType, 'DMXModes'), 'DMXMode')
     .map((mode) => buildMode(mode, context))
@@ -824,7 +862,7 @@ export default function profileFromGDTF(description, { models: meshes = new Map(
     name: fixtureType.attrs.LongName || fixtureType.attrs.Name || 'GDTF fixture',
     category: deriveCategory(modes[0].geometry),
     physical: buildPhysical(modes[0].geometry, modes[0].channels),
-    wheels: buildWheels(fixtureType, wheelUse),
+    wheels,
     modes,
     gdtf: {
       fixtureTypeId: fixtureType.attrs.FixtureTypeID.toUpperCase(),

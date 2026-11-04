@@ -275,3 +275,13 @@
       entities missing from the data flagged `implicit`.
 - [x] 7.5 Emitter colours from `PhysicalDescriptions` are not read: no channel function in the
       test set links an emitter, so the colour-name table stays.
+- [x] 7.6 Prisms come out and irises start open. Over both test sets (279 prism modes), the
+      prism is out at home values and every prism channel can take it out; no iris starts
+      nearly closed (was 19 modes). Fixes in the adapter:
+      - a facet-less prism slot named "No Prism" or "Open" is an open slot;
+      - a prism function's "open" channel sets take the prism out even when it names a wheel;
+      - a lone prism function from physical 0 is out at its first value;
+      - on the prism channel, index and rotation sets put the prism in only on a prism slot; a
+        separate rotation channel never inserts it;
+      - an iris is open at the end of its range nearest its home value (files write either the
+        aperture or the share closed).
