@@ -1,8 +1,7 @@
 import { markRaw } from '../utils/reactivity';
 import Channel from './channel.model';
 import { PROFILE_SOURCES, resolveModeName } from '../fixtures/fixture.profile';
-import MovingHead from '../../plugins/visualizer/moving_head';
-import Controls from '../../plugins/visualizer/controls';
+import EventBus from '../../plugins/eventbus';
 
 /**
  * Highest DMX channel value
@@ -12,54 +11,6 @@ import Controls from '../../plugins/visualizer/controls';
  * @default
  */
 const MAX_DMX_VALUE = 255;
-
-/**
- * Capability types strings handled when pushing channel values to the 3D model
- *
- * @constant
- * @type {String}
- * @default
- */
-const CAPABILITY_TYPES = {
-  ShutterStrobe: 'ShutterStrobe',
-  StrobeSpeed: 'StrobeSpeed',
-  StrobeDuration: 'StrobeDuration',
-  Intensity: 'Intensity',
-  ColorIntensity: 'ColorIntensity',
-  ColorPreset: 'ColorPreset',
-  ColorTemperature: 'ColorTemperature',
-  Pan: 'Pan',
-  PanFine: 'PanFine',
-  PanContinuous: 'PanContinuous',
-  Tilt: 'Tilt',
-  TiltFine: 'TiltFine',
-  TiltContinuous: 'TiltContinuous',
-  PanTiltSpeed: 'PanTiltSpeed',
-  WheelSlot: 'WheelSlot',
-  WheelShake: 'WheelShake',
-  WheelSlotRotation: 'WheelSlotRotation',
-  Effect: 'Effect',
-  BeamAngle: 'BeamAngle',
-  BeamPosition: 'BeamPosition',
-  EffectSpeed: 'EffectSpeed',
-  EffectDuration: 'EffectDuration',
-  EffectPrameter: 'EffectPrameter',
-  SoundSensitivity: 'SoundSensitivity',
-  Focus: 'Focus',
-  Zoom: 'Zoom',
-};
-
-/**
- * OFL Wheel channels types strings for parsing OFL Fixture wheels
- *
- * @constant
- * @type {Object}
- * @default
- */
-const WHEEL_CHANNEL_TYPES = {
-  COLOR_WHEEL: 'Color Wheel',
-  GOBO_WHEEL: 'Gobo Wheel',
-};
 
 /**
  * OFL Fixture category definitions for parsing fixture type
@@ -143,7 +94,7 @@ class Fixture {
       this.chStart = parseInt(data.chStart, 10);
       this.channels = [];
       this.quickChannelsAccessors = {};
-      this._3DModel = null;
+      this._highlighted = false;
       this._rotation = {
         x: 0,
         y: 0,
@@ -220,16 +171,30 @@ class Fixture {
    ******************************************** */
 
   /**
+   * Tells the visualizer the fixture's position or rotation changed
+   *
+   * @private
+   * @param {Boolean} [reattach=false] Whether the move/rotate gizmo should be re-attached to the
+   * fixture (position tool edits), as opposed to loads and gizmo write-backs
+   */
+  emitPose(reattach = false) {
+    EventBus.emit('fixture_pose', {
+      id: this.id,
+      position: this.position,
+      rotation: { ...this._rotation },
+      reattach,
+    });
+  }
+
+  /**
    * Fixture's X position in 3D space (meter)
    *
    * @type {Number}
    */
   set posX(xVal) {
     if (!Number.isNaN(xVal)) {
-      Controls.detach(this);
       this._position.x = xVal;
-      this._3DModel.position = this.position;
-      Controls.attach(this);
+      this.emitPose(true);
     } else {
       this._position.x = this.position.x;
     }
@@ -246,10 +211,8 @@ class Fixture {
    */
   set posY(yVal) {
     if (!Number.isNaN(yVal)) {
-      Controls.detach(this);
       this._position.y = yVal;
-      this._3DModel.position = this.position;
-      Controls.attach(this);
+      this.emitPose(true);
     } else {
       this._position.y = this.position.y;
     }
@@ -266,10 +229,8 @@ class Fixture {
    */
   set posZ(zVal) {
     if (!Number.isNaN(zVal)) {
-      Controls.detach(this);
       this._position.z = zVal;
-      this._3DModel.position = this.position;
-      Controls.attach(this);
+      this.emitPose(true);
     } else {
       this._position.z = this.position.z;
     }
@@ -290,9 +251,7 @@ class Fixture {
       y: positionData.y,
       z: positionData.z, // Math.max(positionData.z, 0)
     };
-    if (this._3DModel) {
-      this._3DModel.position = this._position;
-    }
+    this.emitPose();
   }
 
   get position() {
@@ -309,10 +268,8 @@ class Fixture {
    * @type {Number}
    */
   set rotX(xVal) {
-    Controls.detach(this);
     this._rotation.x = Fixture.degToRad(xVal);
-    this._3DModel.rotation = this._rotation;
-    Controls.attach(this);
+    this.emitPose(true);
   }
 
   get rotX() {
@@ -325,10 +282,8 @@ class Fixture {
    * @type {Number}
    */
   set rotY(yVal) {
-    Controls.detach(this);
     this._rotation.y = Fixture.degToRad(yVal);
-    this._3DModel.rotation = this._rotation;
-    Controls.attach(this);
+    this.emitPose(true);
   }
 
   get rotY() {
@@ -341,10 +296,8 @@ class Fixture {
    * @type {Number}
    */
   set rotZ(zVal) {
-    Controls.detach(this);
     this._rotation.z = Fixture.degToRad(zVal);
-    this._3DModel.rotation = this._rotation;
-    Controls.attach(this);
+    this.emitPose(true);
   }
 
   get rotZ() {
@@ -352,7 +305,7 @@ class Fixture {
   }
 
   /**
-   * Fixture's rotation in 3D space (meter)
+   * Fixture's rotation in 3D space (degree)
    *
    * @type {Object}
    */
@@ -362,9 +315,7 @@ class Fixture {
       y: Fixture.degToRad(rotationData.y),
       z: Fixture.degToRad(rotationData.z),
     };
-    if (this._3DModel) {
-      this._3DModel.rotation = this._rotation;
-    }
+    this.emitPose();
   }
 
   get rotation() {
@@ -382,9 +333,7 @@ class Fixture {
         y: rotationData.y,
         z: rotationData.z,
       };
-      if (this._3DModel) {
-        this._3DModel.rotation = this._rotation;
-      }
+      this.emitPose();
     }
   }
 
@@ -608,8 +557,14 @@ class Fixture {
     return this.channels.length;
   }
 
+  /**
+   * Whether the fixture is highlighted in the visualizer
+   *
+   * @readonly
+   * @type {Boolean}
+   */
   get highlighted() {
-    return this._3DModel.highlighted;
+    return this._highlighted;
   }
 
   setQuickAccessor(channel, value) {
@@ -633,60 +588,23 @@ class Fixture {
   /**
    * Sets specified channel value for given fixture channel index. A channel with a fine
    * companion takes the integer part and its fine channel the fractional part (16-bit);
-   * other channels take the value rounded to the nearest step.
+   * other channels take the value rounded to the nearest step. The visualizer reads the
+   * resulting values from the universe frame.
    *
    * @param {Number} id fixture's channel index
    * @param {Number} value channel value (0-255, fractional values allowed)
    */
-  /* eslint-disable max-len */
   setChannel(id, value) {
-    const channel = this.channels[id]; // Getting channel instance from ID
-    const clampedValue = Math.min(Math.max(Number(value) || 0, 0), MAX_DMX_VALUE); // Clamping value between 0 and 255
-    let DMXValue;
-    if (channel.fineChannels.length > 0) { // Channel has fine capabilities ?
-      this.setChannel(channel.fineChannels[0].id - 1, (clampedValue % 1) * MAX_DMX_VALUE); // Fine channel takes the fractional part
-      DMXValue = Math.floor(clampedValue);
+    const channel = this.channels[id];
+    const clampedValue = Math.min(Math.max(Number(value) || 0, 0), MAX_DMX_VALUE);
+    if (channel.fineChannels.length > 0) {
+      // Fine channel takes the fractional part
+      this.setChannel(channel.fineChannels[0].id - 1, (clampedValue % 1) * MAX_DMX_VALUE);
+      channel.value = Math.floor(clampedValue);
     } else {
-      DMXValue = Math.round(clampedValue);
-    }
-    const capability = channel.getCapability(DMXValue); // Fetching channel's capability from value
-    channel.value = DMXValue; // Setting channel's value
-    if (id === 0) { // If channel is first
-      this._3DModel.colorPreset = null; // Defaulting color preset to null
-    }
-    if (capability) { // Making sure channel's capability is defined
-      const values = capability.getValue(DMXValue); // Fetching values from capability value (reused object)
-      switch (capability.type) { // Checking capability type
-        case CAPABILITY_TYPES.ColorIntensity: // Capability is color
-          this._3DModel.colorIntensity = values; // Updating fixture 3D model color intensity with provided color value
-          break;
-        case CAPABILITY_TYPES.WheelSlot: { // Capability is wheelSlot
-          const slot = Math.floor(values.slotNumber) - 1.0; // Parsing slot number from value
-          switch (channel.type) { // Dtermining wheel type
-            case WHEEL_CHANNEL_TYPES.COLOR_WHEEL: // Wheel is color wheel
-              this._3DModel.colorWheelSlot = slot; // Updating 3D model's color wheel slot in use
-              break;
-            case WHEEL_CHANNEL_TYPES.GOBO_WHEEL: // Wheel is gobo wheel
-              // TODO handle gobo selection here
-              break;
-            default: break;
-          }
-          break;
-        }
-        case CAPABILITY_TYPES.ColorPreset:
-          this._3DModel.colorPreset = values.color ? values.color[0] : null;
-          break;
-        default: {
-          const { valueKeys } = capability;
-          for (let i = 0; i < valueKeys.length; i++) {
-            this._3DModel[valueKeys[i]] = values[valueKeys[i]];
-          }
-          break;
-        }
-      }
+      channel.value = Math.round(clampedValue);
     }
   }
-  /* eslint-disable max-len */
 
   /**
    * Prepares fixture parameters and channels from the fixture's profile
@@ -705,40 +623,8 @@ class Fixture {
     this.prepareChannels(); // Prepare fixture's channels
     this.setupFineChannels();
     this.setupQuickAccessors();
-    this.prepare3DModelInstance();
-  }
-
-  /**
-   * Handles instanciation of 3D model to be bound to fixture instance
-   *
-   * @pulic
-   * @todo implement every fixture type
-   */
-  prepare3DModelInstance() {
-    switch (this.category) { // Checking fixture category
-      case FIXTURE_TYPES.MOVING_HEAD: { // Fixture is a moving head
-        const movingHead = new MovingHead({ // Creating new moving head instance
-          minAngle: this.profile.physical.lens ? this.profile.physical.lens.degreesMinMax[0] : 10, // Setting moving head's minimum beam angle
-          maxAngle: this.profile.physical.lens ? this.profile.physical.lens.degreesMinMax[1] : 25, // Setting moving head's maximum beam angle
-          minTilt: this.quickChannelsAccessors.Tilt ? this.quickChannelsAccessors.Tilt[0].minVal : 0,
-          maxTilt: this.quickChannelsAccessors.Tilt ? this.quickChannelsAccessors.Tilt[0].maxVal : 0,
-          minPan: this.quickChannelsAccessors.Pan ? this.quickChannelsAccessors.Pan[0].minVal : 0,
-          maxPan: this.quickChannelsAccessors.Pan ? this.quickChannelsAccessors.Pan[0].maxVal : 0,
-          colorTemp: this.profile.physical.bulb.colorTemperature, // Setting moving head's default bulb color temperature
-          intensity: 0.0, // Setting moving head's default intensity
-          pan: 128, // Setting moving head's default pan value
-          tilt: 128, // Setting moving head's default tilt value
-          colorWheel: this.wheels['Color Wheel'] ? this.wheels['Color Wheel'].slots : [], // Providing color wheel data (if necessary)
-          goboWheel: this.wheels['Gobo Wheel'] ? this.wheels['Gobo Wheel'].slots : [], // Providing gobo wheel data (if necessary) (not supported in renderer yet...)
-        });
-        movingHead.position = this._position; // Setting moving head's position in 3D space
-        movingHead.rotation = this._rotation; // Setting moving head's rotation in 3D space
-        this._3DModel = markRaw(movingHead); // Binding moving head instance, kept out of Vue reactivity
-        break;
-      }
-      default: { // Do nothing for every other fixture types.
-        throw new Error('This fixture type is not supported yet.');
-      }
+    if (this.category !== FIXTURE_TYPES.MOVING_HEAD) {
+      throw new Error('This fixture type is not supported yet.');
     }
   }
 
@@ -785,57 +671,40 @@ class Fixture {
   }
 
   /**
-   * Highlights the fixture model
+   * Highlights the fixture in the visualizer
    *
-   * @param {Boolean} state wheter the fixture Model should be highlighted or not
+   * @param {Boolean} state wheter the fixture should be highlighted or not
+   * @param {Boolean} [centerControls=false] whether the move/rotate gizmo follows the highlight
    */
   highlight(state, centerControls = false) {
-    if (this._3DModel) {
-      this._3DModel.highlighted = state;
-      if (centerControls) {
-        if (state) {
-          Controls.attach(this);
-        } else {
-          Controls.detach(this);
-        }
-      }
-    }
+    this._highlighted = state;
+    EventBus.emit('fixture_highlight', {
+      id: this.id, state, single: false, center: centerControls,
+    });
   }
 
   /**
-   * Highlights the fixture model while unhighlighting any other already highlighted instance
+   * Highlights the fixture in the visualizer while unhighlighting any other highlighted fixture
    *
-   * @param {Boolean} state wheter the fixture Model should be highlighted or not
+   * @param {Boolean} state wheter the fixture should be highlighted or not
+   * @param {Boolean} [centerControls=false] whether the move/rotate gizmo follows the highlight
    */
   highlightSingle(state, centerControls = false) {
-    if (this._3DModel) {
-      this._3DModel.setSinglyHighlighted(state);
-      if (state && centerControls) {
-        Controls.detachAll();
-        Controls.attach(this);
-      } else if (!state) {
-        Controls.detachAll();
-        Controls.setFocus(false);
-      }
-    }
+    this._highlighted = state;
+    EventBus.emit('fixture_highlight', {
+      id: this.id, state, single: true, center: centerControls,
+    });
   }
 
   /**
-   * Delete fixture instance by removing the model from the instanced mesh pool
-   * and unreferencing each instance property.
+   * Releases a fixture instance. Its 3D instance is removed by the visualizer when the patch
+   * changes.
    *
-   * @param {Fixture}
+   * @param {Fixture} instance fixture instance
    * @static
    */
   static deleteInstance(instance) {
-    switch (instance.category) {
-      case FIXTURE_TYPES.MOVING_HEAD:
-        MovingHead.deleteInstance(instance._3DModel);
-        break;
-      default:
-        break;
-    }
-    instance = null;
+    instance.channels = [];
   }
 
   /**

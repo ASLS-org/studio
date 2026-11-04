@@ -1,5 +1,6 @@
 import ukColors from '@/views/components/uikit/colors/uikit.colors';
 import FixturePool from './fixture.pool.model';
+import EventBus from '../../plugins/eventbus';
 
 /**
  * DMX512 universe length
@@ -211,6 +212,7 @@ class Universe {
       for (let i = fixture.chStart; i < fixture.chStop; i++) {
         this._addressMap[i] = fixture.chStart;
       }
+      EventBus.emit('patch_changed');
     } else {
       throw new Error('Cannot patch fixture on this interval');
     }
@@ -230,6 +232,7 @@ class Universe {
         ? undefined
         : address
     ));
+    EventBus.emit('patch_changed');
   }
 
   /**
@@ -257,6 +260,7 @@ class Universe {
     for (let i = fixture.chStart; i < fixture.chStop; i++) {
       this._addressMap[i] = fixture.chStart;
     }
+    EventBus.emit('patch_changed');
   }
 
   /**

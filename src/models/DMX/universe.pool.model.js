@@ -1,5 +1,6 @@
 import Universe from './universe.model';
 import Live from './live.model';
+import EventBus from '../../plugins/eventbus';
 
 /**
  * @class UniversePool
@@ -96,6 +97,7 @@ class UniversePool {
     const universeIndex = this.universes.findIndex((item) => item.id === universe.id);
     if (universeIndex > -1) {
       this.universes.splice(universeIndex, 1);
+      EventBus.emit('patch_changed');
     } else {
       throw new Error('Could not find universe in universe pool');
     }
