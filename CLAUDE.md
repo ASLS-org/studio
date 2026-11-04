@@ -27,7 +27,7 @@ src/
   main.js                 app bootstrap: registers uikit globally, $show/$utils/$http globals
   singletons/show.singleton.js   the one Show instance (exposed as this.$show)
   models/DMX/             show engine (pure-ish JS classes)  → see models/DMX/CLAUDE.md
-  models/fixtures/        fixture profiles: library loader + source adapters (OFL), pure data
+  models/fixtures/        fixture profiles: library loader, OFL + GDTF adapters, GDTF store (IndexedDB)
   plugins/router.js       memory-history router; modifiers are routes
   plugins/eventbus.js     mitt bus (app_error, app_ready, visualizer_*)
   plugins/wsc.connection.js  WSC output (connections + per-universe streams) → skill wsc-output
@@ -36,6 +36,7 @@ src/
   electron/               desktop shell; spawns the bundled WSC gateway → see electron/CLAUDE.md
   worker.js               60 Hz tick Web Worker that drives Live
 public/fixtures/          Open Fixture Library (OFL) JSON + fixture_list.json index
+public/gdtf/              generic CC0 GDTF bundle, written by scripts/gdtf/generate-generic.mjs
 public/demo/showfiles/    demo + blank showfiles (loaded on first run)
 docs/manual/              end-user manual (VitePress) → skill user-manual
 docs/developer/           JSDoc via docma (models only); Storybook config is stale and not installed
@@ -97,15 +98,17 @@ buffer; a `WscConnectionStream` sends the buffer to the gateway every tick.
 
 - `@asls/wsc-client` is sometimes `npm link`ed to `./wsc-client` (git-ignored). If that folder is
   empty, imports break: run `npm install` to restore the registry package.
-- Only OFL fixtures whose first category is `Moving Head` can be patched. Other categories throw
-  in `Fixture.parseFromProfile()`.
 - Models don't import the visualizer: they emit `patch_changed`, `fixture_pose` and
   `fixture_highlight` on the EventBus, and the visualizer reads universe frames.
 - Channel `type` keys (`Dimmer`, `Pan`, ...) and their index are stored in showfile scenes. The
-  OFL adapter in `src/models/fixtures/` must keep deriving them exactly; see skill
+  OFL and GDTF adapters in `src/models/fixtures/` must keep deriving them exactly; see skill
   `fixture-library`.
+- Node can't import `src/` files directly (ESM without `"type": "module"`, `@` alias). For Node
+  checks, bundle with `npx esbuild <entry> --bundle --platform=node --format=esm --alias:@=./src`
+  plus a `createRequire` banner (xml2js needs Node built-ins).
 - The WSC output path has several known bugs. Read skill `wsc-output` § Known issues first.
 - Components set `compatConfig: { MODE: 3 }` (the app runs on `@vue/compat`). Keep it on new ones.
 - `.env` is committed and holds public URLs only. Never put secrets in it; use `.env.local`.
 - Never edit generated or vendored output: `dist/`, `out/`, `docs/**/dist`, `public/fixtures/*`
-  (except via skill `fixture-library`), `src/plugins/visualizer/orbitcontrol.zup.patch.js`.
+  (except via skill `fixture-library`), `public/gdtf/*` (re-run its generator),
+  `src/plugins/visualizer/orbitcontrol.zup.patch.js`.

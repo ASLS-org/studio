@@ -97,7 +97,7 @@ All channel types are virtually supported. However, some might not have been imp
 | Tilt                 | Tilt                              |     ✅      |                            |
 | Tilt Continuous      | Continuous tilting Speed          |     ⬜️      |                            |
 | Pan TiltSpeed        | Pan & Tilt speed selection        |     ⬜️      |                            |
-| Wheel Slot           | Wheel selection                   |     ✅      | Supported: **Color wheel** |
+| Wheel Slot           | Wheel selection                   |     ✅      | Supported: **Color, gobo and prism wheels** |
 | Wheel Shake          | Wheel slot shaking                |     ⬜️      |                            |
 | Wheel SlotRotation   | Full wheel roration               |     ⬜️      |                            |
 | Wheel Rotation       | Wheel slot rotation               |     ⬜️      |                            |

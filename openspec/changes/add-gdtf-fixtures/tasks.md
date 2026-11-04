@@ -170,13 +170,18 @@
 
 ## 5. Docs and context
 
-- [ ] 5.1 Manual (skill `user-manual`):
+- [x] 5.1 Manual (skill `user-manual`):
   - patching pages: importing GDTF, the Imported and Bundled lists, the missing fixtures popup,
     and keeping your `.gdtf` files;
   - visualizer page: remove the "moving heads only" note.
 
   Verify: the pages read correctly as Markdown (the manual dev server is broken since unit 2).
-- [ ] 5.2 AI context (skill `ai-context-maintenance`):
+  Note (2026-11-04): `workflow/patching/index.md` written (it was "in progress"): sources,
+  GDTF import, the device library, missing fixtures, pixel fixtures. The visualizer page drops
+  the moving-heads-only note and mentions GDTF gobos; the universe page's Wheel Slot row
+  covers gobo and prism wheels. Two `TODO media` placeholders on the patching page. Checked as
+  Markdown.
+- [x] 5.2 AI context (skill `ai-context-maintenance`):
   - `src/models/DMX/CLAUDE.md`: GDTF adapter, store, missing fixtures;
   - `src/plugins/visualizer/CLAUDE.md`: `GeometryFixture` and gobo layers from images; drop the
     Moving Head-only rule;
@@ -185,4 +190,7 @@
     rule, and frozen GDTF and OFL pixel channel naming.
 
   Verify: the files describe the new modules.
+  Note (2026-11-04): also a root Known trap for running `src/` modules in Node (esbuild
+  bundle), the `public/gdtf/*` generated-output rule, and the pool-renumbering invariant in
+  `src/models/DMX/CLAUDE.md`. Every path and symbol mentioned was checked to exist.
 - [ ] 5.3 `npx eslint` on all touched files is clean.
