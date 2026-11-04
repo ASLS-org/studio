@@ -80,6 +80,8 @@ const MIXING_COLORS = {
   ColorAdd_Y: 'Yellow',
   ColorAdd_RY: 'Amber',
   ColorAdd_I: 'Indigo',
+  ColorAdd_GY: 'Lime',
+  ColorAdd_O: 'Amber',
   ColorRGB_Red: 'Red',
   ColorRGB_Green: 'Green',
   ColorRGB_Blue: 'Blue',
@@ -116,6 +118,9 @@ const GEOMETRY_KINDS = {
 };
 
 const IDENTITY = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+
+// Names of prism functions and channel sets that take the prism out
+const PRISM_OUT = /open|\bout\b|\boff\b|^no\b|none/i;
 
 /* ---------------------------------------------------------------- XML helpers */
 
@@ -186,23 +191,32 @@ function hexColor(value) {
 /* ---------------------------------------------------------------- Wheels */
 
 /**
- * Builds the wheels in the OFL shape (slots with `type`, `name`, `colors`, plus `image`)
+ * Builds the wheels in the OFL shape (slots with `type`, `name`, `colors`, plus `image`). A slot is
+ * typed by its content (facets, image), else by what drives its wheel: slots of a wheel driven by
+ * a Gobo or Prism attribute are gobos or prisms even without an image or facets
  *
  * @param {Object} fixtureType FixtureType element
+ * @param {Object} usage Wheel use (`Gobo`, `Prism`, `Color`) by wheel name
  * @returns {Object} Wheels by name
  */
-function buildWheels(fixtureType) {
+function buildWheels(fixtureType, usage) {
   const wheels = {};
   childrenOf(child(fixtureType, 'Wheels'), 'Wheel').forEach((wheel) => {
     wheels[wheel.attrs.Name] = {
       slots: childrenOf(wheel, 'Slot').map((slot) => {
         const name = slot.attrs.Name || '';
         const color = hexColor(slot.attrs.Color);
+        const use = usage[wheel.attrs.Name];
+        const facets = childrenOf(slot, 'Facet').length > 0;
+        const image = Boolean(slot.attrs.MediaFileName);
         let type = 'Color';
-        if (childrenOf(slot, 'Facet').length) type = 'Prism';
-        else if (slot.attrs.MediaFileName) type = 'Gobo';
-        else if (/^open/i.test(name)) type = 'Open';
+        if (/^open/i.test(name)) type = 'Open';
         else if (/^closed?$/i.test(name)) type = 'Closed';
+        else if (facets || (use === 'Prism' && (image || /prism|facet/i.test(name)))) type = 'Prism';
+        else if (use === 'Prism') type = 'Open';
+        else if (image || (use === 'Gobo' && !/^(default|empty|white)?$/i.test(name.trim()))) {
+          type = 'Gobo';
+        } else if (use === 'Gobo') type = 'Open';
         return {
           type,
           name,
@@ -324,6 +338,9 @@ function walk(node, fn, depth = 0) {
 
 const deg = (v) => `${+v.toFixed(4)}deg`;
 const percent = (v) => `${+(v * 100).toFixed(4)}%`;
+// Brightness entities read a value in their own unit as is, on a 0-1 scale ('1%' is full, as
+// for OFL capabilities without explicit brightness)
+const brightness = (v) => `${+v.toFixed(4)}%`;
 
 /**
  * OFL-shaped capability data of one channel function (or one channel set of a wheel function)
@@ -342,9 +359,13 @@ function capabilityData(fn, range, context) {
   if (attribute === 'NoFeature') {
     return { ...base, type: 'NoFunction' };
   }
+  if (attribute === 'Dimmer' && (context.channelAttribute || attribute) !== 'Dimmer') {
+    // A dimmer function on another channel (a shutter's "closed" range) is not a second dimmer
+    return { ...base, type: 'Generic' };
+  }
   if (attribute === 'Dimmer') {
     return {
-      ...base, type: 'Intensity', brightnessStart: percent(from), brightnessEnd: percent(to),
+      ...base, type: 'Intensity', brightnessStart: brightness(from), brightnessEnd: brightness(to),
     };
   }
   if (attribute === 'Pan' || attribute === 'Tilt') {
@@ -360,8 +381,8 @@ function capabilityData(fn, range, context) {
       ...base,
       type: 'ColorIntensity',
       color: MIXING_COLORS[attribute],
-      brightnessStart: percent(from),
-      brightnessEnd: percent(to),
+      brightnessStart: brightness(from),
+      brightnessEnd: brightness(to),
     };
   }
   if (/^Shutter\d$/.test(attribute)) {
@@ -407,9 +428,14 @@ function capabilityData(fn, range, context) {
       frostIntensityEnd: percent(to),
     };
   }
+  if (/^Prism\d$/.test(attribute) && !/^Prism\d$/.test(context.channelAttribute || attribute)) {
+    // Some files tag a prism rotation channel's index with the prism attribute: not an insertion
+    return { ...base, type: 'Generic' };
+  }
   if (/^Prism\d$/.test(attribute)) {
-    // A prism function whose physical range is 0 takes the prism out
-    return from === 0 && to === 0 ? { ...base, type: 'NoFunction' } : { ...base, type: 'Prism' };
+    // A prism function named "open" (or with a physical range of 0) takes the prism out
+    const out = (from === 0 && to === 0) || PRISM_OUT.test(name);
+    return { ...base, type: out ? 'NoFunction' : 'Prism' };
   }
   if (/^Prism\dPosRotate$/.test(attribute)) {
     return { ...base, type: 'PrismRotation' };
@@ -434,7 +460,11 @@ function capabilityData(fn, range, context) {
 function channelCapabilities(functions, bytes, context) {
   const top = 256 ** bytes - 1;
   const coarse = (v) => Math.floor(v / 256 ** (bytes - 1));
-  const sorted = functions
+  // Functions switched by a mode master (another channel) count as the master sits at 0, the
+  // state a fixture starts in; the others share the same DMX range and would hide them
+  const active = functions.filter((fn) => !fn.attrs.ModeMaster
+    || parseInt(String(fn.attrs.ModeFrom || '0').split('/')[0], 10) === 0);
+  const sorted = (active.length ? active : functions)
     .map((fn) => ({ fn, from: dmxValue(fn.attrs.DMXFrom, bytes) }))
     .sort((a, b) => a.from - b.from);
   const result = [];
@@ -446,6 +476,25 @@ function channelCapabilities(functions, bytes, context) {
       .filter((s) => parseInt(s.attrs.WheelSlotIndex, 10) > 0)
       .map((s) => ({ set: s, from: dmxValue(s.attrs.DMXFrom, bytes) }))
       .sort((a, b) => a.from - b.from);
+    // A prism channel without a wheel takes its "open" channel sets as prism out
+    if (!wheel && sets.length === 0 && /^Prism\d$/.test(fn.attrs.Attribute || '')) {
+      const openSets = childrenOf(fn, 'ChannelSet')
+        .map((s) => ({ set: s, from: dmxValue(s.attrs.DMXFrom, bytes) }))
+        .sort((a, b) => a.from - b.from);
+      if (openSets.length) {
+        openSets.forEach(({ set, from: setFrom }, j) => {
+          const setEnd = j + 1 < openSets.length ? openSets[j + 1].from - 1 : end;
+          if (setFrom > end || setEnd < setFrom) return;
+          const out = PRISM_OUT.test(set.attrs.Name || '');
+          result.push({
+            dmxRange: [coarse(setFrom), coarse(Math.min(setEnd, end))],
+            comment: set.attrs.Name || '',
+            type: out ? 'NoFunction' : 'Prism',
+          });
+        });
+        return;
+      }
+    }
     if (wheel && sets.length && /^(Color|Gobo|Prism)\d(Select\w*)?$/.test(fn.attrs.Attribute || '')) {
       sets.forEach(({ set, from: setFrom }, j) => {
         const setEnd = j + 1 < sets.length ? sets[j + 1].from - 1 : end;
@@ -528,7 +577,9 @@ function buildMode(mode, context) {
     // A function without an attribute takes its logical channel's
     const functions = logical.flatMap((l) => childrenOf(l, 'ChannelFunction').map((fn) => (
       fn.attrs.Attribute ? fn : { ...fn, attrs: { ...fn.attrs, Attribute: l.attrs.Attribute } })));
-    const capabilities = channelCapabilities(functions, offsets.length, context);
+    const capabilities = channelCapabilities(functions, offsets.length, {
+      ...context, channelAttribute: attribute,
+    });
     const baseName = CHANNEL_NAMES[attribute] || MIXING_COLORS[attribute]
       || context.pretty[attribute] || attribute;
 
@@ -671,11 +722,14 @@ export default function profileFromGDTF(description) {
 
   // Wheel used by each wheel attribute family (`Gobo1` → its wheel), for rotation functions
   const wheelOf = {};
+  const wheelUse = {};
   childrenOf(child(fixtureType, 'DMXModes'), 'DMXMode').forEach((mode) => {
     childrenOf(child(mode, 'DMXChannels'), 'DMXChannel').forEach((ch) => {
       childrenOf(ch, 'LogicalChannel').forEach((l) => childrenOf(l, 'ChannelFunction').forEach((fn) => {
         const family = (fn.attrs.Attribute || '').slice(0, 5);
         if (fn.attrs.Wheel && !wheelOf[family]) wheelOf[family] = fn.attrs.Wheel;
+        const use = /^(Gobo|Prism|Color)\d/.exec(fn.attrs.Attribute || '');
+        if (fn.attrs.Wheel && use && !wheelUse[fn.attrs.Wheel]) [, wheelUse[fn.attrs.Wheel]] = use;
       }));
     });
   });
@@ -698,7 +752,7 @@ export default function profileFromGDTF(description) {
     name: fixtureType.attrs.LongName || fixtureType.attrs.Name || 'GDTF fixture',
     category: deriveCategory(modes[0].geometry),
     physical: buildPhysical(modes[0].geometry, modes[0].channels),
-    wheels: buildWheels(fixtureType),
+    wheels: buildWheels(fixtureType, wheelUse),
     modes,
     gdtf: {
       fixtureTypeId: fixtureType.attrs.FixtureTypeID.toUpperCase(),

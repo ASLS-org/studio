@@ -217,7 +217,14 @@ class FixtureRenderer {
     } = entry;
     const geometry = entry.geometry || synthesizeGeometry(entry, channels);
     const model = new GeometryFixture({
-      geometry, channels, wheels, matrix, images, centerAngles: !entry.geometry,
+      geometry,
+      channels,
+      wheels,
+      matrix,
+      images,
+      centerAngles: !entry.geometry,
+      lens: entry.physical && entry.physical.lens ? entry.physical.lens.degreesMinMax : null,
+      zoomInPercent: FixtureRenderer.zoomInPercent(channels.find((c) => c.type === 'Zoom')),
     });
     model.position = { ...entry.position };
     model.rotation = { ...entry.rotation };

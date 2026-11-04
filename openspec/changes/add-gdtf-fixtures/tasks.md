@@ -197,3 +197,30 @@
       Note (2026-11-04): 0 errors over the 24 touched JS/Vue files (2 old `console.log` warnings in
       show.model.js; visualizer.js is an eslint-disabled file). `npm run build` passes and ships
       `dist/gdtf/`.
+
+## 6. Fixes from the user's review (2026-11-04)
+
+- [x] 6.1 Channels drive the view correctly. A Node sweep sets every drawable channel of every
+      mode (757 GDTF modes from the test set, 1987 OFL modes drawn by `GeometryFixture`) through
+      0-255 and checks the beam state. Fixed:
+      - **GDTF brightness scale.** Dimmer and colours saturated at DMX 3.
+      - **Mode masters.** The function active with the master at 0 is kept (Robin LEDWash RGB,
+        Ayrton focus).
+      - **Dimmers multiply** down the tree.
+      - **Wheel colours** act as macros on colour-mixing beams; CMY fixtures keep a white
+        source.
+      - **Wheel slots typed by their wheel's use** (gobo and prism wheels without images).
+      - **Prism:** "open" sets take the prism out; prism and dimmer functions on other channels
+        are ignored.
+      - **OFL:** the wheel name falls back to the channel name; zoom presets span the lens
+        range; `BeamAngle` and colour presets are applied.
+      - **Several frost channels** take the strongest.
+      - **Pan/Tilt** on files without axes turn the channel's geometry.
+      - **Crash** on OFL Pan/Tilt channels whose first capability has no angle.
+
+      Remaining "no effect" entries are attributes the view doesn't draw (CTO, macros, blades,
+      iris), shutters that only open and close (ignored, as by `MovingHead`), and a few file
+      quirks.
+- [x] 6.2 Beams and cells follow a fixture moved with the gizmo (world matrix checked every
+      frame, as `MovingHead` does).
+

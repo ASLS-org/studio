@@ -38,6 +38,7 @@ const EMITTER_COLORS = {
 };
 // Primary a subtractive filter removes
 const SUBTRACTIVE = { Cyan: 0, Magenta: 1, Yellow: 2 };
+const BLACK = [0, 0, 0];
 
 const BODY_MATERIAL = new THREE.MeshPhongMaterial({ color: 0xffffff, side: THREE.DoubleSide });
 const HIGHLIGHT_MATERIAL = new THREE.MeshPhongMaterial({
@@ -117,6 +118,29 @@ function beamsUnder(entry) {
 }
 
 /**
+ * Middle of a Pan or Tilt channel's angle range (OFL ranges start at 0), over the capabilities
+ * that have an angle
+ *
+ * @param {Object} channel Profile channel
+ * @returns {Number} Middle angle in degrees
+ */
+function angleCenter(channel) {
+  let min = Infinity;
+  let max = -Infinity;
+  channel.capabilities.forEach((capability) => {
+    const entity = capability.entities.pan || capability.entities.tilt;
+    if (!entity) return;
+    [entity.start, entity.end, entity.value].forEach((v) => {
+      if (Number.isFinite(v)) {
+        min = Math.min(min, v);
+        max = Math.max(max, v);
+      }
+    });
+  });
+  return Number.isFinite(min) ? (min + max) / 2 : 0;
+}
+
+/**
  * Builds the body meshes of a node by role, scaled to its size
  *
  * @param {String} role Body role
@@ -169,12 +193,18 @@ class GeometryFixture {
    * @param {Object} data.wheels Profile wheels
    * @param {?Object} data.matrix Profile pixel groups (OFL), or null
    * @param {Map<String, ImageBitmap>} [data.images] Wheel slot images by media file name (GDTF)
+   * @param {?Array<Number>} [data.lens] Lens field angle range in degrees [min, max]
+   * @param {Boolean} [data.zoomInPercent=false] Whether zoom values are a percentage of the lens
+   * range (OFL "narrow" / "wide" presets) rather than degrees
    * @param {Boolean} [data.centerAngles=false] Whether Pan/Tilt ranges start at 0 (OFL) and are
    * turned around their middle, as GDTF ranges are
    */
   constructor({
     geometry, channels, wheels, matrix, centerAngles = false, images = new Map(),
+    lens = null, zoomInPercent = false,
   }) {
+    this._lens = lens;
+    this._zoomInPercent = zoomInPercent;
     // Gobo layer of each wheel slot: its image when it has one, else a built-in pattern
     this._slotLayers = {};
     Object.entries(wheels || {}).forEach(([name, wheel]) => {
@@ -193,6 +223,7 @@ class GeometryFixture {
     this._lastTime = null;
     this._poseDirty = true;
     this._colorsDirty = true;
+    this._lastWorld = new THREE.Matrix4();
 
     this._dummy = new THREE.Object3D();
     // GDTF trees hang with beams down; flip them so rotation conventions match MovingHead
@@ -267,16 +298,15 @@ class GeometryFixture {
         fieldAngle: beam.fieldAngle || 25,
         projects: PROJECTING_TYPES.includes(beam.type || 'Wash'),
         white: kelvinToRGB(beam.colorTemperature || 6500),
-        hasDimmer: false,
         hasMixing: false,
         state: {
           dimmer: 1,
           shutter: 1,
           strobe: 0,
           add: [0, 0, 0],
-          mixed: false,
           filter: [1, 1, 1],
           zoom: null,
+          preset: null,
           focus: 100,
           frost: 0,
           prism: false,
@@ -293,7 +323,8 @@ class GeometryFixture {
 
   /**
    * The axis a Pan or Tilt channel turns: the node itself when it is the right axis, otherwise
-   * the outermost (Pan) or innermost (Tilt) axis below it
+   * the outermost (Pan) or innermost (Tilt) axis below it. Files without axes turn the channel's
+   * own geometry (not the fixture root)
    *
    * @private
    * @param {Object} entry Channel's node entry
@@ -307,7 +338,11 @@ class GeometryFixture {
       if (e.data.kind === 'axis') chain.push(e);
       e = e.children.find((c) => this.subtreeHasAxis(c)) || null;
     }
-    if (!chain.length) return null;
+    if (!chain.length) {
+      if (!entry.parent) return null;
+      if (!this._axes.includes(entry)) this._axes.push(entry);
+      return entry;
+    }
     return tilt ? chain[chain.length - 1] : chain[0];
   }
 
@@ -339,11 +374,9 @@ class GeometryFixture {
       const entry = named || root;
       const isPan = channel.attribute === 'Pan' || channel.type === 'Pan';
       const isTilt = channel.attribute === 'Tilt' || channel.type === 'Tilt';
-      const last = channel.capabilities[channel.capabilities.length - 1];
       const route = {
         index,
-        center: this._centerAngles && (isPan || isTilt)
-          ? (channel.capabilities[0].min + last.max) / 2 : 0,
+        center: this._centerAngles && (isPan || isTilt) ? angleCenter(channel) : 0,
         fine: channel.fine.length ? channel.fine[0] : -1,
         channel,
         depth: group ? 1 : entry.depth,
@@ -352,9 +385,6 @@ class GeometryFixture {
           ? group.map((key) => this._nodes.get(key)).filter(Boolean).flatMap(beamsUnder)
           : beamsUnder(entry),
       };
-      if (channel.attribute === 'Dimmer') {
-        route.beams.forEach((b) => { this._beams[b].hasDimmer = true; });
-      }
       // Beams with colour mixing channels are dark when those are at 0 (not white)
       const mixing = !/^ColorSub_/.test(channel.attribute)
         && channel.capabilities.some((c) => c.type === 'ColorIntensity');
@@ -362,6 +392,12 @@ class GeometryFixture {
         route.beams.forEach((b) => { this._beams[b].hasMixing = true; });
       }
       this._routes.push(route);
+    });
+    // A beam with subtractive (CMY) filters has a white source: additive channels on it are
+    // accessory LEDs (strips, rings), so it isn't a colour-mixing beam
+    this._routes.forEach((route) => {
+      if (!/^ColorSub_/.test(route.channel.attribute)) return;
+      route.beams.forEach((b) => { this._beams[b].hasMixing = false; });
     });
     this._routes.sort((a, b) => a.depth - b.depth);
   }
@@ -431,13 +467,14 @@ class GeometryFixture {
     for (let b = 0; b < this._beams.length; b++) {
       const beam = this._beams[b];
       const s = beam.state;
-      s.dimmer = beam.hasDimmer ? 0 : 1;
+      s.dimmer = 1;
+      s.macro = null;
       s.shutter = 1;
       s.strobe = 0;
       s.add[0] = 0; s.add[1] = 0; s.add[2] = 0;
-      s.mixed = false;
       s.filter[0] = 1; s.filter[1] = 1; s.filter[2] = 1;
       s.zoom = null;
+      s.preset = null;
       s.focus = 100;
       s.frost = 0;
       s.prism = false;
@@ -450,7 +487,13 @@ class GeometryFixture {
     for (let b = 0; b < this._beams.length; b++) {
       const beam = this._beams[b];
       const s = beam.state;
-      const base = s.mixed || beam.hasMixing ? s.add : beam.white;
+      // A colour preset overrides everything, as for MovingHead. A fixture that mixes its colour
+      // is dark with its mix at 0, unless a colour wheel slot (a macro on LED fixtures) is set
+      let base = beam.white;
+      if (s.preset) base = s.preset;
+      else if (beam.hasMixing) {
+        base = s.add[0] + s.add[1] + s.add[2] > 0 ? s.add : (s.macro || BLACK);
+      }
       const peak = Math.max(base[0], base[1], base[2], 1);
       for (let c = 0; c < 3; c++) s.color[c] = (base[c] / peak) * s.filter[c];
       s.intensity = Math.min(Math.max(s.dimmer, 0), 1);
@@ -485,7 +528,7 @@ class GeometryFixture {
     }
     for (let i = 0; i < route.beams.length; i++) {
       const beam = this._beams[route.beams[i]];
-      this.applyToBeam(beam.state, capability, value, channel);
+      this.applyToBeam(beam, capability, value, channel);
     }
   }
 
@@ -493,15 +536,17 @@ class GeometryFixture {
    * Applies a decoded capability value to a beam
    *
    * @private
-   * @param {Object} s Beam state
+   * @param {Object} beam Beam
    * @param {Capability} capability Capability
    * @param {Object} value Decoded value
    * @param {Object} channel Profile channel
    */
-  applyToBeam(s, capability, value, channel) {
+  applyToBeam(beam, capability, value, channel) {
+    const s = beam.state;
     switch (capability.type) {
       case 'Intensity':
-        s.dimmer = value.intensity;
+        // Master and cell dimmers multiply (GDTF relations)
+        s.dimmer *= value.intensity;
         break;
       case 'ColorIntensity': {
         const name = value.color;
@@ -513,22 +558,28 @@ class GeometryFixture {
           s.add[0] += c[0] * k;
           s.add[1] += c[1] * k;
           s.add[2] += c[2] * k;
-          s.mixed = true;
         }
         break;
       }
       case 'WheelSlot': {
-        const wheel = this._wheels[value.wheel];
+        // OFL wheel slots without a wheel name use the wheel named like their channel
+        const wheelName = value.wheel || channel.name;
+        const wheel = this._wheels[wheelName];
         const index = Math.floor(value.slotNumber) - 1;
         const slot = wheel && wheel.slots[index];
         if (!slot) break;
         if (slot.type === 'Color' && slot.colors && slot.colors[0]) {
           cellColor.set(slot.colors[0]);
-          s.filter[0] *= cellColor.r;
-          s.filter[1] *= cellColor.g;
-          s.filter[2] *= cellColor.b;
+          if (beam.hasMixing) {
+            // On a colour-mixing fixture a wheel colour is a macro, not a filter
+            s.macro = [cellColor.r, cellColor.g, cellColor.b];
+          } else {
+            s.filter[0] *= cellColor.r;
+            s.filter[1] *= cellColor.g;
+            s.filter[2] *= cellColor.b;
+          }
         } else if (slot.type === 'Gobo') {
-          s.gobo = this._slotLayers[value.wheel][index];
+          s.gobo = this._slotLayers[wheelName][index];
         } else if (slot.type === 'Prism') {
           s.prism = true;
         }
@@ -538,17 +589,30 @@ class GeometryFixture {
         s.goboSpeed = value.wheelRotationSpeed || 0;
         break;
       case 'ShutterStrobe':
-        if (value.strobeEffect === 'Closed') s.shutter = 0;
-        else if (value.strobeEffect !== 'Open') s.strobe = value.strobeFrequency || 0;
+        // As MovingHead: a closed shutter doesn't black the beam out, strobes flash it
+        if (value.strobeEffect !== 'Open' && value.strobeEffect !== 'Closed') {
+          s.strobe = value.strobeFrequency || 0;
+        }
+        break;
+      case 'ColorPreset':
+        if (value.color && value.color[0]) {
+          cellColor.set(value.color[0]);
+          s.preset = [cellColor.r, cellColor.g, cellColor.b];
+        }
         break;
       case 'Zoom':
-        s.zoom = value.zoom;
+        s.zoom = this._zoomInPercent && this._lens
+          ? this._lens[0] + (this._lens[1] - this._lens[0]) * (value.zoom / 100)
+          : value.zoom;
+        break;
+      case 'BeamAngle':
+        s.zoom = value.angle;
         break;
       case 'Focus':
         s.focus = value.focus;
         break;
       case 'Frost':
-        s.frost = value.frost;
+        s.frost = Math.max(s.frost, value.frost || 0); // several frost filters: the strongest
         break;
       case 'Prism':
         s.prism = true;
@@ -749,6 +813,12 @@ class GeometryFixture {
    */
   update(t, beamState) {
     this.animate(t);
+    // The gizmo moves fixtures by re-parenting them into its group: follow the world transform
+    this._dummy.updateWorldMatrix(true, false);
+    if (!this._lastWorld.equals(this._dummy.matrixWorld)) {
+      this._lastWorld.copy(this._dummy.matrixWorld);
+      this._poseDirty = true;
+    }
     if (this._poseDirty) {
       this.updatePose();
       this._poseDirty = false;
