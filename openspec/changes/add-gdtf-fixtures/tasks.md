@@ -85,10 +85,19 @@
 
 ## 3. UI (views)
 
-- [ ] 3.1 Universe patch popup: Imported, Bundled and OFL library sections; an **Import GDTF…**
+- [x] 3.1 Universe patch popup: Imported, Bundled and OFL library sections; an **Import GDTF…**
       button; `.gdtf` file drop; import errors through `app_error` (skill `vue-ui-change`).
       Verify: spec "Import a fixture", "Library survives a reload", "Invalid file" and "Patch a
       bundled fixture" hold in `npm start`.
+      Note (2026-11-04): checked in the running app (popup driven through the page):
+      - a dropped `.gdtf` file appears under Imported, and a broken file shows an error naming it;
+      - the Imported list survives a reload;
+      - the bundled Generic Spot patches with its 16 channels;
+      - an OFL PAR (`Color Changer`) patches with 7 channels;
+      - the Eurolite LED PIX-144 24-channel mode patches with 24 channels and `Red 3` as its 7th
+        channel (spec "OFL pixel bar footprint").
+
+      The list shows the manufacturer as secondary text (screenshot `pp-list.png`).
 - [ ] 3.2 Missing fixtures popup at show open: lists the missing types, imports files, and offers
       Open anyway with a note that their data is kept. Verify: spec "Import the missing fixture"
       holds after clearing IndexedDB and reopening a saved GDTF show.
