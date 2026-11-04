@@ -1,6 +1,7 @@
 import { markRaw } from '../utils/reactivity';
 import Channel from './channel.model';
 import { PROFILE_SOURCES, resolveModeName } from '../fixtures/fixture.profile';
+import modeCells from '../fixtures/fixture.cells';
 import EventBus from '../../plugins/eventbus';
 
 /**
@@ -107,10 +108,8 @@ class Fixture {
         y: 0,
         z: 0,
       };
+      // Channels start at their home value (GDTF Default, 0 for OFL)
       this.parseFromProfile();
-      this.channels.forEach((channel) => {
-        this.setChannel(channel.id - 1, 0);
-      });
     }
   }
 
@@ -561,6 +560,17 @@ class Fixture {
   }
 
   /**
+   * The fixture's cells (parts repeating a set of channels, see models/fixtures/fixture.cells.js):
+   * names and channel indexes. Empty when the fixture has none
+   *
+   * @type {Array<Object>}
+   * @readonly
+   */
+  get cells() {
+    return this._cells || [];
+  }
+
+  /**
    * The fixture's stop address as defined by it's universe configuration
    *
    * @type {Number}
@@ -653,10 +663,14 @@ class Fixture {
    */
   prepareChannels() {
     this.mode = this.modes[this.modeIndex] || this.modes[0]; // Selected profile mode
+    const { cells, cellOf, kinds } = modeCells(this.mode, this.profile && this.profile.matrix);
+    this._cells = cells;
     // Channels are raw: playback writes them every tick, widgets read them through the live ticker
     this.channels = this.mode.channels.map((profileChannel, index) => markRaw(new Channel({
       id: index + 1,
       profileChannel,
+      cell: cellOf[index],
+      kind: kinds[index],
     })));
   }
 
