@@ -17,6 +17,59 @@
         col
         class="title"
       >
+        <h3>Quality</h3>
+        <p class="subtitle">
+          Rendering quality on this device. Not saved in the show.
+        </p>
+      </uk-flex>
+      <uk-flex center-h>
+        <div>
+          <h4>Quality:</h4>
+          <p class="subtitle">
+            Auto adapts to this device's frame rate.
+          </p>
+        </div>
+        <uk-spacer />
+        <uk-select-input
+          v-model="$show.visualizerHandle.quality"
+          style="width: 100px"
+          :options="qualityOptions"
+        />
+      </uk-flex>
+      <uk-flex center-h>
+        <div>
+          <h4>Resolution:</h4>
+          <p class="subtitle">
+            Resolution of the stage lighting (when quality isn't Auto).
+          </p>
+        </div>
+        <uk-spacer />
+        <uk-select-input
+          v-model="$show.visualizerHandle.resolutionScale"
+          style="width: 100px"
+          :options="scaleOptions"
+        />
+      </uk-flex>
+      <uk-flex center-h>
+        <div>
+          <h4>Beam guides:</h4>
+          <p class="subtitle">
+            Lines showing each beam's path and footprint. Auto shows them at Guides quality.
+          </p>
+        </div>
+        <uk-spacer />
+        <uk-select-input
+          v-model="$show.visualizerHandle.beamGuides"
+          style="width: 100px"
+          :options="guideOptions"
+        />
+      </uk-flex>
+      <div class="separator" />
+      <uk-flex
+        :gap="8"
+        col
+        class="title"
+      >
         <h3>Fogging</h3>
         <p class="subtitle">
           Global scene fogging settings.
@@ -115,12 +168,28 @@ export default {
        * Popup header data
        */
       headerData: { title: 'Visualizer settings' },
+      /**
+       * Quality setting labels, in Visualizer.QUALITY_OPTIONS order
+       */
+      qualityOptions: ['auto', 'guides', 'low', 'medium', 'high'],
+      /**
+       * Resolution scale labels, in RESOLUTION_SCALES order
+       */
+      scaleOptions: ['100%', '75%', '50%', '35%'],
+      /**
+       * Beam guides setting labels, in Visualizer.GUIDE_OPTIONS order
+       */
+      guideOptions: ['auto', 'on', 'off'],
     };
   },
   watch: {
     state(state) {
       if (state && !this.initialValues && this.$show.visualizerHandle) {
         this.initialValues = this.$show.visualizerHandle.showData;
+      }
+      if (state && this.$show.visualizerHandle) {
+        const { quality, resolutionScale, beamGuides } = this.$show.visualizerHandle;
+        this.initialQuality = { quality, resolutionScale, beamGuides };
       }
     },
   },
@@ -141,6 +210,11 @@ export default {
       // eslint-disable-next-line max-len
       this.$show.visualizerHandle.globalFoggingTurbulences = this.initialValues.globalFoggingTurbulences;
       this.$show.visualizerHandle.globalBrightness = this.initialValues.globalBrightness;
+      if (this.initialQuality) {
+        this.$show.visualizerHandle.quality = this.initialQuality.quality;
+        this.$show.visualizerHandle.resolutionScale = this.initialQuality.resolutionScale;
+        this.$show.visualizerHandle.beamGuides = this.initialQuality.beamGuides;
+      }
       this.close();
     },
   },

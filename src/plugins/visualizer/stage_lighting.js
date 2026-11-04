@@ -1,0 +1,535 @@
+import * as THREE from 'three';
+import { createGoboTexture } from './gobos';
+
+/**
+ * Object layers read by the lighting passes. Lit surfaces (floor, set) are receivers; fixture
+ * bodies are occluders, drawn black so light isn't added over them.
+ *
+ * @constant {Object} LIGHT_LAYERS
+ */
+export const LIGHT_LAYERS = {
+  RECEIVER: 1,
+  OCCLUDER: 2,
+};
+
+/**
+ * Quality levels, lowest first
+ *
+ * @constant {Object} QUALITY_LEVELS
+ */
+export const QUALITY_LEVELS = {
+  GUIDES: 'guides',
+  LOW: 'low',
+  MEDIUM: 'medium',
+  HIGH: 'high',
+};
+
+/**
+ * Lighting resolution of the deferred levels, before the resolution scale
+ *
+ * @constant {Object} LEVEL_SCALE
+ */
+const LEVEL_SCALE = {
+  [QUALITY_LEVELS.MEDIUM]: 0.6,
+  [QUALITY_LEVELS.HIGH]: 1,
+};
+
+const GAIN = 160; // light reaching a surface 1 m away, before the 4 m² falloff offset
+const ACCUM = 0.25; // RGBA8 light buffers store light * ACCUM so values up to 4 fit
+const GUIDE_EDGES = 8;
+const GUIDE_RING = 32;
+const GUIDE_FLOOR = 0.25; // guide brightness of a beam at intensity 0
+
+// Shared by every pass: reads one beam's row of the state texture (see beam_state.js)
+const BEAM_GLSL = /* glsl */`
+uniform highp sampler2D uBeams;
+uniform highp sampler2DArray uGobos;
+uniform float uGain;
+
+vec4 beamTexel(int id, int k) { return texelFetch(uBeams, ivec2(k, id), 0); }
+
+mat4 beamMatrix(int id, int base) {
+  return mat4(beamTexel(id, base), beamTexel(id, base + 1), beamTexel(id, base + 2),
+    beamTexel(id, base + 3));
+}
+
+// uv: position in the beam's unit disk; g: gobo layer, rotation, blur (mip level)
+float goboAt(vec2 uv, vec4 g) {
+  float r = length(uv);
+  if (r >= 1.0) return 0.0;
+  float c = cos(g.y);
+  float s = sin(g.y);
+  vec2 q = vec2(c * uv.x - s * uv.y, s * uv.x + c * uv.y);
+  float v = textureLod(uGobos, vec3(q * 0.5 + 0.5, g.x), g.z).r;
+  return v * (1.0 - smoothstep(0.92, 1.0, r));
+}
+
+// Light a beam casts on world point P, before the surface's angle term; L: direction to the lens
+vec3 beamLight(int id, vec3 P, out vec3 L) {
+  vec4 o = beamTexel(id, 11);
+  L = normalize(o.xyz - P);
+  vec4 loc = beamMatrix(id, 4) * vec4(P, 1.0);
+  if (loc.z <= 0.0 || loc.z > 1.0) return vec3(0.0);
+  float g = goboAt(loc.xy / loc.z, beamTexel(id, 9));
+  float d = loc.z * o.w;
+  vec4 c = beamTexel(id, 8);
+  return c.rgb * (c.a * g * uGain / (4.0 + d * d));
+}
+`;
+
+// Low: one floor quad per beam, covering its footprint
+const DECAL_VERTEX = /* glsl */`
+${BEAM_GLSL}
+flat out int vId;
+out vec3 vWorld;
+void main() {
+  vId = gl_InstanceID;
+  vec4 f = beamTexel(gl_InstanceID, 10);
+  vec3 w = vec3(f.x + position.x * f.z, f.y + position.y * f.z, 0.003);
+  if (f.w < 0.5 || beamTexel(gl_InstanceID, 8).a <= 0.0) w = vec3(0.0);
+  vWorld = w;
+  gl_Position = projectionMatrix * viewMatrix * vec4(w, 1.0);
+}
+`;
+
+const DECAL_FRAGMENT = /* glsl */`
+${BEAM_GLSL}
+uniform sampler2D uFloorMap;
+uniform vec2 uFloorRepeat;
+uniform float uFloorSize;
+flat in int vId;
+in vec3 vWorld;
+out highp vec4 outColor;
+void main() {
+  vec3 L;
+  vec3 li = beamLight(vId, vWorld, L);
+  vec3 albedo = texture(uFloorMap, (vWorld.xy / uFloorSize + 0.5) * uFloorRepeat).rgb;
+  outColor = linearToOutputTexel(vec4(albedo * li * max(L.z, 0.0), 1.0));
+}
+`;
+
+// Medium and High: the cone hull's back faces cover every pixel the beam can light
+const VOLUME_VERTEX = /* glsl */`
+${BEAM_GLSL}
+flat out int vId;
+void main() {
+  vId = gl_InstanceID;
+  vec4 w = beamMatrix(gl_InstanceID, 0) * vec4(position, 1.0);
+  if (beamTexel(gl_InstanceID, 8).a <= 0.0) w = vec4(0.0, 0.0, 0.0, 1.0);
+  gl_Position = projectionMatrix * viewMatrix * w;
+}
+`;
+
+const VOLUME_FRAGMENT = /* glsl */`
+${BEAM_GLSL}
+uniform highp sampler2D uDepth;
+uniform vec2 uTargetSize;
+uniform mat4 uInvViewProj;
+uniform float uAccum;
+flat in int vId;
+out highp vec4 outColor;
+void main() {
+  vec2 uv = gl_FragCoord.xy / uTargetSize;
+  float d = texture(uDepth, uv).r;
+  vec4 p = uInvViewProj * vec4(uv * 2.0 - 1.0, d * 2.0 - 1.0, 1.0);
+  vec3 P = p.xyz / p.w;
+  vec3 n = cross(dFdx(P), dFdy(P));
+  vec3 N = dot(n, n) > 0.0 ? normalize(n) : vec3(0.0, 0.0, 1.0);
+  if (dot(N, cameraPosition - P) < 0.0) N = -N;
+  if (d >= 1.0) discard;
+  vec3 L;
+  vec3 li = beamLight(vId, P, L);
+  outColor = vec4(li * max(dot(N, L), 0.0) * uAccum, 1.0);
+}
+`;
+
+const COMPOSITE_VERTEX = /* glsl */`
+out vec2 vUv;
+void main() {
+  vUv = uv;
+  gl_Position = vec4(position.xy, 0.0, 1.0);
+}
+`;
+
+const COMPOSITE_FRAGMENT = /* glsl */`
+uniform sampler2D uAlbedo;
+uniform sampler2D uLight;
+uniform float uAccum;
+in vec2 vUv;
+out highp vec4 outColor;
+void main() {
+  vec3 light = texture(uAlbedo, vUv).rgb * texture(uLight, vUv).rgb / uAccum;
+  outColor = linearToOutputTexel(vec4(light, 1.0));
+}
+`;
+
+// Beam guides: position.xy is a point on the unit disk (0 for the axis), position.z is 0 at the
+// lens and 1 where that ray meets the floor or the end of the beam
+const GUIDE_VERTEX = /* glsl */`
+${BEAM_GLSL}
+uniform float uGuideFloor;
+in float weight;
+out vec3 vColor;
+void main() {
+  mat4 m = beamMatrix(gl_InstanceID, 0);
+  vec3 origin = m[3].xyz;
+  vec3 ray = mat3(m) * vec3(position.xy, 1.0);
+  float reach = ray.z < 0.0 ? min(origin.z / -ray.z, 1.0) : 1.0;
+  vec3 w = origin + ray * (reach * position.z);
+  vec4 c = beamTexel(gl_InstanceID, 8);
+  vColor = c.rgb * weight * (uGuideFloor + (1.0 - uGuideFloor) * c.a);
+  gl_Position = projectionMatrix * viewMatrix * vec4(w, 1.0);
+}
+`;
+
+const GUIDE_FRAGMENT = /* glsl */`
+in vec3 vColor;
+out highp vec4 outColor;
+void main() { outColor = linearToOutputTexel(vec4(vColor, 1.0)); }
+`;
+
+/**
+ * Unit cone, apex at the origin, base radius 1 at z = 1, closed, faces outward. The ring is pushed
+ * out so the polygon contains the circle.
+ *
+ * @param {Number} [segments=24] Ring segments
+ * @returns {THREE.InstancedBufferGeometry} Cone geometry
+ */
+function createConeGeometry(segments = 24) {
+  const k = 1 / Math.cos(Math.PI / segments);
+  const position = [];
+  for (let i = 0; i < segments; i++) {
+    const a1 = (i / segments) * Math.PI * 2;
+    const a2 = ((i + 1) / segments) * Math.PI * 2;
+    const x1 = Math.cos(a1) * k;
+    const y1 = Math.sin(a1) * k;
+    const x2 = Math.cos(a2) * k;
+    const y2 = Math.sin(a2) * k;
+    position.push(0, 0, 0, x2, y2, 1, x1, y1, 1);
+    position.push(0, 0, 1, x1, y1, 1, x2, y2, 1);
+  }
+  const geometry = new THREE.InstancedBufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(position, 3));
+  geometry.instanceCount = 0;
+  return geometry;
+}
+
+/**
+ * Beam guide segments: axis, cone edges and footprint ring, with a brightness weight per vertex
+ *
+ * @returns {THREE.InstancedBufferGeometry} Guide geometry
+ */
+function createGuideGeometry() {
+  const position = [];
+  const weight = [];
+  const point = (a, r, t, w) => {
+    position.push(Math.cos(a) * r, Math.sin(a) * r, t);
+    weight.push(w);
+  };
+  point(0, 0, 0, 0.9);
+  point(0, 0, 1, 0.9);
+  for (let i = 0; i < GUIDE_EDGES; i++) {
+    const a = (i / GUIDE_EDGES) * Math.PI * 2;
+    point(a, 1, 0, 0.5);
+    point(a, 1, 1, 0.5);
+  }
+  for (let i = 0; i < GUIDE_RING; i++) {
+    point((i / GUIDE_RING) * Math.PI * 2, 1, 1, 1);
+    point(((i + 1) / GUIDE_RING) * Math.PI * 2, 1, 1, 1);
+  }
+  const geometry = new THREE.InstancedBufferGeometry();
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(position, 3));
+  geometry.setAttribute('weight', new THREE.Float32BufferAttribute(weight, 1));
+  geometry.instanceCount = 0;
+  return geometry;
+}
+
+/**
+ * Wraps a mesh in its own scene, drawn whatever its bounds
+ *
+ * @param {THREE.Object3D} object Mesh or line
+ * @returns {THREE.Scene} Scene holding the object
+ */
+function sceneOf(object) {
+  const scene = new THREE.Scene();
+  object.frustumCulled = false;
+  scene.add(object);
+  return scene;
+}
+
+/**
+ * @class StageLighting
+ * @classdesc Draws beam light on the stage from the beam state, at one of the quality levels:
+ * Guides (no light), Low (floor footprints), Medium and High (deferred light volumes on every
+ * receiver, at reduced or full resolution), plus optional beam guides at the canvas's resolution.
+ */
+class StageLighting {
+  /**
+   * @param {THREE.WebGLRenderer} renderer Renderer drawing to the canvas
+   * @param {THREE.Scene} scene Scene holding receivers and occluders
+   * @param {THREE.Camera} camera View camera
+   * @param {BeamState} beamState Per-beam state
+   */
+  constructor(renderer, scene, camera, beamState) {
+    this.renderer = renderer;
+    this.scene = scene;
+    this.camera = camera;
+    this.beamState = beamState;
+    this._level = QUALITY_LEVELS.HIGH;
+    this._scale = 1;
+    this._guides = false;
+    this._receivers = [];
+    this._targets = null;
+    this._size = new THREE.Vector2();
+    this._targetSize = new THREE.Vector2(1, 1);
+
+    this.shared = {
+      uBeams: beamState.uniform,
+      uGobos: { value: createGoboTexture() },
+      uGain: { value: GAIN },
+    };
+    const additive = {
+      glslVersion: THREE.GLSL3,
+      blending: THREE.AdditiveBlending,
+      transparent: true,
+      depthWrite: false,
+    };
+
+    this.decalGeometry = new THREE.InstancedBufferGeometry().copy(new THREE.PlaneGeometry(2, 2));
+    this.decalGeometry.instanceCount = 0;
+    this.floorUniforms = {
+      uFloorMap: { value: null },
+      uFloorRepeat: { value: new THREE.Vector2(1, 1) },
+      uFloorSize: { value: 1 },
+    };
+    this.decalScene = sceneOf(new THREE.Mesh(this.decalGeometry, new THREE.ShaderMaterial({
+      ...additive,
+      side: THREE.DoubleSide,
+      uniforms: { ...this.shared, ...this.floorUniforms },
+      vertexShader: DECAL_VERTEX,
+      fragmentShader: DECAL_FRAGMENT,
+    })));
+
+    this.coneGeometry = createConeGeometry();
+    this.volumeUniforms = {
+      uDepth: { value: null },
+      uTargetSize: { value: this._targetSize },
+      uInvViewProj: { value: new THREE.Matrix4() },
+      uAccum: { value: ACCUM },
+    };
+    this.volumeScene = sceneOf(new THREE.Mesh(this.coneGeometry, new THREE.ShaderMaterial({
+      ...additive,
+      depthTest: false,
+      side: THREE.BackSide,
+      uniforms: { ...this.shared, ...this.volumeUniforms },
+      vertexShader: VOLUME_VERTEX,
+      fragmentShader: VOLUME_FRAGMENT,
+    })));
+
+    this.compositeUniforms = {
+      uAlbedo: { value: null },
+      uLight: { value: null },
+      uAccum: { value: ACCUM },
+    };
+    this.compositeScene = sceneOf(new THREE.Mesh(
+      new THREE.PlaneGeometry(2, 2),
+      new THREE.ShaderMaterial({
+        ...additive,
+        depthTest: false,
+        uniforms: this.compositeUniforms,
+        vertexShader: COMPOSITE_VERTEX,
+        fragmentShader: COMPOSITE_FRAGMENT,
+      }),
+    ));
+    this.screenCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+    this.guideGeometry = createGuideGeometry();
+    this.guideScene = sceneOf(new THREE.LineSegments(this.guideGeometry, new THREE.ShaderMaterial({
+      ...additive,
+      depthTest: false,
+      uniforms: { ...this.shared, uGuideFloor: { value: GUIDE_FLOOR } },
+      vertexShader: GUIDE_VERTEX,
+      fragmentShader: GUIDE_FRAGMENT,
+    })));
+
+    this.occluderMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+
+    beamState.onCountChange((count) => {
+      this.decalGeometry.instanceCount = count;
+      this.coneGeometry.instanceCount = count;
+      this.guideGeometry.instanceCount = count;
+    });
+  }
+
+  /**
+   * Quality level (see QUALITY_LEVELS)
+   *
+   * @type {String}
+   */
+  set level(level) {
+    if (level === this._level) return;
+    this._level = level;
+    this.updateTargets();
+  }
+
+  get level() {
+    return this._level;
+  }
+
+  /**
+   * Resolution scale of the lighting passes, 0 to 1
+   *
+   * @type {Number}
+   */
+  set scale(scale) {
+    if (scale === this._scale) return;
+    this._scale = scale;
+    this.updateTargets();
+  }
+
+  get scale() {
+    return this._scale;
+  }
+
+  /**
+   * Whether beam guides are drawn
+   *
+   * @type {Boolean}
+   */
+  set guides(state) {
+    this._guides = state;
+  }
+
+  get guides() {
+    return this._guides;
+  }
+
+  /**
+   * Registers a surface lit by beams. Its main material shows it unlit; the albedo material shows
+   * its unlit, unshaded colour and is drawn into the lighting prepass.
+   *
+   * @public
+   * @param {THREE.Mesh} mesh Lit surface
+   * @param {THREE.Material} albedoMaterial Albedo-only material
+   */
+  addReceiver(mesh, albedoMaterial) {
+    mesh.layers.enable(LIGHT_LAYERS.RECEIVER);
+    this._receivers.push({ mesh, albedoMaterial, material: mesh.material });
+  }
+
+  /**
+   * Sets the floor albedo read by the Low level's footprints
+   *
+   * @public
+   * @param {THREE.Texture} map Floor texture (repeat wrapping)
+   * @param {Number} size Floor width (meter), centred on the origin
+   */
+  setFloor(map, size) {
+    this.floorUniforms.uFloorMap.value = map;
+    this.floorUniforms.uFloorRepeat.value.copy(map.repeat);
+    this.floorUniforms.uFloorSize.value = size;
+  }
+
+  /**
+   * Follows the canvas size
+   *
+   * @public
+   */
+  resize() {
+    this.updateTargets();
+  }
+
+  /**
+   * Creates the deferred levels' targets at the lighting resolution, or drops them
+   *
+   * @private
+   */
+  updateTargets() {
+    if (this._targets) {
+      this._targets.scene.dispose();
+      this._targets.light.dispose();
+      this._targets = null;
+    }
+    const levelScale = LEVEL_SCALE[this._level];
+    if (!levelScale) return;
+    this.renderer.getDrawingBufferSize(this._size);
+    const w = Math.max(1, Math.round(this._size.x * levelScale * this._scale));
+    const h = Math.max(1, Math.round(this._size.y * levelScale * this._scale));
+    const depthTexture = new THREE.DepthTexture(w, h);
+    const scene = new THREE.WebGLRenderTarget(w, h, { depthBuffer: true, depthTexture });
+    const light = new THREE.WebGLRenderTarget(w, h, { depthBuffer: false });
+    this._targets = { scene, light };
+    this._targetSize.set(w, h);
+    this.volumeUniforms.uDepth.value = depthTexture;
+    this.compositeUniforms.uAlbedo.value = scene.texture;
+    this.compositeUniforms.uLight.value = light.texture;
+  }
+
+  /**
+   * Draws the frame: the scene, then the level's light, then the guides
+   *
+   * @public
+   */
+  render() {
+    const { renderer, scene, camera } = this;
+    renderer.setRenderTarget(null);
+    renderer.render(scene, camera);
+    renderer.autoClear = false;
+    if (this.beamState.count) {
+      if (this._level === QUALITY_LEVELS.LOW) {
+        renderer.render(this.decalScene, camera);
+      } else if (this._targets) {
+        this.renderDeferred();
+      }
+      if (this._guides) {
+        renderer.render(this.guideScene, camera);
+      }
+    }
+    renderer.autoClear = true;
+  }
+
+  /**
+   * Deferred light: receivers' albedo and every lit or occluding surface's depth at the lighting
+   * resolution, the beams' light volumes against that depth, then albedo × light added to the
+   * canvas
+   *
+   * @private
+   */
+  renderDeferred() {
+    const {
+      renderer, scene, camera, _targets: targets,
+    } = this;
+    const { mask } = camera.layers;
+    const { background } = scene;
+    scene.background = null;
+
+    renderer.setRenderTarget(targets.scene);
+    renderer.setClearColor(0x000000, 0);
+    renderer.clear();
+    camera.layers.set(LIGHT_LAYERS.RECEIVER);
+    for (let i = 0; i < this._receivers.length; i++) {
+      this._receivers[i].mesh.material = this._receivers[i].albedoMaterial;
+    }
+    renderer.render(scene, camera);
+    for (let i = 0; i < this._receivers.length; i++) {
+      this._receivers[i].mesh.material = this._receivers[i].material;
+    }
+    camera.layers.set(LIGHT_LAYERS.OCCLUDER);
+    scene.overrideMaterial = this.occluderMaterial;
+    renderer.render(scene, camera);
+    scene.overrideMaterial = null;
+    camera.layers.mask = mask;
+    scene.background = background;
+
+    this.volumeUniforms.uInvViewProj.value
+      .multiplyMatrices(camera.matrixWorld, camera.projectionMatrixInverse);
+    renderer.setRenderTarget(targets.light);
+    renderer.clear();
+    renderer.render(this.volumeScene, camera);
+
+    renderer.setRenderTarget(null);
+    renderer.render(this.compositeScene, this.screenCamera);
+  }
+}
+
+export default StageLighting;

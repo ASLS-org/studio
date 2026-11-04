@@ -24,6 +24,23 @@ const WHEEL_CHANNEL_TYPES = {
   GOBO_WHEEL: 'Gobo Wheel',
 };
 
+/**
+ * Standard attribute of gobo wheel channels (see the OFL adapter)
+ *
+ * @constant {String} GOBO_ATTRIBUTE
+ */
+const GOBO_ATTRIBUTE = 'Gobo1';
+
+/**
+ * Finds the name of a fixture's first wheel matching a pattern (OFL wheel names vary: "Gobo Wheel",
+ * "Rotating Gobo Wheel"...)
+ *
+ * @param {Object} wheels Fixture wheels keyed by name
+ * @param {RegExp} pattern Wheel name pattern
+ * @returns {?String} Wheel name
+ */
+const findWheel = (wheels, pattern) => Object.keys(wheels).find((key) => pattern.test(key)) || null;
+
 const radToDeg = (rad) => rad * (180 / Math.PI);
 const degToRad = (deg) => deg * (Math.PI / 180);
 
@@ -87,7 +104,11 @@ class FixtureHandle {
  * whose DMX bytes changed are decoded through their profile channels.
  */
 class FixtureRenderer {
-  constructor() {
+  /**
+   * @param {Function} [onChange] Called when the patch, a pose or a highlight changes
+   */
+  constructor(onChange = () => {}) {
+    this.onChange = onChange;
     /**
      * Rendered fixtures keyed by fixture id
      *
@@ -123,6 +144,7 @@ class FixtureRenderer {
         this.removeInstance(instance);
       }
     });
+    this.onChange();
   }
 
   /**
@@ -134,6 +156,8 @@ class FixtureRenderer {
    */
   createInstance(entry) {
     const { channels, physical, wheels } = entry;
+    // Only one gobo wheel is drawn: the fixture's first
+    const goboWheel = findWheel(wheels, /gobo/i);
     const tilt = channels.find((channel) => channel.type === 'Tilt');
     const pan = channels.find((channel) => channel.type === 'Pan');
     const range = (channel) => (channel && channel.capabilities.length
@@ -151,7 +175,7 @@ class FixtureRenderer {
       pan: 128,
       tilt: 128,
       colorWheel: wheels['Color Wheel'] ? wheels['Color Wheel'].slots : [],
-      goboWheel: wheels['Gobo Wheel'] ? wheels['Gobo Wheel'].slots : [],
+      goboWheel: goboWheel ? wheels[goboWheel].slots : [],
     });
     model.position = { ...entry.position };
     model.rotation = { ...entry.rotation };
@@ -160,6 +184,7 @@ class FixtureRenderer {
       model,
       handle: new FixtureHandle(entry.id, model),
       channels,
+      goboWheel,
       last: new Uint8Array(channels.length),
       frame: entry.frame,
       chStart: entry.chStart,
@@ -212,6 +237,7 @@ class FixtureRenderer {
     if (reattach) {
       Controls.attach(instance.handle);
     }
+    this.onChange();
   }
 
   /**
@@ -248,14 +274,17 @@ class FixtureRenderer {
         }
       }
     }
+    this.onChange();
   }
 
   /**
    * Decodes the fixtures whose DMX bytes changed since the last rendered frame
    *
    * @public
+   * @returns {Boolean} Whether a fixture changed
    */
   update() {
+    let any = false;
     this.instances.forEach((instance) => {
       const { frame, chStart, last } = instance;
       let changed = instance.force;
@@ -268,9 +297,11 @@ class FixtureRenderer {
       }
       if (changed) {
         instance.force = false;
+        any = true;
         FixtureRenderer.decode(instance);
       }
     });
+    return any;
   }
 
   /**
@@ -281,8 +312,11 @@ class FixtureRenderer {
    * @param {Object} instance Rendered fixture
    */
   static decode(instance) {
-    const { model, channels, last } = instance;
+    const {
+      model, channels, last, goboWheel,
+    } = instance;
     model.colorPreset = null;
+    model.resetCapabilityValues();
     for (let id = 0; id < channels.length; id++) {
       const channel = channels[id];
       const value = last[id];
@@ -297,8 +331,11 @@ class FixtureRenderer {
           case CAPABILITY_TYPES.WheelSlot:
             if (channel.type === WHEEL_CHANNEL_TYPES.COLOR_WHEEL) {
               model.colorWheelSlot = Math.floor(values.slotNumber) - 1.0;
+            } else if ((channel.attribute === GOBO_ATTRIBUTE
+              || channel.type === WHEEL_CHANNEL_TYPES.GOBO_WHEEL)
+              && (values.wheel || channel.type) === goboWheel) {
+              model.goboWheelSlot = Math.floor(values.slotNumber) - 1.0;
             }
-            // Gobo wheel slots are not rendered yet (WHEEL_CHANNEL_TYPES.GOBO_WHEEL)
             break;
           case CAPABILITY_TYPES.ColorPreset:
             model.colorPreset = values.color ? values.color[0] : null;
