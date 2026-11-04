@@ -85,6 +85,11 @@ measured frame time. The user can override it.
 ## Decisions
 
 Confirmed by the user:
+- GDTF fixtures come from file import plus a curated bundle (only files whose redistribution is
+  allowed); GDTF Share stays in the backlog (2026-11-04).
+- Showfiles reference GDTF fixtures in a local library on the device; missing fixtures are asked
+  for on open (2026-11-04).
+- Unit 5 is split: 5a fixtures, 5b GDTF models (2026-11-04).
 - Decouple first, GDTF after.
 - Fresh rendering design. The current `moving_head.js` look is a benchmark to match or beat on the
   same rig, not a template.
@@ -100,9 +105,6 @@ Proposed defaults (to confirm in the relevant unit):
 - No float render targets in T0-T1 (not guaranteed on V3D).
 
 Open (answer in the unit that needs it):
-- Where GDTF files come from: user import, GDTF Share (account + API, likely through Electron for
-  CORS), or a curated bundle; redistribution terms of Share files.
-- Showfile embeds imported fixture files or references a local library (IndexedDB / disk).
 - Realistic show size (fixtures, universes, simultaneous effects): decides whether the engine
   itself must move to a Worker.
 
@@ -114,7 +116,8 @@ Open (answer in the unit that needs it):
 | 2 | `decouple-visualizer-from-models` | 1 | archived |
 | 3 | `add-projector-lighting` (starts with a performance spike; spike on the 2015 laptop and Pi 5 still to run) | 2 | archived |
 | 4 | `add-volumetric-beams` | 3 | archived |
-| 5 | `add-gdtf-fixtures` | 1, 2, 3 | proposed |
+| 5a | `add-gdtf-fixtures` (import, adapter, any category, multi-beam, GDTF gobos) | 1, 2, 3 | refining |
+| 5b | `add-gdtf-models` (GDTF glTF models, LOD, instancing) | 5a | proposed |
 | 6 | `move-visualizer-to-worker` (optional: only if the end-of-epic smoke and performance tests call for it) | 3 | proposed |
 
 Status values: proposed, refining, applying, archived.
