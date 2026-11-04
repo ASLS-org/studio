@@ -2,20 +2,20 @@
 
 ## 1. Engine: cells (models/fixtures, models/DMX)
 
-- [ ] 1.1 `src/models/fixtures/fixture.cells.js` (pure): kind keys, candidates, merge, cached per
+- [x] 1.1 `src/models/fixtures/fixture.cells.js` (pure): kind keys, candidates, merge, cached per
       profile mode (design decision 1). Verify with the Node harness over both GDTF test sets and
       the OFL library: 169 of 757 GDTF modes and 238 of 2240 OFL modes have cells, fixtures without
       repeated parts have none, and no error.
-- [ ] 1.2 `Channel` keeps `geometry` and `cell`; `Fixture.cells` (read-only). Verify in Node on a
+- [x] 1.2 `Channel` keeps `geometry` and `cell`; `Fixture.cells` (read-only). Verify in Node on a
       patched 8-pixel bar, a two-head fixture and the demo MAC Aura (8 cells, 2 cells, none).
 
 ## 2. Engine: colour and Pan/Tilt per cell (models/DMX)
 
-- [ ] 2.1 `src/models/DMX/cell.access.js`: read/write colour (RGB, inverted CMY, RGBW split) and
+- [x] 2.1 `src/models/DMX/cell.access.js`: read/write colour (RGB, inverted CMY, RGBW split) and
       Pan/Tilt over channel entries for a list of cells or all (design decision 2). Verify in Node:
       RGBW pick 255/128/128 writes W 128, R 127, G 0, B 0 and reads back 255/128/128; a cell write
       leaves the other cells unchanged.
-- [ ] 2.2 `Fixture` and `FixtureValue`: `getColor` / `setColor` / `getPanTilt` / `setPanTilt` with
+- [x] 2.2 `Fixture` and `FixtureValue`: `getColor` / `setColor` / `getPanTilt` / `setPanTilt` with
       cells; `color` and `panTilt` delegate with all cells. Verify in the running app (`npm
       start`): the demo show's colour picker and Pan/Tilt behave as before, in the universe view
       and in a scene.

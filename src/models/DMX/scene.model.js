@@ -1,19 +1,8 @@
 import Cue from './cue.model';
 import Fade from './fade.model';
-
-/**
- * List of RGB color channels names as described in OFL-formated files
- *
- * @constant {Array<String>} RGB_CHANNELS
- */
-const RGB_CHANNELS = ['Red', 'Green', 'Blue'];
-
-/**
- * List of CMY color channels names as described in OFL-formated files
- *
- * @constant {Array<String>} CMY_CHANNELS
- */
-const CMY_CHANNELS = ['Cyan', 'Magenta', 'Yellow'];
+import {
+  readColor, writeColor, readPanTilt, writePanTilt,
+} from './cell.access';
 
 /**
  * Enumeration of scene's running directions
@@ -77,6 +66,18 @@ class FixtureValue {
    */
   constructor(fixture, channelValues) {
     this.fixture = fixture;
+    // Channel value access by fixture channel index, for cell.access.js
+    this._read = (index) => {
+      const entry = this.entryOf(index);
+      return entry ? entry.value : 0;
+    };
+    this._write = (index, value) => {
+      const entry = this.entryOf(index);
+      if (!entry) return;
+      entry.value = value;
+      entry.active = true;
+      this.setQuickAccessor(entry);
+    };
 
     // Internal flattened representation used by the runtime update loop.
     // Keeping the original quickChannelsAccessors structure intact preserves
@@ -169,149 +170,86 @@ class FixtureValue {
   }
 
   /**
-   * Fixture's color channels values.
-   * Only RGB color suppoprtded at the moment.
-   *
-   * @todo Implement other color changer types (HSB...). Should do for the alpha
+   * Fixture's colour (RGB 0-255), every cell's (reads the first); CMY inverted, white mixed in
    *
    * @type {Array<Number>}
    */
   set color(rgbValue) {
-    if (this.hasQuickAccessor({
-      type: 'Color',
-    })) {
-      const channels = this.quickChannelsAccessors.Color;
-
-      for (let i = 0; i < channels.length; i++) {
-        const channel = channels[i];
-
-        if (RGB_CHANNELS.includes(channel.color)) {
-          channel.value = rgbValue[RGB_CHANNELS.indexOf(channel.color)];
-          channel.active = true;
-          this.setQuickAccessor(channel);
-        } else if (CMY_CHANNELS.includes(channel.color)) {
-          channel.value = 255 - rgbValue[CMY_CHANNELS.indexOf(channel.color)];
-          channel.active = true;
-          this.setQuickAccessor(channel);
-        }
-      }
-    }
+    this.setColor(rgbValue);
   }
 
-  /**
-   * Fixture's color channels values.
-   *
-   * @type {Array<Number>}
-   */
   get color() {
-    const colorValues = [0, 0, 0];
-
-    if (this.hasQuickAccessor({
-      type: 'Color',
-    })) {
-      const channels = this.quickChannelsAccessors.Color;
-
-      for (let i = 0; i < channels.length; i++) {
-        const colorChannel = channels[i];
-
-        if (RGB_CHANNELS.includes(colorChannel.color)) {
-          colorValues[RGB_CHANNELS.indexOf(colorChannel.color)] = colorChannel.value;
-        } else if (CMY_CHANNELS.includes(colorChannel.color)) {
-          colorValues[CMY_CHANNELS.indexOf(colorChannel.color)] = 255 - colorChannel.value;
-        }
-      }
-    }
-
-    return colorValues;
+    return this.getColor();
   }
 
   /**
-   * Fixture's pan&tilt channels values (0-255)/(0-255)
+   * Fixture's pan&tilt channels values (0-255)/(0-255), every head's (reads the first)
    *
    * @type {Object}
    */
   set panTilt(value) {
-    this.setQuickAccessor({
-      type: 'Pan',
-      value: value.pan,
-      active: true,
-    });
+    this.setPanTilt(value);
+  }
 
-    this.setQuickAccessor({
-      type: 'Tilt',
-      value: value.tilt,
-      active: true,
-    });
-
-    this.setQuickAccessor({
-      type: 'PanFine',
-      value: value.panFine,
-      active: true,
-    });
-
-    this.setQuickAccessor({
-      type: 'TiltFine',
-      value: value.tiltFine,
-      active: true,
-    });
+  get panTilt() {
+    return this.getPanTilt();
   }
 
   /**
-   * Fixture's pan&tilt channels values (0-255)/(0-255)
+   * Reads the colour of the first of some cells (see cell.access.js)
    *
-   * @type {Object}
+   * @public
+   * @param {?Array<String>} [cells=null] Cell names, null for all
+   * @returns {Array<Number>} RGB 0-255
    */
-  get panTilt() {
-    const result = {
-      pan: 0,
-      panFine: 0,
-      tilt: 0,
-      tiltFine: 0,
-    };
+  getColor(cells = null) {
+    return readColor(this.fixture.channels, cells, this._read);
+  }
 
-    let accessor;
+  /**
+   * Writes a colour to some cells, activating the channels written (see cell.access.js)
+   *
+   * @public
+   * @param {Array<Number>} rgbValue RGB 0-255
+   * @param {?Array<String>} [cells=null] Cell names, null for all
+   */
+  setColor(rgbValue, cells = null) {
+    writeColor(this.fixture.channels, rgbValue, cells, this._write);
+  }
 
-    if (this.hasQuickAccessor({
-      type: 'Pan',
-    })) {
-      accessor = this.getQuickAccessor({
-        type: 'Pan',
-      });
+  /**
+   * Reads the pan&tilt of the first of some cells (see cell.access.js)
+   *
+   * @public
+   * @param {?Array<String>} [cells=null] Cell names, null for all
+   * @returns {Object} `pan`, `panFine`, `tilt`, `tiltFine` (0-255)
+   */
+  getPanTilt(cells = null) {
+    return readPanTilt(this.fixture.channels, cells, this._read);
+  }
 
-      result.pan = accessor.value;
-    }
+  /**
+   * Writes pan&tilt to some cells, activating the channels written (see cell.access.js)
+   *
+   * @public
+   * @param {Object} value `pan`, `panFine`, `tilt`, `tiltFine` (0-255)
+   * @param {?Array<String>} [cells=null] Cell names, null for all
+   */
+  setPanTilt(value, cells = null) {
+    writePanTilt(this.fixture.channels, value, cells, this._write);
+  }
 
-    if (this.hasQuickAccessor({
-      type: 'PanFine',
-    })) {
-      accessor = this.getQuickAccessor({
-        type: 'PanFine',
-      });
-
-      result.panFine = accessor.value;
-    }
-
-    if (this.hasQuickAccessor({
-      type: 'Tilt',
-    })) {
-      accessor = this.getQuickAccessor({
-        type: 'Tilt',
-      });
-
-      result.tilt = accessor.value;
-    }
-
-    if (this.hasQuickAccessor({
-      type: 'TiltFine',
-    })) {
-      accessor = this.getQuickAccessor({
-        type: 'TiltFine',
-      });
-
-      result.tiltFine = accessor.value;
-    }
-
-    return result;
+  /**
+   * This scene's entry of a fixture channel, by the channel's index in the fixture
+   *
+   * @public
+   * @param {Number} index Channel index
+   * @returns {?Object} Entry (`type`, `qaIndex`, `value`, `active`)
+   */
+  entryOf(index) {
+    const channel = this.fixture.channels[index];
+    const entries = channel && this._quickChannelsAccessors[channel.type];
+    return (entries && entries[channel.qaIndex || 0]) || null;
   }
 
   /**
