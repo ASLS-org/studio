@@ -214,5 +214,20 @@ export function assignRoles(geometry) {
     return containsAxis;
   };
   visit(geometry, true);
+  // An axis whose child body holds the beams turns a head made of a plain geometry: the axis is
+  // the yoke, the child the head
+  const holdsBeam = (n) => n.kind === 'beam' || n.children.some(holdsBeam);
+  const relabel = (n) => {
+    if (n.kind === 'axis' && roles.get(n) === SHAPE_ROLES.HEAD) {
+      const head = n.children.find((c) => c.kind === 'body' && holdsBeam(c)
+        && roles.get(c) !== SHAPE_ROLES.NONE);
+      if (head) {
+        roles.set(n, SHAPE_ROLES.YOKE);
+        roles.set(head, SHAPE_ROLES.HEAD);
+      }
+    }
+    n.children.forEach(relabel);
+  };
+  relabel(geometry);
   return roles;
 }

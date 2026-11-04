@@ -238,4 +238,8 @@
       - the light is shared between facets.
 
       Prism rotation is not drawn (as before).
+- [x] 6.5 Pan turns the outermost axis on the named geometry's path and Tilt the innermost.
+      Files that name the head or the yoke for both, or that don't declare the head an axis,
+      still pan the yoke and tilt the head. Checked over the test set: in 295 of 296 moving-head
+      modes, Pan's node sits above Tilt's; the exception is a laser with no axes.
 

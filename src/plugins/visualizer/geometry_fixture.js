@@ -327,8 +327,9 @@ class GeometryFixture {
   }
 
   /**
-   * The node a Pan or Tilt channel turns: the geometry it names (an axis, or a plain geometry in
-   * files that don't declare axes). Channels on the fixture root (OFL, a few GDTF files) turn the
+   * The node a Pan or Tilt channel turns. For a named geometry: the outermost (Pan) or innermost
+   * (Tilt) axis on its path from the root, or the geometry itself when that path has no axis
+   * (files that don't declare axes). Channels on the fixture root (OFL, a few GDTF files) turn the
    * outermost (Pan) or innermost (Tilt) axis below it.
    *
    * @private
@@ -338,6 +339,29 @@ class GeometryFixture {
    */
   axisFor(entry, tilt) {
     if (entry.parent) {
+      // Axes on the path from the root to the named geometry: Pan turns the outermost, Tilt the
+      // innermost (some files name the head for both)
+      const path = [];
+      for (let e = entry; e; e = e.parent) if (e.data.kind === 'axis') path.unshift(e);
+      if (tilt && path.length === 1 && entry.data.kind !== 'axis') {
+        // Tilt on a plain geometry below the pan axis (the head isn't declared an axis)
+        if (!this._axes.includes(entry)) this._axes.push(entry);
+        return entry;
+      }
+      if (tilt && path.length === 1) {
+        // Tilt named on the pan axis (some files name the yoke for both): the axis below it
+        const below = entry.children.find((c) => this.subtreeHasAxis(c));
+        const inner = below && this.axisFor(below, true);
+        if (inner && inner !== path[0]) return inner;
+        // No axis below (the head is a plain geometry): the child holding the beams
+        const head = !below && entry.children.find((c) => c.data.kind !== 'beam'
+          && beamsUnder(c).length);
+        if (head) {
+          if (!this._axes.includes(head)) this._axes.push(head);
+          return head;
+        }
+      }
+      if (path.length) return tilt ? path[path.length - 1] : path[0];
       if (!this._axes.includes(entry)) this._axes.push(entry);
       return entry;
     }
