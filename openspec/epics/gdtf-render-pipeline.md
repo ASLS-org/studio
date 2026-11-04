@@ -113,7 +113,7 @@ Open (answer in the unit that needs it):
 | 1 | `add-fixture-profile` | none | archived |
 | 2 | `decouple-visualizer-from-models` | 1 | archived |
 | 3 | `add-projector-lighting` (starts with a performance spike; spike on the 2015 laptop and Pi 5 still to run) | 2 | archived |
-| 4 | `add-volumetric-beams` | 3 | proposed |
+| 4 | `add-volumetric-beams` | 3 | refining |
 | 5 | `add-gdtf-fixtures` | 1, 2, 3 | proposed |
 | 6 | `move-visualizer-to-worker` (optional: only if the end-of-epic smoke and performance tests call for it) | 3 | proposed |
 
