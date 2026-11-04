@@ -26,7 +26,7 @@ const MIN_FLOOR_SLOPE = 0.08;
  *
  * @constant {Number} MAX_FOOTPRINT
  */
-const MAX_FOOTPRINT = 25;
+const MAX_FOOTPRINT = 60;
 
 /**
  * @class BeamState
@@ -203,7 +203,12 @@ class BeamState {
     const height = origin.z;
     const tau = Math.acos(-direction.z);
     const alpha = Math.atan(tanHalf);
-    const far = height * (Math.tan(Math.min(tau + alpha, 1.45)) - Math.tan(tau));
+    // Far edge: where the beam's far rim meets the floor, or the end of the beam when that rim
+    // runs (nearly) parallel to the floor
+    const rimAngle = tau + alpha;
+    const reach = length * Math.sin(Math.min(rimAngle, Math.PI / 2));
+    const rimHit = rimAngle < Math.PI / 2 - 1e-3 ? height * Math.tan(rimAngle) : reach;
+    const far = Math.min(rimHit, reach) - height * Math.tan(tau);
     const near = height * (Math.tan(tau) - Math.tan(tau - alpha));
     const across = (height * tanHalf) / Math.cos(tau);
     data[offset] = origin.x + direction.x * distance;

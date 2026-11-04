@@ -1,8 +1,5 @@
 import * as THREE from 'three';
 import ModelInstancer from './model_instancer';
-// TODO: find a way for the linter to acces vite's '?' syntax
-import VOLUMETRIC_BEAM_VERTEX_SHADER from './shaders/beam.vertex.glsl?raw';
-import VOLUMETRIC_BEAM_FRAGMENT_SHADER from './shaders/beam.fragment.glsl?raw';
 
 import InstanceHighlight from './instance_highlight';
 import { goboLayer } from './gobos';
@@ -15,15 +12,8 @@ const MODEL_MATERIAL = new THREE.MeshPhongMaterial({
 });
 
 const MAX_INSTANCES = 100;
-const vector_cam = new THREE.Vector3();
-const vector_beam = new THREE.Vector3();
-const vector_beam_pos = new THREE.Vector3();
-const vector_cam_pos = new THREE.Vector3();
 
-const BEAM_RESOLUTION = 100;
-const BEAM_SEGMENTS = 1;
-const BEAM_LENGTH = 100;
-const BEAM_TOP_RADIUS = 0.09;
+const BEAM_TOP_RADIUS = 0.09; // lens radius, in meters
 const BEAM_MAX_ANGLE = 45;
 
 // Light cast on surfaces (see beam_state.js)
@@ -65,46 +55,22 @@ const SHUTTER_STROBE_FREQUENCIES_DEFAULT = {
   FAST: 10,
 };
 
-const position_buffer_attribute = new THREE.InstancedBufferAttribute(
-  new Float32Array(MAX_INSTANCES * 3),
-  3,
-);
-const direction_buffer_attribute = new THREE.InstancedBufferAttribute(
-  new Float32Array(MAX_INSTANCES * 3),
-  3,
-);
-const intensity_buffer_attribute = new THREE.InstancedBufferAttribute(
-  new Float32Array(MAX_INSTANCES),
-  1,
-);
-const color_buffer_attribute = new THREE.InstancedBufferAttribute(
-  new Float32Array(MAX_INSTANCES * 3),
-  3,
-);
 const emissive_buffer_attribute = new THREE.InstancedBufferAttribute(
   new Float32Array(MAX_INSTANCES),
   1,
 );
-const angle_buffer_attribute = new THREE.InstancedBufferAttribute(
-  new Float32Array(MAX_INSTANCES * 2),
-  2,
-);
-
 const baseGeo = new THREE.InstancedBufferGeometry();
 const yokeGeo = new THREE.InstancedBufferGeometry();
 const headGeo = new THREE.InstancedBufferGeometry();
-const beamGeo = new THREE.InstancedBufferGeometry();
 const targetGeo = new THREE.InstancedBufferGeometry();
 const boundingBoxGeo = new THREE.InstancedBufferGeometry();
 
 let baseMesh;
 let yokeMesh;
 let headMesh;
-let beamMesh;
 let capMesh;
 let boundingBoxMesh;
 
-let camera_handle = null;
 let scene_handle = null;
 
 // Scratch values for writing beam state rows (no allocation per frame)
@@ -133,7 +99,7 @@ let highlightMeshes = [];
 
 // One helper instead of the repeated six-line blocks
 function syncInstanceCounts() {
-  [baseMesh, yokeMesh, headMesh, beamMesh, capMesh, boundingBoxMesh]
+  [baseMesh, yokeMesh, headMesh, capMesh, boundingBoxMesh]
     .forEach((mesh) => { mesh.count = instanceCount; });
   highlight.setCount(instanceCount);
 }
@@ -183,6 +149,7 @@ class MovingHead {
     this._rotation = new THREE.Vector3();
     this._minAngle = data.minAngle + 1.0;
     this._maxAngle = data.maxAngle + 1.0;
+    this._zoomInPercent = Boolean(data.zoomInPercent);
     this._shutter = SHUTTER_VALUE.OPEN;
     this._goboWheel = data.goboWheel;
     this._colorWheel = data.colorWheel;
@@ -236,14 +203,7 @@ class MovingHead {
    */
   set angle(angle) {
     const clampedAngleValue = Math.min(angle / 2, BEAM_MAX_ANGLE);
-    if (clampedAngleValue !== this._angle) {
-      this._angle = clampedAngleValue;
-      angle_buffer_attribute.setY(this._id, 1.0);
-      angle_buffer_attribute.setX(this._id, this.angle);
-    } else {
-      angle_buffer_attribute.setY(this._id, 0.0);
-    }
-    angle_buffer_attribute.needsUpdate = true;
+    this._angle = clampedAngleValue;
   }
 
   get angle() {
@@ -257,8 +217,6 @@ class MovingHead {
    */
   set color(color) {
     this._color = color instanceof THREE.Color ? color : new THREE.Color(color);
-    color_buffer_attribute.setXYZ(this._id, this._color.r, this._color.g, this._color.b);
-    color_buffer_attribute.needsUpdate = true;
   }
 
   get color() {
@@ -338,36 +296,10 @@ class MovingHead {
 
   set intensity(intensity) {
     this._intensity = Math.min(Math.abs(intensity), 1.0);
-    intensity_buffer_attribute.setX(this._id, this._intensity);
-    intensity_buffer_attribute.needsUpdate = true;
   }
 
   get intensity() {
     return this._intensity * this._shutter || 0.0;
-  }
-
-  /**
-   * Beam radius
-   *
-   * @type {Number}
-   * @private
-   */
-  get radius() {
-    const angle = MovingHead.degToRad(this._angle);
-    const height = BEAM_TOP_RADIUS / Math.tan(angle) + BEAM_LENGTH;
-    const radius = Math.tan(angle) * height;
-    return radius;
-  }
-
-  /**
-   * Vertex scaling factor used for angle definition through vertex transformation
-   *
-   * @type {Number}
-   * @todo check if it is used
-   * @private
-   */
-  get vertexScaleFactor() {
-    return this.radius / BEAM_TOP_RADIUS;
   }
 
   /**
@@ -442,13 +374,17 @@ class MovingHead {
 
   static set highlightXray(value) { highlight.xray = value; }
 
+  /**
+   * Zoom: the field angle in degrees, or with `zoomInPercent` a percentage of the lens range
+   * (OFL "narrow" / "wide" presets decode to 1 / 100)
+   *
+   * @type {Number}
+   */
   set zoom(zoomValue) {
-    const angle = this._maxAngle * (zoomValue / 100);
-    const clampedAngleValue = Math.min(angle / 2, BEAM_MAX_ANGLE);
-    this._angle = clampedAngleValue;
-    angle_buffer_attribute.setY(this._id, 1.0);
-    angle_buffer_attribute.setX(this._id, this._angle);
-    angle_buffer_attribute.needsUpdate = true;
+    const angle = this._zoomInPercent
+      ? this._minAngle + (this._maxAngle - this._minAngle) * (zoomValue / 100)
+      : zoomValue;
+    this._angle = Math.min(Math.max(angle, 0.5) / 2, BEAM_MAX_ANGLE);
   }
 
   /**
@@ -680,30 +616,14 @@ class MovingHead {
       baseMesh.setMatrixAt(this._id, this._dummy.matrixWorld);
       yokeMesh.setMatrixAt(this._id, this._yokeDummy.matrixWorld);
       headMesh.setMatrixAt(this._id, this._headDummy.matrixWorld);
-      beamMesh.setMatrixAt(this._id, this._beamDummy.matrixWorld);
       capMesh.setMatrixAt(this._id, this._targetDummy.matrixWorld);
       boundingBoxMesh.setMatrixAt(this._id, this._dummy.matrixWorld);
       baseMesh.instanceMatrix.needsUpdate = true;
       yokeMesh.instanceMatrix.needsUpdate = true;
       headMesh.instanceMatrix.needsUpdate = true;
-      beamMesh.instanceMatrix.needsUpdate = true;
       capMesh.instanceMatrix.needsUpdate = true;
       boundingBoxMesh.instanceMatrix.needsUpdate = true;
     }
-  }
-
-  updateDirectionVector() {
-    this._beamDummy.getWorldDirection(vector_beam.normalize());
-    direction_buffer_attribute.setXYZ(this._id, vector_beam.x, vector_beam.y, vector_beam.z);
-    direction_buffer_attribute.needsUpdate = true;
-    this._beamDummy.getWorldPosition(vector_beam_pos.normalize());
-    position_buffer_attribute.setXYZ(
-      this._id,
-      vector_beam_pos.x,
-      vector_beam_pos.y,
-      vector_beam_pos.z,
-    );
-    position_buffer_attribute.needsUpdate = true;
   }
 
   updateStrobe(t) {
@@ -714,9 +634,6 @@ class MovingHead {
     } else {
       this._shutter = 1.0;
     }
-
-    intensity_buffer_attribute.setX(this._id, this.intensity * this._shutter);
-    intensity_buffer_attribute.needsUpdate = true;
   }
 
   /**
@@ -777,69 +694,11 @@ class MovingHead {
     this.updateStrobe(t);
     this.updateGoboRotation(t);
     this.updateMatrix();
-    this.updateDirectionVector();
     this.writeBeams(beamState);
   }
 
   static degToRad(degAngle) {
     return degAngle * (Math.PI / 180);
-  }
-
-  static prepareBeamMaterial() {
-    return new THREE.ShaderMaterial({
-      transparent: true,
-      depthWrite: false,
-      clipping: true,
-      side: THREE.DoubleSide,
-      blending: THREE.AdditiveBlending,
-      vertexShader: VOLUMETRIC_BEAM_VERTEX_SHADER,
-      fragmentShader: VOLUMETRIC_BEAM_FRAGMENT_SHADER,
-      fog: false,
-      toneMapped: false,
-      dithering: false,
-      uniforms: {
-        cameraDir: {
-          type: 'v3',
-          value: vector_cam,
-        },
-        cameraPos: {
-          type: 'v3',
-          value: vector_cam_pos,
-        },
-        vertexCount: {
-          type: 'f',
-          value: beamGeo.attributes?.position?.count,
-        },
-        topRadius: {
-          type: 'f',
-          value: BEAM_TOP_RADIUS,
-        },
-        length: {
-          type: 'f',
-          value: BEAM_LENGTH,
-        },
-        time: {
-          type: 'f',
-          value: 0.0,
-        },
-        fogState: {
-          type: 'b',
-          value: true,
-        },
-        fogFactor: {
-          type: 'f',
-          value: 1.0,
-        },
-        fogTurbulence: {
-          type: 'f',
-          value: 1.0,
-        },
-        glowFactor: {
-          type: 'f',
-          value: 1.0,
-        },
-      },
-    });
   }
 
   static prepareModelInstance() {
@@ -886,50 +745,6 @@ class MovingHead {
     headMesh.instanceMatrix.needsUpdate = true;
   }
 
-  static prepareBeamInstance() {
-    const beamGeometry = new THREE.CylinderGeometry(
-      BEAM_TOP_RADIUS,
-      BEAM_TOP_RADIUS,
-      BEAM_LENGTH,
-      BEAM_RESOLUTION,
-      BEAM_SEGMENTS,
-      true,
-    );
-
-    beamGeometry.applyMatrix4(new THREE.Matrix4().makeTranslation(
-      0,
-      -beamGeometry.parameters.height / 2,
-      0,
-    ));
-    beamGeometry.applyMatrix4(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
-    beamGeometry.applyMatrix4(new THREE.Matrix4().setPosition(0, 0, 0.258));
-
-    THREE.BufferGeometry.prototype.copy.call(beamGeo, beamGeometry);
-
-    const verticesIndexBuffer = [];
-    for (let i = 0; i < beamGeo.attributes.position.count; i++) {
-      verticesIndexBuffer[i] = i;
-    }
-    const indexAttributes = new THREE.BufferAttribute(
-      new Float32Array(verticesIndexBuffer),
-      1,
-    ).setUsage(THREE.StaticDrawUsage);
-
-    beamGeo.setAttribute('index', indexAttributes);
-    beamGeo.setAttribute('wpos', position_buffer_attribute);
-    beamGeo.setAttribute('direction', direction_buffer_attribute);
-    beamGeo.setAttribute('color', color_buffer_attribute);
-    beamGeo.setAttribute('intensity', intensity_buffer_attribute);
-    beamGeo.setAttribute('angle', angle_buffer_attribute);
-
-    beamMesh = new THREE.InstancedMesh(beamGeo, MovingHead.prepareBeamMaterial(), MAX_INSTANCES);
-
-    beamMesh.count = instanceCount;
-    beamMesh.frustumCulled = false;
-    beamMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-    beamMesh.instanceMatrix.needsUpdate = true;
-  }
-
   static prepareCapInstance() {
     const capGeometry = new THREE.CircleGeometry(BEAM_TOP_RADIUS, 40);
     const capMaterial = new THREE.MeshBasicMaterial({
@@ -967,15 +782,13 @@ class MovingHead {
     boundingBoxMesh.visible = false;
   }
 
-  static prepareInstanciation(camera, scene) {
-    camera_handle = camera;
+  static prepareInstanciation(scene) {
     scene_handle = scene;
     MovingHead.prepareModelInstance();
-    MovingHead.prepareBeamInstance();
     MovingHead.prepareCapInstance();
     MovingHead.prepareBoxHelperInstance();
 
-    scene.add(baseMesh, yokeMesh, headMesh, beamMesh, capMesh, boundingBoxMesh, ...highlightMeshes);
+    scene.add(baseMesh, yokeMesh, headMesh, capMesh, boundingBoxMesh, ...highlightMeshes);
   }
 
   /**
@@ -984,21 +797,16 @@ class MovingHead {
    * @public
    * @param {Number} t Time in seconds
    * @param {BeamState} beamState Beam state to rewrite
-   * @returns {Boolean} Whether a beam animates on its own (strobe, rotating gobo, fog turbulence)
+   * @returns {Boolean} Whether a beam animates on its own (strobe, rotating gobo)
    */
   static update(t, beamState) {
-    let animating = MovingHead.fogState && MovingHead.fogTurbulence > 0;
+    let animating = false;
     beamState.begin();
     for (let i = 0; i < instances.length; i++) {
       instances[i].update(t, beamState);
       animating = animating || instances[i].animating;
     }
     beamState.end();
-    beamMesh.material.uniforms.time.value = t;
-    camera_handle.getWorldDirection(vector_cam.normalize());
-    beamMesh.material.uniforms.cameraDir.value = vector_cam;
-    camera_handle.getWorldPosition(vector_cam_pos.normalize());
-    beamMesh.material.uniforms.cameraPos.value = vector_cam_pos;
     return animating;
   }
 
@@ -1016,34 +824,6 @@ class MovingHead {
     instanceCount--;
 
     syncInstanceCounts();
-  }
-
-  static getBA() {
-    return position_buffer_attribute;
-  }
-
-  static set fogState(value) {
-    beamMesh.material.uniforms.fogState.value = value;
-  }
-
-  static get fogState() {
-    return beamMesh.material.uniforms.fogState.value;
-  }
-
-  static set fogDensity(value) {
-    beamMesh.material.uniforms.fogFactor.value = value;
-  }
-
-  static get fogDensity() {
-    return beamMesh.material.uniforms.fogFactor.value;
-  }
-
-  static set fogTurbulence(value) {
-    beamMesh.material.uniforms.fogTurbulence.value = value;
-  }
-
-  static get fogTurbulence() {
-    return beamMesh.material.uniforms.fogTurbulence.value;
   }
 
   static get instancedMesh() {

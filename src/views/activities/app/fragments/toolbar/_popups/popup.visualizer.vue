@@ -70,53 +70,21 @@
         col
         class="title"
       >
-        <h3>Fogging</h3>
+        <h3>Haze</h3>
         <p class="subtitle">
-          Global scene fogging settings.
+          Haze the beams shine through. Saved in the show.
         </p>
-      </uk-flex>
-
-      <uk-flex center-h>
-        <div>
-          <h4>State:</h4>
-          <p class="subtitle">
-            Turn global scene fogging on/off
-          </p>
-        </div>
-        <uk-spacer />
-        <uk-select-input
-          v-model="$show.visualizerHandle.globalFoggingState"
-          :min="0"
-          :max="100"
-          style="width: 100px"
-          :options="['disabled', 'enabled']"
-        />
       </uk-flex>
       <uk-flex center-h>
         <div>
           <h4>Density:</h4>
           <p class="subtitle">
-            Sets the global scene fog density amount.
+            How bright beams look in the air. 0 hides them.
           </p>
         </div>
         <uk-spacer />
         <uk-num-input
-          v-model="$show.visualizerHandle.globalFoggingDensity"
-          :min="0"
-          :max="100"
-          style="width: 100px"
-        />
-      </uk-flex>
-      <uk-flex center-h>
-        <div>
-          <h4>Turbulence:</h4>
-          <p class="subtitle">
-            Sets fog turbulence behavior over time.
-          </p>
-        </div>
-        <uk-spacer />
-        <uk-num-input
-          v-model="$show.visualizerHandle.globalFoggingTurbulences"
+          v-model="$show.visualizerHandle.hazeDensity"
           :min="0"
           :max="100"
           style="width: 100px"
@@ -145,6 +113,21 @@
           v-model="$show.visualizerHandle.globalBrightness"
           :min="25"
           :max="100"
+          style="width: 100px"
+        />
+      </uk-flex>
+      <uk-flex center-h>
+        <div>
+          <h4>Exposure:</h4>
+          <p class="subtitle">
+            Brightness of the beams and their light, in %. 100 is physically accurate.
+          </p>
+        </div>
+        <uk-spacer />
+        <uk-num-input
+          v-model="$show.visualizerHandle.exposure"
+          :min="25"
+          :max="400"
           style="width: 100px"
         />
       </uk-flex>
@@ -205,11 +188,9 @@ export default {
        * @public
      */
     resetInitialValues() {
-      this.$show.visualizerHandle.globalFoggingState = this.initialValues.globalFoggingState;
-      this.$show.visualizerHandle.globalFoggingDensity = this.initialValues.globalFoggingDensity;
-      // eslint-disable-next-line max-len
-      this.$show.visualizerHandle.globalFoggingTurbulences = this.initialValues.globalFoggingTurbulences;
+      this.$show.visualizerHandle.hazeDensity = this.initialValues.hazeDensity;
       this.$show.visualizerHandle.globalBrightness = this.initialValues.globalBrightness;
+      this.$show.visualizerHandle.exposure = this.initialValues.exposure;
       if (this.initialQuality) {
         this.$show.visualizerHandle.quality = this.initialQuality.quality;
         this.$show.visualizerHandle.resolutionScale = this.initialQuality.resolutionScale;
