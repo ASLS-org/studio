@@ -247,3 +247,31 @@
       with the highlight attached, one draw per shape for the whole rig. Checked in Node: slots
       are allocated, highlighted and reused after a fixture is removed.
 
+
+## 7. Primitive bodies, one fixture class, GDTF data still unused
+
+- [x] 7.1 Bodies are drawn with one mesh per GDTF PrimitiveType family (`fixture_meshes.js`):
+      Base, Yoke and Head from the bundled moving head model's parts, the others (Cylinder,
+      Sphere, Conventional, Scanner, their 1.1 variants) built in code; Cube, Undefined and nodes
+      without a primitive take their role's shape, Pigtail none. Each shape is one shared
+      instanced pool, created on first use. Checked in Node: every shape fills the unit box, the
+      model's parts are used when loaded (procedural stand-ins otherwise), and over the test set
+      85 bases, 78 yokes and 90 heads given as Undefined now get their part.
+- [x] 7.2 `MovingHead` is retired: every fixture renders through `GeometryFixture`. OFL moving
+      heads keep the bundled model's proportions, stretched to their dimensions, with the head's
+      pivot at the fixture's position, and pan in the same direction as before. Checked on the
+      demo fixtures (MAC Aura, MAC 600) against `MovingHead`: same beam directions for pan/tilt,
+      same zoom, colour, CMY and frost; differences kept on purpose: the body has the fixture's
+      real size (the lens moves with it), a W channel adds white light, the source has its bulb's
+      colour temperature.
+- [x] 7.3 GDTF channels start at their home value (`Default` of the initial function, or of the
+      channel in GDTF 1.0), coarse and fine bytes, also after a mode change. Runtime only;
+      OFL fixtures still start at 0.
+- [x] 7.4 Iris narrows the beam; CTO/CTB tint the source relative to its colour temperature
+      (kelvin, or OFL's relative values); prism index and rotation turn the facets; rotation
+      functions on the prism channel itself insert the prism (e.g. Prolights RA2000); gobo index
+      turns the gobo. Engine fixes: `Iris`, `PrismRotation` and `ColorTemperature` (misspelled)
+      capability types, wheel slot rotation entities (rotation speed presets, index angle),
+      entities missing from the data flagged `implicit`.
+- [x] 7.5 Emitter colours from `PhysicalDescriptions` are not read: no channel function in the
+      test set links an emitter, so the colour-name table stays.

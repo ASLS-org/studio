@@ -254,9 +254,14 @@ Checked over the library:
 ### 5. Any category patches; generated bodies
 
 - **Patching.** The category throw in `Fixture.parseFromProfile()` goes.
-- **Which class.** `FixtureRenderer.createInstance()` keeps `MovingHead` for OFL Moving Heads
-  without pixel blocks, so their look and the unit 4 benchmark stay the same. It builds a
-  `GeometryFixture` (`geometry_fixture.js`) for everything else.
+- **Which class.** `FixtureRenderer.createInstance()` builds a `GeometryFixture`
+  (`geometry_fixture.js`) for every fixture. `MovingHead` was first kept for OFL Moving Heads
+  without pixel blocks; it is retired (task group 7) once `GeometryFixture` matched its beams on
+  the demo rig, so there is one fixture class. OFL moving heads keep its model's parts and
+  proportions, stretched to their dimensions, and its pan direction.
+- **Body shapes.** One unit mesh per GDTF PrimitiveType family (`fixture_meshes.js`): Base, Yoke
+  and Head from the bundled model's parts, the others built in code. Cube, Undefined and nodes
+  without a primitive take their role's shape. One shared instanced pool per shape.
 
 Every geometry tree gets its body shapes from `fixture_shapes.js`, a pure module that turns facts
 into node shapes:

@@ -92,7 +92,10 @@ Confirmed by the user:
   OFL pixel fixtures render per cell (2026-11-04).
 - Showfiles reference GDTF fixtures in a local library on the device; missing fixtures are asked
   for on open (2026-11-04).
-- Unit 5 is split: 5a fixtures, 5b GDTF models (2026-11-04).
+- Unit 5 is split: 5a fixtures, 5b GDTF models (2026-11-04). 5c, multi-cell control, comes
+  between them (2026-11-04).
+- Bodies without a mesh use one shape per GDTF PrimitiveType; base, yoke and head come from the
+  bundled moving head model. `MovingHead` is retired: one fixture class (2026-11-04).
 - Decouple first, GDTF after.
 - Fresh rendering design. The current `moving_head.js` look is a benchmark to match or beat on the
   same rig, not a template.
@@ -120,6 +123,7 @@ Open (answer in the unit that needs it):
 | 3 | `add-projector-lighting` (starts with a performance spike; spike on the 2015 laptop and Pi 5 still to run) | 2 | archived |
 | 4 | `add-volumetric-beams` | 3 | archived |
 | 5a | `add-gdtf-fixtures` (import, adapter, any category, generated bodies, per-beam, GDTF gobos) | 1, 2, 3 | refining |
+| 5c | `add-multi-cell-control` (controls per cell in the universe and scene views, effects across cells, RGBW from the colour picker) | 5a | proposed |
 | 5b | `add-gdtf-models` (GDTF glTF models, LOD, instancing) | 5a | proposed |
 | 6 | `move-visualizer-to-worker` (optional: only if the end-of-epic smoke and performance tests call for it) | 3 | proposed |
 

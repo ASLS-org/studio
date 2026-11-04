@@ -3,8 +3,7 @@
 ### Requirement: Every patched fixture shows in the view
 The system SHALL draw every patched fixture in the 3D view, whatever its category, with a body
 generated from the fixture's description: its category (moving head, can, bar, panel), its
-dimensions, its pan/tilt axes and its beams or cells placed as described. OFL moving heads without
-pixel channels SHALL look as before.
+dimensions, its pan/tilt axes and its beams or cells placed as described.
 
 #### Scenario: OFL PAR
 - **GIVEN** a patched OFL `Color Changer` with its dimmer at 255 and red at 255
@@ -19,6 +18,22 @@ pixel channels SHALL look as before.
 #### Scenario: GDTF moving head
 - **WHEN** a GDTF moving head's Pan goes from 0 to 255
 - **THEN** its yoke and head turn through the fixture's pan range, and the beam follows
+
+### Requirement: Fixture bodies follow their parts
+The system SHALL draw a fixture body with the shape of its GDTF primitive type (base, yoke and head
+from the bundled moving head model; cylinder, sphere, conventional, scanner), else with the shape
+of its role. OFL moving heads SHALL keep the bundled model's parts and proportions, sized to their
+dimensions, with pan and tilt turning as before.
+
+#### Scenario: GDTF fixture described by primitives only
+- **GIVEN** a patched GDTF moving head whose models name the Base, Yoke and Head primitives and no
+  mesh file (for example the Fine Art FINE 380 BSW)
+- **THEN** the view shows the bundled base, yoke and head parts, each sized to its model
+
+#### Scenario: OFL moving head
+- **GIVEN** a patched OFL moving head with Pan at 160 and Tilt at 160
+- **THEN** its beam points the same way as before this change, from a body sized to the
+  fixture's dimensions
 
 ### Requirement: Each beam of a multi-beam fixture follows its own channels
 The system SHALL drive each beam or cell of a GDTF or OFL pixel fixture from its own channels
