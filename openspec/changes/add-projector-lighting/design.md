@@ -50,7 +50,21 @@ per fixture, Three.js r170.
 - [Losing the current look before unit 4 lands] → the existing beam cones stay drawn on top until
   unit 4 replaces them.
 
+9. **Built-in gobo set drawn in code** (confirmed 2026-11-04). About 8-12 patterns (dots,
+   breakup, lines, star, spiral...) are drawn procedurally into the cookie texture array when the
+   visualizer starts: no image files, no licence question. Wheel slots map to patterns by slot
+   number until unit 5 brings GDTF wheel images. The 7 OFL gobo images (5 bundled fixtures) are
+   not used.
+10. **No per-showfile Quality override** (confirmed 2026-11-04). Quality is a device setting only;
+    a presentation machine sets its own.
+
+## Spike
+
+A standalone page (published as a private claude.ai Artifact, not part of the repo) runs on the
+2015 laptop and the Pi 5 in Chromium. Results are recorded here.
+
+Results: pending.
+
 ## Open Questions (resolve while refining this unit)
 
-- Built-in gobo set: source and licence.
-- Whether the Quality setting needs a per-showfile override for presentations.
+- none (tier boundaries come from the spike)
