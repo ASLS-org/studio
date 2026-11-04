@@ -1,5 +1,10 @@
 import * as THREE from 'three';
 import { createGoboTexture } from './gobos';
+import {
+  BEAM_GLSL, ACCUM, createConeGeometry, sceneOf,
+} from './beam_shading';
+import AirBeams, { AIR_MODES, AIR_SAMPLES } from './air_beams';
+import Bloom from './bloom';
 
 /**
  * Object layers read by the lighting passes. Lit surfaces (floor, set) are receivers; fixture
@@ -34,48 +39,22 @@ const LEVEL_SCALE = {
   [QUALITY_LEVELS.HIGH]: 1,
 };
 
+/**
+ * Air beam technique and buffer size (fraction of the canvas, before the resolution scale) per
+ * level; Guides draws no air beam
+ *
+ * @constant {Object} AIR_LEVELS
+ */
+const AIR_LEVELS = {
+  [QUALITY_LEVELS.LOW]: { mode: AIR_MODES.PLAIN, fraction: 0.25 },
+  [QUALITY_LEVELS.MEDIUM]: { mode: AIR_MODES.SOFT_GOBO, fraction: 0.25 },
+  [QUALITY_LEVELS.HIGH]: { mode: AIR_MODES.RAYMARCH, fraction: 0.5 },
+};
+
 const GAIN = 160; // light reaching a surface 1 m away, before the 4 m² falloff offset
-const ACCUM = 0.25; // RGBA8 light buffers store light * ACCUM so values up to 4 fit
 const GUIDE_EDGES = 8;
 const GUIDE_RING = 32;
 const GUIDE_FLOOR = 0.25; // guide brightness of a beam at intensity 0
-
-// Shared by every pass: reads one beam's row of the state texture (see beam_state.js)
-const BEAM_GLSL = /* glsl */`
-uniform highp sampler2D uBeams;
-uniform highp sampler2DArray uGobos;
-uniform float uGain;
-
-vec4 beamTexel(int id, int k) { return texelFetch(uBeams, ivec2(k, id), 0); }
-
-mat4 beamMatrix(int id, int base) {
-  return mat4(beamTexel(id, base), beamTexel(id, base + 1), beamTexel(id, base + 2),
-    beamTexel(id, base + 3));
-}
-
-// uv: position in the beam's unit disk; g: gobo layer, rotation, blur (mip level)
-float goboAt(vec2 uv, vec4 g) {
-  float r = length(uv);
-  if (r >= 1.0) return 0.0;
-  float c = cos(g.y);
-  float s = sin(g.y);
-  vec2 q = vec2(c * uv.x - s * uv.y, s * uv.x + c * uv.y);
-  float v = textureLod(uGobos, vec3(q * 0.5 + 0.5, g.x), g.z).r;
-  return v * (1.0 - smoothstep(0.92, 1.0, r));
-}
-
-// Light a beam casts on world point P, before the surface's angle term; L: direction to the lens
-vec3 beamLight(int id, vec3 P, out vec3 L) {
-  vec4 o = beamTexel(id, 11);
-  L = normalize(o.xyz - P);
-  vec4 loc = beamMatrix(id, 4) * vec4(P, 1.0);
-  if (loc.z <= 0.0 || loc.z > 1.0) return vec3(0.0);
-  float g = goboAt(loc.xy / loc.z, beamTexel(id, 9));
-  float d = loc.z * o.w;
-  vec4 c = beamTexel(id, 8);
-  return c.rgb * (c.a * g * uGain / (4.0 + d * d));
-}
-`;
 
 // Low: one floor quad per beam, covering its footprint
 const DECAL_VERTEX = /* glsl */`
@@ -189,32 +168,6 @@ void main() { outColor = linearToOutputTexel(vec4(vColor, 1.0)); }
 `;
 
 /**
- * Unit cone, apex at the origin, base radius 1 at z = 1, closed, faces outward. The ring is pushed
- * out so the polygon contains the circle.
- *
- * @param {Number} [segments=24] Ring segments
- * @returns {THREE.InstancedBufferGeometry} Cone geometry
- */
-function createConeGeometry(segments = 24) {
-  const k = 1 / Math.cos(Math.PI / segments);
-  const position = [];
-  for (let i = 0; i < segments; i++) {
-    const a1 = (i / segments) * Math.PI * 2;
-    const a2 = ((i + 1) / segments) * Math.PI * 2;
-    const x1 = Math.cos(a1) * k;
-    const y1 = Math.sin(a1) * k;
-    const x2 = Math.cos(a2) * k;
-    const y2 = Math.sin(a2) * k;
-    position.push(0, 0, 0, x2, y2, 1, x1, y1, 1);
-    position.push(0, 0, 1, x1, y1, 1, x2, y2, 1);
-  }
-  const geometry = new THREE.InstancedBufferGeometry();
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(position, 3));
-  geometry.instanceCount = 0;
-  return geometry;
-}
-
-/**
  * Beam guide segments: axis, cone edges and footprint ring, with a brightness weight per vertex
  *
  * @returns {THREE.InstancedBufferGeometry} Guide geometry
@@ -245,19 +198,6 @@ function createGuideGeometry() {
 }
 
 /**
- * Wraps a mesh in its own scene, drawn whatever its bounds
- *
- * @param {THREE.Object3D} object Mesh or line
- * @returns {THREE.Scene} Scene holding the object
- */
-function sceneOf(object) {
-  const scene = new THREE.Scene();
-  object.frustumCulled = false;
-  scene.add(object);
-  return scene;
-}
-
-/**
  * @class StageLighting
  * @classdesc Draws beam light on the stage from the beam state, at one of the quality levels:
  * Guides (no light), Low (floor footprints), Medium and High (deferred light volumes on every
@@ -278,6 +218,7 @@ class StageLighting {
     this._level = QUALITY_LEVELS.HIGH;
     this._scale = 1;
     this._guides = false;
+    [this._samples] = AIR_SAMPLES;
     this._receivers = [];
     this._targets = null;
     this._size = new THREE.Vector2();
@@ -353,6 +294,8 @@ class StageLighting {
     })));
 
     this.occluderMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+    this.air = new AirBeams(renderer, this.shared, beamState);
+    this.bloom = new Bloom(renderer, this.shared, beamState);
 
     beamState.onCountChange((count) => {
       this.decalGeometry.instanceCount = count;
@@ -396,6 +339,41 @@ class StageLighting {
    *
    * @type {Boolean}
    */
+  /**
+   * Raymarch samples of the High level's air beams (see AIR_SAMPLES)
+   *
+   * @type {Number}
+   */
+  set airSamples(samples) {
+    if (samples === this._samples) return;
+    this._samples = samples;
+    this.updateTargets();
+  }
+
+  get airSamples() {
+    return this._samples;
+  }
+
+  /**
+   * Sets the haze the air beams shine through
+   *
+   * @public
+   * @param {Number} density Haze density, 0 to 100
+   * @param {Number} movement Haze movement, 0 to 100
+   */
+  setHaze(density, movement) {
+    this.air.setHaze(density, movement);
+  }
+
+  /**
+   * Whether the picture changes on its own (drifting haze)
+   *
+   * @type {Boolean}
+   */
+  get animating() {
+    return this._level === QUALITY_LEVELS.HIGH && this.air.drifting;
+  }
+
   set guides(state) {
     this._guides = state;
   }
@@ -436,6 +414,7 @@ class StageLighting {
    * @public
    */
   resize() {
+    this.air.resize();
     this.updateTargets();
   }
 
@@ -445,6 +424,9 @@ class StageLighting {
    * @private
    */
   updateTargets() {
+    const air = AIR_LEVELS[this._level];
+    if (air) this.air.configure(air.mode, this._samples, air.fraction * this._scale);
+    this.bloom.resize();
     if (this._targets) {
       this._targets.scene.dispose();
       this._targets.light.dispose();
@@ -466,11 +448,13 @@ class StageLighting {
   }
 
   /**
-   * Draws the frame: the scene, then the level's light, then the guides
+   * Draws the frame: the scene, then the level's surface light, air beams, lens glow and bloom,
+   * then the guides
    *
    * @public
+   * @param {Number} time Time in seconds (haze drift)
    */
-  render() {
+  render(time) {
     const { renderer, scene, camera } = this;
     renderer.setRenderTarget(null);
     renderer.render(scene, camera);
@@ -480,6 +464,13 @@ class StageLighting {
         renderer.render(this.decalScene, camera);
       } else if (this._targets) {
         this.renderDeferred();
+      }
+      if (AIR_LEVELS[this._level]) {
+        if (this.air.visible) {
+          this.air.render(camera, this._targets ? this._targets.scene.depthTexture : null, time);
+        }
+        this.bloom.renderGlow(camera);
+        if (this._targets) this.bloom.render(camera, this.air.visible ? this.air.texture : null);
       }
       if (this._guides) {
         renderer.render(this.guideScene, camera);

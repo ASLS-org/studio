@@ -13,6 +13,7 @@ import FixtureRenderer from './fixture_renderer';
 import InfiniteGridHelper from './grid';
 import BeamState from './beam_state';
 import StageLighting, { QUALITY_LEVELS } from './stage_lighting';
+import { AIR_SAMPLES } from './air_beams';
 import {
   QUALITY_SETTINGS,
   GUIDE_SETTINGS,
@@ -47,9 +48,8 @@ THREE.Vector3.prototype.round = function vector3RoundPolyfill(digits) {
  * @default
  */
 const DEFAULT_PREFERENCES = {
-  FOGGING_STATE: true,
-  FOGGING_DENSITY: 0,
-  GLOBAL_FOGGING_TURBULENCES: 0,
+  HAZE_DENSITY: 50,
+  HAZE_MOVEMENT: 0,
   GLOBAL_BRIGHTNESS: 80,
 };
 
@@ -101,6 +101,8 @@ class Visualizer {
     this.qualitySettings = loadQualitySettings();
     this.governor = null;
     this.floorMaterial = null;
+    this._hazeDensity = DEFAULT_PREFERENCES.HAZE_DENSITY;
+    this._hazeMovement = DEFAULT_PREFERENCES.HAZE_MOVEMENT;
     /**
      * Whether something changed since the last drawn frame (render on demand)
      */
@@ -146,58 +148,56 @@ class Visualizer {
   set preferences(preferences) {
     if (preferences) {
       this.globalBrightness = preferences.globalBrightness;
-      this.globalFoggingDensity = preferences.globalFoggingDensity;
-      this.globalFoggingState = preferences.globalFoggingState;
-      this.globalFoggingTurbulences = preferences.globalFoggingTurbulences;
+      if (preferences.hazeDensity !== undefined) {
+        this.hazeDensity = preferences.hazeDensity;
+        this.hazeMovement = preferences.hazeMovement;
+      } else {
+        // Showfiles from before Haze: their beams always showed, fogging only added moving noise
+        this.hazeDensity = DEFAULT_PREFERENCES.HAZE_DENSITY;
+        this.hazeMovement = preferences.globalFoggingState
+          ? preferences.globalFoggingTurbulences : 0;
+      }
     }
   }
 
   /**
-   * Global scene fogging state
-   * @type {Boolean}
-   * @param {boolean} value
-   */
-  // eslint-disable-next-line class-methods-use-this
-  set globalFoggingState(value) {
-    MovingHead.fogState = value || DEFAULT_PREFERENCES.GLOBAL_FOGGING_STATE;
-    this.invalidate();
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  get globalFoggingState() {
-    return MovingHead.fogState ? 1 : 0;
-  }
-
-  /**
-   * Global scene fogging density
+   * Haze density, 0 to 100 (0 hides beams in the air)
    *
    * @type {Number}
    */
-  // eslint-disable-next-line class-methods-use-this
-  set globalFoggingDensity(value) {
-    MovingHead.fogDensity = value ? value / 100 : DEFAULT_PREFERENCES.GLOBAL_FOGGING_DENSITY;
-    this.invalidate();
+  set hazeDensity(value) {
+    const density = Number.isFinite(value) ? value : DEFAULT_PREFERENCES.HAZE_DENSITY;
+    this._hazeDensity = Math.min(Math.max(density, 0), 100);
+    this.applyHaze();
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  get globalFoggingDensity() {
-    return MovingHead.fogDensity * 100;
+  get hazeDensity() {
+    return this._hazeDensity;
   }
 
   /**
-   * Global scene fogging turbulence
+   * Haze movement, 0 to 100 (drift speed of the haze in the beams)
    *
    * @type {Number}
    */
-  // eslint-disable-next-line class-methods-use-this
-  set globalFoggingTurbulences(value) {
-    MovingHead.fogTurbulence = value ? value / 50 : DEFAULT_PREFERENCES.GLOBAL_FOGGING_TURBULENCES;
-    this.invalidate();
+  set hazeMovement(value) {
+    const movement = Number.isFinite(value) ? value : DEFAULT_PREFERENCES.HAZE_MOVEMENT;
+    this._hazeMovement = Math.min(Math.max(movement, 0), 100);
+    this.applyHaze();
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  get globalFoggingTurbulences() {
-    return MovingHead.fogTurbulence * 50;
+  get hazeMovement() {
+    return this._hazeMovement;
+  }
+
+  /**
+   * Passes the haze settings to the lighting
+   *
+   * @private
+   */
+  applyHaze() {
+    if (this.lighting) this.lighting.setHaze(this._hazeDensity, this._hazeMovement);
+    this.invalidate();
   }
 
   /**
@@ -339,6 +339,7 @@ class Visualizer {
     const level = auto ? this.governor.level : quality;
     this.lighting.level = level;
     this.lighting.scale = auto ? this.governor.scale : scale;
+    this.lighting.airSamples = auto ? this.governor.airSamples : AIR_SAMPLES[0];
     this.lighting.guides = guides === GUIDE_SETTINGS.ON
       || (guides === GUIDE_SETTINGS.AUTO && level === QUALITY_LEVELS.GUIDES);
     this.invalidate();
@@ -355,9 +356,8 @@ class Visualizer {
 
   get showData() {
     return {
-      globalFoggingState: this.globalFoggingState,
-      globalFoggingDensity: this.globalFoggingDensity,
-      globalFoggingTurbulences: this.globalFoggingTurbulences,
+      hazeDensity: this.hazeDensity,
+      hazeMovement: this.hazeMovement,
       globalBrightness: this.globalBrightness,
       autoRotate: this.autoRotate,
     };
@@ -407,7 +407,7 @@ class Visualizer {
     this.globalLightHandle.castShadow = false;
     this.globalLightHandle.position.set(-10, -10, 10);
 
-    MovingHead.prepareInstanciation(this.camera, SceneManager);
+    MovingHead.prepareInstanciation(SceneManager);
     this.fixtureRenderer = new FixtureRenderer(this.invalidate);
 
     // Floor
@@ -462,6 +462,7 @@ class Visualizer {
   prepareLighting() {
     this.lighting = new StageLighting(this.renderer, SceneManager, this.camera, this.beamState);
     this.applyQuality();
+    this.applyHaze();
     this.domElement.addEventListener('pointermove', this.invalidate);
     this.domElement.addEventListener('pointerdown', this.invalidate);
     this.domElement.addEventListener('pointerup', this.invalidate);
@@ -553,7 +554,7 @@ class Visualizer {
    */
   render(t) {
     if (this.fixtureRenderer && this.fixtureRenderer.update()) this.needsRender = true;
-    if (MovingHead.update(t, this.beamState)) this.needsRender = true;
+    if (MovingHead.update(t, this.beamState) || this.lighting.animating) this.needsRender = true;
     this.camera.updateMatrixWorld();
     if (Visualizer.matrixMoved(this.lastView, this.camera.matrixWorld)
       || Visualizer.matrixMoved(this.lastProjection, this.camera.projectionMatrix)) {
@@ -567,7 +568,7 @@ class Visualizer {
     }
     this.needsRender = false;
     const now = performance.now();
-    this.lighting.render();
+    this.lighting.render(t);
     const work = performance.now() - now;
     if (this.governor && this.lastFrameAt !== null
       && this.qualitySettings.quality === QUALITY_SETTINGS.AUTO

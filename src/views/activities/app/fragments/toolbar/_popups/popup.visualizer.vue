@@ -70,38 +70,21 @@
         col
         class="title"
       >
-        <h3>Fogging</h3>
+        <h3>Haze</h3>
         <p class="subtitle">
-          Global scene fogging settings.
+          Haze the beams shine through. Saved in the show.
         </p>
-      </uk-flex>
-
-      <uk-flex center-h>
-        <div>
-          <h4>State:</h4>
-          <p class="subtitle">
-            Turn global scene fogging on/off
-          </p>
-        </div>
-        <uk-spacer />
-        <uk-select-input
-          v-model="$show.visualizerHandle.globalFoggingState"
-          :min="0"
-          :max="100"
-          style="width: 100px"
-          :options="['disabled', 'enabled']"
-        />
       </uk-flex>
       <uk-flex center-h>
         <div>
           <h4>Density:</h4>
           <p class="subtitle">
-            Sets the global scene fog density amount.
+            How bright beams look in the air. 0 hides them.
           </p>
         </div>
         <uk-spacer />
         <uk-num-input
-          v-model="$show.visualizerHandle.globalFoggingDensity"
+          v-model="$show.visualizerHandle.hazeDensity"
           :min="0"
           :max="100"
           style="width: 100px"
@@ -109,14 +92,14 @@
       </uk-flex>
       <uk-flex center-h>
         <div>
-          <h4>Turbulence:</h4>
+          <h4>Movement:</h4>
           <p class="subtitle">
-            Sets fog turbulence behavior over time.
+            How fast the haze drifts (high quality only).
           </p>
         </div>
         <uk-spacer />
         <uk-num-input
-          v-model="$show.visualizerHandle.globalFoggingTurbulences"
+          v-model="$show.visualizerHandle.hazeMovement"
           :min="0"
           :max="100"
           style="width: 100px"
@@ -205,10 +188,8 @@ export default {
        * @public
      */
     resetInitialValues() {
-      this.$show.visualizerHandle.globalFoggingState = this.initialValues.globalFoggingState;
-      this.$show.visualizerHandle.globalFoggingDensity = this.initialValues.globalFoggingDensity;
-      // eslint-disable-next-line max-len
-      this.$show.visualizerHandle.globalFoggingTurbulences = this.initialValues.globalFoggingTurbulences;
+      this.$show.visualizerHandle.hazeDensity = this.initialValues.hazeDensity;
+      this.$show.visualizerHandle.hazeMovement = this.initialValues.hazeMovement;
       this.$show.visualizerHandle.globalBrightness = this.initialValues.globalBrightness;
       if (this.initialQuality) {
         this.$show.visualizerHandle.quality = this.initialQuality.quality;

@@ -1,0 +1,387 @@
+import * as THREE from 'three';
+import {
+  BEAM_GLSL, ACCUM, createConeGeometry, sceneOf,
+} from './beam_shading';
+import { createHazeTexture } from './haze';
+
+/**
+ * Air beam techniques: closed form without gobo, closed form with a soft gobo, raymarch
+ *
+ * @constant {Object} AIR_MODES
+ */
+export const AIR_MODES = {
+  PLAIN: 0,
+  SOFT_GOBO: 1,
+  RAYMARCH: 2,
+};
+
+/**
+ * Raymarch sample counts, highest first (the governor drops to the next one before anything else)
+ *
+ * @constant {Array<Number>} AIR_SAMPLES
+ */
+export const AIR_SAMPLES = [16, 8];
+
+const AIR_GAIN = 1; // air light per unit of haze density, before falloff
+const FALLOFF = 0.04; // inverse-square falloff: 1 / (1 + FALLOFF × distance²)
+const HAZE_SCALE = 0.08; // haze noise texture repeats every 1 / HAZE_SCALE / 64 × 64 meters
+const MOVEMENT_SPEED = 0.05; // haze drift at Movement 100, in noise texture units per second
+
+const AIR_VERTEX = /* glsl */`
+${BEAM_GLSL}
+flat out int vId;
+out vec3 vWorld;
+void main() {
+  vId = gl_InstanceID;
+  vec4 w = beamMatrix(gl_InstanceID, 0) * vec4(position, 1.0);
+  if (beamTexel(gl_InstanceID, 8).a <= 0.0) w = vec4(0.0, 0.0, 0.0, 1.0);
+  vWorld = w.xyz;
+  gl_Position = projectionMatrix * viewMatrix * w;
+}
+`;
+
+// Back faces of the cone hull: the view ray enters the cone analytically and leaves at the back
+// face, the floor, or (with depth) the first surface. MODE picks the technique (AIR_MODES).
+const AIR_FRAGMENT = /* glsl */`
+${BEAM_GLSL}
+uniform highp sampler2D uDepth;
+uniform float uUseDepth;
+uniform vec2 uTargetSize;
+uniform mat4 uInvViewProj;
+uniform float uHaze;
+uniform float uAccum;
+uniform float uFalloff;
+uniform highp sampler3D uNoise;
+uniform vec3 uDrift;
+uniform float uNoiseScale;
+flat in int vId;
+in vec3 vWorld;
+out highp vec4 outColor;
+
+// Beams fade out well before the end of their cone, so the far cap never shows
+float endFade(float z) { return 1.0 - smoothstep(0.25, 0.9, z); }
+
+void main() {
+  vec2 uv = gl_FragCoord.xy / uTargetSize;
+  vec3 C = cameraPosition;
+  vec3 toBack = vWorld - C;
+  float tExit = length(toBack);
+  vec3 dir = toBack / tExit;
+  if (dir.z < 0.0 && C.z > 0.0) tExit = min(tExit, C.z / -dir.z);
+  if (uUseDepth > 0.5) {
+    float d = texture(uDepth, uv).r;
+    if (d < 1.0) {
+      vec4 p = uInvViewProj * vec4(uv * 2.0 - 1.0, d * 2.0 - 1.0, 1.0);
+      tExit = min(tExit, length(p.xyz / p.w - C));
+    }
+  }
+  mat4 inv = beamMatrix(vId, 4);
+  vec3 c0 = (inv * vec4(C, 1.0)).xyz;
+  vec3 v = (inv * vec4(dir, 0.0)).xyz;
+  float tEnter = 0.0;
+  if (!(c0.z > 0.0 && dot(c0.xy, c0.xy) < c0.z * c0.z)) {
+    float a = dot(v.xy, v.xy) - v.z * v.z;
+    float b = 2.0 * (dot(c0.xy, v.xy) - c0.z * v.z);
+    float c = dot(c0.xy, c0.xy) - c0.z * c0.z;
+    float disc = b * b - 4.0 * a * c;
+    if (disc > 0.0 && abs(a) > 1e-6) {
+      float sq = sqrt(disc);
+      float t1 = (-b - sq) / (2.0 * a);
+      float t2 = (-b + sq) / (2.0 * a);
+      float tn = min(t1, t2);
+      float tf = max(t1, t2);
+      if (tn > 0.0 && c0.z + tn * v.z > 0.0) tEnter = tn;
+      else if (tf > 0.0 && c0.z + tf * v.z > 0.0) tEnter = tf;
+    }
+  }
+  if (tEnter >= tExit) discard;
+  vec4 col = beamTexel(vId, 8);
+  vec4 g = beamTexel(vId, 9);
+  vec4 o = beamTexel(vId, 11);
+  float light;
+#if MODE == 2
+  float dt = (tExit - tEnter) / float(STEPS);
+  float jitter = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+  float acc = 0.0;
+  for (int i = 0; i < STEPS; i++) {
+    float t = tEnter + (float(i) + jitter) * dt;
+    vec3 q = c0 + v * t;
+    if (q.z <= 0.0 || q.z > 1.0) continue;
+    float dist = q.z * o.w;
+    float n = texture(uNoise, (C + dir * t) * uNoiseScale + uDrift).r;
+    acc += goboAt(q.xy / q.z, g + vec4(0.0, 0.0, 1.0, 0.0)) * (0.3 + 1.4 * n)
+      * endFade(q.z) / (1.0 + uFalloff * dist * dist);
+  }
+  light = acc * dt;
+#else
+  // Point source with inverse-square falloff, integrated along the ray inside the cone
+  vec3 ao = C - o.xyz;
+  float b = dot(ao, dir);
+  float h2 = max(dot(ao, ao) - b * b, 0.0);
+  float sk = sqrt(uFalloff);
+  float sa = sqrt(1.0 + uFalloff * h2);
+  light = (atan(sk * (tExit + b) / sa) - atan(sk * (tEnter + b) / sa)) / (sk * sa);
+  vec3 qm = c0 + v * (0.5 * (tEnter + tExit));
+  vec2 disk = qm.xy / max(qm.z, 1e-4);
+  light *= (1.0 - smoothstep(0.7, 1.0, length(disk))) * endFade(qm.z);
+#if MODE == 1
+  light *= 0.35 + 0.65 * goboAt(disk, g + vec4(0.0, 0.0, 2.5, 0.0));
+#endif
+#endif
+  // Dither below one 8-bit step, so faint beam ends fade instead of banding
+  float dither = (fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.0671, 0.0058)))) - 0.5)
+    / 255.0;
+  outColor = vec4(max(col.rgb * (col.a * light * uHaze * uAccum) + dither, 0.0), 1.0);
+}
+`;
+
+const COMPOSITE_VERTEX = /* glsl */`
+out vec2 vUv;
+void main() {
+  vUv = uv;
+  gl_Position = vec4(position.xy, 0.0, 1.0);
+}
+`;
+
+// Adds the air buffer to the canvas. With depth, each of the 4 nearest air texels is weighted by
+// how close its depth is to this pixel's, so beams don't bleed over fixture bodies.
+const COMPOSITE_FRAGMENT = /* glsl */`
+uniform sampler2D uAir;
+uniform highp sampler2D uDepth;
+uniform float uUseDepth;
+uniform vec2 uAirSize;
+uniform float uAccum;
+uniform float uNear;
+uniform float uFar;
+in vec2 vUv;
+out highp vec4 outColor;
+
+float linearDepth(float d) {
+  return uNear * uFar / (uFar - d * (uFar - uNear));
+}
+
+void main() {
+  vec3 air;
+  if (uUseDepth > 0.5) {
+    float here = linearDepth(texture(uDepth, vUv).r);
+    vec2 base = vUv * uAirSize - 0.5;
+    vec2 i0 = floor(base);
+    vec2 f = base - i0;
+    vec3 sum = vec3(0.0);
+    float total = 0.0;
+    for (int j = 0; j < 2; j++) {
+      for (int i = 0; i < 2; i++) {
+        vec2 tap = (i0 + vec2(float(i), float(j)) + 0.5) / uAirSize;
+        float there = linearDepth(texture(uDepth, tap).r);
+        float bilinear = (i == 0 ? 1.0 - f.x : f.x) * (j == 0 ? 1.0 - f.y : f.y);
+        float w = bilinear / (0.02 + abs(here - there) / here);
+        sum += texture(uAir, tap).rgb * w;
+        total += w;
+      }
+    }
+    air = sum / max(total, 1e-5);
+  } else {
+    air = texture(uAir, vUv).rgb;
+  }
+  // Soft saturation: overlapping or head-on beams roll off to white instead of clipping
+  outColor = linearToOutputTexel(vec4(1.0 - exp(-air / uAccum), 1.0));
+}
+`;
+
+/**
+ * @class AirBeams
+ * @classdesc Beams in the haze, drawn from the beam state into a reduced-resolution buffer and
+ * added to the canvas: closed-form scattering (plain or with a soft gobo) or a raymarch with the
+ * gobo and drifting haze at each sample.
+ */
+class AirBeams {
+  /**
+   * @param {THREE.WebGLRenderer} renderer Renderer drawing to the canvas
+   * @param {Object} shared Uniforms shared with the lighting passes (beam state, gobos)
+   * @param {BeamState} beamState Per-beam state
+   */
+  constructor(renderer, shared, beamState) {
+    this.renderer = renderer;
+    this._mode = AIR_MODES.PLAIN;
+    [this._samples] = AIR_SAMPLES;
+    this._fraction = 0.25;
+    this._target = null;
+    this._size = new THREE.Vector2();
+    this._drift = new THREE.Vector3();
+    this._movement = 0;
+    this._lastTime = null;
+    this.uniforms = {
+      ...shared,
+      uDepth: { value: null },
+      uUseDepth: { value: 0 },
+      uTargetSize: { value: new THREE.Vector2(1, 1) },
+      uInvViewProj: { value: new THREE.Matrix4() },
+      uHaze: { value: 0 },
+      uAccum: { value: ACCUM },
+      uFalloff: { value: FALLOFF },
+      uNoise: { value: createHazeTexture() },
+      uDrift: { value: this._drift },
+      uNoiseScale: { value: HAZE_SCALE },
+    };
+    this.geometry = createConeGeometry();
+    this.materials = new Map();
+    this.mesh = new THREE.Mesh(this.geometry, this.material());
+    this.scene = sceneOf(this.mesh);
+    beamState.onCountChange((count) => { this.geometry.instanceCount = count; });
+
+    this.compositeUniforms = {
+      uAir: { value: null },
+      uDepth: this.uniforms.uDepth,
+      uUseDepth: this.uniforms.uUseDepth,
+      uAirSize: { value: this.uniforms.uTargetSize.value },
+      uAccum: { value: ACCUM },
+      uNear: { value: 0.01 },
+      uFar: { value: 1000 },
+    };
+    this.compositeScene = sceneOf(new THREE.Mesh(
+      new THREE.PlaneGeometry(2, 2),
+      new THREE.ShaderMaterial({
+        glslVersion: THREE.GLSL3,
+        blending: THREE.AdditiveBlending,
+        transparent: true,
+        depthTest: false,
+        depthWrite: false,
+        uniforms: this.compositeUniforms,
+        vertexShader: COMPOSITE_VERTEX,
+        fragmentShader: COMPOSITE_FRAGMENT,
+      }),
+    ));
+    this.screenCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  }
+
+  /**
+   * Returns (building it once) the material of the current technique and sample count
+   *
+   * @private
+   * @returns {THREE.ShaderMaterial} Air beam material
+   */
+  material() {
+    const key = `${this._mode}:${this._samples}`;
+    if (!this.materials.has(key)) {
+      this.materials.set(key, new THREE.ShaderMaterial({
+        glslVersion: THREE.GLSL3,
+        blending: THREE.AdditiveBlending,
+        transparent: true,
+        depthTest: false,
+        depthWrite: false,
+        side: THREE.BackSide,
+        defines: { MODE: this._mode, STEPS: this._samples },
+        uniforms: this.uniforms,
+        vertexShader: AIR_VERTEX,
+        fragmentShader: AIR_FRAGMENT,
+      }));
+    }
+    return this.materials.get(key);
+  }
+
+  /**
+   * Sets the technique, raymarch samples and buffer size
+   *
+   * @public
+   * @param {Number} mode Technique (AIR_MODES)
+   * @param {Number} samples Raymarch samples (AIR_SAMPLES)
+   * @param {Number} fraction Buffer size as a fraction of the canvas
+   */
+  configure(mode, samples, fraction) {
+    const resize = fraction !== this._fraction;
+    this._mode = mode;
+    this._samples = samples;
+    this._fraction = fraction;
+    this.mesh.material = this.material();
+    if (resize) this.resize();
+  }
+
+  /**
+   * Haze density and movement, 0 to 100
+   *
+   * @public
+   * @param {Number} density Haze density
+   * @param {Number} movement Haze movement
+   */
+  setHaze(density, movement) {
+    this.uniforms.uHaze.value = (density / 100) * AIR_GAIN;
+    this._movement = movement / 100;
+  }
+
+  /**
+   * Whether the haze drifts (the view must keep drawing)
+   *
+   * @type {Boolean}
+   */
+  get drifting() {
+    return this._mode === AIR_MODES.RAYMARCH && this._movement > 0
+      && this.uniforms.uHaze.value > 0;
+  }
+
+  /**
+   * Whether air beams are drawn at all
+   *
+   * @type {Boolean}
+   */
+  get visible() {
+    return this.uniforms.uHaze.value > 0;
+  }
+
+  /**
+   * Follows the canvas size
+   *
+   * @public
+   */
+  resize() {
+    if (this._target) this._target.dispose();
+    this.renderer.getDrawingBufferSize(this._size);
+    const w = Math.max(1, Math.round(this._size.x * this._fraction));
+    const h = Math.max(1, Math.round(this._size.y * this._fraction));
+    // Half float where the GPU can render to it (no banding); RGBA8 with dithering otherwise
+    const type = this.renderer.extensions.has('EXT_color_buffer_float')
+      ? THREE.HalfFloatType : THREE.UnsignedByteType;
+    this._target = new THREE.WebGLRenderTarget(w, h, { depthBuffer: false, type });
+    this.uniforms.uTargetSize.value.set(w, h);
+    this.compositeUniforms.uAir.value = this._target.texture;
+  }
+
+  /**
+   * Air buffer texture (also a bloom source)
+   *
+   * @type {THREE.Texture}
+   */
+  get texture() {
+    return this._target ? this._target.texture : null;
+  }
+
+  /**
+   * Draws the beams into the air buffer, then adds it to the canvas
+   *
+   * @public
+   * @param {THREE.PerspectiveCamera} camera View camera
+   * @param {?THREE.DepthTexture} depth Scene depth (receivers and occluders), or none
+   * @param {Number} time Time in seconds
+   */
+  render(camera, depth, time) {
+    const { renderer } = this;
+    if (!this._target) this.resize();
+    if (this._lastTime !== null) {
+      this._drift.z += this._movement * MOVEMENT_SPEED * (time - this._lastTime);
+      this._drift.x += this._movement * MOVEMENT_SPEED * 0.4 * (time - this._lastTime);
+    }
+    this._lastTime = time;
+    this.uniforms.uDepth.value = depth;
+    this.uniforms.uUseDepth.value = depth ? 1 : 0;
+    this.uniforms.uInvViewProj.value
+      .multiplyMatrices(camera.matrixWorld, camera.projectionMatrixInverse);
+    this.compositeUniforms.uNear.value = camera.near;
+    this.compositeUniforms.uFar.value = camera.far;
+    renderer.setRenderTarget(this._target);
+    renderer.clear();
+    renderer.render(this.scene, camera);
+    renderer.setRenderTarget(null);
+    renderer.render(this.compositeScene, this.screenCamera);
+  }
+}
+
+export default AirBeams;

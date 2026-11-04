@@ -1,4 +1,5 @@
 import { QUALITY_LEVELS } from './stage_lighting';
+import { AIR_SAMPLES } from './air_beams';
 
 /**
  * Quality setting values: Auto, or one of the quality levels
@@ -122,7 +123,8 @@ export function startingLevel(gl) {
 /**
  * @class QualityGovernor
  * @classdesc Adjusts the quality level and lighting resolution from measured frame times (Auto
- * quality). It lowers the resolution, then the level, when frames come over 1.25 × the refresh
+ * quality). It lowers the air beam samples (at High), then the resolution, then the level, when
+ * frames come over 1.25 × the refresh
  * interval apart for 3 s. It raises them after 10 s of frames at the refresh rate whose drawing
  * took under 0.6 × the refresh interval (frame intervals can't show spare time), and stops raising
  * for a minute when a raise is undone within 15 s.
@@ -134,6 +136,7 @@ export class QualityGovernor {
   constructor(level) {
     this._levelIndex = Math.max(LEVEL_ORDER.indexOf(level), 0);
     this._scaleIndex = 0;
+    this._samplesIndex = 0;
     this._times = new Float64Array(SAMPLE_CAPACITY);
     this._intervals = new Float32Array(SAMPLE_CAPACITY);
     this._work = new Float32Array(SAMPLE_CAPACITY);
@@ -165,6 +168,15 @@ export class QualityGovernor {
    */
   get scale() {
     return RESOLUTION_SCALES[this._scaleIndex];
+  }
+
+  /**
+   * Current raymarch sample count of the air beams (High level)
+   *
+   * @type {Number}
+   */
+  get airSamples() {
+    return AIR_SAMPLES[this._samplesIndex];
   }
 
   /**
@@ -228,7 +240,8 @@ export class QualityGovernor {
   }
 
   /**
-   * Lowers (-1) or raises (+1) quality one step: resolution first, then level
+   * Lowers (-1) or raises (+1) quality one step: air beam samples at High, then resolution, then
+   * level (raising goes the other way)
    *
    * @private
    * @param {Number} direction -1 or 1
@@ -237,10 +250,14 @@ export class QualityGovernor {
    */
   step(direction, now) {
     const scaled = this.level === QUALITY_LEVELS.MEDIUM || this.level === QUALITY_LEVELS.HIGH;
+    const high = this.level === QUALITY_LEVELS.HIGH;
     const levelBefore = this._levelIndex;
     const scaleBefore = this._scaleIndex;
+    const samplesBefore = this._samplesIndex;
     if (direction < 0) {
-      if (scaled && this._scaleIndex < RESOLUTION_SCALES.length - 1) {
+      if (high && this._samplesIndex < AIR_SAMPLES.length - 1) {
+        this._samplesIndex++;
+      } else if (scaled && this._scaleIndex < RESOLUTION_SCALES.length - 1) {
         this._scaleIndex++;
       } else if (this._levelIndex > 0) {
         this._levelIndex--;
@@ -248,11 +265,15 @@ export class QualityGovernor {
       }
     } else if (scaled && this._scaleIndex > 0) {
       this._scaleIndex--;
+    } else if (high && this._samplesIndex > 0) {
+      this._samplesIndex--;
     } else if (this._levelIndex < LEVEL_ORDER.length - 1) {
       this._levelIndex++;
       this._scaleIndex = SCALE_AFTER_RAISE;
+      this._samplesIndex = AIR_SAMPLES.length - 1;
     }
-    const changed = levelBefore !== this._levelIndex || scaleBefore !== this._scaleIndex;
+    const changed = levelBefore !== this._levelIndex || scaleBefore !== this._scaleIndex
+      || samplesBefore !== this._samplesIndex;
     if (changed) this._lastChange = now;
     return changed;
   }
