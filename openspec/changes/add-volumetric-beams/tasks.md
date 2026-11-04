@@ -1,0 +1,71 @@
+# Tasks
+
+## 1. Visualizer: haze settings
+
+- [ ] 1.1 `Visualizer`: `hazeDensity` and `hazeMovement` (0-100) with setters that invalidate the
+      view; `showData` writes them instead of the fog keys; `preferences` reads them, or maps
+      `globalFoggingState` / `globalFoggingDensity` / `globalFoggingTurbulences` when they are
+      missing (design.md decision 5). Verify: spec "Fog disabled in an old showfile" and "Demo
+      show" hold after `localStorage.removeItem('ASLS_STUDIO_SHOWFILE')` and a reload; "Haze saved
+      with the show" holds after Save and reload.
+- [ ] 1.2 Visualizer popup: replace the Fogging section with Haze (Density, Movement), cancel
+      restores them (skill `vue-ui-change`). Verify: changing each value in `npm start` changes
+      the view at once; Cancel restores them; spec "No haze" holds.
+
+## 2. Visualizer: air beam pass
+
+- [ ] 2.1 Bake a tileable 64³ R8 haze noise texture at start and scroll it by `hazeMovement`
+      over time (design.md decision 3); report the animation to render on demand when Movement is
+      above 0. Verify: spec "Drifting haze" holds; with Movement 0 and nothing moving, 0 frames
+      are drawn over 3 s.
+- [ ] 2.2 Air beam shader on the beam state: cone hull back faces, analytic ray/cone entry,
+      exit clipped by the cone length, the floor plane and (Medium/High) the prepass depth;
+      closed-form in-scattering for Low and Medium, Medium sampling the gobo once at the segment
+      middle with extra blur; 16-sample jittered raymarch with gobo and haze noise per sample for
+      High (design.md decisions 1, 2 and 6). Verify: spec "Low level", "Gobo shafts", "Rotating
+      gobo in the haze" and "Dimmer closed" hold with the demo show and a patched gobo fixture.
+- [ ] 2.3 Render air beams into a 1/4 (Low, Medium) or 1/2 (High) target and composite with a
+      depth-aware upsample (Medium/High) or a plain additive upsample (Low) (design.md decision
+      4). Verify: at Medium and High a beam passing behind a fixture body is hidden by it; no
+      halo wider than a few pixels around fixture bodies in a screenshot.
+- [ ] 2.4 Governor: at High, drop raymarch samples from 16 to 8 before any resolution step, and
+      restore them first when raising (design.md decision 8). Verify: spec "Slow frames at High"
+      holds with synthetic frame times fed to the governor in the page.
+
+## 3. Visualizer: bloom and lens glow
+
+- [ ] 3.1 Lens glow: one additive sprite per beam at the lens, in the beam's colour, scaled by
+      intensity, at Low, Medium and High. Verify: spec "Lens glow" holds.
+- [ ] 3.2 Bloom pass at Medium and High: bright-pass into a 1/2 target, 4-level
+      downsample/upsample blur, added back (design.md decision 7); remove the unused
+      `postprocessing` dependency from `package.json`. Verify: spec "No bloom at Low" holds;
+      `npm install` and `npm run build` pass without `postprocessing`.
+
+## 4. Visualizer: old beams out
+
+- [ ] 4.1 Compare the demo show side by side, old beams against new at High, from the default
+      camera, and keep both screenshots for the PR. Then remove the old beam meshes, their
+      instanced attributes and `shaders/beam.*.glsl` from `moving_head.js`, and the fog setters.
+      Verify: `grep -rn "beam.fragment\|fogTurbulence" src` finds nothing; the demo show renders
+      with no console errors.
+
+## 5. Docs and context
+
+- [ ] 5.1 Manual: Visualizer page § Settings, replace Fogging with Haze, and say what each quality
+      level shows in the air (skill `user-manual`). Verify: the page reads correctly in the
+      Markdown preview (the manual dev server is broken since unit 2, see unit 3 task 6.4).
+- [ ] 5.2 Update `src/plugins/visualizer/CLAUDE.md` (air beam pass, bloom, haze, no old beam
+      shaders) (skill `ai-context-maintenance`). Verify: the file describes the new passes.
+
+## 6. Integration
+
+- [ ] 6.1 With the demo show in `npm start`, run the chase, a scene and the effects at each level;
+      check air beams, gobo shafts, bloom and footprints follow the DMX values, frame rate and no
+      console errors (skill `run-studio`). Verify: spec "The view shows the output values" holds
+      at every level.
+- [ ] 6.2 `npx eslint` on all touched files is clean.
+
+## Workflow follow-up
+
+- Archive the change on the unit branch, set unit 4 to `archived` in the epic doc, then open a PR
+  from `feat/add-volumetric-beams` into `epic/gdtf-render-pipeline`.
