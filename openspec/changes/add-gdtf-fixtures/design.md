@@ -221,9 +221,26 @@ Compatibility: only fixtures with insert blocks change. Two cases:
   Expanding fixes the footprint, but channels after the block shift. A saved show with one of
   them may then overlap the next fixture's addresses, and its scene values move to other channels.
 
-  On load, such a fixture is detected (its saved patch length differs from the expanded one) and
-  reported once through `app_error` with its name. It is left patched with its new footprint. The
-  operator re-addresses it if it overlaps.
+  On load, such a fixture is reported once through `app_error`, with its name and address. It
+  stays patched with its new footprint, and the operator re-addresses it if it overlaps.
+
+  Showfiles stored no channel count, so each fixture now saves `channelCount`. A fixture is
+  reported when its saved count differs from its profile's. A fixture saved without a count is
+  reported when its mode had insert blocks. Since the count is saved straight away (local
+  autosave), the report shows once.
+
+**Type keys stay put.** OFL modes can also name expanded template channels directly (`Red 1`,
+`Red Master`). Before this change those channels had no capabilities, and their `type` was their
+name. Every template channel keeps `type` = its expanded name, so scenes saved with those 18
+fixtures still find their channels. Template channels also gain their capabilities, attribute
+and colour.
+
+Checked over the library:
+- 387 fixtures without pixels are unchanged;
+- 18 pixel fixtures without insert blocks keep every `type` and `qaIndex`;
+- 75 fixtures with insert blocks grow, 13 of them Moving Heads;
+- every one of the 875 modes whose name states a channel count ("24-channel") now has that many
+  channels (76 didn't before).
 
 ### 5. Any category patches; generated bodies
 

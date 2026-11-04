@@ -5,6 +5,7 @@ import {
 import {
   parseStringPromise as XMLParse,
 } from 'xml2js';
+import EventBus from '../../plugins/eventbus';
 
 import Master from './master.model';
 import GroupPool from './group.pool.model';
@@ -444,6 +445,12 @@ class Show extends EventEmitter {
         fixtureData.model,
       );
       this.fixturePool.addRaw({ ...fixtureData, profile });
+    }
+    const changed = this.fixturePool.fixtures.filter((fixture) => fixture.footprintChanged);
+    if (changed.length) {
+      const list = changed.map((f) => `${f.name} (universe ${f.universe}, address ${f.chStart + 1})`);
+      EventBus.emit('app_error', new Error('These fixtures now use their full channel list, so '
+        + `their DMX footprint changed. Check their addresses and scenes: ${list.join(', ')}`));
     }
   }
 

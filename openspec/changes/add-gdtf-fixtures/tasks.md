@@ -43,11 +43,19 @@
       The `Entity.parseValueUnit` fix is recorded in design.md. The OFL snapshot from 2.1 is
       unchanged. For the pixel bar, the mode lists one set of colour channels per cell; for
       the moving head, Pan and Tilt have fine channels and the angle ranges match the file.
-- [ ] 2.3 OFL adapter expands `matrixChannels` insert blocks per pixel (`repeatFor`,
+- [x] 2.3 OFL adapter expands `matrixChannels` insert blocks per pixel (`repeatFor`,
       `channelOrder`, `$pixelKey` names, `geometry` = pixel key). On load, report fixtures whose
       footprint grew (design.md decision 4). Verify: spec "OFL pixel bar footprint" and "Footprint
       grew in an older show" hold. The `type` / `qaIndex` snapshot from 2.1 is unchanged for
       every library fixture without insert blocks (Node script over `public/fixtures`).
+      Note (2026-11-04): direct template references keep `type` = their name (design.md decision
+      4), so the check holds for all 405 fixtures without insert blocks. "OFL pixel bar footprint"
+      was checked on the profile: the Eurolite LED PIX-144 24-channel mode has `Red 3` at channel
+      7. It is checked again in the patch popup once task 2.5 lifts the category limit. "Footprint
+      grew in an older show" was checked in the app: a Robin LEDWash 600 saved without
+      `channelCount` opens with 37 channels and the message, and saves `channelCount: 37`; after a
+      reload there is no message and the show is not marked unsaved. Fixtures now save
+      `channelCount`.
 - [ ] 2.4 `gdtf.store.js` (IndexedDB) and the bundle list. `FixtureLibrary.getProfile('gdtf',
       ...)` looks in the library, then the bundle, and rejects with `MissingFixtureError`; wheel
       images are decoded per type. Verify: in the page, importing the same file twice keeps one
@@ -57,7 +65,8 @@
       written back unchanged. The patch keeps their addresses reserved. `Fixture.parseFromProfile`
       no longer refuses categories other than Moving Head (design.md decision 3). Verify: spec
       "Open without, then restore", "Address stays reserved" and "Not marked unsaved" hold. An
-      OFL-only showfile saved before the change re-saves byte-identical (except `version`).
+      OFL-only showfile saved before the change re-saves identical except for the new
+      `channelCount` keys.
 
 ## 3. UI (views)
 

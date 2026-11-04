@@ -76,6 +76,7 @@ class Fixture {
    * @param {Object} data.model Manufacturer's fixture model name as described in fixture_list.json
    * @param {String|Number} data.mode Name (or index) of the fixture's selected running mode
    * @param {Object} data.chStart FIxture's universe address/starting channel
+   * @param {Number} [data.channelCount] Channel count saved with the show
    * @param {Object} data.position Fixture's position in 3D space
    * @param {Object} data.rotation Fixture's rotation in 3D space
    */
@@ -92,6 +93,8 @@ class Fixture {
       this.name = data.name || DEFAULT_FIXTURE_NAME;
       this.category = data.category;
       this.chStart = parseInt(data.chStart, 10);
+      // Channel count saved with the show (absent in showfiles saved before it existed)
+      this.savedChannelCount = Number.isInteger(data.channelCount) ? data.channelCount : null;
       this.channels = [];
       this.quickChannelsAccessors = {};
       this._highlighted = false;
@@ -159,11 +162,26 @@ class Fixture {
       name: this.name,
       universe: this.universe,
       chStart: this.chStart,
+      channelCount: this.channels.length,
       mode: this.modeName,
       source: this.source,
       position: this.position,
       rotation: this.rotation,
     };
+  }
+
+  /**
+   * Whether the fixture's channel count differs from the one saved with the show: the profile
+   * changed since (for OFL modes with pixel channels, which used to drop them, shows saved before
+   * the count existed count as changed)
+   *
+   * @public
+   * @readonly
+   * @type {Boolean}
+   */
+  get footprintChanged() {
+    if (this.savedChannelCount !== null) return this.savedChannelCount !== this.channels.length;
+    return Boolean(this.mode && this.mode.matrixInserts);
   }
 
   /** *******************************************

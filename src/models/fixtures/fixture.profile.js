@@ -53,6 +53,8 @@
  * @property {Object} wheels Wheel definitions keyed by wheel name
  * @property {Array<ProfileMode>} modes Available modes
  * @property {?Object} gdtf GDTF identity: `fixtureTypeId`, `revision`, `dataVersion`
+ * @property {?Object} matrix OFL pixel layout: `pixels` ({ key, x, y, z } on the grid) and
+ * `groups` (pixel keys by group name); pixel channels name their pixel in `geometry`
  */
 
 /**
