@@ -210,7 +210,7 @@ class Controls {
       // TODO: this is redundant and shouldn't happen here so comenting out ATM
       // this.detachAll();
       // this.setFocus(false);
-      MovingHead.clearHiglighting();
+      MovingHead.clearHighlighting();
     } else if (e.key.toLowerCase() === 't') {
       this.mode = CONTROL_MODES.NORMAL;
       this.handle.setMode('translate');
