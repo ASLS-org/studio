@@ -38,8 +38,10 @@ per fixture, Three.js r170.
    adjusts resolution scale first, then tier, from a rolling frame-time average, with hysteresis.
    Provisional until the spike runs on the target machines: software renderer → Guides,
    `deviceMemory` ≤ 4 GB or ≤ 4 cores → Low, otherwise High; step down after 3 s over 1.25 × the
-   refresh interval, up after 10 s under 0.6 ×; scale steps 1, 0.75, 0.5, floor 0.35. User-facing
-   levels: Guides, Low (T0), Medium (T1 at reduced scale), High (T1 at full scale).
+   refresh interval, up after 10 s of frames at the refresh rate whose drawing took under 0.6 × the
+   refresh interval (frame intervals can't show spare time); scale steps 1, 0.75, 0.5, floor
+   0.35. User-facing levels: Guides, Low (T0), Medium (T1 at reduced scale), High (T1 at full
+   scale).
 7. **Worker + OffscreenCanvas** with event forwarding for orbit and gizmo; picking runs in the
    worker. Same-thread fallback uses the same module.
 8. **Quality settings in `localStorage`**, wrapped in try/catch; the showfile keeps only artistic
