@@ -193,4 +193,7 @@
   Note (2026-11-04): also a root Known trap for running `src/` modules in Node (esbuild
   bundle), the `public/gdtf/*` generated-output rule, and the pool-renumbering invariant in
   `src/models/DMX/CLAUDE.md`. Every path and symbol mentioned was checked to exist.
-- [ ] 5.3 `npx eslint` on all touched files is clean.
+- [x] 5.3 `npx eslint` on all touched files is clean.
+      Note (2026-11-04): 0 errors over the 24 touched JS/Vue files (2 old `console.log` warnings in
+      show.model.js; visualizer.js is an eslint-disabled file). `npm run build` passes and ships
+      `dist/gdtf/`.
