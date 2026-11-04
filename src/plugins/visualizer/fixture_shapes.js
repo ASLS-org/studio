@@ -1,13 +1,26 @@
 /**
  * Fixture body shapes from facts: gives every node of a geometry tree a body role (base, yoke,
- * head, can, bar, panel, box or lens) and builds a tree for fixtures that don't have one (OFL),
- * from their category, dimensions, pan/tilt channels, lens and pixel layout.
+ * head, can, bar, panel, box or lens) and the shape it is drawn with (its GDTF primitive, else
+ * its role's), and builds a tree for fixtures that don't have one (OFL), from their category,
+ * dimensions, pan/tilt channels, lens and pixel layout.
  *
  * Trees follow the GDTF convention: meters, Z up, the fixture hanging with its beams along -Z.
  * Pure data, no Three.js, so it can run anywhere.
  */
 
 const DEFAULT_SIZE = 0.3; // meters, when a fixture gives no dimensions
+// Proportions of the bundled moving head model, upright (meters): its overall size, its parts,
+// the heights of the yoke's centre and of the head's pivot, the lens distance and radius
+const MOVING_HEAD = {
+  size: [0.428, 0.306, 0.743],
+  base: [0.38, 0.306, 0.115],
+  yoke: [0.428, 0.11, 0.388],
+  head: [0.298, 0.236, 0.518],
+  yokeCenter: 0.309,
+  pivot: 0.49,
+  lens: 0.258,
+  lensRadius: 0.09,
+};
 const DEFAULT_FIELD_ANGLE = 25; // degrees
 const BAR_ASPECT = 2.5; // length / width above which a body is a bar
 const PIXEL_FIELD_ANGLE = 40; // degrees, OFL pixels have no lens data of their own
@@ -127,20 +140,27 @@ export function synthesizeGeometry(profile, channels) {
   const matrix = profile.matrix && profile.matrix.pixels.length ? profile.matrix : null;
 
   if (category === 'Moving Head' || category === 'Scanner' || hasPanTilt) {
-    const baseH = height * 0.2;
-    const yokeH = height * 0.55;
-    const headSize = [width * 0.6, depth * 0.75, height * 0.5];
-    const lensZ = -headSize[2] / 2;
+    // The bundled model's layout, stretched to the fixture's dimensions (its own size without
+    // them), the head's pivot at the fixture's origin
+    const m = MOVING_HEAD;
+    const k = [0, 1, 2].map((i) => {
+      const facts = [dims[0], dims[2], dims[1]][i];
+      return facts ? facts / 1000 / m.size[i] : 1;
+    });
+    const scaled = (size) => size.map((v, i) => v * k[i]);
+    const head = scaled(m.head);
+    const lensZ = -m.lens * k[2];
     const beams = matrix
-      ? pixelBeams(matrix, physical, [headSize[0] * 0.8, headSize[1] * 0.8], lensZ, 'Wash')
-      : [node('Beam', 'beam', [0, 0, lensZ], [headSize[0] * 0.7, headSize[0] * 0.7, 0.01], {
-        beam: oflBeam(physical, 'Spot', headSize[0] * 0.35),
+      ? pixelBeams(matrix, physical, [head[0] * 0.8, head[1] * 0.8], lensZ, 'Wash')
+      : [node('Beam', 'beam', [0, 0, lensZ], [head[0] * 0.6, head[0] * 0.6, 0.01], {
+        beam: oflBeam(physical, 'Spot', m.lensRadius * Math.min(k[0], k[1])),
       })];
-    return node('Base', 'body', [0, 0, 0], [width * 0.8, depth * 0.8, baseH], {
+    const baseZ = (m.pivot - m.base[2] / 2) * k[2];
+    return node('Base', 'body', [0, 0, baseZ], scaled(m.base), {
       shape: 'Base',
-      children: [node('Yoke', 'axis', [0, 0, -baseH / 2], [width, depth * 0.35, yokeH], {
+      children: [node('Yoke', 'axis', [0, 0, (m.base[2] / 2 - m.yokeCenter) * k[2]], scaled(m.yoke), {
         shape: 'Yoke',
-        children: [node('Head', 'axis', [0, 0, -yokeH * 0.6], headSize, {
+        children: [node('Head', 'axis', [0, 0, (m.yokeCenter - m.pivot) * k[2]], head, {
           shape: 'Head',
           children: beams,
         })],
@@ -194,6 +214,53 @@ function roleOf(geometryNode, containsAxis, isRoot) {
   if (long / short > BAR_ASPECT) return SHAPE_ROLES.BAR;
   if (height < short * 0.4) return SHAPE_ROLES.PANEL;
   return SHAPE_ROLES.BOX;
+}
+
+/**
+ * Body shape of each GDTF primitive type (fixture_meshes.js); Cube and Undefined (or no
+ * primitive) take the shape of the node's role
+ *
+ * @constant {Object} PRIMITIVE_SHAPES
+ */
+const PRIMITIVE_SHAPES = {
+  Cylinder: 'cylinder',
+  Sphere: 'sphere',
+  Base: 'base',
+  Base1_1: 'base',
+  Yoke: 'yoke',
+  Head: 'head',
+  Scanner: 'scanner',
+  Scanner1_1: 'scanner',
+  Conventional: 'conventional',
+  Conventional1_1: 'conventional',
+};
+
+/**
+ * Body shape of each role, for nodes without a specific primitive
+ *
+ * @constant {Object} ROLE_SHAPES
+ */
+const ROLE_SHAPES = {
+  [SHAPE_ROLES.BASE]: 'base',
+  [SHAPE_ROLES.YOKE]: 'yoke',
+  [SHAPE_ROLES.HEAD]: 'head',
+  [SHAPE_ROLES.CAN]: 'cylinder',
+  [SHAPE_ROLES.BAR]: 'box',
+  [SHAPE_ROLES.PANEL]: 'box',
+  [SHAPE_ROLES.BOX]: 'box',
+};
+
+/**
+ * The body shape a node is drawn with: its GDTF primitive's, else its role's
+ *
+ * @public
+ * @param {Object} geometryNode Geometry node
+ * @param {String} role Body role (SHAPE_ROLES)
+ * @returns {?String} Body shape (see fixture_meshes.js), or null when the node has no body
+ */
+export function shapeOf(geometryNode, role) {
+  if (role === SHAPE_ROLES.NONE || role === SHAPE_ROLES.LENS) return null;
+  return PRIMITIVE_SHAPES[geometryNode.shape] || ROLE_SHAPES[role] || null;
 }
 
 /**

@@ -40,7 +40,10 @@ Enums live next to their model and are exported: `CUE_TYPES`, `CUE_STATES`,
   keeps each missing fixture as a placeholder (`placeholderProfile`): same id, address, groups and
   raw scene values, saved back unchanged. Fixtures save `channelCount`; a mismatch on load is
   reported (`Fixture.footprintChanged`).
-- `Capability.getValue()` returns one reused object per capability: read it immediately.
+- `Capability.getValue()` returns one reused object per capability: read it immediately. Entities
+  the data doesn't give span their whole range and are flagged `implicit`.
+- GDTF channels start at their home value (`profileChannel.defaultValue`, runtime only, never
+  saved); OFL channels start at 0 (their `defaultValue` isn't read, to keep shows unchanged).
 
 ## Invariants
 

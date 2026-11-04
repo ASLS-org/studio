@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import { LIGHT_LAYERS } from './stage_lighting';
 import { goboLayer, goboImageLayer } from './gobos';
 import InstanceHighlight from './instance_highlight';
-import { SHAPE_ROLES, assignRoles } from './fixture_shapes';
+import { assignRoles, shapeOf } from './fixture_shapes';
+import unitShape from './fixture_meshes';
 import { NO_CAPABILITY } from '../../models/fixtures/fixture.profile';
 
 const LIGHT_LENGTH = 60; // meters
@@ -18,11 +19,13 @@ const FOCUS_BLUR = 1; // gobo blur at focus 0, in mip levels
 const PRISM_FACETS = 3; // prisms without facet data (OFL, image-only GDTF slots)
 const PRISM_SPREAD = 1.6; // their facet offset, in half field angles
 const PRISM_MIN_SPREAD = Math.tan((4 * Math.PI) / 180); // at least 4°, so narrow beams split
-const PRISM_FACET_INTENSITY = 0.6; // most light per facet (3 facets, as MovingHead)
+const PRISM_FACET_INTENSITY = 0.6; // most light per facet (3 facets, as the original moving head)
 const PRISM_TOTAL = 1.8;
 const PRISM_MAX_FACETS = 16;
 const CELL_OFF = 0.04; // brightness of an unlit cell
-const YOKE_THICKNESS = 0.18; // arm thickness, share of the yoke length
+const MIN_IRIS = 0.05; // smallest aperture drawn, share of the beam
+const WARM_KELVIN = 2700; // colour temperature of relative CTO values at -100 (OFL)
+const COLD_KELVIN = 10000; // and of relative CTB values at 100
 
 // Emitted colour of colour mixing channels (OFL colour names), linear RGB
 const EMITTER_COLORS = {
@@ -50,9 +53,6 @@ const CELL_MATERIAL = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
 const POOL_CAPACITY = 4096; // body pieces per shape, for the whole rig
 const ZERO_MATRIX = new THREE.Matrix4().makeScale(0, 0, 0);
 
-// Shared unit shapes, centered on the origin (Z up)
-const BOX = new THREE.BoxGeometry(1, 1, 1);
-const CYLINDER = new THREE.CylinderGeometry(0.5, 0.5, 1, 24).rotateX(Math.PI / 2);
 const DISC = new THREE.CircleGeometry(0.5, 20);
 
 // Scratch values (no allocation per frame)
@@ -77,6 +77,8 @@ const turn = new THREE.Quaternion();
 const cellMatrix = new THREE.Matrix4();
 const cellScale = new THREE.Matrix4();
 const cellColor = new THREE.Color();
+const tint = [1, 1, 1];
+const native = [1, 1, 1];
 const X_AXIS = new THREE.Vector3(1, 0, 0);
 const Z_AXIS = new THREE.Vector3(0, 0, 1);
 const degToRad = (deg) => (deg * Math.PI) / 180;
@@ -85,21 +87,36 @@ const instances = [];
 let sceneHandle = null;
 
 /**
+ * Linear RGB of a colour temperature, written into an array (no allocation)
+ *
+ * @param {Number} kelvin Colour temperature
+ * @param {Array<Number>} out RGB, 0 to 1
+ * @returns {Array<Number>} out
+ */
+function kelvinInto(kelvin, out) {
+  const t = kelvin / 100;
+  const r = t <= 66 ? 255 : 329.7 * (t - 60) ** -0.1332;
+  const g = t <= 66 ? 99.47 * Math.log(t) - 161.12 : 288.12 * (t - 60) ** -0.0755;
+  let b = 255;
+  if (t <= 19) b = 0;
+  else if (t <= 66) b = 138.52 * Math.log(t - 10) - 305.04;
+  const linear = (c) => {
+    const v = Math.min(Math.max(c, 0), 255) / 255;
+    return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+  };
+  out[0] = linear(r);
+  out[1] = linear(g);
+  out[2] = linear(b);
+  return out;
+}
+
+/**
  * Linear RGB of a colour temperature
  *
  * @param {Number} kelvin Colour temperature
  * @returns {Array<Number>} RGB, 0 to 1
  */
-function kelvinToRGB(kelvin) {
-  const t = kelvin / 100;
-  const rgb = t <= 66
-    ? [255, 99.47 * Math.log(t) - 161.12, t <= 19 ? 0 : 138.52 * Math.log(t - 10) - 305.04]
-    : [329.7 * (t - 60) ** -0.1332, 288.12 * (t - 60) ** -0.0755, 255];
-  return rgb.map((c) => {
-    const s = Math.min(Math.max(c, 0), 255) / 255;
-    return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
-  });
-}
+const kelvinToRGB = (kelvin) => kelvinInto(kelvin, [0, 0, 0]);
 
 /**
  * Beams in a node's subtree
@@ -142,9 +159,9 @@ function angleCenter(channel) {
 
 /**
  * @class ShapePool
- * @classdesc One instanced mesh per unit shape (box, cylinder) holding every fixture body piece,
- * with the selection highlight of MovingHead (InstanceHighlight) attached: one draw per shape for
- * the whole rig, and the same highlight look for every fixture.
+ * @classdesc One instanced mesh per body shape (fixture_meshes.js) holding every fixture body
+ * piece, with the selection highlight (InstanceHighlight) attached: one draw per shape for the
+ * whole rig, and the same highlight look for every fixture.
  */
 class ShapePool {
   /**
@@ -209,43 +226,29 @@ class ShapePool {
 const pools = {};
 
 /**
- * Body pieces of a node by role, as unit shapes placed in the node's frame
+ * The shared pool of a body shape, created on first use
  *
- * @param {String} role Body role
+ * @param {String} shape Body shape
+ * @returns {ShapePool} Pool
+ */
+function poolOf(shape) {
+  if (!pools[shape]) pools[shape] = new ShapePool(unitShape(shape), sceneHandle);
+  return pools[shape];
+}
+
+/**
+ * Placement of a node's body in the node's frame: the unit shape scaled to the model's size
+ *
  * @param {Array<Number>} size Length, width, height
  * @param {Array<Number>} [offset] Body centre relative to the node's origin
- * @returns {Array<{shape: String, local: THREE.Matrix4}>} Pieces
+ * @returns {THREE.Matrix4} Local matrix
  */
-function bodyPieces(role, size, offset = [0, 0, 0]) {
-  const [length, width, height] = size;
-  const piece = (shape, sx, sy, sz, x = 0, y = 0, z = 0) => ({
-    shape,
-    local: new THREE.Matrix4().compose(
-      new THREE.Vector3(x + offset[0], y + offset[1], z + offset[2]),
-      new THREE.Quaternion(),
-      new THREE.Vector3(Math.max(sx, 1e-3), Math.max(sy, 1e-3), Math.max(sz, 1e-3)),
-    ),
-  });
-  switch (role) {
-    case SHAPE_ROLES.YOKE: {
-      const t = length * YOKE_THICKNESS;
-      return [
-        piece('box', length, width, t, 0, 0, height / 2 - t / 2),
-        piece('box', t, width, height, -length / 2 + t / 2, 0, 0),
-        piece('box', t, width, height, length / 2 - t / 2, 0, 0),
-      ];
-    }
-    case SHAPE_ROLES.HEAD:
-    case SHAPE_ROLES.CAN:
-      return [piece('cylinder', Math.min(length, width), Math.min(length, width), height)];
-    case SHAPE_ROLES.BASE:
-    case SHAPE_ROLES.BAR:
-    case SHAPE_ROLES.PANEL:
-    case SHAPE_ROLES.BOX:
-      return [piece('box', length, width, height)];
-    default:
-      return [];
-  }
+function bodyMatrix(size, offset = [0, 0, 0]) {
+  return new THREE.Matrix4().compose(
+    new THREE.Vector3(offset[0], offset[1], offset[2]),
+    new THREE.Quaternion(),
+    new THREE.Vector3(...size.map((v) => Math.max(v, 1e-3))),
+  );
 }
 
 /**
@@ -285,6 +288,8 @@ class GeometryFixture {
       });
     });
     this._centerAngles = centerAngles;
+    // OFL pan turns as the original moving head did; the flipped GDTF frame turns the other way
+    this._panSign = centerAngles ? -1 : 1;
     this._wheels = wheels || {};
     this._groups = (matrix && matrix.groups) || {};
     this._position = { x: 0, y: 0, z: 0 };
@@ -297,7 +302,7 @@ class GeometryFixture {
     this._facetCache = new Map();
 
     this._dummy = new THREE.Object3D();
-    // GDTF trees hang with beams down; flip them so rotation conventions match MovingHead
+    // GDTF trees hang with beams down; flip them so a fixture rotation of x = 180° hangs them
     this._frame = new THREE.Object3D();
     this._frame.rotation.x = Math.PI;
     this._dummy.add(this._frame);
@@ -350,12 +355,13 @@ class GeometryFixture {
     };
     if (parentEntry) parentEntry.children.push(entry);
     this._nodes.set(data.name, entry);
-    bodyPieces(roles.get(data), data.size, data.offset).forEach((piece) => {
-      const pool = pools[piece.shape];
+    const shape = shapeOf(data, roles.get(data));
+    if (shape) {
+      const pool = poolOf(shape);
       this._pieces.push({
-        object, local: piece.local, pool, index: pool.alloc(),
+        object, local: bodyMatrix(data.size, data.offset), pool, index: pool.alloc(),
       });
-    });
+    }
     if (data.kind === 'axis') this._axes.push(entry);
     if (data.kind === 'beam') {
       const beam = data.beam || {};
@@ -370,6 +376,7 @@ class GeometryFixture {
         radius,
         fieldAngle: beam.fieldAngle || 25,
         projects: PROJECTING_TYPES.includes(beam.type || 'Wash'),
+        kelvin: beam.colorTemperature || 6500,
         white: kelvinToRGB(beam.colorTemperature || 6500),
         hasMixing: false,
         state: {
@@ -386,6 +393,12 @@ class GeometryFixture {
           gobo: null,
           goboSpeed: 0,
           goboAngle: 0,
+          goboIndex: 0,
+          iris: 1,
+          kelvin: null,
+          prismSpeed: 0,
+          prismIndex: 0,
+          prismSpin: 0,
           color: [1, 1, 1],
           intensity: 0,
         },
@@ -577,6 +590,11 @@ class GeometryFixture {
       s.prism = false;
       s.gobo = null;
       s.goboSpeed = 0;
+      s.goboIndex = 0;
+      s.iris = 1;
+      s.kelvin = null;
+      s.prismSpeed = 0;
+      s.prismIndex = 0;
     }
     for (let r = 0; r < this._routes.length; r++) {
       this.applyRoute(this._routes[r], values);
@@ -584,15 +602,23 @@ class GeometryFixture {
     for (let b = 0; b < this._beams.length; b++) {
       const beam = this._beams[b];
       const s = beam.state;
-      // A colour preset overrides everything, as for MovingHead. A fixture that mixes its colour
+      // A colour preset overrides everything. A fixture that mixes its colour
       // is dark with its mix at 0, unless a colour wheel slot (a macro on LED fixtures) is set
       let base = beam.white;
       if (s.preset) base = s.preset;
       else if (beam.hasMixing) {
         base = s.add[0] + s.add[1] + s.add[2] > 0 ? s.add : (s.macro || BLACK);
       }
+      // A colour temperature filter tints the source relative to its own temperature
+      tint[0] = 1; tint[1] = 1; tint[2] = 1;
+      if (s.kelvin !== null) {
+        kelvinInto(s.kelvin, tint);
+        kelvinInto(beam.kelvin, native);
+        const top = Math.max(tint[0] / native[0], tint[1] / native[1], tint[2] / native[2]);
+        for (let c = 0; c < 3; c++) tint[c] = tint[c] / native[c] / top;
+      }
       const peak = Math.max(base[0], base[1], base[2], 1);
-      for (let c = 0; c < 3; c++) s.color[c] = (base[c] / peak) * s.filter[c];
+      for (let c = 0; c < 3; c++) s.color[c] = (base[c] / peak) * s.filter[c] * tint[c];
       s.intensity = Math.min(Math.max(s.dimmer, 0), 1);
     }
     this._poseDirty = true;
@@ -615,7 +641,7 @@ class GeometryFixture {
     const value = capability.getValue(coarse + (route.fine >= 0 ? values[route.fine] / 256 : 0));
     switch (capability.type) {
       case 'Pan':
-        if (route.axis) route.axis.pan = (value.pan || 0) - route.center;
+        if (route.axis) route.axis.pan = this._panSign * ((value.pan || 0) - route.center);
         return;
       case 'Tilt':
         if (route.axis) route.axis.tilt = (value.tilt || 0) - route.center;
@@ -683,10 +709,39 @@ class GeometryFixture {
         break;
       }
       case 'WheelSlotRotation':
-        s.goboSpeed = value.wheelRotationSpeed || 0;
+        // Entities the capability doesn't give span their whole range: skip them
+        if (!capability.entities.wheelRotationSpeed.implicit) {
+          s.goboSpeed = value.wheelRotationSpeed || 0;
+        }
+        if (!capability.entities.wheelRotationAngle.implicit) {
+          s.goboIndex = value.wheelRotationAngle || 0;
+        }
         break;
+      case 'PrismRotation':
+        if (value.prism && !s.prism) s.prism = this.prismOf(value.wheel || channel.name);
+        if (!capability.entities.prismRotationSpeed.implicit) {
+          s.prismSpeed = value.prismRotationSpeed || 0;
+        }
+        if (!capability.entities.prismRotationAngle.implicit) {
+          s.prismIndex = value.prismRotationAngle || 0;
+        }
+        break;
+      case 'Iris':
+        if (!capability.entities.iris.implicit) {
+          s.iris = Math.max(Math.min((value.iris || 0) / 100, 1), MIN_IRIS);
+        }
+        break;
+      case 'ColorTemperature': {
+        if (capability.entities.colorTemperature.implicit) break;
+        const k = value.colorTemperature || 0;
+        // Kelvin, or relative (OFL percentages and presets): -100 warm to 100 cold
+        if (Math.abs(k) > 100) s.kelvin = k;
+        else if (k < 0) s.kelvin = beam.kelvin + (k / 100) * (beam.kelvin - WARM_KELVIN);
+        else s.kelvin = beam.kelvin + (k / 100) * (COLD_KELVIN - beam.kelvin);
+        break;
+      }
       case 'ShutterStrobe':
-        // As MovingHead: a closed shutter doesn't black the beam out, strobes flash it
+        // A closed shutter doesn't black the beam out (OFL files close it at 0); strobes flash
         if (value.strobeEffect !== 'Open' && value.strobeEffect !== 'Closed') {
           s.strobe = value.strobeFrequency || 0;
         }
@@ -717,6 +772,19 @@ class GeometryFixture {
       default:
         break;
     }
+  }
+
+  /**
+   * Facet layout of a wheel's prism slot (its first), or true (3 facets) when it has none
+   *
+   * @private
+   * @param {String} wheelName Wheel name
+   * @returns {Array<Array<Number>>|Boolean} Facet layout, or true
+   */
+  prismOf(wheelName) {
+    const wheel = this._wheels[wheelName];
+    const slot = wheel && wheel.slots.find((s) => s.type === 'Prism');
+    return slot ? this.facetsOf(slot) : true;
   }
 
   /**
@@ -793,7 +861,8 @@ class GeometryFixture {
    * @type {Boolean}
    */
   get animating() {
-    return this._beams.some((b) => b.state.strobe > 0 || b.state.goboSpeed !== 0);
+    return this._beams.some((b) => b.state.strobe > 0 || b.state.goboSpeed !== 0
+      || (b.state.prism && b.state.prismSpeed !== 0));
   }
 
   /**
@@ -860,6 +929,9 @@ class GeometryFixture {
       if (s.goboSpeed !== 0) {
         s.goboAngle = (s.goboAngle + (s.goboSpeed / 60) * 2 * Math.PI * dt) % (2 * Math.PI);
       }
+      if (s.prismSpeed !== 0) {
+        s.prismSpin = (s.prismSpin + (s.prismSpeed / 60) * 2 * Math.PI * dt) % (2 * Math.PI);
+      }
     }
   }
 
@@ -890,7 +962,7 @@ class GeometryFixture {
       row.color.r += s.color[0] * k;
       row.color.g += s.color[1] * k;
       row.color.b += s.color[2] * k;
-      field += s.zoom !== null && s.zoom > 0 ? s.zoom : beam.fieldAngle;
+      field += (s.zoom !== null && s.zoom > 0 ? s.zoom : beam.fieldAngle) * s.iris;
     }
     if (intensity <= 0) return;
     const n = members.length;
@@ -905,7 +977,7 @@ class GeometryFixture {
     row.tanHalf = Math.tan(degToRad(half));
     row.length = glow ? GLOW_LENGTH : LIGHT_LENGTH;
     row.goboLayer = lead.gobo || 0;
-    row.goboRotation = lead.goboAngle;
+    row.goboRotation = lead.goboAngle + degToRad(lead.goboIndex);
     row.blur = (lead.frost / 100) * FROST_BLUR + (1 - lead.focus / 100) * FOCUS_BLUR;
     if (glow || !lead.prism) {
       row.direction.copy(axis);
@@ -919,10 +991,16 @@ class GeometryFixture {
     const count = facets ? facets.length : PRISM_FACETS;
     const spread = Math.max(row.tanHalf * PRISM_SPREAD, PRISM_MIN_SPREAD);
     row.intensity *= Math.min(PRISM_FACET_INTENSITY, PRISM_TOTAL / count);
+    // The prism turns the facets around the beam (index angle plus rotation)
+    const spin = degToRad(lead.prismIndex) + lead.prismSpin;
+    const cos = Math.cos(spin);
+    const sin = Math.sin(spin);
     for (let k = 0; k < count; k++) {
       const a = (k / count) * 2 * Math.PI;
-      const dx = (facets ? facets[k][0] : Math.cos(a)) * spread;
-      const dy = (facets ? facets[k][1] : Math.sin(a)) * spread;
+      const fx = facets ? facets[k][0] : Math.cos(a);
+      const fy = facets ? facets[k][1] : Math.sin(a);
+      const dx = (fx * cos - fy * sin) * spread;
+      const dy = (fx * sin + fy * cos) * spread;
       row.direction.copy(axis)
         .addScaledVector(right, dx)
         .addScaledVector(up, dy)
@@ -989,8 +1067,6 @@ class GeometryFixture {
    */
   static prepareInstanciation(scene) {
     sceneHandle = scene;
-    pools.box = new ShapePool(BOX, scene);
-    pools.cylinder = new ShapePool(CYLINDER, scene);
   }
 
   /**

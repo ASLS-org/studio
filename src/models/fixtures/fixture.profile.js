@@ -21,6 +21,8 @@
  * @property {Int16Array} lookup Capability index for each DMX value 0-255, NO_CAPABILITY if none
  * @property {?String} geometry Name of the geometry node the channel drives (see GeometryNode),
  * null for the whole fixture
+ * @property {Number} [defaultValue=0] DMX value the channel starts at once patched (GDTF home
+ * value; OFL channels start at 0)
  */
 
 /**

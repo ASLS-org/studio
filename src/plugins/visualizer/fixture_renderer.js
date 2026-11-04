@@ -1,47 +1,7 @@
-import MovingHead from './moving_head';
 import GeometryFixture from './geometry_fixture';
 import { synthesizeGeometry } from './fixture_shapes';
 import Controls from './controls';
 import EventBus from '../eventbus';
-import { NO_CAPABILITY } from '../../models/fixtures/fixture.profile';
-
-/**
- * Capability types decoded with special handling (others map their value keys onto the model)
- *
- * @constant {Object} CAPABILITY_TYPES
- */
-const CAPABILITY_TYPES = {
-  ColorIntensity: 'ColorIntensity',
-  ColorPreset: 'ColorPreset',
-  WheelSlot: 'WheelSlot',
-};
-
-/**
- * Wheel channel types (channel `type` keys)
- *
- * @constant {Object} WHEEL_CHANNEL_TYPES
- */
-const WHEEL_CHANNEL_TYPES = {
-  COLOR_WHEEL: 'Color Wheel',
-  GOBO_WHEEL: 'Gobo Wheel',
-};
-
-/**
- * Standard attribute of gobo wheel channels (see the OFL adapter)
- *
- * @constant {String} GOBO_ATTRIBUTE
- */
-const GOBO_ATTRIBUTE = 'Gobo1';
-
-/**
- * Finds the name of a fixture's first wheel matching a pattern (OFL wheel names vary: "Gobo Wheel",
- * "Rotating Gobo Wheel"...)
- *
- * @param {Object} wheels Fixture wheels keyed by name
- * @param {RegExp} pattern Wheel name pattern
- * @returns {?String} Wheel name
- */
-const findWheel = (wheels, pattern) => Object.keys(wheels).find((key) => pattern.test(key)) || null;
 
 const radToDeg = (rad) => rad * (180 / Math.PI);
 const degToRad = (deg) => deg * (Math.PI / 180);
@@ -55,7 +15,7 @@ const degToRad = (deg) => deg * (Math.PI / 180);
 class FixtureHandle {
   /**
    * @param {Number} id Fixture id
-   * @param {MovingHead} model Fixture's 3D instance
+   * @param {GeometryFixture} model Fixture's 3D instance
    */
   constructor(id, model) {
     this.id = id;
@@ -150,68 +110,14 @@ class FixtureRenderer {
   }
 
   /**
-   * Creates the 3D instance of a patch entry
+   * Creates the 3D instance of a patch entry, drawn from its geometry tree (GDTF, or built from
+   * its OFL facts)
    *
    * @private
    * @param {Object} entry Patch snapshot entry
    * @returns {Object} Rendered fixture
    */
   createInstance(entry) {
-    const { channels, physical, wheels } = entry;
-    // OFL moving heads keep their model; everything else is drawn from a geometry tree
-    const pixels = channels.some((channel) => channel.geometry);
-    if (entry.geometry || entry.category !== 'Moving Head' || pixels) {
-      return this.createGeometryInstance(entry);
-    }
-    // Only one gobo wheel is drawn: the fixture's first
-    const goboWheel = findWheel(wheels, /gobo/i);
-    const tilt = channels.find((channel) => channel.type === 'Tilt');
-    const pan = channels.find((channel) => channel.type === 'Pan');
-    const zoom = channels.find((channel) => channel.type === 'Zoom');
-    const range = (channel) => (channel && channel.capabilities.length
-      ? [channel.capabilities[0].min, channel.capabilities[channel.capabilities.length - 1].max]
-      : [0, 0]);
-    const model = new MovingHead({
-      minAngle: physical.lens ? physical.lens.degreesMinMax[0] : 10,
-      maxAngle: physical.lens ? physical.lens.degreesMinMax[1] : 25,
-      minTilt: range(tilt)[0],
-      maxTilt: range(tilt)[1],
-      minPan: range(pan)[0],
-      maxPan: range(pan)[1],
-      colorTemp: physical.bulb ? physical.bulb.colorTemperature : undefined,
-      intensity: 0.0,
-      pan: 128,
-      tilt: 128,
-      colorWheel: wheels['Color Wheel'] ? wheels['Color Wheel'].slots : [],
-      goboWheel: goboWheel ? wheels[goboWheel].slots : [],
-      zoomInPercent: FixtureRenderer.zoomInPercent(zoom),
-    });
-    model.position = { ...entry.position };
-    model.rotation = { ...entry.rotation };
-    const instance = {
-      id: entry.id,
-      model,
-      handle: new FixtureHandle(entry.id, model),
-      channels,
-      goboWheel,
-      last: new Uint8Array(channels.length),
-      frame: entry.frame,
-      chStart: entry.chStart,
-      force: true,
-    };
-    this.instances.set(entry.id, instance);
-    return instance;
-  }
-
-  /**
-   * Creates the 3D instance of a fixture drawn from its geometry tree (GDTF, or built from its
-   * OFL facts)
-   *
-   * @private
-   * @param {Object} entry Patch snapshot entry
-   * @returns {Object} Rendered fixture
-   */
-  createGeometryInstance(entry) {
     const {
       channels, wheels, matrix, images,
     } = entry;
@@ -233,7 +139,6 @@ class FixtureRenderer {
       model,
       handle: new FixtureHandle(entry.id, model),
       channels,
-      goboWheel: null,
       last: new Uint8Array(channels.length),
       frame: entry.frame,
       chStart: entry.chStart,
@@ -273,8 +178,7 @@ class FixtureRenderer {
       instance.handle.silent = true;
       Controls.detachAll();
     }
-    if (instance.model instanceof GeometryFixture) instance.model.dispose();
-    else MovingHead.deleteInstance(instance.model);
+    instance.model.dispose();
     this.instances.delete(instance.id);
   }
 
@@ -374,55 +278,13 @@ class FixtureRenderer {
   }
 
   /**
-   * Pushes every channel of a fixture to its 3D instance, in mode order, channel 0 first
-   * (any change resets the colour preset before the channels re-apply it)
+   * Pushes a fixture's DMX bytes to its 3D instance
    *
    * @private
    * @param {Object} instance Rendered fixture
    */
   static decode(instance) {
-    const {
-      model, channels, last, goboWheel,
-    } = instance;
-    if (model instanceof GeometryFixture) {
-      model.decode(last);
-      return;
-    }
-    model.colorPreset = null;
-    model.resetCapabilityValues();
-    for (let id = 0; id < channels.length; id++) {
-      const channel = channels[id];
-      const value = last[id];
-      const index = channel.lookup ? channel.lookup[value] : NO_CAPABILITY;
-      const capability = index === NO_CAPABILITY ? null : channel.capabilities[index];
-      if (capability) {
-        const values = capability.getValue(value);
-        switch (capability.type) {
-          case CAPABILITY_TYPES.ColorIntensity:
-            model.colorIntensity = values;
-            break;
-          case CAPABILITY_TYPES.WheelSlot:
-            if (channel.type === WHEEL_CHANNEL_TYPES.COLOR_WHEEL) {
-              model.colorWheelSlot = Math.floor(values.slotNumber) - 1.0;
-            } else if ((channel.attribute === GOBO_ATTRIBUTE
-              || channel.type === WHEEL_CHANNEL_TYPES.GOBO_WHEEL)
-              && (values.wheel || channel.type) === goboWheel) {
-              model.goboWheelSlot = Math.floor(values.slotNumber) - 1.0;
-            }
-            break;
-          case CAPABILITY_TYPES.ColorPreset:
-            model.colorPreset = values.color ? values.color[0] : null;
-            break;
-          default: {
-            const { valueKeys } = capability;
-            for (let k = 0; k < valueKeys.length; k++) {
-              model[valueKeys[k]] = values[valueKeys[k]];
-            }
-            break;
-          }
-        }
-      }
-    }
+    instance.model.decode(instance.last);
   }
 }
 

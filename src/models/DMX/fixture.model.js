@@ -377,9 +377,13 @@ class Fixture {
     this.prepareChannels();
     this.setupFineChannels();
     this.setupQuickAccessors();
-    // Coarse channels first: writing a coarse channel resets its fine byte
+    // Channels the old mode didn't have keep their home value. Coarse channels first: writing a
+    // coarse channel resets its fine byte
+    const home = this.channels.map((channel) => channel.value.DMX);
     const restore = (channel) => {
-      this.setChannel(channel.id - 1, previousValues[`${channel.type}#${channel.qaIndex}`] || 0);
+      const key = `${channel.type}#${channel.qaIndex}`;
+      const value = key in previousValues ? previousValues[key] : home[channel.id - 1];
+      this.setChannel(channel.id - 1, value);
     };
     this.channels.filter((channel) => !channel.isFine).forEach(restore);
     this.channels.filter((channel) => channel.isFine).forEach(restore);

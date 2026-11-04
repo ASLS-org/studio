@@ -451,14 +451,44 @@ function capabilityData(fn, range, context) {
     const out = (from === 0 && to === 0) || PRISM_OUT.test(name);
     return { ...base, type: out ? 'NoFunction' : 'Prism' };
   }
+  if (/^Gobo\dPos$/.test(attribute)) {
+    return {
+      ...base,
+      type: 'WheelSlotRotation',
+      wheel: context.wheelOf[attribute.slice(0, 5)] || '',
+      angleStart: deg(from),
+      angleEnd: deg(to),
+    };
+  }
+  // Rotation functions on the prism channel itself only exist with the prism in
+  const prism = { wheel: fn.attrs.Wheel || '', prismIn: /^Prism\d$/.test(context.channelAttribute || '') };
   if (/^Prism\dPosRotate$/.test(attribute)) {
-    return { ...base, type: 'PrismRotation' };
+    return {
+      ...base,
+      ...prism,
+      type: 'PrismRotation',
+      speedStart: `${+(from / 6).toFixed(3)}rpm`,
+      speedEnd: `${+(to / 6).toFixed(3)}rpm`,
+    };
+  }
+  if (/^Prism\dPos$/.test(attribute)) {
+    return {
+      ...base, ...prism, type: 'PrismRotation', angleStart: deg(from), angleEnd: deg(to),
+    };
   }
   if (attribute === 'Iris') {
-    return { ...base, type: 'Iris' };
+    // Physical values are the aperture ratio (1 open)
+    return {
+      ...base, type: 'Iris', openPercentStart: percent(from), openPercentEnd: percent(to),
+    };
   }
   if (attribute === 'CTO' || attribute === 'CTC' || attribute === 'CTB') {
-    return { ...base, type: 'ColorTemperature' };
+    return {
+      ...base,
+      type: 'ColorTemperature',
+      colorTemperatureStart: `${Math.round(from)}K`,
+      colorTemperatureEnd: `${Math.round(to)}K`,
+    };
   }
   return { ...base, type: 'Generic' };
 }
@@ -533,11 +563,29 @@ function channelCapabilities(functions, bytes, context) {
 /* ---------------------------------------------------------------- Modes */
 
 /**
+ * Home value of a DMX channel, one value per byte (coarse first): the default of its initial
+ * function (GDTF 1.1+, `InitialFunction` links it by name; else its first function), or the
+ * channel's own `Default` (GDTF 1.0)
+ *
+ * @param {Object} dmxChannel DMXChannel element
+ * @param {Array<Object>} functions Its channel function elements
+ * @param {Number} bytes Channel resolution
+ * @returns {Array<Number>} Byte values
+ */
+function homeBytes(dmxChannel, functions, bytes) {
+  const initial = String(dmxChannel.attrs.InitialFunction || '').split('.').pop();
+  const fn = functions.find((f) => initial && f.attrs.Name === initial) || functions[0];
+  const raw = fn && fn.attrs.Default !== undefined ? fn.attrs.Default : dmxChannel.attrs.Default;
+  const value = dmxValue(raw, bytes);
+  return Array.from({ length: bytes }, (_, i) => Math.floor(value / 256 ** (bytes - 1 - i)) % 256);
+}
+
+/**
  * Builds one profile channel
  *
  * @param {String} baseName Channel name (OFL naming)
  * @param {String} label Display suffix (geometry instance), or ''
- * @param {Object} info Attribute, geometry, fine flag and capability data
+ * @param {Object} info Attribute, geometry, fine flag, capability data and home value
  * @returns {Object} Profile channel without fine pairing and qaIndex
  */
 function buildChannel(baseName, label, info) {
@@ -555,6 +603,7 @@ function buildChannel(baseName, label, info) {
     capabilities,
     lookup: buildCapabilityLookup(capabilities),
     geometry: info.geometry,
+    defaultValue: info.defaultValue || 0,
   };
 }
 
@@ -596,6 +645,7 @@ function buildMode(mode, context) {
     });
     const baseName = CHANNEL_NAMES[attribute] || MIXING_COLORS[attribute]
       || context.pretty[attribute] || attribute;
+    const home = homeBytes(dmxChannel, functions, offsets.length);
 
     const geometryName = dmxChannel.attrs.Geometry || null;
     const instances = geometryName ? instancesOf(geometryName) : [];
@@ -612,13 +662,14 @@ function buildMode(mode, context) {
       slots.push({
         address: addresses[0],
         channel: buildChannel(baseName, target.label, {
-          attribute, geometry: target.geometry, isFine: false, capabilities,
+          attribute, geometry: target.geometry, isFine: false, capabilities, defaultValue: home[0],
         }),
         fineAddresses: addresses.slice(1),
-        fine: addresses.slice(1).map(() => buildChannel(baseName, target.label, {
+        fine: addresses.slice(1).map((_, i) => buildChannel(baseName, target.label, {
           attribute,
           geometry: target.geometry,
           isFine: true,
+          defaultValue: home[i + 1],
           // As OFL: a single-function channel's fine byte retypes that function
           capabilities: capabilities.length === 1
             ? [{ ...capabilities[0], dmxRange: [0, 255], type: `${baseName}${FINE_CHANNEL_TERMINOLOGY}` }]

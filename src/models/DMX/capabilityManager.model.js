@@ -218,7 +218,8 @@ const CAPABILITY_TYPES = {
       max: 100,
     },
   },
-  ColorTeperature: {
+  ColorTemperature: {
+    // Kelvin, or relative values (-100 warm / CTO to 100 cold / CTB) for percentages and presets
     colorTemperature: {
       alias: 'colorTemperature',
       entity: EntityManager.entities.ColorTemperature,
@@ -350,17 +351,17 @@ const CAPABILITY_TYPES = {
     },
     speed: {
       alias: 'wheelRotationSpeed',
-      entity: EntityManager.entities.Speed,
+      entity: EntityManager.entities.RotationSpeed,
       unit: ENTITY_UNIT_RPM,
       min: 0,
       max: 360,
     },
-    shakeAngle: {
+    angle: {
       alias: 'wheelRotationAngle',
-      entity: EntityManager.entities.SwingAngle,
+      entity: EntityManager.entities.RotationAngle,
       unit: ENTITY_UNIT_DEG,
       min: 0,
-      max: 90,
+      max: 360,
     },
   },
   Effect: {
@@ -455,6 +456,40 @@ const CAPABILITY_TYPES = {
       default: true,
     },
   },
+  PrismRotation: {
+    wheel: {
+      alias: 'wheel',
+      default: '',
+    },
+    // GDTF: rotation ranges of the prism channel itself mean the prism is in
+    prismIn: {
+      alias: 'prism',
+      default: false,
+    },
+    speed: {
+      alias: 'prismRotationSpeed',
+      entity: EntityManager.entities.RotationSpeed,
+      unit: ENTITY_UNIT_RPM,
+      min: 0,
+      max: 360,
+    },
+    angle: {
+      alias: 'prismRotationAngle',
+      entity: EntityManager.entities.RotationAngle,
+      unit: ENTITY_UNIT_DEG,
+      min: 0,
+      max: 360,
+    },
+  },
+  Iris: {
+    openPercent: {
+      alias: 'iris',
+      entity: EntityManager.entities.IrisPercent,
+      unit: ENTITY_UNIT_PERC,
+      min: 0,
+      max: 100,
+    },
+  },
 };
 
 /**
@@ -547,6 +582,8 @@ class Capability {
             );
           }
           if (!entityValue && !entityValueStart && !entityValueStop) {
+            // Not in the data: the entity spans its whole range, flagged so readers can skip it
+            this.entities[alias].implicit = true;
             this.entities[alias].start = setting.entity.getValue(
               setting.min + setting.unit,
               setting.unit,
