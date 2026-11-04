@@ -5,6 +5,8 @@ import VOLUMETRIC_BEAM_VERTEX_SHADER from './shaders/beam.vertex.glsl?raw';
 import VOLUMETRIC_BEAM_FRAGMENT_SHADER from './shaders/beam.fragment.glsl?raw';
 
 import InstanceHighlight from './instance_highlight';
+import { goboLayer } from './gobos';
+import { LIGHT_LAYERS } from './stage_lighting';
 
 const MODEL_MATERIAL = new THREE.MeshPhongMaterial({
   color: 0Xffffff,
@@ -24,10 +26,14 @@ const BEAM_LENGTH = 100;
 const BEAM_TOP_RADIUS = 0.09;
 const BEAM_MAX_ANGLE = 45;
 
-const SPOTLIGHT_PHYSICALLY_CORRECT_DISTANCE = 0;
-const SPOTLIGHT_PHYSICALLY_CORRECT_INTENSITY = 100.0;
-const SPOTLIGHT_PHYSICALLY_CORRECT_DECAY = 1.0;
-const SPOTLIGHT_PHYSICALLY_CORRECT_PENUMBRA = 1.2;
+// Light cast on surfaces (see beam_state.js)
+const LIGHT_LENGTH = 60; // meters
+const LENS_OFFSET = 0.258; // lens distance from the head's pivot, along the beam
+const FROST_BLUR = 3; // gobo blur at full frost, in mip levels
+const FOCUS_BLUR = 1; // gobo blur at focus 0, in mip levels
+const PRISM_FACETS = 3;
+const PRISM_SPREAD = 1.6; // facet offset, in half field angles
+const PRISM_FACET_INTENSITY = 0.6;
 
 const DEFAULT_COLOR_TEMP = 8000;
 
@@ -101,6 +107,24 @@ let boundingBoxMesh;
 let camera_handle = null;
 let scene_handle = null;
 
+// Scratch values for writing beam state rows (no allocation per frame)
+const beam_row = {
+  origin: new THREE.Vector3(),
+  direction: new THREE.Vector3(),
+  right: new THREE.Vector3(),
+  up: new THREE.Vector3(),
+  tanHalf: 0,
+  length: LIGHT_LENGTH,
+  color: null,
+  intensity: 0,
+  goboLayer: 0,
+  goboRotation: 0,
+  blur: 0,
+};
+const beam_axis = new THREE.Vector3();
+const beam_right = new THREE.Vector3();
+const beam_up = new THREE.Vector3();
+
 const instances = [];
 let instanceCount = 0;
 
@@ -164,6 +188,13 @@ class MovingHead {
     this._colorWheel = data.colorWheel;
     this._activeColorPreset = false;
     this._highlighted = false;
+    this._goboLayer = 0;
+    this._goboRotationSpeed = 0;
+    this._goboAngle = 0;
+    this._frost = 0;
+    this._focus = 100;
+    this._prism = false;
+    this._lastTime = null;
 
     this.prepareInstance();
 
@@ -207,7 +238,6 @@ class MovingHead {
     const clampedAngleValue = Math.min(angle / 2, BEAM_MAX_ANGLE);
     if (clampedAngleValue !== this._angle) {
       this._angle = clampedAngleValue;
-      this._spotLight.angle = MovingHead.degToRad(this.angle);
       angle_buffer_attribute.setY(this._id, 1.0);
       angle_buffer_attribute.setX(this._id, this.angle);
     } else {
@@ -227,7 +257,6 @@ class MovingHead {
    */
   set color(color) {
     this._color = color instanceof THREE.Color ? color : new THREE.Color(color);
-    this._spotLight.color = this._color;
     color_buffer_attribute.setXYZ(this._id, this._color.r, this._color.g, this._color.b);
     color_buffer_attribute.needsUpdate = true;
   }
@@ -309,7 +338,6 @@ class MovingHead {
 
   set intensity(intensity) {
     this._intensity = Math.min(Math.abs(intensity), 1.0);
-    this._spotLight.intensity = SPOTLIGHT_PHYSICALLY_CORRECT_INTENSITY * this._intensity;
     intensity_buffer_attribute.setX(this._id, this._intensity);
     intensity_buffer_attribute.needsUpdate = true;
   }
@@ -418,17 +446,91 @@ class MovingHead {
     const angle = this._maxAngle * (zoomValue / 100);
     const clampedAngleValue = Math.min(angle / 2, BEAM_MAX_ANGLE);
     this._angle = clampedAngleValue;
-    this._spotLight.angle = MovingHead.degToRad(this._angle);
     angle_buffer_attribute.setY(this._id, 1.0);
     angle_buffer_attribute.setX(this._id, this._angle);
     angle_buffer_attribute.needsUpdate = true;
   }
 
+  /**
+   * Focus, 0 to 100 (100 is sharp): blurs the gobo
+   *
+   * @type {Number}
+   */
   set focus(focus) {
-    this._spotLight.penumbra = Math.max(
-      SPOTLIGHT_PHYSICALLY_CORRECT_PENUMBRA - SPOTLIGHT_PHYSICALLY_CORRECT_PENUMBRA * (focus / 100),
-      0.3,
-    );
+    this._focus = Math.min(Math.max(focus, 0), 100);
+  }
+
+  get focus() {
+    return this._focus;
+  }
+
+  /**
+   * Frost, 0 to 100: blurs the gobo
+   *
+   * @type {Number}
+   */
+  set frost(frost) {
+    this._frost = Math.min(Math.max(frost, 0), 100);
+  }
+
+  get frost() {
+    return this._frost;
+  }
+
+  /**
+   * Whether the prism is in, splitting the beam into facets
+   *
+   * @type {Boolean}
+   */
+  set prism(state) {
+    this._prism = Boolean(state);
+  }
+
+  get prism() {
+    return this._prism;
+  }
+
+  /**
+   * Gobo wheel slot (zero-based index into the fixture's gobo wheel)
+   *
+   * @type {Number}
+   */
+  set goboWheelSlot(slotId) {
+    this._goboLayer = goboLayer(this._goboWheel, slotId);
+  }
+
+  /**
+   * Gobo rotation speed in rpm (negative turns the other way)
+   *
+   * @type {Number}
+   */
+  set wheelRotationSpeed(speed) {
+    this._goboRotationSpeed = speed || 0;
+  }
+
+  get wheelRotationSpeed() {
+    return this._goboRotationSpeed;
+  }
+
+  /**
+   * Whether the beam changes on its own between DMX updates (strobe, rotating gobo)
+   *
+   * @type {Boolean}
+   */
+  get animating() {
+    return this._strobeFrequency > 0 || this._goboRotationSpeed !== 0;
+  }
+
+  /**
+   * Resets the values only some channel capabilities set, before a fixture's channels are decoded
+   * again (a channel moving to "no function" must clear them)
+   *
+   * @public
+   */
+  resetCapabilityValues() {
+    this._prism = false;
+    this._frost = 0;
+    this._goboRotationSpeed = 0;
   }
 
   /**
@@ -550,26 +652,11 @@ class MovingHead {
     this._targetDummy = new THREE.Object3D();
     this._boundingBoxDummy = new THREE.Object3D();
 
-    this._spotLight = new THREE.SpotLight(
-      this.colorTemp,
-      SPOTLIGHT_PHYSICALLY_CORRECT_INTENSITY,
-      SPOTLIGHT_PHYSICALLY_CORRECT_DISTANCE,
-      MovingHead.degToRad(this.angle),
-      SPOTLIGHT_PHYSICALLY_CORRECT_PENUMBRA,
-      SPOTLIGHT_PHYSICALLY_CORRECT_DECAY,
-    );
-
-    this._spotLight.applyMatrix4(new THREE.Matrix4().makeRotationX(-Math.PI / 2));
-    this._spotLight.applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, 0.9));
-
     this._dummy.add(this._yokeDummy);
 
     this._yokeDummy.attach(this._headDummy);
     this._headDummy.attach(this._beamDummy);
     this._beamDummy.attach(this._targetDummy);
-    this._beamDummy.attach(this._spotLight);
-
-    this._spotLight.target = this._targetDummy;
 
     syncInstanceCounts();
 
@@ -628,16 +715,70 @@ class MovingHead {
       this._shutter = 1.0;
     }
 
-    // eslint-disable-next-line max-len
-    this._spotLight.intensity = SPOTLIGHT_PHYSICALLY_CORRECT_INTENSITY * this.intensity * this._shutter;
     intensity_buffer_attribute.setX(this._id, this.intensity * this._shutter);
     intensity_buffer_attribute.needsUpdate = true;
   }
 
-  update(t) {
+  /**
+   * Turns the gobo by its rotation speed since the last frame
+   *
+   * @private
+   * @param {Number} t Time in seconds
+   */
+  updateGoboRotation(t) {
+    if (this._lastTime !== null && this._goboRotationSpeed !== 0) {
+      this._goboAngle = (this._goboAngle
+        + (this._goboRotationSpeed / 60) * 2 * Math.PI * (t - this._lastTime)) % (2 * Math.PI);
+    }
+    this._lastTime = t;
+  }
+
+  /**
+   * Appends this fixture's beams (one, or one per prism facet) to the beam state
+   *
+   * @private
+   * @param {BeamState} beamState Beam state being written this frame
+   */
+  writeBeams(beamState) {
+    const e = this._beamDummy.matrixWorld.elements;
+    beam_right.set(e[0], e[1], e[2]).normalize();
+    beam_up.set(e[4], e[5], e[6]).normalize();
+    beam_axis.set(e[8], e[9], e[10]).normalize();
+    const row = beam_row;
+    row.origin.set(e[12], e[13], e[14]).addScaledVector(beam_axis, LENS_OFFSET);
+    row.tanHalf = Math.tan(MovingHead.degToRad(this.angle));
+    row.color = this.color;
+    row.goboLayer = this._goboLayer;
+    row.goboRotation = this._goboAngle;
+    row.blur = (this._frost / 100) * FROST_BLUR + (1 - this._focus / 100) * FOCUS_BLUR;
+    if (!this._prism) {
+      row.intensity = this.intensity;
+      row.direction.copy(beam_axis);
+      row.right.copy(beam_right);
+      row.up.copy(beam_up);
+      beamState.push(row);
+      return;
+    }
+    row.intensity = this.intensity * PRISM_FACET_INTENSITY;
+    for (let k = 0; k < PRISM_FACETS; k++) {
+      const a = (k / PRISM_FACETS) * 2 * Math.PI;
+      const offset = row.tanHalf * PRISM_SPREAD;
+      row.direction.copy(beam_axis)
+        .addScaledVector(beam_right, Math.cos(a) * offset)
+        .addScaledVector(beam_up, Math.sin(a) * offset)
+        .normalize();
+      row.up.copy(beam_up).addScaledVector(row.direction, -beam_up.dot(row.direction)).normalize();
+      row.right.crossVectors(row.up, row.direction);
+      beamState.push(row);
+    }
+  }
+
+  update(t, beamState) {
     this.updateStrobe(t);
+    this.updateGoboRotation(t);
     this.updateMatrix();
     this.updateDirectionVector();
+    this.writeBeams(beamState);
   }
 
   static degToRad(degAngle) {
@@ -730,6 +871,7 @@ class MovingHead {
     baseMesh.frustumCulled = false;
     yokeMesh.frustumCulled = false;
     headMesh.frustumCulled = false;
+    [baseMesh, yokeMesh, headMesh].forEach((mesh) => mesh.layers.enable(LIGHT_LAYERS.OCCLUDER));
 
     baseMesh.count = instanceCount;
     yokeMesh.count = instanceCount;
@@ -836,22 +978,34 @@ class MovingHead {
     scene.add(baseMesh, yokeMesh, headMesh, beamMesh, capMesh, boundingBoxMesh, ...highlightMeshes);
   }
 
-  static update(t) {
-    instances.forEach((instance) => {
-      instance.update(t);
-    });
+  /**
+   * Updates every instance and rewrites the beam state
+   *
+   * @public
+   * @param {Number} t Time in seconds
+   * @param {BeamState} beamState Beam state to rewrite
+   * @returns {Boolean} Whether a beam animates on its own (strobe, rotating gobo, fog turbulence)
+   */
+  static update(t, beamState) {
+    let animating = MovingHead.fogState && MovingHead.fogTurbulence > 0;
+    beamState.begin();
+    for (let i = 0; i < instances.length; i++) {
+      instances[i].update(t, beamState);
+      animating = animating || instances[i].animating;
+    }
+    beamState.end();
     beamMesh.material.uniforms.time.value = t;
     camera_handle.getWorldDirection(vector_cam.normalize());
     beamMesh.material.uniforms.cameraDir.value = vector_cam;
     camera_handle.getWorldPosition(vector_cam_pos.normalize());
     beamMesh.material.uniforms.cameraPos.value = vector_cam_pos;
+    return animating;
   }
 
   static deleteInstance(instance) {
     scene_handle.remove(instance._headDummy);
     scene_handle.remove(instance._yokeDummy);
     scene_handle.remove(instance._beamDummy);
-    scene_handle.remove(instance._spotLight);
     scene_handle.remove(instance._dummy);
 
     instances.splice(instance.id, 1);

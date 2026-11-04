@@ -6,12 +6,16 @@ Three.js r170 WebGL renderer for the rig. It is instantiated by
 
 | Module | Role |
 |---|---|
-| `visualizer.js` | renderer, camera, orbit controls, render loop, global fog/brightness preferences |
+| `visualizer.js` | renderer, camera, orbit controls, render-on-demand loop, fog/brightness preferences, quality settings |
 | `scene_manager.js` | singleton `THREE.Scene` |
 | `animation_manager.js` | singleton rAF loop for render-side animations (separate from `Live`) |
 | `model_instancer.js` | GLTF/Draco preloading from `public/visualizer/models/model_list.json` |
 | `fixture_renderer.js` | one `MovingHead` per patched fixture from `Show.patchSnapshot`; decodes universe frames through profile channels; gizmo handles |
-| `moving_head.js` | fixture 3D instance: pan/tilt/zoom/colour/strobe/wheel setters + volumetric beam |
+| `moving_head.js` | fixture 3D instance: pan/tilt/zoom/colour/strobe/gobo/frost/prism setters, in-air beam cone; writes its beam rows (one per prism facet) |
+| `beam_state.js` | per-beam float texture (cone matrix, inverse, colour, gobo, floor footprint, origin), rewritten each frame; read by every lighting pass |
+| `stage_lighting.js` | quality levels: Guides (unlit), Low (floor decals), Medium/High (deferred light volumes on receivers at a resolution scale), beam guides; object layers RECEIVER/OCCLUDER |
+| `gobos.js` | built-in gobo patterns drawn in code into a mipmapped texture array; wheel slot → layer |
+| `quality.js` | quality settings in `localStorage` (never in `showData`), starting level from the device, `QualityGovernor` for Auto |
 | `shaders/beam.*.glsl` | volumetric beam shaders, imported with `?raw` |
 | `controls.js` | TransformControls (translate/rotate) for fixture placement |
 | `instance_highlight.js` | selection outline |
@@ -30,6 +34,13 @@ Three.js r170 WebGL renderer for the rig. It is instantiated by
   into models.
 - Per-frame code (`update(t)`, setters called each tick) must not allocate: reuse vectors, colours
   and materials. Dispose geometries, materials and textures when removing instances.
+- Render on demand: `Visualizer.render()` draws only when `needsRender` is set (DMX change, camera
+  move, gizmo `change`, pointer/key input, settings, patch/pose/highlight via `FixtureRenderer`'s
+  `onChange`) or a beam animates (strobe, gobo rotation, fog turbulence). Anything new that changes
+  the picture must call `visualizer.invalidate()`.
+- There are no three.js lights for fixtures. Beam light comes from `stage_lighting.js`; a surface
+  lit by beams registers with `lighting.addReceiver(mesh, albedoMaterial)`, and fixture bodies sit on
+  the OCCLUDER layer. The world floor is the plane z = 0.
 - Static assets load through `import.meta.env.VITE_STATIC_URL` (the `static://` protocol in
   Electron). Never hard-code `/`.
 - Many files are `/* eslint-disable */`. Don't spread that: new modules lint clean, and imports from

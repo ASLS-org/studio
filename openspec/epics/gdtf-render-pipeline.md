@@ -94,7 +94,8 @@ Confirmed by the user:
 Proposed defaults (to confirm in the relevant unit):
 - WebGL2 baseline, no WebGL1 path. WebGPU/TSL only as a later T3 path.
 - Per-beam state buffer as the only input to every rendering tier.
-- Visualizer in a Worker with `OffscreenCanvas`, same-thread fallback.
+- Visualizer in a Worker with `OffscreenCanvas`, same-thread fallback. Moved out of unit 3 into
+  the optional unit 6 (2026-11-04).
 - Keep an OFL adapter so existing showfiles and the bundled library keep working.
 - No float render targets in T0-T1 (not guaranteed on V3D).
 
@@ -111,9 +112,10 @@ Open (answer in the unit that needs it):
 |---|---|---|---|
 | 1 | `add-fixture-profile` | none | archived |
 | 2 | `decouple-visualizer-from-models` | 1 | archived |
-| 3 | `add-projector-lighting` (starts with a performance spike) | 2 | proposed |
+| 3 | `add-projector-lighting` (starts with a performance spike; spike on the 2015 laptop and Pi 5 still to run) | 2 | archived |
 | 4 | `add-volumetric-beams` | 3 | proposed |
 | 5 | `add-gdtf-fixtures` | 1, 2, 3 | proposed |
+| 6 | `move-visualizer-to-worker` (optional: only if the end-of-epic smoke and performance tests call for it) | 3 | proposed |
 
 Status values: proposed, refining, applying, archived.
 
