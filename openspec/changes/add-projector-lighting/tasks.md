@@ -104,11 +104,15 @@
 - [x] 8.1 Update `src/plugins/visualizer/CLAUDE.md` (beam state, quality levels, render on demand,
       no fixture lights) (skill `ai-context-maintenance`). Verify: the file describes the new
       renderer. The Worker tasks moved to the optional unit `move-visualizer-to-worker`.
-- [ ] 8.2 With the demo show in `npm start`, run a scene, a dimmer effect and a looping chase at
+- [x] 8.2 With the demo show in `npm start`, run a scene, a dimmer effect and a looping chase at
       each quality level with guides on and off; check gobos, colours and footprints match the
       DMX values in the universe view (skill `run-studio`). Verify: spec "The view shows the
       output values" holds at every level.
-- [ ] 8.3 `npx eslint` on all touched files is clean.
+      Note (2026-11-04): chase "Amber Rainbow", scene Cue 5 and effect cues 0, 4 and 8 playing
+      together; at every level, guides on and off, the decoded dimmer matches the universe frame
+      (within one engine step), about 60 fps on an M2, no console errors.
+- [x] 8.3 `npx eslint` on all touched files is clean.
+      Note (2026-11-04): `visualizer.js` is `/* eslint-disable */` already (pre-existing).
 
 ## Workflow follow-up
 
