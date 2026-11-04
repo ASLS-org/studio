@@ -47,9 +47,11 @@ Visualizer preferences today: `globalFoggingState`, `globalFoggingDensity`,
    | Level | Air beam | Buffer | Bloom |
    |---|---|---|---|
    | Guides | none | - | no |
-   | Low | closed form, no gobo, clipped by the floor plane only | 1/4 | no |
-   | Medium | closed form, gobo sampled once at the segment middle with extra blur | 1/4 | yes |
-   | High | raymarch, 16 samples (governor: 8 before any resolution step), gobo and haze noise per sample | 1/2 | yes |
+   | Low | closed form, no gobo, clipped by the floor plane only | 1/2 | no |
+   | Medium | closed form, gobo sampled once at the segment middle with extra blur | 1/2 | yes |
+   | High | raymarch, 16 samples (governor: 8 before any resolution step), gobo and haze noise per sample | full | yes |
+
+   (Buffer sizes raised from 1/4, 1/4, 1/2 in the second review, decision 10.)
 
    Low has no prepass, so its beams are not hidden behind fixture bodies; Medium and High clip
    against the prepass depth and upsample depth-aware.
@@ -76,6 +78,19 @@ Visualizer preferences today: `globalFoggingState`, `globalFoggingDensity`,
    - Haze noise tiles every 25 m and drifts slowly. Bloom only takes light above 1.2, at 0.25
      strength. Lens glow is a small Gaussian reaching 0 at the sprite edge (no ring), strongest
      looking into the fixture. Surface gain 80, air gain 0.2, gobo rim softened (0.8-1.0).
+
+10. **Sharpness and artifact fixes** (2026-11-04, second review: faint, blurry, holes looking up a
+    beam, "fish scales" in a crowded rig):
+    - The ray's segment inside the cone is exact (sides, apex plane, far cap); the polygon hull
+      only decides which pixels run. Bounding the segment by the hull's faces made brightness
+      step along every facet: the fish scales.
+    - The closed form is integrated in 4 pieces, each with its own profile, phase, extinction
+      and end fade, instead of one representative point; the profile's radius never drops
+      below the lens (0.1 m). Both removed the holes and hard discs near the lens.
+    - Raymarch jitter is offset per beam, so overlapping beams don't stack one pattern.
+    - Buffers: Low and Medium 1/2, High full resolution (times the resolution scale); a 3-tap blur
+      only below full resolution; profile rim 0.55-1.0; phase g = 0.3 (about 3× head-on); air
+      gain 0.35, extinction 0.008 /m; dithering only on 8-bit buffers; lens glow rolls off.
 
 ## Risks / Trade-offs
 

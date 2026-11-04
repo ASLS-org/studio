@@ -46,9 +46,9 @@ const LEVEL_SCALE = {
  * @constant {Object} AIR_LEVELS
  */
 const AIR_LEVELS = {
-  [QUALITY_LEVELS.LOW]: { mode: AIR_MODES.PLAIN, fraction: 0.25 },
-  [QUALITY_LEVELS.MEDIUM]: { mode: AIR_MODES.SOFT_GOBO, fraction: 0.25 },
-  [QUALITY_LEVELS.HIGH]: { mode: AIR_MODES.RAYMARCH, fraction: 0.5 },
+  [QUALITY_LEVELS.LOW]: { mode: AIR_MODES.PLAIN, fraction: 0.5 },
+  [QUALITY_LEVELS.MEDIUM]: { mode: AIR_MODES.SOFT_GOBO, fraction: 0.5 },
+  [QUALITY_LEVELS.HIGH]: { mode: AIR_MODES.RAYMARCH, fraction: 1 },
 };
 
 const GAIN = 80; // light reaching a surface 1 m away, before the 4 m² falloff offset

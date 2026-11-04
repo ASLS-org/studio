@@ -22,10 +22,12 @@ export const AIR_MODES = {
  */
 export const AIR_SAMPLES = [16, 8];
 
-const AIR_GAIN = 0.2; // air light per unit of haze density, before falloff
+const AIR_GAIN = 0.35; // air light per unit of haze density, before falloff
 const FALLOFF = 0.04; // inverse-square falloff: 1 / (1 + FALLOFF × distance²)
-const EXTINCTION = 0.015; // haze extinction toward the camera, per meter
-const PHASE = 0.55; // forward scattering (Henyey-Greenstein g): brighter looking into a beam
+const EXTINCTION = 0.008; // haze extinction toward the camera, per meter
+const LENS_RADIUS = 0.1; // meters
+const AIR_PIECES = 4; // closed-form pieces per ray
+const PHASE = 0.3; // forward scattering (Henyey-Greenstein g): about 3× brighter head-on
 const HAZE_SCALE = 0.04; // haze noise: one texture tile per 25 m
 const MOVEMENT_SPEED = 0.02; // haze drift at Movement 100, in noise texture units per second
 
@@ -70,7 +72,9 @@ out highp vec4 outColor;
 float endFade(float z) { return 1.0 - smoothstep(0.25, 0.9, z); }
 
 // Soft beam edge: full in the core, fading to 0 at the cone's rim (r = 1)
-float profile(float r) { return 1.0 - smoothstep(0.3, 1.0, r); }
+float profile(float r) { return 1.0 - smoothstep(0.55, 1.0, r); }
+
+bool insideCone(vec3 q) { return q.z > 0.0 && q.z <= 1.0 && dot(q.xy, q.xy) < q.z * q.z; }
 
 // Henyey-Greenstein phase, relative to a side view (1 at 90 degrees)
 float phase(float cosTheta) {
@@ -82,9 +86,8 @@ float phase(float cosTheta) {
 void main() {
   vec2 uv = gl_FragCoord.xy / uTargetSize;
   vec3 C = cameraPosition;
-  vec3 toBack = vWorld - C;
-  float tExit = length(toBack);
-  vec3 dir = toBack / tExit;
+  vec3 dir = normalize(vWorld - C);
+  float tExit = 1e9;
   if (dir.z < 0.0 && C.z > 0.0) tExit = min(tExit, C.z / -dir.z);
   if (uUseDepth > 0.5) {
     float d = texture(uDepth, uv).r;
@@ -96,53 +99,80 @@ void main() {
   mat4 inv = beamMatrix(vId, 4);
   vec3 c0 = (inv * vec4(C, 1.0)).xyz;
   vec3 v = (inv * vec4(dir, 0.0)).xyz;
-  float tEnter = 0.0;
-  if (!(c0.z > 0.0 && dot(c0.xy, c0.xy) < c0.z * c0.z)) {
-    float a = dot(v.xy, v.xy) - v.z * v.z;
-    float b = 2.0 * (dot(c0.xy, v.xy) - c0.z * v.z);
-    float c = dot(c0.xy, c0.xy) - c0.z * c0.z;
-    float disc = b * b - 4.0 * a * c;
-    if (disc > 0.0 && abs(a) > 1e-6) {
-      float sq = sqrt(disc);
-      float t1 = (-b - sq) / (2.0 * a);
-      float t2 = (-b + sq) / (2.0 * a);
-      float tn = min(t1, t2);
-      float tf = max(t1, t2);
-      if (tn > 0.0 && c0.z + tn * v.z > 0.0) tEnter = tn;
-      else if (tf > 0.0 && c0.z + tf * v.z > 0.0) tEnter = tf;
-    }
+
+  // Exact segment of the ray inside the cone (0 < z <= 1, x² + y² < z²). The hull is a polygon
+  // slightly larger than the cone and only decides which pixels run; its faces never bound the
+  // segment, or brightness would step along every facet.
+  float qa = dot(v.xy, v.xy) - v.z * v.z;
+  float qb = 2.0 * (dot(c0.xy, v.xy) - c0.z * v.z);
+  float qc = dot(c0.xy, c0.xy) - c0.z * c0.z;
+  float crossings[4] = float[4](-1.0, -1.0, -1.0, -1.0);
+  float disc = qb * qb - 4.0 * qa * qc;
+  if (abs(qa) > 1e-6 && disc >= 0.0) {
+    float sq = sqrt(disc);
+    crossings[0] = (-qb - sq) / (2.0 * qa);
+    crossings[1] = (-qb + sq) / (2.0 * qa);
+  } else if (abs(qb) > 1e-6) {
+    crossings[0] = -qc / qb;
   }
+  if (abs(v.z) > 1e-6) {
+    crossings[2] = -c0.z / v.z;
+    crossings[3] = (1.0 - c0.z) / v.z;
+  }
+  float tEnter = insideCone(c0) ? 0.0 : 1e9;
+  for (int i = 0; i < 4; i++) {
+    float t = crossings[i];
+    if (t > 0.0 && t < tEnter && insideCone(c0 + v * (t + 1e-3 * max(t, 1.0)))) tEnter = t;
+  }
+  float tCone = 1e9;
+  for (int i = 0; i < 4; i++) {
+    float t = crossings[i];
+    if (t > tEnter && t < tCone && !insideCone(c0 + v * (t + 1e-3 * max(t, 1.0)))) tCone = t;
+  }
+  tExit = min(tExit, tCone);
   if (tEnter >= tExit) discard;
   vec4 g = beamTexel(vId, 9);
   vec4 o = beamTexel(vId, 11);
   vec3 axis = normalize(beamTexel(vId, 2).xyz);
 
-  // In-scattering of a point source with 1 / (1 + k d^2) falloff, integrated over the segment
+  // In-scattering of a point source with 1 / (1 + k d^2) falloff, integrated in closed form over
+  // PIECES equal parts of the segment, each weighted by the beam profile, phase, extinction and
+  // end fade at its middle
   vec3 ao = C - o.xyz;
   float b = dot(ao, dir);
   float h2 = max(dot(ao, ao) - b * b, 0.0);
   float sk = sqrt(uFalloff);
   float sa = sqrt(1.0 + uFalloff * h2);
-  float base = (atan(sk * (tExit + b) / sa) - atan(sk * (tEnter + b) / sa)) / (sk * sa);
+  float light = 0.0;
+  float prev = atan(sk * (tEnter + b) / sa);
+  for (int k = 1; k <= PIECES; k++) {
+    float t = mix(tEnter, tExit, float(k) / float(PIECES));
+    float next = atan(sk * (t + b) / sa);
+    float tm = t - 0.5 * (tExit - tEnter) / float(PIECES);
+    vec3 lm = C + dir * tm - o.xyz;
+    float along = max(dot(lm, axis), 1e-3);
+    // Never thinner than the lens, so a ray passing by the lens doesn't count as outside the beam
+    float r = length(lm - axis * along) / max(along * g.w, ${LENS_RADIUS.toFixed(2)});
+    light += (next - prev) / (sk * sa) * profile(r) * phase(dot(normalize(lm), -dir))
+      * exp(-uExtinction * tm) * endFade(along / o.w);
+    prev = next;
+  }
 
-  // Where the ray passes closest to the beam axis, inside the segment
+  // Where the ray passes closest to the beam axis, inside the segment (soft gobo at Medium)
   float dd = dot(dir, axis);
   float denom = 1.0 - dd * dd;
   float tc = denom > 1e-4 ? (dd * dot(axis, ao) - b) / denom : 0.5 * (tEnter + tExit);
   tc = clamp(tc, tEnter, tExit);
-  vec3 lc = C + dir * tc - o.xyz;
-  float along = max(dot(lc, axis), 1e-3);
-  float r = length(lc - axis * along) / (along * g.w);
-  float light = base * profile(r) * phase(dot(normalize(lc), -dir)) * exp(-uExtinction * tc)
-    * endFade(along / o.w);
 
 #if MODE == 1
-  vec3 qc = c0 + v * tc;
-  light *= 0.4 + 0.6 * goboAt(qc.xy / max(qc.z, 1e-4), g + vec4(0.0, 0.0, 2.5, 0.0));
+  vec3 closest = c0 + v * tc;
+  light *= 0.4 + 0.6 * goboAt(closest.xy / max(closest.z, 1e-4), g + vec4(0.0, 0.0, 2.5, 0.0));
 #elif MODE == 2
   // Gobo and haze variation, averaged with the same falloff weights as the base
   float dt = (tExit - tEnter) / float(STEPS);
-  float jitter = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+  // Offset per beam, so overlapping beams don't stack the same sampling pattern
+  float jitter = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))
+    + float(vId) * 0.618034);
   float sum = 0.0;
   float weight = 0.0;
   for (int i = 0; i < STEPS; i++) {
@@ -159,26 +189,25 @@ void main() {
   light *= weight > 0.0 ? sum / weight : 0.0;
 #endif
   vec3 color = beamTexel(vId, 8).rgb * (beamPower(vId) * light * uHaze * uAccum);
-  // Dither below one 8-bit step, so faint beam ends fade instead of banding
-  float dither = (fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.0671, 0.0058)))) - 0.5)
-    / 255.0;
-  outColor = vec4(max(color + dither, 0.0), 1.0);
+#ifdef DITHER
+  // 8-bit buffer: dither below one step, so faint beam ends fade instead of banding
+  color += (fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.0671, 0.0058)))) - 0.5) / 255.0;
+#endif
+  outColor = vec4(max(color, 0.0), 1.0);
 }
 `;
 
-// Small separable blur of the air buffer (5 taps), before upsampling: removes raymarch grain
-// and the steps of a low-resolution buffer
+// Light separable blur of the air buffer (3 taps) when it's below the canvas resolution, before
+// upsampling: removes raymarch grain and the steps of a low-resolution buffer
 const BLUR_FRAGMENT = /* glsl */`
 uniform sampler2D uSource;
 uniform vec2 uStep;
 in vec2 vUv;
 out highp vec4 outColor;
 void main() {
-  vec3 c = texture(uSource, vUv).rgb * 0.375;
+  vec3 c = texture(uSource, vUv).rgb * 0.5;
   c += texture(uSource, vUv + uStep).rgb * 0.25;
   c += texture(uSource, vUv - uStep).rgb * 0.25;
-  c += texture(uSource, vUv + uStep * 2.0).rgb * 0.0625;
-  c += texture(uSource, vUv - uStep * 2.0).rgb * 0.0625;
   outColor = vec4(c, 1.0);
 }
 `;
@@ -250,6 +279,12 @@ class AirBeams {
    */
   constructor(renderer, shared, beamState) {
     this.renderer = renderer;
+    /**
+     * Whether the GPU renders to half-float buffers (no banding, no dithering needed)
+     *
+     * @type {Boolean}
+     */
+    this.halfFloat = renderer.extensions.has('EXT_color_buffer_float');
     this._mode = AIR_MODES.PLAIN;
     [this._samples] = AIR_SAMPLES;
     this._fraction = 0.25;
@@ -333,7 +368,12 @@ class AirBeams {
         depthTest: false,
         depthWrite: false,
         side: THREE.BackSide,
-        defines: { MODE: this._mode, STEPS: this._samples },
+        defines: {
+          MODE: this._mode,
+          STEPS: this._samples,
+          PIECES: AIR_PIECES,
+          ...(this.halfFloat ? {} : { DITHER: 1 }),
+        },
         uniforms: this.uniforms,
         vertexShader: AIR_VERTEX,
         fragmentShader: AIR_FRAGMENT,
@@ -404,8 +444,7 @@ class AirBeams {
     const w = Math.max(1, Math.round(this._size.x * this._fraction));
     const h = Math.max(1, Math.round(this._size.y * this._fraction));
     // Half float where the GPU can render to it (no banding); RGBA8 with dithering otherwise
-    const type = this.renderer.extensions.has('EXT_color_buffer_float')
-      ? THREE.HalfFloatType : THREE.UnsignedByteType;
+    const type = this.halfFloat ? THREE.HalfFloatType : THREE.UnsignedByteType;
     this._target = new THREE.WebGLRenderTarget(w, h, { depthBuffer: false, type });
     this._blurTarget = new THREE.WebGLRenderTarget(w, h, { depthBuffer: false, type });
     this.uniforms.uTargetSize.value.set(w, h);
@@ -464,7 +503,7 @@ class AirBeams {
     renderer.setRenderTarget(this._target);
     renderer.clear();
     renderer.render(this.scene, camera);
-    this.blur();
+    if (this._fraction < 1) this.blur();
     renderer.setRenderTarget(null);
     renderer.render(this.compositeScene, this.screenCamera);
   }

@@ -96,6 +96,18 @@
 - [x] 7.4 `npx eslint` on the touched visualizer files is clean; playback at every level shows no
       console errors.
 
+## 8. Sharpness and artifacts (second review)
+
+- [x] 8.1 Exact ray segment inside the cone (hull only for coverage), per-beam jitter offset.
+      Verify: a crowded rig (16 beams crossing, wide zoom) shows no facet pattern at High, Medium
+      and Low (screenshots `cu-e-crowd-*.png`).
+- [x] 8.2 Closed form in 4 pieces, profile radius floored at the lens, phase g = 0.3. Verify:
+      looking up a beam from inside it shows the lens and haze glow, no holes or hard disc
+      (`cu-e-up.png`).
+- [x] 8.3 Sharper buffers (Low/Medium 1/2, High full), 3-tap blur only below full resolution,
+      tighter profile rim, brighter air, dithering only on 8-bit buffers. Verify: no shader
+      errors in the console; `npx eslint` clean on the touched files.
+
 ## Workflow follow-up
 
 - Archive the change on the unit branch, set unit 4 to `archived` in the epic doc, then open a PR

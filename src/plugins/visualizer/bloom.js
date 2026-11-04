@@ -41,7 +41,8 @@ void main() {
   if (r2 > 1.0) discard;
   // Gaussian that reaches exactly 0 at the sprite's edge, so no ring shows
   float glow = max(exp(-r2 * 6.0) - exp(-6.0), 0.0) / (1.0 - exp(-6.0));
-  vec3 light = vColor * glow * 1.5;
+  // Roll off instead of clipping, so a glow seen up close stays soft
+  vec3 light = 1.0 - exp(-vColor * glow * 1.2);
 #ifdef TO_SCREEN
   outColor = linearToOutputTexel(vec4(light, 1.0));
 #else
