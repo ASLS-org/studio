@@ -13,17 +13,6 @@ import EventBus from '../../plugins/eventbus';
 const MAX_DMX_VALUE = 255;
 
 /**
- * OFL Fixture category definitions for parsing fixture type
- *
- * @constant
- * @type {Object}
- * @default
- */
-const FIXTURE_TYPES = {
-  MOVING_HEAD: 'Moving Head',
-};
-
-/**
  * Default fixture name
  *
  * @constant
@@ -76,6 +65,7 @@ class Fixture {
    * @param {Object} data.model Manufacturer's fixture model name as described in fixture_list.json
    * @param {String|Number} data.mode Name (or index) of the fixture's selected running mode
    * @param {Object} data.chStart FIxture's universe address/starting channel
+   * @param {Number} [data.channelCount] Channel count saved with the show
    * @param {Object} data.position Fixture's position in 3D space
    * @param {Object} data.rotation Fixture's rotation in 3D space
    */
@@ -92,6 +82,8 @@ class Fixture {
       this.name = data.name || DEFAULT_FIXTURE_NAME;
       this.category = data.category;
       this.chStart = parseInt(data.chStart, 10);
+      // Channel count saved with the show (absent in showfiles saved before it existed)
+      this.savedChannelCount = Number.isInteger(data.channelCount) ? data.channelCount : null;
       this.channels = [];
       this.quickChannelsAccessors = {};
       this._highlighted = false;
@@ -159,11 +151,38 @@ class Fixture {
       name: this.name,
       universe: this.universe,
       chStart: this.chStart,
+      channelCount: this.channels.length,
       mode: this.modeName,
       source: this.source,
       position: this.position,
       rotation: this.rotation,
     };
+  }
+
+  /**
+   * Whether the fixture stands in for a fixture type missing on this device (see
+   * placeholderProfile): it keeps its patch, groups and scenes but has no channels to play
+   *
+   * @public
+   * @readonly
+   * @type {Boolean}
+   */
+  get isPlaceholder() {
+    return Boolean(this.profile && this.profile.placeholder);
+  }
+
+  /**
+   * Whether the fixture's channel count differs from the one saved with the show: the profile
+   * changed since (for OFL modes with pixel channels, which used to drop them, shows saved before
+   * the count existed count as changed)
+   *
+   * @public
+   * @readonly
+   * @type {Boolean}
+   */
+  get footprintChanged() {
+    if (this.savedChannelCount !== null) return this.savedChannelCount !== this.channels.length;
+    return Boolean(this.mode && this.mode.matrixInserts);
   }
 
   /** *******************************************
@@ -358,9 +377,13 @@ class Fixture {
     this.prepareChannels();
     this.setupFineChannels();
     this.setupQuickAccessors();
-    // Coarse channels first: writing a coarse channel resets its fine byte
+    // Channels the old mode didn't have keep their home value. Coarse channels first: writing a
+    // coarse channel resets its fine byte
+    const home = this.channels.map((channel) => channel.value.DMX);
     const restore = (channel) => {
-      this.setChannel(channel.id - 1, previousValues[`${channel.type}#${channel.qaIndex}`] || 0);
+      const key = `${channel.type}#${channel.qaIndex}`;
+      const value = key in previousValues ? previousValues[key] : home[channel.id - 1];
+      this.setChannel(channel.id - 1, value);
     };
     this.channels.filter((channel) => !channel.isFine).forEach(restore);
     this.channels.filter((channel) => channel.isFine).forEach(restore);
@@ -610,8 +633,6 @@ class Fixture {
    * Prepares fixture parameters and channels from the fixture's profile
    *
    * @public
-   * @todo improve error handling.
-   * @todo Implement other fixure categories
    */
   parseFromProfile() {
     const { profile } = this;
@@ -623,9 +644,6 @@ class Fixture {
     this.prepareChannels(); // Prepare fixture's channels
     this.setupFineChannels();
     this.setupQuickAccessors();
-    if (this.category !== FIXTURE_TYPES.MOVING_HEAD) {
-      throw new Error('This fixture type is not supported yet.');
-    }
   }
 
   /**

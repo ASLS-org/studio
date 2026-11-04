@@ -9,12 +9,14 @@ Three.js r170 WebGL renderer for the rig. It is instantiated by
 | `visualizer.js` | renderer, camera, orbit controls, render-on-demand loop, haze/brightness preferences, quality settings |
 | `scene_manager.js` | singleton `THREE.Scene` |
 | `animation_manager.js` | singleton rAF loop for render-side animations (separate from `Live`) |
-| `model_instancer.js` | GLTF/Draco preloading from `public/visualizer/models/model_list.json` |
-| `fixture_renderer.js` | one `MovingHead` per patched fixture from `Show.patchSnapshot`; decodes universe frames through profile channels; gizmo handles |
-| `moving_head.js` | fixture 3D instance (body meshes only): pan/tilt/zoom/colour/strobe/gobo/frost/prism setters; writes its beam rows (one per prism facet) |
+| `model_instancer.js` | GLTF/Draco preloading from `public/visualizer/models/model_list.json` (the moving head model whose base, yoke and head parts `fixture_meshes.js` uses) |
+| `fixture_renderer.js` | one `GeometryFixture` per patched fixture from `Show.patchSnapshot` (OFL trees synthesized); decodes universe frames; gizmo handles |
+| `geometry_fixture.js` | fixture drawn from a geometry tree (GDTF, or synthesized): axes, per-node decoding with inheritance, lit cells (one instanced mesh), up to 8 clustered projector rows, 1 mm rows for glow-only cells; bodies in shared instanced pools, one per shape |
+| `fixture_shapes.js` | pure: body role and shape per node (GDTF primitive, else role), synthesized trees for OFL fixtures (moving heads keep the bundled model's proportions, pivot at the origin) |
+| `fixture_meshes.js` | unit meshes per body shape (box, cylinder, sphere, conventional, scanner, base, yoke, head), GDTF axes, built on first use |
 | `beam_state.js` | per-beam float texture (cone matrix, inverse, colour, gobo, floor footprint, origin), rewritten each frame; read by every lighting pass |
 | `stage_lighting.js` | quality levels: Guides (unlit), Low (floor decals), Medium/High (deferred light volumes on receivers at a resolution scale), beam guides; object layers RECEIVER/OCCLUDER |
-| `gobos.js` | built-in gobo patterns drawn in code into a mipmapped texture array; wheel slot → layer |
+| `gobos.js`, `gobo_patterns.js` | shared gobo texture array: built-in patterns (pure module, also used by the GDTF bundle generator), then GDTF wheel images (`goboImageLayer`, up to 64 layers) |
 | `beam_shading.js` | GLSL shared by every beam pass (beam state reads, gobo lookup, light falloff), cone hull geometry, `ACCUM` |
 | `air_beams.js` | beams in the haze: closed form (Low, Medium + soft gobo) or raymarch with the gobo (High), uniform haze, 1/4 or 1/2 buffer, depth-aware upsample |
 | `bloom.js` | lens glow sprites (Low and up) and bloom from the air buffer and lens glows (Medium, High) |
@@ -49,5 +51,11 @@ Three.js r170 WebGL renderer for the rig. It is instantiated by
   `three/examples/jsm/*` keep the explicit `.js` extension (lint override is in `.eslintrc.js`).
 - `hazeDensity` and `exposure` are in the visualizer `showData` (older showfiles without them open
   at 50 and 100; their `globalFogging*` keys are ignored). Quality settings are not.
-- Only `Moving Head` fixtures have a 3D type (`Fixture` refuses other categories). New fixture
-  types add a class here, created by `FixtureRenderer.createInstance()` from the patch entry.
+- `visualizer.render` wraps every fixture class's `update(t, beamState)` in one
+  `beamState.begin()` / `end()`. A new fixture class writes its rows there and exposes `_dummy`,
+  `position` / `rotation` (radians) and `highlighted` for `Controls` and `FixtureRenderer`.
+- Geometry trees use the GDTF convention (beams along -Z, hanging); `GeometryFixture` flips them
+  so a fixture rotation of x = 180° hangs it. OFL Pan/Tilt ranges start at 0 and are re-centred,
+  and OFL pan is reversed to turn as the retired `MovingHead` did; GDTF ranges are already signed.
+- Read a capability entity only when it isn't `implicit` (absent from the data, it spans its whole
+  range): e.g. a speed-only rotation would otherwise also decode an index angle.

@@ -29,11 +29,21 @@ Enums live next to their model and are exported: `CUE_TYPES`, `CUE_STATES`,
 - `fixture.library.js` (`FixtureLibrary.getProfile(source, manufacturer, model)`) is the only way
   to get a fixture definition; it caches one frozen profile per fixture type. Never fetch library
   JSON elsewhere.
-- Source adapters (`ofl.adapter.js`, later GDTF) and `fixture.profile.js` stay pure: no Vue,
-  Three.js or `import.meta`, so they run in Node and workers.
-- **Channel `type` keys and `qaIndex` are stored in showfile scenes.** The OFL adapter reproduces
-  the original derivation exactly (typos included); changing it breaks saved shows.
-- `Capability.getValue()` returns one reused object per capability: read it immediately.
+- Sources: `ofl.adapter.js` (bundled OFL JSON; pixel blocks expanded per cell) and
+  `gdtf.adapter.js` + `gdtf.archive.js` (`.gdtf` zip). GDTF files come from `gdtf.store.js`
+  (IndexedDB, imported with `FixtureLibrary.importGDTF`), then the `public/gdtf/` bundle; neither →
+  `MissingFixtureError`. Adapters, `channel.types.js` and `fixture.profile.js` stay pure (no Vue,
+  Three.js, `import.meta`). GDTF profiles carry a geometry tree per mode (`mode.geometry`).
+- **Channel `type` keys and `qaIndex` are stored in showfile scenes.** `channel.types.js` keeps
+  the original derivation (typos included); OFL pixel channels keep `type` = their name.
+- A show whose GDTF type is missing asks through `MISSING_FIXTURES_EVENT` (show.model.js), then
+  keeps each missing fixture as a placeholder (`placeholderProfile`): same id, address, groups and
+  raw scene values, saved back unchanged. Fixtures save `channelCount`; a mismatch on load is
+  reported (`Fixture.footprintChanged`).
+- `Capability.getValue()` returns one reused object per capability: read it immediately. Entities
+  the data doesn't give span their whole range and are flagged `implicit`.
+- GDTF channels start at their home value (`profileChannel.defaultValue`, runtime only, never
+  saved); OFL channels start at 0 (their `defaultValue` isn't read, to keep shows unchanged).
 
 ## Invariants
 
@@ -54,7 +64,8 @@ Enums live next to their model and are exported: `CUE_TYPES`, `CUE_STATES`,
   Time units: `Live.beatDuration` / `Live.barDuration` in ms, derived from BPM.
 - **Pools:** `addRaw`, `addExisting`, `getFromId` (throws), `delete`, `clearAll`, plus a `listable`
   getter that shapes data for `uk-list`. New pools follow the same API.
-- **Ids:** numeric and unique per pool. Getters coerce with `Number(id)`.
+- **Ids:** numeric and unique per pool. Getters coerce with `Number(id)`. `FixturePool.addRaw`
+  renumbers fixtures in load order, so never skip a saved fixture on load (references would shift).
 
 ## Known debt (don't copy these patterns)
 

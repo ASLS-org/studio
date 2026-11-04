@@ -2,11 +2,15 @@
 
 ASLS's WebGL based visualizer enables users to visualize and monitor fixtures activity in a 3D environment. It also enables users to interact with fixtures in order to [position](#Transform-Controls) them through simple and intuitive draggable interfaces.
 
-> **_NOTE:_** Currently implemented visualizable fixtures only  include moving heads. Regarding visualizing capabilities, the 3D engine is currently capable of emulating most fixture channels capabilities **EXCEPT:** *Multi-Color wheel slots, Multi-bulbs (rendered as single bulb), blading system and any non-standard capabilities*.
+Every patched fixture shows in the view. GDTF fixtures are drawn from their own description: their body, pan and tilt axes and every beam or cell sit where the fixture places them. Bodies follow the fixture's parts: a base, yoke and head for moving heads, a can for PARs and profiles, a scanner body, a bar or a panel, each sized like the real fixture. Fixtures without a description of their own (Open Fixture Library) get the same parts, built from their type and size.
+
+Multi-cell fixtures (LED washes, pixel bars, multi-beam bars) light each cell in its own colour. The light they cast on the floor and in the haze combines neighbouring cells into a few beams, so large rigs stay smooth. Cells a fixture describes as glowing rather than projecting (LED pixels, panels) light up without casting beams.
+
+> **_NOTE:_** The visualizer doesn't show blades, animation wheels or built-in fixture effects.
 
 ## Stage Lighting
 
-Each beam lights the floor where it lands, in its colour and intensity, and with the shape of its field angle. Gobos show in the light: the visualizer uses a built-in set of gobo patterns, picked by the fixture's gobo wheel slot, so a projected pattern looks like a gobo but not like the fixture's exact gobo image. Gobo rotation turns the pattern, frost and focus blur it, and a prism splits the beam into three.
+Each beam lights the floor where it lands, in its colour and intensity, and with the shape of its field angle. Gobos show in the light: GDTF fixtures project their real gobo images; other fixtures use a built-in set of gobo patterns, picked by the gobo wheel slot. Gobo rotation and the gobo index turn the pattern, frost and focus blur it, and the iris narrows the beam. A prism splits the beam into its facets (three when the fixture doesn't describe them) and turns with the prism rotation. Colour temperature (CTO, CTB) warms or cools the light.
 
 Beams also show in the air, through haze: brighter near the lens, fading with distance, and stopping at the floor. At **high** quality the gobo shows in the haze as shafts of light that match the pattern on the floor. Lit fixtures glow at the lens, and at **medium** and **high** quality bright beams and lenses get a soft bloom.
 

@@ -33,8 +33,9 @@ class Channel {
     this.fineChannels = [];
     this.active = true;
     this._lookup = profileChannel.lookup || EMPTY_LOOKUP;
+    // GDTF channels start at the fixture's home value
     this._value = {
-      DMX: 0,
+      DMX: profileChannel.defaultValue || 0,
       model: 0,
     };
   }

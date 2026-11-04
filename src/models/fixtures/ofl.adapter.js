@@ -1,5 +1,6 @@
 import Capability from '../DMX/capabilityManager.model';
 import { PROFILE_SOURCES, buildCapabilityLookup } from './fixture.profile';
+import { FINE_CHANNEL_TERMINOLOGY, deriveTypeKey, deriveAttribute } from './channel.types';
 
 /**
  * OFL (Open Fixture Library) JSON to fixture profile adapter.
@@ -15,186 +16,11 @@ import { PROFILE_SOURCES, buildCapabilityLookup } from './fixture.profile';
 const FINE_CHANNEL_SPLIT_PATTERN = ' fine';
 
 /**
- * Suffix appended to fine channel type keys (e.g. `PanFine`)
- *
- * @constant {String} FINE_CHANNEL_TERMINOLOGY
- */
-const FINE_CHANNEL_TERMINOLOGY = 'Fine';
-
-/**
  * Type key of empty mode slots
  *
  * @constant {String} UNSET_CHANNEL_TYPE
  */
 const UNSET_CHANNEL_TYPE = 'Unset';
-
-/**
- * Attribute of channels with no known mapping
- *
- * @constant {String} UNKNOWN_ATTRIBUTE
- */
-const UNKNOWN_ATTRIBUTE = 'Unknown';
-
-/**
- * OFL capability types used to derive channel type keys.
- *
- * Copied verbatim from the pre-profile Channel model, including the misspelled
- * `ColorTepemrature` key: the type keys are stored in showfile scenes, so the
- * derivation must not change. `LEGACY_CAPABILITY_TYPES.ColorTemperature` is
- * therefore undefined on purpose.
- *
- * @constant {Object} LEGACY_CAPABILITY_TYPES
- */
-const LEGACY_CAPABILITY_TYPES = {
-  ShutterStrobe: 'ShutterStrobe',
-  StrobeSpeed: 'StrobeSpeed',
-  StrobeDuration: 'StrobeDuration',
-  Intensity: 'Intensity',
-  ColorIntensity: 'ColorIntensity',
-  ColorPreset: 'ColorPreset',
-  ColorTepemrature: 'ColorTepemrature',
-  Pan: 'Pan',
-  PanFine: 'PanFine',
-  PanContinuous: 'PanContinuous',
-  Tilt: 'Tilt',
-  TiltFine: 'TiltFine',
-  TiltContinuous: 'TiltContinuous',
-  BeamAngle: 'BeamAngle',
-  Zoom: 'Zoom',
-  Effect: 'Effect',
-  EffectSpeed: 'EffectSpeed',
-  EffectDuration: 'EffectDuration',
-  EffectParameter: 'EffectParameter',
-  SoundSensitivity: 'SoundSensitivity',
-  Focus: 'Focus',
-  Maintenance: 'Maintenance',
-};
-
-/**
- * Channel type key rules, applied in order for every capability of a channel (last match wins)
- *
- * @constant {Array<Array>} LEGACY_TYPE_RULES
- */
-const LEGACY_TYPE_RULES = [
-  [[LEGACY_CAPABILITY_TYPES.ShutterStrobe, LEGACY_CAPABILITY_TYPES.StrobeDuration,
-    LEGACY_CAPABILITY_TYPES.StrobeSpeed], 'Shutter'],
-  [[LEGACY_CAPABILITY_TYPES.Intensity], 'Dimmer'],
-  [[LEGACY_CAPABILITY_TYPES.ColorIntensity], 'Color'],
-  [[LEGACY_CAPABILITY_TYPES.ColorPreset], 'ColorPreset'],
-  [[LEGACY_CAPABILITY_TYPES.ColorTemperature], 'ColorTemp'],
-  [[LEGACY_CAPABILITY_TYPES.Pan, LEGACY_CAPABILITY_TYPES.PanFine], 'Pan'],
-  [[LEGACY_CAPABILITY_TYPES.Tilt, LEGACY_CAPABILITY_TYPES.TiltFine], 'Tilt'],
-  [[LEGACY_CAPABILITY_TYPES.PanContinuous], 'PanContinuous'],
-  [[LEGACY_CAPABILITY_TYPES.TiltContinuous], 'TiltContinuous'],
-  [[LEGACY_CAPABILITY_TYPES.BeamAngle, LEGACY_CAPABILITY_TYPES.Zoom], 'Zoom'],
-  [[LEGACY_CAPABILITY_TYPES.Effect, LEGACY_CAPABILITY_TYPES.EffectDuration,
-    LEGACY_CAPABILITY_TYPES.EffectSpeed, LEGACY_CAPABILITY_TYPES.EffectParameter,
-    LEGACY_CAPABILITY_TYPES.SoundSensitivity], 'Effect'],
-  [[LEGACY_CAPABILITY_TYPES.Focus], 'Focus'],
-  [[LEGACY_CAPABILITY_TYPES.Maintenance], 'Maintenance'],
-];
-
-/**
- * OFL capability type to standard (GDTF) attribute
- *
- * @constant {Object} ATTRIBUTES_BY_CAPABILITY
- */
-const ATTRIBUTES_BY_CAPABILITY = {
-  Intensity: 'Dimmer',
-  ShutterStrobe: 'Shutter1',
-  StrobeSpeed: 'Shutter1Strobe',
-  StrobeDuration: 'Shutter1Strobe',
-  ColorPreset: 'ColorMacro1',
-  ColorTemperature: 'CTO',
-  Pan: 'Pan',
-  PanFine: 'Pan',
-  Tilt: 'Tilt',
-  TiltFine: 'Tilt',
-  PanContinuous: 'PanRotate',
-  TiltContinuous: 'TiltRotate',
-  PanTiltSpeed: 'PositionMSpeed',
-  WheelSlotRotation: 'Gobo1PosRotate',
-  WheelShake: 'Gobo1PosShake',
-  Zoom: 'Zoom',
-  BeamAngle: 'Zoom',
-  Focus: 'Focus1',
-  Prism: 'Prism1',
-  PrismRotation: 'Prism1PosRotate',
-  Iris: 'Iris',
-  Frost: 'Frost1',
-  Effect: 'Effects1',
-  EffectSpeed: 'Effects1Rate',
-  EffectDuration: 'Effects1Rate',
-  EffectParameter: 'Effects1Adjust1',
-  Maintenance: 'Control1',
-};
-
-/**
- * OFL colour intensity colour to standard (GDTF) attribute
- *
- * @constant {Object} COLOR_ATTRIBUTES
- */
-const COLOR_ATTRIBUTES = {
-  Red: 'ColorAdd_R',
-  Green: 'ColorAdd_G',
-  Blue: 'ColorAdd_B',
-  White: 'ColorAdd_W',
-  'Warm White': 'ColorAdd_WW',
-  'Cold White': 'ColorAdd_CW',
-  Amber: 'ColorAdd_A',
-  UV: 'ColorAdd_UV',
-  Cyan: 'ColorSub_C',
-  Magenta: 'ColorSub_M',
-  Yellow: 'ColorSub_Y',
-};
-
-/**
- * Derives a channel's type key and colour exactly as the pre-profile Channel model did
- *
- * @param {String} initialType Channel name (or `Unset`)
- * @param {Boolean} isFine Whether the channel is a fine channel
- * @param {Array<Object>} capabilities OFL capability data
- * @returns {{type: String, color: ?String}} Type key and colour
- */
-function deriveTypeKey(initialType, isFine, capabilities) {
-  let type = initialType;
-  let color = null;
-  capabilities.forEach((capability) => {
-    LEGACY_TYPE_RULES.forEach(([capabilityTypes, key]) => {
-      type = capabilityTypes.includes(capability.type) ? key : type;
-    });
-    type = isFine ? `${type}${FINE_CHANNEL_TERMINOLOGY}` : type;
-    if (type === 'Color') {
-      color = capability.color;
-    }
-  });
-  return { type, color: color ?? null };
-}
-
-/**
- * Picks a channel's standard attribute from its first mappable capability
- *
- * @param {String} channelName Channel name, used to tell colour and gobo wheels apart
- * @param {Array<Object>} capabilities OFL capability data
- * @returns {String} Attribute name
- */
-function deriveAttribute(channelName, capabilities) {
-  for (let i = 0; i < capabilities.length; i++) {
-    const capability = capabilities[i];
-    if (capability.type === 'ColorIntensity' && COLOR_ATTRIBUTES[capability.color]) {
-      return COLOR_ATTRIBUTES[capability.color];
-    }
-    if (capability.type === 'WheelSlot') {
-      const wheel = capability.wheel || channelName;
-      if (/gobo/i.test(wheel)) return 'Gobo1';
-      if (/colou?r/i.test(wheel)) return 'Color1';
-    }
-    if (ATTRIBUTES_BY_CAPABILITY[capability.type]) {
-      return ATTRIBUTES_BY_CAPABILITY[capability.type];
-    }
-  }
-  return UNKNOWN_ATTRIBUTE;
-}
 
 /**
  * Builds one profile channel
@@ -203,16 +29,24 @@ function deriveAttribute(channelName, capabilities) {
  * @param {Boolean} isFine Whether the channel is a fine channel
  * @param {?Object} channelData OFL channel data
  * @param {Array<Object>} capabilityData OFL capability data, fine retyping applied
+ * @param {?String} [pixel] Pixel key or pixel group of a matrix channel, null otherwise
  * @returns {Object} Profile channel without fine pairing and qaIndex
  */
-function buildChannel(name, isFine, channelData, capabilityData) {
-  const { type, color } = deriveTypeKey(name, isFine, capabilityData);
+function buildChannel(name, isFine, channelData, capabilityData, pixel = null) {
+  const derived = deriveTypeKey(name, isFine, capabilityData);
   const capabilities = capabilityData.map((capability) => new Capability(capability));
+  // Pixel channels keep their name as type key, as before they had capabilities, so saved
+  // scenes still find them
+  const type = pixel === null ? derived.type : name;
+  const colorCapability = capabilityData.find((c) => c.type === 'ColorIntensity');
+  let { color } = derived;
+  if (pixel !== null) color = colorCapability ? colorCapability.color || null : null;
   return {
     name: isFine ? `${name}${FINE_CHANNEL_TERMINOLOGY}` : name,
     attribute: deriveAttribute(name, capabilityData),
     type,
     color,
+    geometry: pixel,
     isFine,
     fineChannelAliases: (channelData && channelData.fineChannelAliases) || null,
     fine: [],
@@ -220,6 +54,128 @@ function buildChannel(name, isFine, channelData, capabilityData) {
     capabilities,
     lookup: buildCapabilityLookup(capabilities),
   };
+}
+
+/**
+ * Pixel keys of an OFL matrix with their position on the grid
+ *
+ * @param {?Object} matrix OFL matrix
+ * @returns {Array<{key: String, x: Number, y: Number, z: Number}>} Pixels
+ */
+function matrixPixels(matrix) {
+  const pixels = [];
+  if (!matrix) return pixels;
+  if (matrix.pixelKeys) {
+    matrix.pixelKeys.forEach((layer, z) => layer.forEach((row, y) => row.forEach((key, x) => {
+      if (key) {
+        pixels.push({
+          key, x, y, z,
+        });
+      }
+    })));
+  } else if (matrix.pixelCount) {
+    const [nx, ny, nz] = matrix.pixelCount;
+    const dimensions = matrix.pixelCount.filter((n) => n > 1).length;
+    for (let z = 0; z < nz; z++) {
+      for (let y = 0; y < ny; y++) {
+        for (let x = 0; x < nx; x++) {
+          let key = `${x + y + z + 1}`;
+          if (dimensions === 2) key = nz > 1 ? `(${x + 1}, ${z + 1})` : `(${x + 1}, ${y + 1})`;
+          if (dimensions === 2 && nx === 1) key = `(${y + 1}, ${z + 1})`;
+          if (dimensions === 3) key = `(${x + 1}, ${y + 1}, ${z + 1})`;
+          pixels.push({
+            key, x, y, z,
+          });
+        }
+      }
+    }
+  }
+  return pixels;
+}
+
+/**
+ * Pixel groups of an OFL matrix (arrays of keys; `all` and constraint groups take every pixel)
+ *
+ * @param {?Object} matrix OFL matrix
+ * @param {Array<Object>} pixels Matrix pixels
+ * @returns {Object} Pixel keys by group name
+ */
+function matrixGroups(matrix, pixels) {
+  const groups = {};
+  Object.entries((matrix && matrix.pixelGroups) || {}).forEach(([name, group]) => {
+    groups[name] = Array.isArray(group) ? group : pixels.map((p) => p.key);
+  });
+  return groups;
+}
+
+/**
+ * Pixel keys a matrix insert block repeats for, in order
+ *
+ * @param {String|Array<String>} repeatFor Keys, groups, or an `eachPixel...` / `eachPixelGroup`
+ * order
+ * @param {Array<Object>} pixels Matrix pixels
+ * @param {Object} groups Pixel groups
+ * @returns {Array<String>} Pixel keys or group names
+ */
+function repeatKeys(repeatFor, pixels, groups) {
+  if (Array.isArray(repeatFor)) return repeatFor;
+  if (repeatFor === 'eachPixelGroup') return Object.keys(groups);
+  if (repeatFor === 'eachPixelABC') {
+    return pixels.map((p) => p.key)
+      .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  }
+  const order = /^eachPixel([XYZ]{3})$/.exec(repeatFor || '');
+  if (!order) return pixels.map((p) => p.key);
+  // The first letter changes fastest
+  const axes = order[1].toLowerCase().split('').reverse();
+  return pixels.slice().sort((a, b) => {
+    for (let i = 0; i < axes.length; i++) {
+      const d = a[axes[i]] - b[axes[i]];
+      if (d) return d;
+    }
+    return 0;
+  }).map((p) => p.key);
+}
+
+/**
+ * Expands a mode's channel list: matrix insert blocks become one entry per pixel and template
+ * channel (`perPixel` or `perChannel` order)
+ *
+ * @param {Array} entries OFL mode channel entries
+ * @param {Array<Object>} pixels Matrix pixels
+ * @param {Object} groups Pixel groups
+ * @returns {Array<?String>} Channel names (null for empty slots)
+ */
+function expandEntries(entries, pixels, groups) {
+  return entries.flatMap((entry) => {
+    if (!entry || typeof entry === 'string') return [entry || null];
+    if (entry.insert !== 'matrixChannels') return [null];
+    const keys = repeatKeys(entry.repeatFor, pixels, groups);
+    const templates = entry.templateChannels || [];
+    const name = (template, key) => (template ? template.replace(/\$pixelKey/g, key) : null);
+    if (entry.channelOrder === 'perChannel') {
+      return templates.flatMap((t) => keys.map((k) => name(t, k)));
+    }
+    return keys.flatMap((k) => templates.map((t) => name(t, k)));
+  });
+}
+
+/**
+ * Template channels of a matrix fixture, expanded for every pixel key and group name
+ *
+ * @param {Object} templateChannels OFL template channels
+ * @param {Array<String>} keys Pixel keys and group names
+ * @returns {Map<String, {data: Object, pixel: String}>} Channel data and pixel by channel name
+ */
+function expandTemplates(templateChannels, keys) {
+  const expanded = new Map();
+  Object.entries(templateChannels || {}).forEach(([template, data]) => {
+    keys.forEach((key) => {
+      const json = JSON.stringify(data).replace(/\$pixelKey/g, key.replace(/"/g, '\\"'));
+      expanded.set(template.replace(/\$pixelKey/g, key), { data: JSON.parse(json), pixel: key });
+    });
+  });
+  return expanded;
 }
 
 /**
@@ -231,18 +187,21 @@ function buildChannel(name, isFine, channelData, capabilityData) {
  *
  * @param {Object} availableChannels OFL available channels
  * @param {Object} mode OFL mode
+ * @param {Object} matrix Matrix pixels, groups and expanded template channels
  * @returns {Object} Profile mode
  */
-function buildMode(availableChannels, mode) {
+function buildMode(availableChannels, mode, matrix) {
   const retyped = new Set();
-  const channels = mode.channels.map((entry) => {
-    if (!entry || typeof entry !== 'string') {
+  const channels = expandEntries(mode.channels, matrix.pixels, matrix.groups).map((entry) => {
+    if (!entry) {
       return buildChannel(UNSET_CHANNEL_TYPE, false, null, []);
     }
     const split = entry.split(FINE_CHANNEL_SPLIT_PATTERN);
     const channelName = split[0];
     const isFine = split.length > 1;
-    const channelData = availableChannels[channelName];
+    const template = availableChannels[channelName] ? null : matrix.templates.get(channelName);
+    const channelData = template ? template.data : availableChannels[channelName];
+    const pixel = template ? template.pixel : null;
     if (channelData && channelData.capability && isFine) {
       retyped.add(channelName);
     }
@@ -254,7 +213,7 @@ function buildMode(availableChannels, mode) {
     } else if (channelData && channelData.capabilities) {
       capabilityData = channelData.capabilities;
     }
-    return buildChannel(channelName, isFine, channelData, capabilityData);
+    return buildChannel(channelName, isFine, channelData, capabilityData, pixel);
   });
 
   channels.forEach((channel) => {
@@ -275,7 +234,9 @@ function buildMode(availableChannels, mode) {
     typeCounts[channel.type] = channel.qaIndex + 1;
   });
 
-  return { name: mode.name, channels };
+  // Modes with insert blocks used to drop their pixel channels (see Fixture.footprintChanged)
+  const matrixInserts = mode.channels.some((entry) => entry && typeof entry === 'object');
+  return { name: mode.name, channels, matrixInserts };
 }
 
 /**
@@ -285,10 +246,18 @@ function buildMode(availableChannels, mode) {
  * @param {String} manufacturer Manufacturer key in the library
  * @param {String} model Model key in the library (without `.json`)
  * @param {Object} data OFL fixture JSON
- * @returns {Object} Fixture profile (see fixture.profile.js)
+ * @returns {Object} Fixture profile (see fixture.profile.js); matrix fixtures also carry
+ * `matrix` (pixels on their grid and pixel groups)
  */
 export default function profileFromOFL(manufacturer, model, data) {
   const availableChannels = data.availableChannels || {};
+  const pixels = matrixPixels(data.matrix);
+  const groups = matrixGroups(data.matrix, pixels);
+  const templates = expandTemplates(
+    data.templateChannels,
+    pixels.map((p) => p.key).concat(Object.keys(groups)),
+  );
+  const matrix = { pixels, groups, templates };
   return {
     source: PROFILE_SOURCES.OFL,
     manufacturer,
@@ -297,6 +266,10 @@ export default function profileFromOFL(manufacturer, model, data) {
     category: (data.categories || [])[0] || null,
     physical: data.physical || {},
     wheels: data.wheels || {},
-    modes: (data.modes || []).map((mode) => buildMode(availableChannels, mode)),
+    modes: (data.modes || []).map((mode) => ({
+      ...buildMode(availableChannels, mode, matrix),
+      geometry: null,
+    })),
+    matrix: pixels.length ? { pixels, groups } : null,
   };
 }

@@ -8,7 +8,7 @@ import ModelInstancer from './model_instancer';
 import SceneManager from './scene_manager';
 import AnimationManager from './animation_manager';
 import Controls from './controls';
-import MovingHead from './moving_head';
+import GeometryFixture from './geometry_fixture';
 import FixtureRenderer from './fixture_renderer';
 import InfiniteGridHelper from './grid';
 import BeamState from './beam_state';
@@ -405,7 +405,7 @@ class Visualizer {
     this.globalLightHandle.castShadow = false;
     this.globalLightHandle.position.set(-10, -10, 10);
 
-    MovingHead.prepareInstanciation(SceneManager);
+    GeometryFixture.prepareInstanciation(SceneManager);
     this.fixtureRenderer = new FixtureRenderer(this.invalidate);
 
     // Floor
@@ -554,7 +554,9 @@ class Visualizer {
    */
   render(t) {
     if (this.fixtureRenderer && this.fixtureRenderer.update()) this.needsRender = true;
-    if (MovingHead.update(t, this.beamState)) this.needsRender = true;
+    this.beamState.begin();
+    if (GeometryFixture.update(t, this.beamState)) this.needsRender = true;
+    this.beamState.end();
     this.camera.updateMatrixWorld();
     if (Visualizer.matrixMoved(this.lastView, this.camera.matrixWorld)
       || Visualizer.matrixMoved(this.lastProjection, this.camera.projectionMatrix)) {

@@ -3,7 +3,7 @@ import {
   TransformControls,
 } from 'three/examples/jsm/controls/TransformControls.js';
 import SceneManager from './scene_manager';
-import MovingHead from './moving_head';
+import GeometryFixture from './geometry_fixture';
 
 /**
  * Global position vector handle
@@ -210,7 +210,7 @@ class Controls {
       // TODO: this is redundant and shouldn't happen here so comenting out ATM
       // this.detachAll();
       // this.setFocus(false);
-      MovingHead.clearHighlighting();
+      GeometryFixture.clearHighlighting();
     } else if (e.key.toLowerCase() === 't') {
       this.mode = CONTROL_MODES.NORMAL;
       this.handle.setMode('translate');

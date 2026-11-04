@@ -1,75 +1,7 @@
 import * as THREE from 'three';
+import { GOBO_SIZE, GOBO_LAYERS, rasterizeGobo } from './gobo_patterns';
 
-/**
- * Gobo texture size, in texels
- *
- * @constant {Number} GOBO_SIZE
- */
-const GOBO_SIZE = 128;
-
-function hash(x, y) {
-  const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
-  return s - Math.floor(s);
-}
-
-function valueNoise(x, y) {
-  const xi = Math.floor(x);
-  const yi = Math.floor(y);
-  const xf = x - xi;
-  const yf = y - yi;
-  const u = xf * xf * (3 - 2 * xf);
-  const v = yf * yf * (3 - 2 * yf);
-  const a = hash(xi, yi);
-  const b = hash(xi + 1, yi);
-  const c = hash(xi, yi + 1);
-  const d = hash(xi + 1, yi + 1);
-  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
-}
-
-function polygonEdge(angle, sides) {
-  const sector = (2 * Math.PI) / sides;
-  const local = ((angle % sector) + sector) % sector;
-  return Math.cos(Math.PI / sides) / Math.cos(local - Math.PI / sides);
-}
-
-/**
- * Built-in gobo patterns: (x, y, radius, angle) on the unit disk to coverage 0 or 1.
- * Layer 0 is the open beam.
- *
- * @constant {Array<Function>} GOBO_PATTERNS
- */
-const GOBO_PATTERNS = [
-  () => 1, // open
-  (x, y) => { // dots
-    if (Math.hypot(x, y) < 0.18) return 1;
-    for (let k = 0; k < 6; k++) {
-      const a = (k * Math.PI) / 3;
-      if (Math.hypot(x - 0.58 * Math.cos(a), y - 0.58 * Math.sin(a)) < 0.2) return 1;
-    }
-    return 0;
-  },
-  (x, y) => ( // breakup
-    valueNoise(x * 5 + 3, y * 5 + 7) * 0.65 + valueNoise(x * 11, y * 11) * 0.35 > 0.55 ? 1 : 0),
-  (x, y, r, a) => (Math.abs(Math.sin(a * 4)) < 0.35 ? 1 : 0), // star
-  (x, y, r) => (Math.sin(r * 28) > 0 ? 1 : 0), // rings
-  (x, y, r, a) => (Math.sin(a * 3 + r * 14) > 0.1 ? 1 : 0), // spiral
-  (x, y) => (Math.abs(((x * 3.5 + 10) % 1) - 0.5) < 0.38
-    && Math.abs(((y * 3.5 + 10) % 1) - 0.5) < 0.38 ? 1 : 0), // window
-  (x, y, r, a) => { // triangle outline
-    const k = polygonEdge(a, 3);
-    return r < 0.78 * k && r > 0.42 * k ? 1 : 0;
-  },
-  (x, y) => (Math.sin(y * 26) > 0.2 ? 1 : 0), // slats
-  (x, y) => ( // leaves
-    valueNoise(x * 3 + 11, y * 3 + 1) > 0.5 && valueNoise(x * 9 + 2, y * 9 + 5) > 0.35 ? 1 : 0),
-];
-
-/**
- * Number of gobo layers, open included
- *
- * @constant {Number} GOBO_LAYERS
- */
-export const GOBO_LAYERS = GOBO_PATTERNS.length;
+export { GOBO_LAYERS };
 
 /**
  * Picks the gobo layer of a wheel slot: open slots give the open layer, gobo slots cycle through
@@ -87,33 +19,38 @@ export function goboLayer(slots, slotIndex) {
 }
 
 /**
- * Draws the built-in gobos into a mipmapped single-channel texture array (2 × 2 supersampled,
- * soft edge at the rim). Mip levels give focus and frost blur.
+ * Most gobo layers the texture array holds: built-in patterns, then fixture wheel images
  *
- * @public
- * @returns {THREE.DataArrayTexture} Gobo texture array, one layer per pattern
+ * @constant {Number} MAX_GOBO_LAYERS
  */
-export function createGoboTexture() {
-  const data = new Uint8Array(GOBO_SIZE * GOBO_SIZE * GOBO_LAYERS);
-  const sub = [0.25, 0.75];
+export const MAX_GOBO_LAYERS = 64;
+
+/**
+ * Shared gobo texture uniform: its value is replaced when wheel images add layers
+ *
+ * @constant {Object} goboUniform
+ */
+export const goboUniform = { value: null };
+
+// Wheel image layers: one per decoded image, after the built-in patterns
+const imageLayers = new Map();
+const imageData = [];
+
+/**
+ * Builds the mipmapped single-channel texture array from the built-in patterns and the wheel
+ * images added so far. Mip levels give focus and frost blur.
+ *
+ * @returns {THREE.DataArrayTexture} Gobo texture array
+ */
+function buildTexture() {
+  const layerSize = GOBO_SIZE * GOBO_SIZE;
+  const depth = GOBO_LAYERS + imageData.length;
+  const data = new Uint8Array(layerSize * depth);
   for (let l = 0; l < GOBO_LAYERS; l++) {
-    const pattern = GOBO_PATTERNS[l];
-    for (let j = 0; j < GOBO_SIZE; j++) {
-      for (let i = 0; i < GOBO_SIZE; i++) {
-        let sum = 0;
-        for (let sy = 0; sy < 2; sy++) {
-          for (let sx = 0; sx < 2; sx++) {
-            const x = ((i + sub[sx]) / GOBO_SIZE) * 2 - 1;
-            const y = ((j + sub[sy]) / GOBO_SIZE) * 2 - 1;
-            const r = Math.hypot(x, y);
-            if (r < 0.97) sum += pattern(x, y, r, Math.atan2(y, x));
-          }
-        }
-        data[(l * GOBO_SIZE + j) * GOBO_SIZE + i] = Math.round((sum / 4) * 255);
-      }
-    }
+    rasterizeGobo(l, GOBO_SIZE, data, l * layerSize);
   }
-  const texture = new THREE.DataArrayTexture(data, GOBO_SIZE, GOBO_SIZE, GOBO_LAYERS);
+  imageData.forEach((layer, i) => data.set(layer, (GOBO_LAYERS + i) * layerSize));
+  const texture = new THREE.DataArrayTexture(data, GOBO_SIZE, GOBO_SIZE, depth);
   texture.format = THREE.RedFormat;
   texture.type = THREE.UnsignedByteType;
   texture.minFilter = THREE.LinearMipmapLinearFilter;
@@ -121,4 +58,75 @@ export function createGoboTexture() {
   texture.generateMipmaps = true;
   texture.needsUpdate = true;
   return texture;
+}
+
+/**
+ * Returns the shared gobo texture uniform, building the texture the first time
+ *
+ * @public
+ * @returns {Object} Uniform holding the gobo texture array
+ */
+export function createGoboTexture() {
+  if (!goboUniform.value) goboUniform.value = buildTexture();
+  return goboUniform;
+}
+
+/**
+ * Draws a wheel image into a gobo layer: luminance on black (transparent parts block the light),
+ * inverted when the image is drawn dark-on-light (bright border)
+ *
+ * @param {ImageBitmap} image Wheel slot image
+ * @returns {?Uint8Array} Layer pixels, or null when the image can't be drawn
+ */
+function rasterizeImage(image) {
+  if (typeof document === 'undefined') return null;
+  const canvas = document.createElement('canvas');
+  canvas.width = GOBO_SIZE;
+  canvas.height = GOBO_SIZE;
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  if (!context) return null;
+  context.fillStyle = '#000';
+  context.fillRect(0, 0, GOBO_SIZE, GOBO_SIZE);
+  context.drawImage(image, 0, 0, GOBO_SIZE, GOBO_SIZE);
+  const { data } = context.getImageData(0, 0, GOBO_SIZE, GOBO_SIZE);
+  const layer = new Uint8Array(GOBO_SIZE * GOBO_SIZE);
+  let border = 0;
+  let borderCount = 0;
+  for (let j = 0; j < GOBO_SIZE; j++) {
+    for (let i = 0; i < GOBO_SIZE; i++) {
+      const p = (j * GOBO_SIZE + i) * 4;
+      const v = Math.round(0.2126 * data[p] + 0.7152 * data[p + 1] + 0.0722 * data[p + 2]);
+      layer[j * GOBO_SIZE + i] = v;
+      if (i === 0 || j === 0 || i === GOBO_SIZE - 1 || j === GOBO_SIZE - 1) {
+        border += v;
+        borderCount += 1;
+      }
+    }
+  }
+  if (border / borderCount > 128) {
+    for (let k = 0; k < layer.length; k++) layer[k] = 255 - layer[k];
+  }
+  return layer;
+}
+
+/**
+ * Returns the gobo layer of a wheel image, adding it to the texture array the first time
+ *
+ * @public
+ * @param {ImageBitmap} image Wheel slot image
+ * @returns {Number} Layer, or -1 when the array is full or the image can't be drawn
+ */
+export function goboImageLayer(image) {
+  if (imageLayers.has(image)) return imageLayers.get(image);
+  if (GOBO_LAYERS + imageData.length >= MAX_GOBO_LAYERS) return -1;
+  const layer = rasterizeImage(image);
+  if (!layer) return -1;
+  imageData.push(layer);
+  const index = GOBO_LAYERS + imageData.length - 1;
+  imageLayers.set(image, index);
+  if (goboUniform.value) {
+    goboUniform.value.dispose();
+    goboUniform.value = buildTexture();
+  }
+  return index;
 }

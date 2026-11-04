@@ -1,6 +1,6 @@
 ---
 name: fixture-library
-description: Add, update or debug fixture definitions in the built-in library (public/fixtures, Open Fixture Library JSON, fixture_list.json, manufacturers.json), and check that a fixture's capabilities and category are supported by the engine and visualizer. Use when a user wants a new fixture, a fixture fails to patch, or channels behave wrongly.
+description: Add, update or debug fixture definitions: the built-in OFL library (public/fixtures, Open Fixture Library JSON, fixture_list.json, manufacturers.json), GDTF import (.gdtf files, the GDTF adapter, the local GDTF library) and the generic GDTF bundle (public/gdtf). Check that a fixture's capabilities are supported by the engine and visualizer. Use when a user wants a new fixture, a fixture or .gdtf file fails to import or patch, or channels behave wrongly.
 ---
 
 # Fixture library
@@ -43,10 +43,9 @@ previous build's output.
 
 ## Support check
 
-- **Category.** Only fixtures whose `categories[0]` is `"Moving Head"` can be patched today.
-  Others throw `This fixture type is not supported yet.` in `Fixture.parseFromProfile()`.
-  Supporting a new category is an engine and visualizer feature (OpenSpec change), not a library
-  task.
+- **Category.** Any category patches. OFL fixtures get a body generated from category,
+  `physical.dimensions` and `matrix` (`src/plugins/visualizer/fixture_shapes.js`); GDTF bodies use
+  each model's PrimitiveType, else the node's role.
 - **Modes.** A fixture with no `modes` is rejected by the library ("defines no modes").
 - **Capabilities.** Channel type keys come from the rules in `src/models/fixtures/ofl.adapter.js`;
   value handling comes from `CAPABILITY_TYPES` in `capabilityManager.model.js` and the cases in
@@ -54,10 +53,27 @@ previous build's output.
   `node -e "const f=require('./public/fixtures/<m>/<f>.json');console.log([...new Set(Object.values(f.availableChannels).flatMap(c=>c.capabilities||[c.capability]).map(c=>c.type))])"`
 - **Physical.** `physical.lens.degreesMinMax` sets the beam angle (defaults 10–25°), and
   `physical.bulb.colorTemperature` the default white. Colour and gobo wheels are read from
-  `wheels` ("Color Wheel" is rendered; gobos aren't yet).
+  `wheels`; OFL gobos use built-in patterns.
 - **Fine channels.** They are detected by the `" fine"` suffix in mode channel names and paired
   through `fineChannelAliases`. Keep OFL naming. A coarse channel takes the integer part of a
   value and its fine channel the fraction (16-bit).
+
+## GDTF
+
+- **Operators import `.gdtf` files** in the patch popup into IndexedDB (`gdtf.store.js`).
+  Showfiles store `source: 'gdtf'`, `manufacturer` and `model` = the GDTF fixture type ID.
+- **The bundle (`public/gdtf/`) holds only generic fixtures written by
+  `scripts/gdtf/generate-generic.mjs`, CC0.** Never add third-party GDTF files there: their
+  meshes, gobo images and thumbnails are copyrighted by default, and GDTF Share has its own terms.
+  To change the bundle, edit the generator and re-run `node scripts/gdtf/generate-generic.mjs`.
+  Validate with `xmllint --schema gdtf.xsd` (from github.com/mvrdevelopment/tools).
+- **`gdtf.adapter.js` maps channel functions to OFL-shaped capabilities.** Channel names follow
+  OFL naming (`CHANNEL_NAMES`), so `type` keys match. Once released, GDTF channel names and OFL
+  pixel channel names (`Red 3`, `type` = name) are frozen like OFL type keys.
+- **Debug a file in Node:** bundle `readGDTF` + `profileFromGDTF` with esbuild (root CLAUDE.md,
+  Known traps) and print each mode's channels. Real files mix GDTF 1.0–1.2, virtual channels
+  (empty `Offset`) and geometry references; see design notes in the archived change
+  `add-gdtf-fixtures`.
 
 ## Don't
 

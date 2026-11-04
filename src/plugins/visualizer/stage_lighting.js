@@ -272,7 +272,7 @@ class StageLighting {
 
     this.shared = {
       uBeams: beamState.uniform,
-      uGobos: { value: createGoboTexture() },
+      uGobos: createGoboTexture(),
       uGain: { value: GAIN },
     };
     const additive = {

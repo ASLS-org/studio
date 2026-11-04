@@ -195,18 +195,18 @@ Modulated channels are effect channels that are bound to a waveform which will r
 | -------------------- | --------------------------- | :-------: | -------------------------- |
 | Shutter Strobe       | Shutter strobe              |     ✅     |                            |
 | Intensity            | Dimmer/Brightness           |     ✅     |                            |
-| Color Intensity      | Color Channel Intensity     |     ✅     | Supported: **R,G,B,C,M,Y** |
+| Color Intensity      | Color Channel Intensity     |     ✅     | Supported: **R, G, B, C, M, Y, white, warm and cold white, amber, UV, lime**|
 | Pan                  | Pan                         |     ✅     |                            |
 | Tilt                 | Tilt                        |     ✅     |                            |
 | Wheel Slot           | Wheel selection             |     ⬜️     |                            |
-| Wheel SlotRotation   | Full wheel roration         |     ⬜️     |                            |
+| Wheel SlotRotation   | Full wheel roration         |     ✅     | Gobo rotation and gobo index|
 | Wheel Rotation       | Wheel slot rotation         |     ⬜️     |                            |
 | Focus                | Focus distance              |     ✅     |                            |
 | Zoom                 | Zoom / Beam angle           |     ✅     |                            |
-| Iris                 | Iris  Opening               |     ⬜️     |                            |
-| Frost                | Frosting                    |     ⬜️     |                            |
-| Prism                | Prism selection             |     ⬜️     |                            |
-| Prism Rotation       | Prism rotation speed        |     ⬜️     |                            |
+| Iris                 | Iris  Opening               |     ✅     | Narrows the beam           |
+| Frost                | Frosting                    |     ✅     |                            |
+| Prism                | Prism selection             |     ✅     | The fixture's facets (GDTF), else three|
+| Prism Rotation       | Prism rotation speed        |     ✅     | Speed and index            |
 | Blade Insertion      | blade selection / insertion |     ⬜️     |                            |
 | Blade SystemRotation | blade rotation selection    |     ⬜️     |                            |
 

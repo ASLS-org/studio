@@ -89,7 +89,7 @@ All channel types are virtually supported. However, some might not have been imp
 | Strobe Speed         | Strobe Speed                      |     ✅      |                            |
 | Strobe Duration      | Strobe Duration                   |     ✅      |                            |
 | Intensity            | Dimmer/Brightness                 |     ✅      |                            |
-| Color Intensity      | Color Channel Intensity           |     ✅      | Supported: **R,G,B,C,M,Y** |
+| Color Intensity      | Color Channel Intensity           |     ✅      | Supported: **R, G, B, C, M, Y, white, warm and cold white, amber, UV, lime**|
 | Color Preset         | Color preset selection            |     ✅      |                            |
 | Color Temperature    | Color temperatrue                 |     ✅      |                            |
 | Pan                  | Pan                               |     ✅      |                            |
@@ -97,9 +97,9 @@ All channel types are virtually supported. However, some might not have been imp
 | Tilt                 | Tilt                              |     ✅      |                            |
 | Tilt Continuous      | Continuous tilting Speed          |     ⬜️      |                            |
 | Pan TiltSpeed        | Pan & Tilt speed selection        |     ⬜️      |                            |
-| Wheel Slot           | Wheel selection                   |     ✅      | Supported: **Color wheel** |
+| Wheel Slot           | Wheel selection                   |     ✅      | Supported: **Color, gobo and prism wheels** |
 | Wheel Shake          | Wheel slot shaking                |     ⬜️      |                            |
-| Wheel SlotRotation   | Full wheel roration               |     ⬜️      |                            |
+| Wheel SlotRotation   | Full wheel roration               |     ✅      | Gobo rotation and gobo index|
 | Wheel Rotation       | Wheel slot rotation               |     ⬜️      |                            |
 | Effect               | Fixture built-in effect selection |     ⬜️      |                            |
 | Beam Angle           | Beam angle value                  |     ✅      |                            |
@@ -110,12 +110,12 @@ All channel types are virtually supported. However, some might not have been imp
 | Sound Sensitivity    | Fixture sound sensitivity         |     ⬜️      |                            |
 | Focus                | Focus distance                    |     ✅      |                            |
 | Zoom                 | Zoom / Beam angle                 |     ✅      |                            |
-| Iris                 | Iris  Opening                     |     ⬜️      |                            |
+| Iris                 | Iris  Opening                     |     ✅      | Narrows the beam           |
 | Iris Effect          | Fixture built-in iris effect      |     ⬜️      |                            |
-| Frost                | Frosting                          |     ⬜️      |                            |
+| Frost                | Frosting                          |     ✅      |                            |
 | Frost Effect         | Fixture built-in frosting effect  |     ⬜️      |                            |
-| Prism                | Prism selection                   |     ⬜️      |                            |
-| Prism Rotation       | Prism rotation speed              |     ⬜️      |                            |
+| Prism                | Prism selection                   |     ✅      | The fixture's facets (GDTF), else three|
+| Prism Rotation       | Prism rotation speed              |     ✅      | Speed and index            |
 | Blade Insertion      | blade selection / insertion       |     ⬜️      |                            |
 | Blade SystemRotation | blade rotation selection          |     ⬜️      |                            |
 | Fog                  | Fogging                           |     ⬜️      |                            |
