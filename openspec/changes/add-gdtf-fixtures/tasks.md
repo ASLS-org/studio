@@ -1,15 +1,16 @@
 # Tasks
 
-## 1. Test files and bundle
+## 1. Generic GDTF bundle and test files
 
-- [ ] 1.1 Gather test `.gdtf` files and choose the bundle (user's call):
-  - **Test set:** at least a moving head with gobo images, an RGB pixel bar with glowing cells,
-    and a multi-beam fixture.
-  - **Bundle:** the user names the files whose redistribution terms allow shipping. Test files
-    stay in the scratchpad, never in the repo.
-
-  Verify: the user has confirmed the list; each bundled file has a licence note for
-  `gdtf_list.json`.
+- [ ] 1.1 Local test set: a few real `.gdtf` files you downloaded (a moving head with gobo images,
+      a pixel bar, a multi-beam fixture), kept in the scratchpad and never committed.
+      Verify: the files are in the scratchpad; `git status` shows none of them.
+- [ ] 1.2 `scripts/gdtf/generate-generic.js` writes the five generic fixtures of design.md
+      decision 2 into `public/gdtf/` with `gdtf_list.json`. Their wheel PNGs are rendered from
+      the `gobos.js` patterns, under the licence the user picks (design.md, open question).
+      Verify: the script reproduces the same files when run twice; each file unzips to a
+      `description.xml` that conforms to the GDTF 1.2 schema (`xmllint --schema`, using the
+      schema from the GDTF spec).
 
 ## 2. Engine: profiles, library, showfile (models)
 
@@ -20,14 +21,19 @@
 - [ ] 2.2 `gdtf.adapter.js` (pure, see design.md decision 1): modes, coarse and fine channels,
       functions mapped to OFL-shaped capabilities, geometry references expanded per instance,
       geometry tree, `physical`, `wheels`, derived category. Add `fflate` and the
-      `PROFILE_SOURCES.GDTF` source. Verify: in Node, the adapter runs on every test file
-      without errors. For the pixel bar, the mode lists one set of colour channels per cell; for
+      `PROFILE_SOURCES.GDTF` source. Verify: in Node, the adapter runs on the generic bundle and
+      on every local test file without errors. For the pixel bar, the mode lists one set of colour channels per cell; for
       the moving head, Pan and Tilt have fine channels and the angle ranges match the file.
-- [ ] 2.3 `gdtf.store.js` (IndexedDB) and the bundle list. `FixtureLibrary.getProfile('gdtf',
+- [ ] 2.3 OFL adapter expands `matrixChannels` insert blocks per pixel (`repeatFor`,
+      `channelOrder`, `$pixelKey` names, `geometry` = pixel key). On load, report fixtures whose
+      footprint grew (design.md decision 4). Verify: spec "OFL pixel bar footprint" and "Footprint
+      grew in an older show" hold. The `type` / `qaIndex` snapshot from 2.1 is unchanged for
+      every library fixture without insert blocks (Node script over `public/fixtures`).
+- [ ] 2.4 `gdtf.store.js` (IndexedDB) and the bundle list. `FixtureLibrary.getProfile('gdtf',
       ...)` looks in the library, then the bundle, and rejects with `MissingFixtureError`; wheel
       images are decoded per type. Verify: in the page, importing the same file twice keeps one
       record; `getProfile` for an unknown ID rejects with that error.
-- [ ] 2.4 `Show.prepareFixtures` resolves profiles first. It handles missing GDTF types (the
+- [ ] 2.5 `Show.prepareFixtures` resolves profiles first. It handles missing GDTF types (the
       popup hook, and Open anyway), and keeps their fixture, group and scene data aside and
       written back unchanged. The patch keeps their addresses reserved. `Fixture.parseFromProfile`
       no longer refuses categories other than Moving Head (design.md decision 3). Verify: spec
@@ -48,18 +54,22 @@
 
 ## 4. Visualizer
 
-- [ ] 4.1 `geometry_fixture.js`: node tree with proxy boxes on the OCCLUDER layer, axis rotation
-      from Pan/Tilt, per-node decoding with inheritance from ancestors, and `writeBeams` for
-      projecting beams; glow-only cells are emissive and add a lens glow. Build it for GDTF
-      fixtures and for non-Moving-Head OFL fixtures (a synthetic tree); OFL Moving Heads keep
-      `MovingHead` (design.md decision 4). Verify: spec "OFL PAR", "GDTF moving head", "Beam
-      colours" and "Pixel cells" hold at every quality level. The demo show looks as before
-      (screenshot against the epic branch).
-- [ ] 4.2 Gobo array grows with wheel images, up to 64 layers, and falls back to the built-in
-      patterns past that; slots map to layers at patch time (design.md decision 5). Verify: spec
+- [ ] 4.1 `fixture_shapes.js`: parametric body shapes by role from GDTF trees, and synthetic
+      OFL trees from category, dimensions, axes, beam and matrix cells (design.md decisions 4
+      and 5). Verify: a page script builds and renders one fixture per OFL category plus each
+      generic GDTF fixture, and the screenshot shows each one recognisably (yoke and head, can,
+      bar, panel).
+- [ ] 4.2 `geometry_fixture.js`: node tree with generated shapes on the OCCLUDER layer, axis
+      rotation from Pan/Tilt, per-node decoding with inheritance from ancestors, and `writeBeams`
+      for projecting beams; glow-only cells are emissive and add a lens glow. OFL Moving Heads
+      without pixel blocks keep `MovingHead`. Verify: spec "OFL PAR", "OFL pixel bar", "GDTF
+      moving head", "Beam colours" and "Pixel cells" hold at every quality level. The demo show
+      looks as before (screenshot against the epic branch).
+- [ ] 4.3 Gobo array grows with wheel images, up to 64 layers, and falls back to the built-in
+      patterns past that; slots map to layers at patch time (design.md decision 6). Verify: spec
       "Real gobo" holds on the floor at Medium and in the haze at High; focus and frost still
       blur it.
-- [ ] 4.3 Frame cost check: a rig of 20 pixel bars plus the demo rig plays a chase. Verify: with
+- [ ] 4.4 Frame cost check: a rig of 20 pixel bars plus the demo rig plays a chase. Verify: with
       render on demand, a still show draws 0 frames over 3 s, and Auto quality does not step down
       on the M1 at High (Stats panel).
 
@@ -76,7 +86,8 @@
   - `src/plugins/visualizer/CLAUDE.md`: `GeometryFixture` and gobo layers from images; drop the
     Moving Head-only rule;
   - root `CLAUDE.md` Known traps: drop the Moving Head-only trap;
-  - skill `fixture-library`: GDTF bundle, and frozen GDTF channel naming.
+  - skill `fixture-library`: the generic GDTF bundle and its generator, the no-third-party-files
+    rule, and frozen GDTF and OFL pixel channel naming.
 
   Verify: the files describe the new modules.
 - [ ] 5.3 `npx eslint` on all touched files is clean.

@@ -20,14 +20,15 @@ already in the library SHALL keep a single entry, with the newer revision.
 - **WHEN** the operator imports a file that is not a GDTF fixture, or has no DMX mode
 - **THEN** an error says why, and the library is unchanged
 
-### Requirement: Bundled GDTF fixtures
-The system SHALL list the GDTF fixtures that ship with the app under Bundled in the universe patch
-popup, ready to patch without importing.
+### Requirement: Bundled generic GDTF fixtures
+The system SHALL list generic GDTF fixtures that ship with the app (a PAR, a spot and a wash
+moving head, a pixel bar and a multi-beam bar) under Bundled in the universe patch popup, ready to
+patch without importing. The bundle SHALL contain no third-party fixture files.
 
 #### Scenario: Patch a bundled fixture
-- **GIVEN** the app ships at least one GDTF fixture
-- **WHEN** the operator selects it under Bundled and patches it
-- **THEN** it is patched like an imported fixture
+- **WHEN** the operator selects the generic spot under Bundled and patches it
+- **THEN** it is patched like an imported fixture, with its pan/tilt, colour wheel, gobo wheel and
+  zoom channels
 
 ### Requirement: Fixtures of any category can be patched
 The system SHALL patch fixtures of any category from the OFL library and from GDTF, not only

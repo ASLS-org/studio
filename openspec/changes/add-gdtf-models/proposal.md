@@ -11,10 +11,11 @@ the 3D view should look like the real rig while staying smooth on weak hardware.
 ## What Changes
 
 - Load each GDTF fixture's own 3D models (`gltf_low`, `gltf`, `gltf_high`; 3ds converted or
-  skipped) for its geometry nodes, in place of the 5a proxy boxes.
+  skipped) for its geometry nodes, in place of the generated bodies from 5a.
 - Pick a level of detail per quality level (Guides and Low: `gltf_low` or proxy; Medium: `gltf`;
-  High: `gltf_high`), with a polygon budget per level; fall back to the proxy when a file has no
-  model or the budget is exceeded.
+  High: `gltf_high`), with a polygon budget per level; fall back to the generated body from 5a
+  when a file has no model or the budget is exceeded. Models come only from the operator's own
+  imported files and are never redistributed.
 - Instance the meshes per fixture type and geometry part, so large rigs of the same fixture cost
   one draw per part.
 

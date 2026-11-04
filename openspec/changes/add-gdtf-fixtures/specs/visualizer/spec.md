@@ -1,13 +1,20 @@
 ## ADDED Requirements
 
 ### Requirement: Every patched fixture shows in the view
-The system SHALL draw every patched fixture in the 3D view, whatever its category: GDTF fixtures
-with their bodies, pan/tilt axes and beams placed as the fixture describes, and other OFL fixtures
-as a simple body with one beam. Moving heads from the OFL library SHALL look as before.
+The system SHALL draw every patched fixture in the 3D view, whatever its category, with a body
+generated from the fixture's description: its category (moving head, can, bar, panel), its
+dimensions, its pan/tilt axes and its beams or cells placed as described. OFL moving heads without
+pixel channels SHALL look as before.
 
 #### Scenario: OFL PAR
 - **GIVEN** a patched OFL `Color Changer` with its dimmer at 255 and red at 255
-- **THEN** the view shows a body with a red beam lighting the floor
+- **THEN** the view shows a can sized from the fixture's dimensions, with a red beam lighting the
+  floor
+
+#### Scenario: OFL pixel bar
+- **GIVEN** a patched OFL pixel bar
+- **WHEN** a scene lights pixel 3 in blue and the others off
+- **THEN** the bar shows its cells in a row, and only the third is blue
 
 #### Scenario: GDTF moving head
 - **WHEN** a GDTF moving head's Pan goes from 0 to 255

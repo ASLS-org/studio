@@ -24,3 +24,19 @@ the whole fixture (for example a master Dimmer) to every cell.
 - **GIVEN** a patched 12-cell RGB bar from GDTF
 - **WHEN** a scene sets cell 3's Red to 255 and the others to 0
 - **THEN** only the third cell's Red address carries 255
+
+### Requirement: OFL pixel fixtures have their full channel list
+For OFL fixtures with pixel (matrix) channels, the system SHALL patch every pixel channel of the
+chosen mode, in the order the fixture defines, named after its pixel (for example `Red 3`), so the
+fixture occupies its real number of DMX channels.
+
+#### Scenario: OFL pixel bar footprint
+- **GIVEN** an OFL pixel bar whose mode has 3 channels for each of 8 pixels
+- **WHEN** the operator patches it at address 1
+- **THEN** it occupies addresses 1-24, and Red 3 sits at address 7
+
+#### Scenario: Footprint grew in an older show
+- **GIVEN** a show saved with an OFL moving head whose pixel channels used to be dropped
+- **WHEN** the show is opened
+- **THEN** the fixture opens with its full channel list, and a message names it so the operator
+  can check its address

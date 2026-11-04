@@ -1,8 +1,14 @@
 # Design
 
-Refined in the unit branch on 2026-11-04. Product decisions from the user: GDTF files come from
-file import plus a curated bundle; showfiles reference a local library; glTF models move to unit
-5b (`add-gdtf-models`).
+Refined in the unit branch on 2026-11-04. Product decisions from the user:
+- **Bundle.** It holds only generic GDTF fixtures written for the project. Files from GDTF Share
+  and manufacturers stay out: the format is open, but each file's meshes, gobo images and
+  thumbnails are copyrighted by default, and the Share terms are a contract. Fixtures come
+  from the operator's own imports.
+- **Library.** Showfiles reference a local library.
+- **Bodies.** Every fixture's body is generated from its facts (category, dimensions, lens, cell
+  layout), which carry no licence issue. OFL pixel fixtures render per cell.
+- **Models.** glTF models move to unit 5b (`add-gdtf-models`).
 
 ## Context
 
@@ -31,7 +37,8 @@ A `.gdtf` file is a zip holding:
 **Goals:**
 - Any GDTF fixture imports, patches, plays and renders with its beams in the right place, each
   beam driven by its own channels.
-- Every OFL fixture patches. Non-Moving-Head fixtures render with a proxy body and one beam.
+- Every OFL fixture patches and renders with a body generated from its facts; OFL pixel
+  fixtures render per cell.
 - Existing showfiles, scenes and OFL Moving Heads behave exactly as before.
 
 **Non-Goals:**
@@ -107,15 +114,27 @@ dropped.
   behave the same. A disk folder in Electron can come later, without a format change.
 - **Re-import.** Importing a file whose fixture type ID is already stored replaces the record,
   keeping the newer revision. The library keeps one revision per type.
-- **Bundle.** The curated bundle is `public/fixtures/gdtf/` plus `gdtf_list.json`, listing for
-  each file its name, manufacturer, fixture type ID and licence note. Bundled files are fetched
-  through `VITE_STATIC_URL` when used, and never copied into IndexedDB.
-- **Licences.** A file goes into the bundle only once the user confirms its redistribution terms
-  (task 1.1). The bundle may start with zero files: the code path is the same.
+- **Bundle.** It lives in `public/gdtf/` with a `gdtf_list.json` index, kept out of
+  `public/fixtures/`, which is the vendored OFL snapshot. Bundled files are fetched through
+  `VITE_STATIC_URL` when used, and never copied into IndexedDB.
+- **Generic fixtures.** A Node script, `scripts/gdtf/generate-generic.js`, writes the bundle
+  from code (the `description.xml` plus wheel PNGs rendered from the `gobos.js` patterns), so the
+  files are reproducible and wholly the project's own. The manufacturer is "ASLS Generic":
+
+  | Fixture | Exercises |
+  |---|---|
+  | Generic PAR RGBW | 8-bit dimmer, additive colour, strobe |
+  | Generic Spot | 16-bit pan/tilt, colour wheel, rotating gobo wheel with images, zoom, focus, frost, prism |
+  | Generic Wash RGBW | Moving head, zoom, colour mixing |
+  | Generic Pixel Bar 12 | 12 glowing RGB cells from one geometry reference, master dimmer |
+  | Generic Beam Bar 4 | 4 tilting projector beams, each with its own dimmer and colour |
+
+  They double as the committed test set. Real third-party files are tested only locally (task
+  1.1).
 
 `FixtureLibrary.getProfile('gdtf', manufacturer, fixtureTypeId)` loads the file from the local
 library first, then from the bundle, unzips it, runs the adapter and freezes the result. Wheel
-images are decoded at this point (decision 5) and kept with the profile as `ImageBitmap`s,
+images are decoded at this point (decision 6) and kept with the profile as `ImageBitmap`s,
 outside the frozen data. If neither source has the file, it rejects with a `MissingFixtureError`
 that carries the fixture type ID and name.
 
@@ -152,20 +171,61 @@ On load:
 
 That is the riskiest part of the unit. Task 2.4 checks it with a round trip.
 
-### 4. Any category patches; the generic fixture
+### 4. OFL pixel channels expand per cell
+
+OFL `matrix` fixtures (93 in the library) declare cells (`pixelCount` or `pixelKeys`, optionally
+grouped) and `templateChannels` whose names contain `$pixelKey`. Their modes insert them with
+`{ insert: "matrixChannels", repeatFor, channelOrder, templateChannels }`. Today
+`buildMode` turns each insert block into one `Unset` slot.
+
+The OFL adapter now expands each block as OFL defines it:
+- **Order.** `repeatFor` is a list of keys, or `eachPixelABC`, `eachPixelXYZ`, and so on.
+  `channelOrder` is `perPixel` or `perChannel`.
+- **Channels.** Each expanded channel is named with the pixel key substituted (`Red 3`). Its
+  type comes from `deriveTypeKey`, as for any channel, and it carries `geometry` = the pixel key.
+
+The profile also gets a synthetic geometry tree (decision 5) with one beam per pixel, laid out on
+the matrix grid. The cell spacing comes from `physical.matrixPixels` when it's given, and
+otherwise the cells are spread evenly over the body face.
+
+Compatibility: only fixtures with insert blocks change. Two cases:
+- **Not Moving Heads.** They could never be patched, so no showfile has them.
+- **About 14 OFL Moving Heads** (for example Robin LEDWash 600, Rogue R2 Wash) could be patched,
+  but each block became one `Unset` slot. Their DMX footprint was shorter than the real fixture,
+  and the addressing was wrong.
+
+  Expanding fixes the footprint, but channels after the block shift. A saved show with one of
+  them may then overlap the next fixture's addresses, and its scene values move to other channels.
+
+  On load, such a fixture is detected (its saved patch length differs from the expanded one) and
+  reported once through `app_error` with its name. It is left patched with its new footprint. The
+  operator re-addresses it if it overlaps.
+
+### 5. Any category patches; generated bodies
 
 - **Patching.** The category throw in `Fixture.parseFromProfile()` goes.
-- **Which class.** `FixtureRenderer.createInstance()` keeps `MovingHead` for OFL Moving Heads, so
-  their look and the unit 4 benchmark stay the same. It builds a `GeometryFixture`
-  (`geometry_fixture.js`) for everything else.
-- **OFL fixtures.** A non-Moving-Head OFL fixture gets a synthetic tree with one body and one
-  beam pointing down the body's −Z, sized from `physical.dimensions` (mm) or 0.3 m.
-  GDTF Moving Heads use `GeometryFixture` too, since their tree has the axes.
+- **Which class.** `FixtureRenderer.createInstance()` keeps `MovingHead` for OFL Moving Heads
+  without pixel blocks, so their look and the unit 4 benchmark stay the same. It builds a
+  `GeometryFixture` (`geometry_fixture.js`) for everything else.
+
+Every geometry tree gets its body shapes from `fixture_shapes.js`, a pure module that turns facts
+into node shapes:
+- **GDTF trees.** Each node already has its place and `size`. The shape generator gives it a
+  shape by role: base, yoke, head, can, bar or cell. The role comes from its kind, its position in
+  the tree and its aspect ratio.
+- **OFL trees.** They are synthesised from:
+  - the category: Moving Head and Scanner get base, yoke and head; Color Changer and Dimmer get a
+    can; Pixel Bar and Matrix get a bar or panel; anything else a box;
+  - `physical.dimensions` (mm, default 0.3 m);
+  - the pan/tilt axes, when the fixture has Pan/Tilt channels;
+  - one beam on the head's front, or the matrix cells (decision 4).
+- **Shapes.** They are parametric: rounded boxes, cylinders and a lens ring, from a few shared
+  geometries scaled per node. They come out the same for the same input. In 5b they stay as the
+  fallback for GDTF files without models, and at the Guides and Low levels.
 
 `GeometryFixture` builds the tree once:
-- **Nodes.** Each node is an `Object3D`. Body and axis nodes get a proxy box of `size`: one
-  shared unit-box geometry scaled per node, in the fixture body material, on the OCCLUDER layer.
-  Beam nodes get a lens disc.
+- **Nodes.** Each node is an `Object3D` with its generated shape in the fixture body material, on
+  the OCCLUDER layer. Beam nodes get a lens disc.
 - **Patch entry.** The renderer gets a geometry → channel index map built at patch time:
   - each profile channel is routed to the node named by its `geometry`;
   - channels with no `geometry`, or on the root, go to the root;
@@ -193,10 +253,10 @@ Cost per frame:
 - `writeBeams` is proportional to the lit beams;
 - lighting cost grows with the beam count exactly as in units 3 and 4, and the governor already
   adapts to it;
-- proxy bodies are a few boxes per fixture, with one draw per node. Per-type instancing comes
-  with the real models in 5b.
+- generated bodies are a few shapes per fixture, with one draw per node. Per-type instancing
+  comes with 5b.
 
-### 5. Wheel images become gobo layers
+### 6. Wheel images become gobo layers
 
 - **Image format.** `gobos.js` keeps its procedural patterns as the first layers. A profile's
   wheel slots with an `image` are decoded once per type (`createImageBitmap` from the zip entry),
@@ -209,7 +269,7 @@ Cost per frame:
 - **Lookup.** The renderer maps each wheel slot to its layer at patch time. The shaders don't
   change, since they already sample a layer index.
 
-### 6. Patch UI
+### 7. Patch UI
 
 The universe patch popup lists its sources:
 1. **Imported**: GDTF fixtures in the local library, from `gdtf.store.js`.
@@ -237,7 +297,11 @@ The group patch popup only lists fixtures that are already patched, so it doesn'
   checks it.
 - **[IndexedDB is wiped with the site data]**: a show then asks for its fixtures again. That is
   what the missing-fixture popup is for. The manual says to keep the `.gdtf` files.
-- **[Bundle licences]**: no file ships until the user confirms its terms.
+- **[Licences]**: the bundle holds only generated files. Bodies and gobos come from facts or
+  from our own patterns, never from third-party meshes or images. Third-party files reach the
+  app only through the operator's own import.
+- **[OFL Moving Heads with pixel blocks]**: saved shows using them shift (decision 4), reported
+  on load.
 
 ## Migration Plan
 
@@ -247,4 +311,5 @@ fixture.
 
 ## Open Questions
 
-- Which GDTF files go into the bundle (task 1.1, the user's choice).
+- Licence of the generated bundle files: GPL-3.0 like the app, or CC0 so others can reuse them
+  (the user's choice, before task 1.2).
