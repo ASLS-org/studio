@@ -1,5 +1,6 @@
 import ukColors from '@/views/components/uikit/colors/uikit.colors';
 import Live from './live.model';
+import { toRaw } from '../utils/reactivity';
 import CueItemPool from './cue.item.pool.model';
 import Cue from './cue.model';
 
@@ -218,7 +219,9 @@ class Chase {
     if (state) {
       this.elapsed = 0;
       this.deltaStart = null;
-      this.animationId = Live.add(this.update.bind(this), this.quantize, 60, onReadyCallback);
+      // Playback runs on the raw chase (see Cue.cue)
+      const raw = toRaw(this);
+      this.animationId = Live.add(raw.update.bind(raw), this.quantize, 60, onReadyCallback);
     } else if (this.animationId != null) {
       this.elapsed = 0;
       this.cues.forEach((cueItemPool) => {
@@ -263,12 +266,14 @@ class Chase {
      */
     this.cues.forEach((cueItemPool) => {
       cueItemPool.items.forEach((item) => {
+      let active = false;
         if (
           t >= item.tick * this.tickDuration
           && t <= (item.tick + item.length) * this.tickDuration
         ) {
           item.update(t - (item.tick * this.tickDuration));
         } else {
+          active = true;
           cueItemPool.cue.state = 0;
         }
       });

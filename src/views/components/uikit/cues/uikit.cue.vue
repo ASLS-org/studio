@@ -3,7 +3,7 @@
     ref="chase"
     class="uikit_chase"
     :style="{ background: chase.color, top: `${chase.id * 26}px` }"
-    :class="{ playing: chase.state, selected: selected }"
+    :class="{ playing: live(chase.state), selected: selected }"
     @mousedown="startDrag"
     @mouseup="stopDrag"
   >
@@ -13,12 +13,12 @@
     >
       <uk-icon
         class="uikit_chase_icon"
-        :name="chase.state ? 'stop' : 'play'"
+        :name="live(chase.state) ? 'stop' : 'play'"
       />
     </div>
     <div
       class="uikit_chase_loader"
-      :style="{ width: chase.elapsedPerc * 100 + '%' }"
+      :style="{ width: live(chase.elapsedPerc) * 100 + '%' }"
     />
     <h4 class="uikit_chase_title">
       {{ chase.name }}
@@ -27,12 +27,15 @@
 </template>
 
 <script>
+import LiveMixin from '@/views/mixins/live.mixin';
+
 export default {
   name: 'UkChase',
   compatConfig: {
     // or, for full vue 3 compat in this component:
     MODE: 3,
   },
+  mixins: [LiveMixin],
   props: {
     /**
      * Handle to chase instance

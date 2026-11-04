@@ -1,5 +1,6 @@
 import ukColors from '@/views/components/uikit/colors/uikit.colors';
 import Live from './live.model';
+import { toRaw } from '../utils/reactivity';
 /**
  * Cue types enumeration
  *
@@ -213,7 +214,10 @@ class Cue {
       // if (this.relative) {
       //   this.prepareStartValues();
       // }
-      this.animationId = Live.add(this._update.bind(this));
+      // Playback runs on the raw cue: per-tick writes trigger no Vue work (UI reads them through
+      // the live ticker)
+      const raw = toRaw(this);
+      this.animationId = Live.add(raw._update.bind(raw));
       this.state = CUE_STATES.RUNNING;
     } else if (this.animationId != null) {
       Live.remove(this.animationId);

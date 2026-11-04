@@ -79,8 +79,8 @@
                       style=""
                     >
                       <uk-icon
-                        :class="{ playing: cue.state }"
-                        :name="cue.state ? 'stop' : 'play'"
+                        :class="{ playing: isPlaying(cue) }"
+                        :name="isPlaying(cue) ? 'stop' : 'play'"
                         class="grid_item_body_icon"
                       />
                     </uk-flex>
@@ -112,7 +112,7 @@
             v-for="(cue, index) in cues"
             :key="index"
             class="cue_preview"
-            :class="{ playing: cue.state, selected: cue.id === selectedCue }"
+            :class="{ playing: isPlaying(cue), selected: cue.id === selectedCue }"
             :style="computeCuePreviewStyle(cue)"
           />
         </div>
@@ -128,6 +128,7 @@
 </template>
 
 <script>
+import LiveMixin from '@/views/mixins/live.mixin';
 import popupCuePool from '../_popups/group.modifier.popup.cuepool.vue';
 
 export default {
@@ -139,6 +140,7 @@ export default {
   components: {
     popupCuePool,
   },
+  mixins: [LiveMixin],
   props: {
     /**
      * Handle to group instance
@@ -202,6 +204,16 @@ export default {
   },
   methods: {
     /**
+     * Whether a cue is playing, triggered directly or by a running chase
+     *
+     * @public
+     * @param {Object} cue handle to cue instance
+     * @returns {Boolean} playing state
+     */
+    isPlaying(cue) {
+      return this.live(cue.state || cue.chaseActive);
+    },
+    /**
      * Computes cue loading gradient baed on cue playtime
      *
        * @public
@@ -209,7 +221,10 @@ export default {
      * @returns {Object} css background linear-gradient value
      */
     computeCueLoader(cue) {
-      const perc = (cue.time / cue.durationMS) * 100 * cue.state;
+      // Playing directly or through a chase; a chase item can outlast the cue's own duration
+      const perc = this.isPlaying(cue)
+        ? Math.min((cue.time / cue.durationMS) * 100, 100)
+        : 0;
       return {
         background: `linear-gradient(90deg ,var(--secondary-light) 0% ,var(--secondary-light) ${perc}% ,transparent ${perc}%,transparent 100% )`,
       };

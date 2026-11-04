@@ -75,12 +75,15 @@
 </template>
 
 <script>
+import LiveMixin from '@/views/mixins/live.mixin';
+
 export default {
   name: 'GroupSceneModifierWidgetCurve',
   compatConfig: {
     // or, for full vue 3 compat in this component:
     MODE: 3,
   },
+  mixins: [LiveMixin],
   props: {
     /**
      * Handle to Fade instance
@@ -147,8 +150,8 @@ export default {
      */
     cp3Style() {
       return {
-        bottom: `${(Math.min(this.fade.value, 1) % 1) * this.canvas.height - 8}px`,
-        left: `${(Math.min(this.fade.x, 1) % 1) * this.canvas.width - 8}px`,
+        bottom: `${(Math.min(this.live(this.fade.value), 1) % 1) * this.canvas.height - 8}px`,
+        left: `${(Math.min(this.live(this.fade.x), 1) % 1) * this.canvas.width - 8}px`,
       };
     },
   },

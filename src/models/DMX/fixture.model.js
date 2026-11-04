@@ -1,4 +1,4 @@
-import { markRaw } from 'vue';
+import { markRaw } from '../utils/reactivity';
 import Channel from './channel.model';
 import { PROFILE_SOURCES, resolveModeName } from '../fixtures/fixture.profile';
 import MovingHead from '../../plugins/visualizer/moving_head';
@@ -749,10 +749,11 @@ class Fixture {
    */
   prepareChannels() {
     this.mode = this.modes[this.modeIndex] || this.modes[0]; // Selected profile mode
-    this.channels = this.mode.channels.map((profileChannel, index) => new Channel({
+    // Channels are raw: playback writes them every tick, widgets read them through the live ticker
+    this.channels = this.mode.channels.map((profileChannel, index) => markRaw(new Channel({
       id: index + 1,
       profileChannel,
-    }));
+    })));
   }
 
   /**

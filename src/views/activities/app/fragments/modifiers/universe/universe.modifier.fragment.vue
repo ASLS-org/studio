@@ -30,21 +30,22 @@
       v-show="selectedFixture"
       ref="channels"
       class="fixture_channels"
-      :channels="selectedFixture ? selectedFixture.simplifiedChannels : []"
+      :channels="liveChannels"
       @input="setChannel"
     />
     <widget-color-picker
       v-if="selectedFixture && selectedFixture.hasColor"
       ref="colorPicker"
-      v-model="selectedFixture.color"
+      :model-value="liveColor"
       tabindex="0"
+      @update:model-value="setFixtureColor"
     />
     <!-- :rgb-data="selectedFixture ? selectedFixture.color : undefined"
       @input="setFixtureColor" -->
     <pan-tilt-widget
       v-show="selectedFixture && selectedFixture.hasPan && selectedFixture.hasTilt"
       ref="panTiltPicker"
-      :pan-tilt="selectedFixture ? selectedFixture.panTilt : undefined"
+      :pan-tilt="livePanTilt"
       @input="setFixturePanTilt"
     />
     <patch-popup
@@ -55,6 +56,7 @@
 </template>
 
 <script>
+import LiveMixin from '@/views/mixins/live.mixin';
 import FixturePoolWidget from '../_widgets/modifier.widget.fixture.pool.vue';
 import FixtureChannelsWidget from '../_widgets/modifier.widget.fixture.channels.vue';
 import WidgetColorPicker from '../_widgets/modifier.widget.colorpicker.vue';
@@ -83,6 +85,7 @@ export default {
     PanTiltWidget,
     PatchPopup,
   },
+  mixins: [LiveMixin],
   data() {
     return {
       /**
@@ -102,6 +105,26 @@ export default {
        */
       selectedFixtureIndex: 0,
     };
+  },
+  computed: {
+    /**
+     * Selected fixture's channels, refreshed by the live ticker (playback writes bypass Vue)
+     */
+    liveChannels() {
+      return this.live(this.selectedFixture ? this.selectedFixture.simplifiedChannels : []);
+    },
+    /**
+     * Selected fixture's colour, refreshed by the live ticker
+     */
+    liveColor() {
+      return this.live(this.selectedFixture ? this.selectedFixture.color : undefined);
+    },
+    /**
+     * Selected fixture's pan/tilt, refreshed by the live ticker
+     */
+    livePanTilt() {
+      return this.live(this.selectedFixture ? this.selectedFixture.panTilt : undefined);
+    },
   },
   watch: {
     '$route.query.fixtureId': function routeQueryFixtureIdWatcher(fixtureId) {
@@ -175,6 +198,7 @@ export default {
      */
     setChannel(channel) {
       this.selectedFixture.setQuickAccessor(channel, channel.value);
+      this.$liveTicker.bump();
     },
     /**
      * Sets the selected fixture color intensity value
@@ -185,6 +209,7 @@ export default {
     setFixtureColor(color) {
       if (this.selectedFixture) {
         this.selectedFixture.color = color;
+        this.$liveTicker.bump();
       }
     },
     /**
@@ -200,6 +225,7 @@ export default {
     setFixturePanTilt(panTilt) {
       if (this.selectedFixture) {
         this.selectedFixture.panTilt = panTilt;
+        this.$liveTicker.bump();
       }
     },
     /**

@@ -3,6 +3,7 @@ import axios from 'axios';
 import uikit from '@/views/components/uikit';
 import utils from '@/views/utils';
 import EventBus from '@/plugins/eventbus';
+import LiveTicker from '@/plugins/live.ticker';
 import '@/assets/styles/global.css';
 import '@/assets/styles/fonts.css';
 import ShowSingleton from '@/singletons/show.singleton';
@@ -26,6 +27,7 @@ try {
   app.config.globalProperties.$show = reactive(ShowSingleton);
   app.config.globalProperties.$http = axios;
   app.config.globalProperties.$utils = reactive(utils);
+  app.config.globalProperties.$liveTicker = LiveTicker;
   app.config.errorHandler = (err) => {
     console.log(err);
     EventBus.emit('app_error', err);
