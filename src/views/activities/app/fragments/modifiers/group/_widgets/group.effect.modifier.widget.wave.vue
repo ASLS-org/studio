@@ -78,6 +78,11 @@
             :max="360"
             label="Phase stop"
           />
+          <uk-checkbox
+            v-model="channel.cellPhase"
+            :disabled="!channel.type"
+            label="Across cells"
+          />
         </uk-flex>
       </uk-flex>
       <div class="widget_wave_modifier">
@@ -134,6 +139,7 @@ export default {
           directionOptions: ['No Channel'],
           fixturePhaseStart: 0,
           fixturePhaseStop: 0,
+          cellPhase: false,
           fixtures: [],
           getValue: () => {},
         };

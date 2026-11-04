@@ -38,19 +38,19 @@
 
 ## 4. UI: cell selector (views)
 
-- [ ] 4.1 `fragments/modifiers/_widgets/modifier.widget.cells.vue` (`ModifierWidgetCells`):
+- [x] 4.1 `fragments/modifiers/_widgets/modifier.widget.cells.vue` (`ModifierWidgetCells`):
       **All cells** plus the cells, Ctrl/Shift multi-select, hidden without cells (design decision
       4). Verify in the running app: shows for a pixel bar, hidden for the demo moving heads,
       selecting cells doesn't mark the show unsaved.
-- [ ] 4.2 Universe fragment: the selector, faders filtered to whole-fixture and selected cells'
+- [x] 4.2 Universe fragment: the selector, faders filtered to whole-fixture and selected cells'
       channels, colour picker and Pan/Tilt per selection. Verify in the running app: cell 3 blue on
       an 8-pixel bar lights only cell 3 in the visualizer; the second head's Pan/Tilt moves only
       that head.
-- [ ] 4.3 Scene fragment: the selector, rows per whole-fixture channel and per kind key for the
+- [x] 4.3 Scene fragment: the selector, rows per whole-fixture channel and per kind key for the
       selected cells, writes to every target; the `type`/`color` dedup goes. Verify in the running
       app: cell 7's dimmer at 200 is stored and played for cell 7 only; **All cells** sets all of
       them; the demo show's scenes show the same faders as before.
-- [ ] 4.4 Effect wave widget: **Across cells** checkbox next to Phase start / Phase stop. Verify
+- [x] 4.4 Effect wave widget: **Across cells** checkbox next to Phase start / Phase stop. Verify
       in the running app: toggling it marks the show unsaved and changes the running effect.
 
 ## 5. Docs
