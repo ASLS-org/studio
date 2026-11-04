@@ -28,8 +28,9 @@ const EXTINCTION = 0.008; // haze extinction toward the camera, per meter
 const LENS_RADIUS = 0.1; // meters
 const AIR_PIECES = 4; // closed-form pieces per ray
 const PHASE = 0.3; // forward scattering (Henyey-Greenstein g): about 3× brighter head-on
-const HAZE_SCALE = 0.04; // haze noise: one texture tile per 25 m
-const MOVEMENT_SPEED = 0.02; // haze drift at Movement 100, in noise texture units per second
+const HAZE_SCALE = 0.09; // haze noise: one texture tile per 11 m
+const MOVEMENT_SPEED = 0.12; // haze drift at Movement 100, in noise texture units per second
+// (about 1.3 m/s)
 
 const AIR_VERTEX = /* glsl */`
 ${BEAM_GLSL}
@@ -183,7 +184,9 @@ void main() {
     vec2 disk = q.xy / q.z;
     float w = profile(length(disk)) / (1.0 + uFalloff * dist * dist);
     float n = texture(uNoise, (C + dir * t) * uNoiseScale + uDrift).r;
-    sum += w * goboAt(disk, g + vec4(0.0, 0.0, 1.0, 0.0)) * (0.7 + 0.6 * n);
+    // Haze clouds: thin between them, dense inside
+    float cloud = 0.25 + 1.5 * smoothstep(0.3, 0.7, n);
+    sum += w * goboAt(disk, g + vec4(0.0, 0.0, 1.0, 0.0)) * cloud;
     weight += w;
   }
   light *= weight > 0.0 ? sum / weight : 0.0;
@@ -292,6 +295,8 @@ class AirBeams {
     this._size = new THREE.Vector2();
     this._drift = new THREE.Vector3();
     this._movement = 0;
+    this._density = 0;
+    this._exposure = 1;
     this._lastTime = null;
     this.uniforms = {
       ...shared,
@@ -407,8 +412,20 @@ class AirBeams {
    * @param {Number} movement Haze movement
    */
   setHaze(density, movement) {
-    this.uniforms.uHaze.value = (density / 100) * AIR_GAIN;
+    this._density = density;
+    this.uniforms.uHaze.value = (density / 100) * AIR_GAIN * this._exposure;
     this._movement = movement / 100;
+  }
+
+  /**
+   * Scales the air light (the visualizer's Exposure)
+   *
+   * @public
+   * @param {Number} exposure Exposure factor (1 is neutral)
+   */
+  setExposure(exposure) {
+    this._exposure = exposure;
+    this.uniforms.uHaze.value = (this._density / 100) * AIR_GAIN * exposure;
   }
 
   /**

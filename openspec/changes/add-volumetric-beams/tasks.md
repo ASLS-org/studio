@@ -118,6 +118,14 @@
 - [x] 9.3 Playback at every level shows no console errors; `npx eslint` clean on the touched
       files.
 
+## 10. Exposure and haze movement (fourth review)
+
+- [x] 10.1 Exposure setting (visualizer `showData`, popup, manual). Verify: spec "Brighter view"
+      and "Showfile without Exposure" hold (Exposure 200 vs 100 screenshots `ce200.png`,
+      `ce100.png`; a fresh demo load reads 100).
+- [x] 10.2 Visible haze drift at High. Verify: rendering two frames 1 s apart in the page changes
+      0 pixels at Movement 0 and about 37,000 at Movement 50.
+
 ## Workflow follow-up
 
 - Archive the change on the unit branch, set unit 4 to `archived` in the epic doc, then open a PR

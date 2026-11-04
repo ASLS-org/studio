@@ -479,6 +479,19 @@ class StageLighting {
   }
 
   /**
+   * Exposure of the whole picture: the tone curve's exposure (scene and surface light) and the
+   * air beams, lens glow and bloom
+   *
+   * @public
+   * @param {Number} exposure Exposure factor (1 is neutral)
+   */
+  setExposure(exposure) {
+    this.renderer.toneMappingExposure = exposure;
+    this.air.setExposure(exposure);
+    this.bloom.exposure.value = exposure;
+  }
+
+  /**
    * Floor brightness without beam light (the factor the floor's unlit material uses)
    *
    * @public

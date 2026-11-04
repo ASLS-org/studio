@@ -126,3 +126,16 @@ footprint shows a visible step where it overlaps another, at every level that li
 - **WHEN** a fixture lights the floor at a grazing angle
 - **THEN** its footprint shows in full, up to the end of the beam, without being cut
 
+### Requirement: Exposure setting
+The system SHALL provide an Exposure setting (25-400 %, default 100, saved in the showfile) that
+scales the brightness of the beams in the air, their lens glow and bloom, and the light they cast
+on surfaces through the scene's tone curve. 100 SHALL give the physically scaled result.
+
+#### Scenario: Brighter view
+- **WHEN** the operator raises Exposure from 100 to 200
+- **THEN** beams and their footprints get brighter and still roll off smoothly instead of clipping
+
+#### Scenario: Showfile without Exposure
+- **WHEN** a showfile saved before Exposure existed is opened
+- **THEN** Exposure is 100
+

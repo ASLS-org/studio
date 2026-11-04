@@ -50,6 +50,7 @@ THREE.Vector3.prototype.round = function vector3RoundPolyfill(digits) {
 const DEFAULT_PREFERENCES = {
   HAZE_DENSITY: 50,
   HAZE_MOVEMENT: 0,
+  EXPOSURE: 100,
   GLOBAL_BRIGHTNESS: 80,
 };
 
@@ -103,6 +104,7 @@ class Visualizer {
     this.floorMaterial = null;
     this._hazeDensity = DEFAULT_PREFERENCES.HAZE_DENSITY;
     this._hazeMovement = DEFAULT_PREFERENCES.HAZE_MOVEMENT;
+    this._exposure = DEFAULT_PREFERENCES.EXPOSURE;
     /**
      * Whether something changed since the last drawn frame (render on demand)
      */
@@ -148,6 +150,7 @@ class Visualizer {
   set preferences(preferences) {
     if (preferences) {
       this.globalBrightness = preferences.globalBrightness;
+      this.exposure = preferences.exposure;
       if (preferences.hazeDensity !== undefined) {
         this.hazeDensity = preferences.hazeDensity;
         this.hazeMovement = preferences.hazeMovement;
@@ -188,6 +191,23 @@ class Visualizer {
 
   get hazeMovement() {
     return this._hazeMovement;
+  }
+
+  /**
+   * Exposure, 25 to 400 (%): brightness of everything the beams light and the whole picture's tone
+   * curve, for a physically accurate (100) or a more readable view
+   *
+   * @type {Number}
+   */
+  set exposure(value) {
+    const exposure = Number.isFinite(value) ? value : DEFAULT_PREFERENCES.EXPOSURE;
+    this._exposure = Math.min(Math.max(exposure, 25), 400);
+    if (this.lighting) this.lighting.setExposure(this._exposure / 100);
+    this.invalidate();
+  }
+
+  get exposure() {
+    return this._exposure;
   }
 
   /**
@@ -359,6 +379,7 @@ class Visualizer {
     return {
       hazeDensity: this.hazeDensity,
       hazeMovement: this.hazeMovement,
+      exposure: this.exposure,
       globalBrightness: this.globalBrightness,
       autoRotate: this.autoRotate,
     };
@@ -465,6 +486,7 @@ class Visualizer {
     this.applyQuality();
     this.applyHaze();
     this.lighting.setAmbient(this._globalBrightness * FLOOR_AMBIENT);
+    this.lighting.setExposure(this._exposure / 100);
     this.domElement.addEventListener('pointermove', this.invalidate);
     this.domElement.addEventListener('pointerdown', this.invalidate);
     this.domElement.addEventListener('pointerup', this.invalidate);

@@ -12,6 +12,7 @@ const GLOW_VERTEX = /* glsl */`
 ${BEAM_GLSL}
 uniform float uSize;
 uniform float uOffset;
+uniform float uExposure;
 out vec2 vDisk;
 out vec3 vColor;
 void main() {
@@ -25,7 +26,7 @@ void main() {
   vec4 view = viewMatrix * vec4(centre, 1.0);
   view.xy += position.xy * size;
   vDisk = position.xy;
-  vColor = c.rgb * c.a * (0.15 + 0.85 * facing3);
+  vColor = c.rgb * c.a * (0.15 + 0.85 * facing3) * uExposure;
   gl_Position = projectionMatrix * view;
   if (c.a <= 0.0) gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
 }
@@ -135,6 +136,7 @@ class Bloom {
    */
   constructor(renderer, shared, beamState) {
     this.renderer = renderer;
+    this.exposure = { value: 1 };
     this._levels = [];
     this._size = new THREE.Vector2();
     this.screenCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -153,6 +155,7 @@ class Bloom {
         uSize: { value: GLOW_SIZE },
         uOffset: { value: GLOW_OFFSET },
         uScale: { value: ACCUM },
+        uExposure: this.exposure,
       },
       vertexShader: GLOW_VERTEX,
       fragmentShader: GLOW_FRAGMENT,

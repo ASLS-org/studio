@@ -76,9 +76,10 @@ Global scene illumination may be adjusted to fit your needs.
 
 | Setting    | Description             |
 | ---------- | ----------------------- |
-| brightness | Global scene brightness |
+| Global Brightness | Brightness of the stage where no beam lights it. |
+| Exposure   | Brightness of the beams and the light they cast, in %, saved with the show. **100** is physically accurate: wide beams look dimmer than narrow ones, as on a real stage. Raise it for a more readable view, lower it for a darker room. |
 
-> **Note:** High global illumination values might decrease lighting emulation and volumetric's visibility.
+> **Note:** High global brightness makes the beams' light harder to see against the stage.
 
 ### Haze
 

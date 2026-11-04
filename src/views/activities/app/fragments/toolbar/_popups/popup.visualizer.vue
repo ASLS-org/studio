@@ -131,6 +131,21 @@
           style="width: 100px"
         />
       </uk-flex>
+      <uk-flex center-h>
+        <div>
+          <h4>Exposure:</h4>
+          <p class="subtitle">
+            Brightness of the beams and their light, in %. 100 is physically accurate.
+          </p>
+        </div>
+        <uk-spacer />
+        <uk-num-input
+          v-model="$show.visualizerHandle.exposure"
+          :min="25"
+          :max="400"
+          style="width: 100px"
+        />
+      </uk-flex>
     </uk-flex>
   </uk-popup>
 </template>
@@ -191,6 +206,7 @@ export default {
       this.$show.visualizerHandle.hazeDensity = this.initialValues.hazeDensity;
       this.$show.visualizerHandle.hazeMovement = this.initialValues.hazeMovement;
       this.$show.visualizerHandle.globalBrightness = this.initialValues.globalBrightness;
+      this.$show.visualizerHandle.exposure = this.initialValues.exposure;
       if (this.initialQuality) {
         this.$show.visualizerHandle.quality = this.initialQuality.quality;
         this.$show.visualizerHandle.resolutionScale = this.initialQuality.resolutionScale;

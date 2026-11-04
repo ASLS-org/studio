@@ -106,6 +106,15 @@ Visualizer preferences today: `globalFoggingState`, `globalFoggingDensity`,
       outer 22% of the radius plus 10% per mip level of focus or frost blur.
     - Light buffers clear to black (three.js leaves the scene background as clear colour).
 
+12. **Exposure and visible haze** (2026-11-04, fourth review: the physical result looked faint,
+    haze Movement did nothing visible):
+    - Exposure (25-400 %, showfile key `exposure`, default 100) sets the renderer's tone mapping
+      exposure, which the surface composite shares, and scales air light and lens glow. Global
+      Brightness stays the unlit stage's level.
+    - Haze noise tiles every 11 m with cloud contrast 0.25-1.75, drifting about 1.3 m/s at
+      Movement 100 (was 25 m tiles, 0.7-1.3 contrast, 0.5 m/s: averaged away along each ray).
+      Measured in the page at High: 0 changed pixels per second at Movement 0, about 37,000 at 50.
+
 ## Risks / Trade-offs
 
 - [Upsample halos at depth edges] → bilateral (depth-aware) upsample; full resolution at T3.
