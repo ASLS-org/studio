@@ -1,4 +1,3 @@
-import liveInstance from '@/models/DMX/live.model';
 import WscClientManager, { WSC_REMOTE_STATE } from '@asls/wsc-client';
 import { WscPacket, WscTransport } from '@asls/wsc-sdk';
 
@@ -25,7 +24,6 @@ export class WscConnectionStream {
     this.connectionHandle = wscConnectionHandle;
     this.getFrame = getFrame;
     this.state = STREAM_STATE.IDLE;
-    this.streamId = null;
     this.protocol = protocol;
     this.address = address;
   }
@@ -77,14 +75,27 @@ export class WscConnectionStream {
     }
   }
 
-  start() {
-    if (this.state === STREAM_STATE.IDLE && !this.streamId) {
-      this.streamId = liveInstance.add(this.forward.bind(this));
-      this.state = STREAM_STATE.RUNNING;
-    }
+  /**
+   * Whether the stream sends frames. Running streams are fed by the universe pool's Live
+   * frame phase, every tick and whatever the play state.
+   *
+   * @readonly
+   * @type {Boolean}
+   */
+  get isRunning() {
+    return this.state === STREAM_STATE.RUNNING;
   }
 
-  forward() {
+  start() {
+    this.state = STREAM_STATE.RUNNING;
+  }
+
+  /**
+   * Sends one universe frame to the gateway
+   *
+   * @param {Uint8Array} [frame] Universe frame, defaults to the stream's frame getter
+   */
+  forward(frame = this.getFrame()) {
     let packet = null;
 
     switch (this.protocol) {
@@ -93,7 +104,7 @@ export class WscConnectionStream {
         // eslint-disable-next-line no-case-declarations
         packet = WscPacket.create(
           WscPacket.Type.STREAM_CHANNELS,
-          { universe: this.targetId, startChannel: 0, values: this.getFrame() },
+          { universe: this.targetId, startChannel: 0, values: frame },
           { transport: this.transport },
         );
         break;
@@ -101,16 +112,13 @@ export class WscConnectionStream {
         throw new Error(`Unsupported protocol: 0x${parseInt(this.protocol, 16)}\nthis protocol isn't supported yet`);
     }
 
-    if (packet) {
+    if (packet && this.connectionHandle.client) {
       this.connectionHandle.client.send(packet);
     }
   }
 
   stop() {
-    if (this.state === STREAM_STATE.RUNNING && this.streamId) {
-      liveInstance.remove(this.streamId);
-      this.state = STREAM_STATE.IDLE;
-    }
+    this.state = STREAM_STATE.IDLE;
   }
 }
 

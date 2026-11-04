@@ -149,18 +149,35 @@ class Universe {
   }
 
   get DMX512Data() {
-    const DMX_PACKET_LENGTH = 512;
-    const DMX_BUFF = new Uint8Array(DMX_PACKET_LENGTH);
-    this._addressMap.forEach((address, index) => {
-      const fixture = this._patch[address];
-      if (fixture) {
-        const fixtureChannelIndex = index - fixture.chStart;
-        DMX_BUFF[index] = fixture.channels[fixtureChannelIndex].value.DMX || 0;
-      } else {
-        DMX_BUFF[index] = 0;
-      }
-    });
-    return DMX_BUFF;
+    return this._dmxBuffer;
+  }
+
+  /**
+   * Universe's current DMX frame (512 channels), packed once per Live tick by the universe pool.
+   * The buffer is reused: copy it to keep a snapshot.
+   *
+   * @readonly
+   * @type {Uint8Array}
+   */
+  get frame() {
+    return this._dmxBuffer;
+  }
+
+  /**
+   * Copies the patched fixtures' channel values into the universe frame
+   *
+   * @public
+   * @returns {Uint8Array} The universe frame
+   */
+  packFrame() {
+    const frame = this._dmxBuffer;
+    for (let i = 0; i < DMX_UNIVERSE_LENGTH; i++) {
+      const address = this._addressMap[i];
+      const fixture = address === undefined ? undefined : this._patch[address];
+      const channel = fixture ? fixture.channels[i - address] : undefined;
+      frame[i] = channel ? channel.value.DMX : 0;
+    }
+    return frame;
   }
 
   /**
@@ -318,7 +335,7 @@ class Universe {
       this.id,
       protocol,
       address,
-      () => this.DMX512Data,
+      () => this.frame,
     );
   }
 
