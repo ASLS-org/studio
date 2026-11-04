@@ -81,9 +81,13 @@
 - [x] 6.3 Add the three controls to `popup.visualizer.vue` with `uk-select-input` / `uk-num-input`
       (skill `vue-ui-change`). Verify: changing each control in `npm start` changes the view at
       once; spec "Guides on at High quality" holds.
-- [ ] 6.4 Update the manual: Visualizer page § Settings (Quality, resolution scale, Beam guides,
+- [x] 6.4 Update the manual: Visualizer page § Settings (Quality, resolution scale, Beam guides,
       what Auto does) and the toolbar preferences page if its screenshot or list changes (skill
       `user-manual`). Verify: `npm run docs:manual:serve` shows the new settings.
+      Note (2026-11-04): pages updated (Stage Lighting, Quality; stale Volumetrics and Lighting
+      settings removed; screenshot recapture left as a TODO). The manual dev server fails on every
+      page since 859fed8: uikit imports `@/views/mixins/live.mixin`, which the manual can't
+      resolve. Not fixed here.
 
 ## 7. Visualizer: render on demand
 
