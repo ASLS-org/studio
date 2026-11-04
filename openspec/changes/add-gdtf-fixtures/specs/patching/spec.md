@@ -17,7 +17,8 @@ already in the library SHALL keep a single entry, with the newer revision.
 - **THEN** the fixture is still listed under Imported
 
 #### Scenario: Invalid file
-- **WHEN** the operator imports a file that is not a GDTF fixture, or has no DMX mode
+- **WHEN** the operator imports a file that is not a GDTF fixture, is damaged, or has no DMX
+  mode
 - **THEN** an error says why, and the library is unchanged
 
 ### Requirement: Bundled generic GDTF fixtures

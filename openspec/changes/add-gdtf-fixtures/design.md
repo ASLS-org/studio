@@ -105,6 +105,14 @@ uses `xml2js`, which is already used for QLC showfiles. Parsing stays on the mai
 once per import and takes milliseconds for a `description.xml`, so the draft's worker idea is
 dropped.
 
+**Versions and broken files.** The local test set mixes GDTF 1.0 (70 files), 1.1 (24) and 1.2
+(104), so the adapter reads all three. The differences that matter:
+- DMX values are written as `N` or `N/bytes`;
+- in 1.0, the channel's geometry and default value can sit on different elements;
+- `Break` offsets differ.
+
+Four of the files fail the zip CRC check. Import rejects such a file with a message naming it.
+
 ### 2. Local library in IndexedDB, plus a static bundle
 
 `gdtf.store.js` (under `src/models/fixtures/`) is a thin IndexedDB wrapper.
@@ -243,10 +251,32 @@ inputs did not change is not re-decoded.
 After decoding, `GeometryFixture.writeBeams()` writes one `BeamState` row per lit projector beam
 (more with a prism, as `MovingHead` does).
 
-**Glow-only beams.** GDTF beams of type `Glow`, `None` or `Rectangle` (LED pixels, effect cells,
-panels) do not project light. They show as an emissive lens or cell in their colour and add a lens
-glow, but write no beam row. That keeps a 20-bar pixel rig from becoming hundreds of projectors.
-`Wash`, `Spot`, `PC`, `Fresnel` and `Beam` beams project as unit 3 and 4 beams.
+**Cells and projectors.** The local test set has 198 readable files. In it, a beam's type says
+nothing about its role:
+- LED washes are many `Wash` cells forming one beam: 37 on a Robin 600 LEDWash, 217 on a WildSun
+  K25.
+- Pixel strips and LED walls mostly use `None`, the largest with 400 cells.
+
+So the view keeps two things apart:
+- **Cells.** Every beam node shows as a lit cell (an emissive disc in its colour, plus a lens
+  glow). All cells of the visible fixtures go into one instanced draw.
+- **Projectors.** Projected light (`BeamState` rows: floor light and air beams) comes from
+  clusters of cells. Rules:
+  - `None`, `Glow` and `Rectangle` cells project nothing.
+  - The other cells are grouped when they share a parent and point within 5° of each other.
+  - A group spanning more than 0.4 m is split along its long side into equal parts. A fixture
+    has at most `MAX_PROJECTORS` (8) projectors in all.
+  - A cluster's projector starts at the cells' centroid, with their mean field angle and gobo.
+    Its intensity is the sum of the cells' intensities; its colour is the intensity-weighted mix.
+
+Some examples:
+- A Robin LEDWash projects one beam, its cells lit individually on the lens.
+- A 1 m pixel bar projects 3 beams.
+- A Tarantula (6 tilting bars) projects up to 8.
+- A spot has one cell, so one projector, as before.
+
+So a rig's lighting cost is bounded by its fixture count, not its cell count. Cell colours change
+on the lens at full detail.
 
 Cost per frame:
 - decoding is proportional to the channels that changed, as before;
@@ -311,5 +341,5 @@ fixture.
 
 ## Open Questions
 
-- Licence of the generated bundle files: GPL-3.0 like the app, or CC0 so others can reuse them
-  (the user's choice, before task 1.2).
+None. The generated bundle files are CC0 (the user's choice, 2026-11-04). `public/gdtf/` holds a
+`LICENSE` file with the CC0 text, and `gdtf_list.json` records the licence.

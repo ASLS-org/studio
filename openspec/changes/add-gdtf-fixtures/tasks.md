@@ -2,12 +2,16 @@
 
 ## 1. Generic GDTF bundle and test files
 
-- [ ] 1.1 Local test set: a few real `.gdtf` files you downloaded (a moving head with gobo images,
-      a pixel bar, a multi-beam fixture), kept in the scratchpad and never committed.
-      Verify: the files are in the scratchpad; `git status` shows none of them.
+- [x] 1.1 Local test set: a few real `.gdtf` files you downloaded (a moving head with gobo images,
+      a pixel bar, a multi-beam fixture), kept outside the repo and never committed.
+      Verify: the files are outside the repo; `git status` shows none of them.
+      Note (2026-11-04): the user supplied 202 files from 48 manufacturers in
+      `~/Downloads/GDTF_fixtures_04_11_2026_19-_part_1`: GDTF 1.0 (70), 1.1 (24) and 1.2 (104),
+      plus 4 with a zip CRC error. They include LED washes of up to 217 cells, a 400-cell LED
+      wall, and 1313 wheel slot images (design.md decisions 1 and 5).
 - [ ] 1.2 `scripts/gdtf/generate-generic.js` writes the five generic fixtures of design.md
       decision 2 into `public/gdtf/` with `gdtf_list.json`. Their wheel PNGs are rendered from
-      the `gobos.js` patterns, under the licence the user picks (design.md, open question).
+      the `gobos.js` patterns, under CC0, with a `LICENSE` file.
       Verify: the script reproduces the same files when run twice; each file unzips to a
       `description.xml` that conforms to the GDTF 1.2 schema (`xmllint --schema`, using the
       schema from the GDTF spec).
@@ -22,7 +26,9 @@
       functions mapped to OFL-shaped capabilities, geometry references expanded per instance,
       geometry tree, `physical`, `wheels`, derived category. Add `fflate` and the
       `PROFILE_SOURCES.GDTF` source. Verify: in Node, the adapter runs on the generic bundle and
-      on every local test file without errors. For the pixel bar, the mode lists one set of colour channels per cell; for
+      on all 198 readable test files without errors. The 4 damaged files are rejected with a
+      message naming them. Unmapped attributes are counted, and the most common ones are
+      reviewed (blades, animation wheel and mode attributes are expected). For the pixel bar, the mode lists one set of colour channels per cell; for
       the moving head, Pan and Tilt have fine channels and the angle ranges match the file.
 - [ ] 2.3 OFL adapter expands `matrixChannels` insert blocks per pixel (`repeatFor`,
       `channelOrder`, `$pixelKey` names, `geometry` = pixel key). On load, report fixtures whose
@@ -61,15 +67,16 @@
       bar, panel).
 - [ ] 4.2 `geometry_fixture.js`: node tree with generated shapes on the OCCLUDER layer, axis
       rotation from Pan/Tilt, per-node decoding with inheritance from ancestors, and `writeBeams`
-      for projecting beams; glow-only cells are emissive and add a lens glow. OFL Moving Heads
+      for projector clusters (at most 8 per fixture); every cell is an instanced lit disc. OFL Moving Heads
       without pixel blocks keep `MovingHead`. Verify: spec "OFL PAR", "OFL pixel bar", "GDTF
-      moving head", "Beam colours" and "Pixel cells" hold at every quality level. The demo show
+      moving head", "Beam colours", "LED wash" and "Pixel cells" hold at every quality level. The demo show
       looks as before (screenshot against the epic branch).
 - [ ] 4.3 Gobo array grows with wheel images, up to 64 layers, and falls back to the built-in
       patterns past that; slots map to layers at patch time (design.md decision 6). Verify: spec
       "Real gobo" holds on the floor at Medium and in the haze at High; focus and frost still
       blur it.
-- [ ] 4.4 Frame cost check: a rig of 20 pixel bars plus the demo rig plays a chase. Verify: with
+- [ ] 4.4 Frame cost check: a rig of 20 pixel bars and 10 Robin 600 LEDWash plus the demo rig
+      plays a chase. Verify: with
       render on demand, a still show draws 0 frames over 3 s, and Auto quality does not step down
       on the M1 at High (Stats panel).
 

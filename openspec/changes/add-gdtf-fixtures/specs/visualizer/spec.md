@@ -21,15 +21,20 @@ pixel channels SHALL look as before.
 - **THEN** its yoke and head turn through the fixture's pan range, and the beam follows
 
 ### Requirement: Each beam of a multi-beam fixture follows its own channels
-The system SHALL drive each beam or cell of a GDTF fixture from its own channels (dimmer, colour,
-gobo, zoom), with fixture-wide channels applying to all of them. LED cells and pixels that the
-fixture describes as glowing rather than projecting SHALL light up in their colour without
-casting beams.
+The system SHALL drive each beam or cell of a GDTF or OFL pixel fixture from its own channels
+(dimmer, colour, gobo, zoom), with fixture-wide channels applying to all of them, and SHALL show
+every cell lit in its own colour on the fixture. The light a fixture casts on surfaces and in the
+haze SHALL combine neighbouring cells that point the same way into a few beams, with their summed
+intensity and mixed colour. Cells the fixture describes as not projecting SHALL cast no light.
 
 #### Scenario: Beam colours
 - **GIVEN** a patched multi-beam GDTF fixture
 - **WHEN** a scene sets beam 1 to red and beam 2 to blue
 - **THEN** the view shows a red and a blue beam from the same fixture
+
+#### Scenario: LED wash
+- **GIVEN** a GDTF LED wash with 37 cells, all at full white
+- **THEN** its lens shows 37 lit cells, and it casts one beam
 
 #### Scenario: Pixel cells
 - **GIVEN** a GDTF pixel bar whose cells glow
