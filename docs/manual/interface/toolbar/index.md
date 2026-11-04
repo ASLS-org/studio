@@ -79,4 +79,6 @@ Fixture list is not editable in this version of thge software
 I/O are not editable in this version of thge software
 :::
 
+Output keeps running while the show is paused or stopped: pausing freezes cues and chases, but connected devices keep receiving the current channel values, and any fader you move is sent right away.
+
 <img style="border-radius:5px" src="/interface/toolbar_nav_preferences_io.png" alt="Inputs/Ouputs" width="300"/>
