@@ -63,7 +63,24 @@ per fixture, Three.js r170.
 A standalone page (published as a private claude.ai Artifact, not part of the repo) runs on the
 2015 laptop and the Pi 5 in Chromium. Results are recorded here.
 
-Results: pending.
+Results, page version 1 (2026-11-04), on two strong devices rather than the targets:
+
+| Device | Browser | 20 beams, every variant | 40 beams, baseline | 40 beams, new variants |
+|---|---|---|---|---|
+| Pixel 7a (Mali-G710) | Chrome 156, Android | 60 fps | 60 fps | 60 fps |
+| MacBook M1 | Firefox 159 | 60 fps | 28 fps, p95 67 ms | 60 fps |
+
+- The SpotLight baseline does not scale: it is the only variant that drops below refresh (M1 at
+  40 beams). Its shader recompiles when the beam count changes (first frame 204 ms at 20 beams and
+  338 ms at 40 on the Pixel); the new variants compile in under 70 ms.
+- Every new variant, T2 included, holds 60 fps at 40 beams on a phone GPU.
+- Load × 3 never left the refresh cap, and neither browser exposes the GPU timer, so version 1
+  can't rank the variants by cost. The Worker run failed to start on both (the page loaded it by a
+  relative URL).
+
+Version 2 replaces load × 3 with a load ramp per variant at 40 beams (doubling until a frame misses
+refresh), which ranks variants without the GPU timer, and starts the Worker from blob URLs when its
+URL is refused. Tier boundaries still need the 2015 laptop and the Pi 5: pending.
 
 ## Open Questions (resolve while refining this unit)
 
