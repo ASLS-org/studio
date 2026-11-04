@@ -106,7 +106,7 @@ class Group {
     let TOTChannels = 0;
     if (this.cuePool) {
       this.cuePool.cues.forEach((cue) => {
-        if (cue.state) {
+        if (cue.state || cue.chaseActive) {
           DMXActivity += cue.DMXActivity;
         }
       });

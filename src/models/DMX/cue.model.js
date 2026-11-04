@@ -91,6 +91,10 @@ class Cue {
       this.deltaStart = null;
       this.time = 0;
       this.DMXActivity = 0;
+      /**
+       * Whether a running chase is playing one of this cue's items (runtime only, not saved)
+       */
+      this.chaseActive = false;
     }
   }
 

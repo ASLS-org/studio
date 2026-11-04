@@ -226,6 +226,7 @@ class Chase {
       this.elapsed = 0;
       this.cues.forEach((cueItemPool) => {
         cueItemPool.cue.state = 0;
+        cueItemPool.cue.chaseActive = false;
         cueItemPool.cue.cue(false);
       });
       Live.remove(this.animationId);
@@ -265,18 +266,20 @@ class Chase {
      * break a lot of things. Have a look into it.
      */
     this.cues.forEach((cueItemPool) => {
-      cueItemPool.items.forEach((item) => {
       let active = false;
+      cueItemPool.items.forEach((item) => {
         if (
           t >= item.tick * this.tickDuration
           && t <= (item.tick + item.length) * this.tickDuration
         ) {
           item.update(t - (item.tick * this.tickDuration));
-        } else {
           active = true;
+        } else {
           cueItemPool.cue.state = 0;
         }
       });
+      // Play indicator and activity meter: `state` can't be used (see Scene relative fades)
+      cueItemPool.cue.chaseActive = active;
     });
   }
 
