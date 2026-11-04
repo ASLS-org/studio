@@ -42,6 +42,13 @@ Enums live next to their model and are exported: `CUE_TYPES`, `CUE_STATES`,
   reported (`Fixture.footprintChanged`).
 - `Capability.getValue()` returns one reused object per capability: read it immediately. Entities
   the data doesn't give span their whole range and are flagged `implicit`.
+- **Cells** (`fixtures/fixture.cells.js`): parts repeating a set of channels (GDTF geometries,
+  OFL pixels; pixel groups and other channels are the whole fixture). Each `Channel` has `cell`
+  and `kind` (type without the cell's name: OFL pixel types differ per cell, so compare on
+  `kind`). Colour and Pan/Tilt per cell go through `cell.access.js`, shared by `Fixture` and the
+  scene's `FixtureValue` (`getColor(cells)`, `setPanTilt(value, cells)`; `color` / `panTilt` are
+  all cells). Effects write precomputed per-cell targets (`FXFixture.targets`), never quick
+  accessors.
 - GDTF channels start at their home value (`profileChannel.defaultValue`, runtime only, never
   saved); OFL channels start at 0 (their `defaultValue` isn't read, to keep shows unchanged).
 

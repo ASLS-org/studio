@@ -55,13 +55,13 @@
 
 ## 5. Docs
 
-- [ ] 5.1 Manual: universe and group modifier pages (cell selector, per-cell scenes, effects
+- [x] 5.1 Manual: universe and group modifier pages (cell selector, per-cell scenes, effects
       across cells and the **Across cells** option, RGBW from the colour picker, older shows'
       effects moving every cell). Verify with `npm run docs:manual:serve`: pages render, media
       TODOs listed.
-- [ ] 5.2 AI context: `src/models/DMX/CLAUDE.md` (cells, `cell.access.js`, effect targets) and
+- [x] 5.2 AI context: `src/models/DMX/CLAUDE.md` (cells, `cell.access.js`, effect targets) and
       `src/views/CLAUDE.md` (the shared cells widget). Verify that every path mentioned exists.
-- [ ] 5.3 `npx eslint` on all touched files is clean.
+- [x] 5.3 `npx eslint` on all touched files is clean.
 
 ## Workflow follow-up
 
