@@ -98,8 +98,9 @@ buffer; a `WscConnectionStream` sends the buffer to the gateway every tick.
 - `@asls/wsc-client` is sometimes `npm link`ed to `./wsc-client` (git-ignored). If that folder is
   empty, imports break: run `npm install` to restore the registry package.
 - Only OFL fixtures whose first category is `Moving Head` can be patched. Other categories throw
-  in `Fixture.prepare3DModelInstance()`.
-- `fixture.model.js` imports visualizer classes, so models are not runnable headless.
+  in `Fixture.parseFromProfile()`.
+- Models don't import the visualizer: they emit `patch_changed`, `fixture_pose` and
+  `fixture_highlight` on the EventBus, and the visualizer reads universe frames.
 - Channel `type` keys (`Dimmer`, `Pan`, ...) and their index are stored in showfile scenes. The
   OFL adapter in `src/models/fixtures/` must keep deriving them exactly; see skill
   `fixture-library`.

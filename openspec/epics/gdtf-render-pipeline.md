@@ -110,7 +110,7 @@ Open (answer in the unit that needs it):
 | # | Change | Depends on | Status |
 |---|---|---|---|
 | 1 | `add-fixture-profile` | none | archived |
-| 2 | `decouple-visualizer-from-models` | 1 | refining |
+| 2 | `decouple-visualizer-from-models` | 1 | archived |
 | 3 | `add-projector-lighting` (starts with a performance spike) | 2 | proposed |
 | 4 | `add-volumetric-beams` | 3 | proposed |
 | 5 | `add-gdtf-fixtures` | 1, 2, 3 | proposed |

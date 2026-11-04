@@ -137,8 +137,94 @@ export default {
     EventBus.emit('visualizer_loaded', true);
     this.autoFocus = this.$show.visualizerHandle.autoFocus;
     this.autoRotate = this.$show.visualizerHandle.autoRotate;
+    this.patchFrame = null;
+    EventBus.on('patch_changed', this.schedulePatchUpdate);
+    EventBus.on('fixture_pose', this.handleFixturePose);
+    EventBus.on('fixture_highlight', this.handleFixtureHighlight);
+    EventBus.on('fixture_transformed', this.handleFixtureTransformed);
+    this.$show.visualizerHandle.fixtureRenderer.setPatch(this.$show.patchSnapshot);
+  },
+  beforeUnmount() {
+    EventBus.off('patch_changed', this.schedulePatchUpdate);
+    EventBus.off('fixture_pose', this.handleFixturePose);
+    EventBus.off('fixture_highlight', this.handleFixtureHighlight);
+    EventBus.off('fixture_transformed', this.handleFixtureTransformed);
+    cancelAnimationFrame(this.patchFrame);
   },
   methods: {
+    /**
+     * Rebuilds the rendered patch once per animation frame, however many patch changes happen
+     * (loading a show patches every fixture)
+     *
+     * @public
+     */
+    schedulePatchUpdate() {
+      if (this.patchFrame) return;
+      this.patchFrame = requestAnimationFrame(this.flushPatchUpdate);
+    },
+    /**
+     * Applies a pending patch rebuild now (before a pose or highlight that may target a fixture
+     * patched in the same frame)
+     *
+     * @public
+     */
+    flushPatchUpdate() {
+      if (this.patchFrame) {
+        cancelAnimationFrame(this.patchFrame);
+      }
+      this.patchFrame = null;
+      this.$show.visualizerHandle.fixtureRenderer.setPatch(this.$show.patchSnapshot);
+    },
+    /**
+     * Makes sure the renderer knows a fixture before an event targets it: flushes a pending
+     * patch rebuild when the fixture isn't rendered yet. Ignores fixtures without an id yet
+     * (still being built).
+     *
+     * @public
+     * @param {Number} id Fixture id
+     * @returns {Boolean} Whether the event should be forwarded
+     */
+    resolvePendingPatch(id) {
+      if (!Number.isInteger(id)) return false;
+      if (this.patchFrame && !this.$show.visualizerHandle.fixtureRenderer.instances.has(id)) {
+        this.flushPatchUpdate();
+      }
+      return true;
+    },
+    /**
+     * Forwards a fixture's position/rotation change to the renderer
+     *
+     * @public
+     * @param {Object} pose fixture_pose event payload
+     */
+    handleFixturePose(pose) {
+      if (this.resolvePendingPatch(pose.id)) {
+        this.$show.visualizerHandle.fixtureRenderer.setPose(pose);
+      }
+    },
+    /**
+     * Forwards a fixture highlight to the renderer
+     *
+     * @public
+     * @param {Object} highlight fixture_highlight event payload
+     */
+    handleFixtureHighlight(highlight) {
+      if (this.resolvePendingPatch(highlight.id)) {
+        this.$show.visualizerHandle.fixtureRenderer.highlight(highlight);
+      }
+    },
+    /**
+     * Applies a gizmo move or rotation to the fixture (the model stays the source of truth)
+     *
+     * @public
+     * @param {Object} transform fixture_transformed event payload
+     */
+    handleFixtureTransformed({ id, position, rotation }) {
+      if (!this.$show.fixturePool.checkIfExists(id)) return;
+      const fixture = this.$show.fixturePool.getFromId(id);
+      if (position) fixture.position = position;
+      if (rotation) fixture.rotation = rotation;
+    },
     /**
      * Opens visualizer in a popup window
      *

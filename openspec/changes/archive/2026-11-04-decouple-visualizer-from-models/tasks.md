@@ -51,37 +51,42 @@
 
 ## 4. Visualizer: decoupling (plugins/visualizer, models)
 
-- [ ] 4.1 `Show.patchSnapshot` and the `patch_changed`, `fixture_pose`, `fixture_highlight`
+- [x] 4.1 `Show.patchSnapshot` and the `patch_changed`, `fixture_pose`, `fixture_highlight`
       events from `FixturePool`, `Universe`, and `Fixture` (decision 6); `highlight*`, `posX..rotZ`,
       `position`/`rotation` keep their signatures. Verify: `npx eslint` clean.
-- [ ] 4.2 Add `plugins/visualizer/fixture_renderer.js`: instances from the snapshot (diff by id),
+- [x] 4.2 Add `plugins/visualizer/fixture_renderer.js`: instances from the snapshot (diff by id),
       per-universe last-frame copy, whole-fixture decode on change with the capability switch moved
       out of `Fixture.setChannel` (decision 5). Wire it in `visualizer.fragment.vue` (events
       coalesced per animation frame). Verify: spec "Effect on a dimmer" and "Fader edit while
       paused"; the demo show looks the same as on the epic branch build (side by side).
-- [ ] 4.3 `Controls` on renderer instances keyed by id, emitting `fixture_transformed`; the
+- [x] 4.3 `Controls` on renderer instances keyed by id, emitting `fixture_transformed`; the
       fragment applies it to the fixture (decision 7). Verify: spec "Select two fixtures", "Move
       with the gizmo" and "Type a rotation".
-- [ ] 4.4 Remove `_3DModel`, `prepare3DModelInstance`, `deleteInstance` 3D handling and the
+- [x] 4.4 Remove `_3DModel`, `prepare3DModelInstance`, `deleteInstance` 3D handling and the
       `MovingHead`/`Controls` imports from `Fixture`; keep the Moving Head-only patch check in the
       patch path (decision 8). Verify: `grep -rn "plugins/visualizer" src/models` returns nothing;
       patching a non-Moving Head fixture still shows "This fixture type is not supported yet.";
       deleting a fixture removes it from the 3D view.
-- [ ] 4.5 Update `src/plugins/visualizer/CLAUDE.md` (renderer, events, no model writes except
+- [x] 4.6 Two older bugs surfaced by the 4.4 check (also on the epic branch): `controls.js` called
+      `MovingHead.clearHiglighting()` (typo) on Escape, and `uikit.list.vue` read
+      `e.relatedTarget` when `handleFocusOut()` is called without an event (delete popup closing).
+      Fixed as separate commits. Verify: deleting a fixture through the delete popup, and pressing
+      Escape in the visualizer, raise no console error.
+- [x] 4.5 Update `src/plugins/visualizer/CLAUDE.md` (renderer, events, no model writes except
       `fixture_transformed`), `src/models/DMX/CLAUDE.md` (remove the coupling debt line) and root
       `CLAUDE.md` § Known traps (models runnable headless). Verify: no file still says `Fixture`
       owns a `MovingHead`.
 
 ## 5. Docs and integration
 
-- [ ] 5.1 Manual, `docs/manual/interface/toolbar/index.md` § Inputs/Outputs: output keeps running
+- [x] 5.1 Manual, `docs/manual/interface/toolbar/index.md` § Inputs/Outputs: output keeps running
       while the show is paused or stopped. Verify: the page compiles on
       `npx vitepress dev docs/manual`.
 - [ ] 5.2 Repeat the 1.1 recording. Verify: no Three.js or Vue frames inside the `Live` tick; put
       before/after frame times in the PR description.
       **Deferred with 1.1 (2026-11-04).**
-- [ ] 5.3 `npm run build`. Verify: build succeeds.
-- [ ] 5.4 Run `npx eslint` on all touched files. Verify: it reports no errors.
+- [x] 5.3 `npm run build`. Verify: build succeeds.
+- [x] 5.4 Run `npx eslint` on all touched files. Verify: it reports no errors.
 
 ## Workflow follow-up
 

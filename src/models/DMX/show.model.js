@@ -96,6 +96,35 @@ class Show extends EventEmitter {
   }
 
   /**
+   * Plain description of every patched fixture, for the visualizer. Rebuilt on `patch_changed`.
+   * `frame` is the universe's live DMX frame and `chStart` the fixture's address in it (0-based).
+   *
+   * @readonly
+   * @type {Array<Object>}
+   */
+  get patchSnapshot() {
+    const entries = [];
+    this.universePool.universes.forEach((universe) => {
+      const { frame } = universe;
+      Object.entries(universe._patch).forEach(([address, fixture]) => {
+        entries.push({
+          id: fixture.id,
+          universe: universe.id,
+          chStart: Number(address),
+          channels: fixture.mode.channels,
+          category: fixture.category,
+          physical: fixture.profile.physical,
+          wheels: fixture.profile.wheels,
+          position: fixture.position,
+          rotation: { ...fixture._rotation },
+          frame,
+        });
+      });
+    });
+    return entries;
+  }
+
+  /**
    * Show name
    *
    * @type {String}

@@ -9,6 +9,7 @@ import SceneManager from './scene_manager';
 import AnimationManager from './animation_manager';
 import Controls from './controls';
 import MovingHead from './moving_head';
+import FixtureRenderer from './fixture_renderer';
 import InfiniteGridHelper from './grid';
 
 /**
@@ -57,6 +58,10 @@ class Visualizer {
     this.camera = null;
     this.controls = null;
     this.animation = null;
+    /**
+     * Draws patched fixtures from the universes' DMX frames (see fixture_renderer.js)
+     */
+    this.fixtureRenderer = null;
     this.finalComposer = null;
     this.globalBrightness = 100;
     this.globalLightHandle = null;
@@ -246,8 +251,10 @@ class Visualizer {
     this.globalLightHandle.position.set(-10, -10, 10);
 
     MovingHead.prepareInstanciation(this.camera, SceneManager);
+    this.fixtureRenderer = new FixtureRenderer();
 
     AnimationManager.add((t) => {
+      this.fixtureRenderer.update();
       MovingHead.update(t);
     });
 

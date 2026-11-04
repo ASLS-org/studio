@@ -10,6 +10,7 @@ Three.js r170 WebGL renderer for the rig. It is instantiated by
 | `scene_manager.js` | singleton `THREE.Scene` |
 | `animation_manager.js` | singleton rAF loop for render-side animations (separate from `Live`) |
 | `model_instancer.js` | GLTF/Draco preloading from `public/visualizer/models/model_list.json` |
+| `fixture_renderer.js` | one `MovingHead` per patched fixture from `Show.patchSnapshot`; decodes universe frames through profile channels; gizmo handles |
 | `moving_head.js` | fixture 3D instance: pan/tilt/zoom/colour/strobe/wheel setters + volumetric beam |
 | `shaders/beam.*.glsl` | volumetric beam shaders, imported with `?raw` |
 | `controls.js` | TransformControls (translate/rotate) for fixture placement |
@@ -20,8 +21,13 @@ Three.js r170 WebGL renderer for the rig. It is instantiated by
 ## Rules
 
 - The world is **Z-up**. Fixture `position` / `rotation` are persisted in the fixture's `showData`.
-- `Fixture` (models/DMX) owns its `MovingHead` and pushes channel values into its setters. The
-  visualizer must never write back into models.
+- The visualizer is driven by data only. `visualizer.fragment.vue` feeds the renderer:
+  `patch_changed` → `setPatch(Show.patchSnapshot)` (coalesced per animation frame),
+  `fixture_pose` → `setPose`, `fixture_highlight` → `highlight`. Each rendered frame the renderer
+  re-decodes fixtures whose bytes changed in their universe `frame`. Models never import this folder.
+- The only write back is the gizmo: `FixtureHandle` setters emit `fixture_transformed`, and the
+  fragment applies it to the fixture (`position` / `rotation` setters). Nothing else here writes
+  into models.
 - Per-frame code (`update(t)`, setters called each tick) must not allocate: reuse vectors, colours
   and materials. Dispose geometries, materials and textures when removing instances.
 - Static assets load through `import.meta.env.VITE_STATIC_URL` (the `static://` protocol in
@@ -29,5 +35,5 @@ Three.js r170 WebGL renderer for the rig. It is instantiated by
 - Many files are `/* eslint-disable */`. Don't spread that: new modules lint clean, and imports from
   `three/examples/jsm/*` keep the explicit `.js` extension (lint override is in `.eslintrc.js`).
 - `postprocessing` is a dependency but is currently unused in `src/`.
-- Only `Moving Head` fixtures have a 3D type. New fixture types add a class here and a
-  `case` in `Fixture.prepare3DModelInstance()`.
+- Only `Moving Head` fixtures have a 3D type (`Fixture` refuses other categories). New fixture
+  types add a class here, created by `FixtureRenderer.createInstance()` from the patch entry.
