@@ -99,29 +99,16 @@
       0 animates the in-air beams, so it keeps drawing. Camera moves compare matrices with a 1e-6
       tolerance (orbit controls recompute the camera every frame).
 
-## 8. Visualizer: Worker and OffscreenCanvas
+## 8. Integration
 
-- [ ] 8.1 Move the renderer into a module Worker drawing to an `OffscreenCanvas`: the fragment
-      sends the patch snapshot, pose and highlight events and settings; changed universe frames
-      are copied to the worker once per tick (512 bytes per universe, no SharedArrayBuffer).
-      Static assets load through `VITE_STATIC_URL` from the worker. Verify: `npm start` and
-      `npm run electron:start` both render the demo show from the worker.
-- [ ] 8.2 Forward pointer, wheel and resize events for orbit; run gizmo picking and drags in the
-      worker and send `fixture_transformed` back. Verify: visualizer spec "Move with the gizmo"
-      and "Select two fixtures" still hold; spec "Busy editor" holds.
-- [ ] 8.3 Same-thread fallback with the same module when `transferControlToOffscreen` is missing.
-      Verify: spec "No background-thread support" holds with the worker path forced off.
-- [ ] 8.4 Update `src/plugins/visualizer/CLAUDE.md` and the root `CLAUDE.md` architecture map
-      (beam state, tiers, worker, render on demand; no `SpotLight`s) (skill
-      `ai-context-maintenance`). Verify: both files describe the new renderer.
-
-## 9. Integration
-
-- [ ] 9.1 With the demo show in `npm start`, run a scene, a dimmer effect and a looping chase at
+- [x] 8.1 Update `src/plugins/visualizer/CLAUDE.md` (beam state, quality levels, render on demand,
+      no fixture lights) (skill `ai-context-maintenance`). Verify: the file describes the new
+      renderer. The Worker tasks moved to the optional unit `move-visualizer-to-worker`.
+- [ ] 8.2 With the demo show in `npm start`, run a scene, a dimmer effect and a looping chase at
       each quality level with guides on and off; check gobos, colours and footprints match the
       DMX values in the universe view (skill `run-studio`). Verify: spec "The view shows the
       output values" holds at every level.
-- [ ] 9.2 `npx eslint` on all touched files is clean.
+- [ ] 8.3 `npx eslint` on all touched files is clean.
 
 ## Workflow follow-up
 

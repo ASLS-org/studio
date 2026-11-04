@@ -24,8 +24,10 @@ renderer shares the main thread with the engine and the UI. The target is smooth
 - A quality governor picks the starting tier from the device and steps tier and resolution scale
   from measured frame time. A Quality setting (Auto, Low, Medium, High, plus resolution scale) in
   the visualizer settings overrides it, stored per device, not in the showfile.
-- The visualizer runs in a Worker with an OffscreenCanvas, falling back to the main thread when
-  unsupported. Rendering only happens when DMX or the camera changed.
+- Rendering only happens when DMX, the camera or a running beam animation changed.
+- Not in this unit: drawing from a Worker with an OffscreenCanvas. It moved to the optional unit
+  `move-visualizer-to-worker` (2026-11-04), decided by the end-of-epic smoke and performance
+  tests.
 
 ## Capabilities
 
@@ -40,7 +42,7 @@ renderer shares the main thread with the engine and the UI. The target is smooth
 
 - Showfile format: none (quality is a device setting).
 - Undo/redo: none.
-- Live playback/timing: none; rendering leaves the main thread where supported.
+- Live playback/timing: none; rendering stays on the main thread, but idles when nothing changes.
 - WSC output: none.
 - Visualizer: new surface lighting at all tiers; the in-air beams stay as today until unit 4.
 - Web vs Electron: same; WebGL2 required.

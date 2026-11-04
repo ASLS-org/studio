@@ -42,8 +42,10 @@ per fixture, Three.js r170.
    refresh interval (frame intervals can't show spare time); scale steps 1, 0.75, 0.5, floor
    0.35. User-facing levels: Guides, Low (T0), Medium (T1 at reduced scale), High (T1 at full
    scale).
-7. **Worker + OffscreenCanvas** with event forwarding for orbit and gizmo; picking runs in the
-   worker. Same-thread fallback uses the same module.
+7. **Worker + OffscreenCanvas: moved out** (confirmed 2026-11-04) to the optional unit
+   `move-visualizer-to-worker`. Orbit, the gizmo, picking and canvas recording would all have to
+   cross the thread boundary, and render on demand already leaves the main thread idle when
+   nothing moves. The end-of-epic smoke and performance tests decide whether it's needed.
 8. **Quality settings in `localStorage`**, wrapped in try/catch; the showfile keeps only artistic
    settings (brightness, fog).
 
@@ -51,8 +53,6 @@ per fixture, Three.js r170.
 
 - [Pi 5 fill rate too low even for T1] → T0 plus resolution scale down to about 0.35, with beam
   guides kept at full resolution; Guides tier as the floor. Record it in the epic doc.
-- [Gizmo and orbit feel laggy through the worker] → measure input latency in the spike; keep
-  controls on the main thread if needed.
 - [Losing the current look before unit 4 lands] → the existing beam cones stay drawn on top until
   unit 4 replaces them.
 
