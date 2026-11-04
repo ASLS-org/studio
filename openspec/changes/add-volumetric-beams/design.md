@@ -37,9 +37,11 @@ Visualizer preferences today: `globalFoggingState`, `globalFoggingDensity`,
    one lookup per sample instead of procedural noise.
 4. **Half/quarter-resolution beam buffer** with a depth-aware upsample against the scene depth;
    additive, so order-independent.
-5. **Fog to haze mapping on load:** `globalFoggingState` false means density 0; density and
-   turbulence map to haze density and motion; new keys default from those. New keys:
-   `hazeDensity` and `hazeMovement` (0-100). Saving writes only the new keys.
+5. **Fog to haze mapping on load** (corrected 2026-11-04 after reading the old shader): the old
+   fog settings never hid beams. `globalFoggingState` only switched the noise on, and
+   `globalFoggingDensity` set the noise size, not brightness. So a showfile without haze keys opens
+   with `hazeDensity` 50 (the default) and `hazeMovement` = `globalFoggingTurbulences` when
+   fogging was enabled, 0 otherwise. Saving writes only `hazeDensity` and `hazeMovement` (0-100).
 6. **Air beams per quality level** (confirmed 2026-11-04):
 
    | Level | Air beam | Buffer | Bloom |
@@ -51,8 +53,10 @@ Visualizer preferences today: `globalFoggingState`, `globalFoggingDensity`,
 
    Low has no prepass, so its beams are not hidden behind fixture bodies; Medium and High clip
    against the prepass depth and upsample depth-aware.
-7. **Own bloom pass** (confirmed 2026-11-04): bright-pass on the canvas image into a 1/2 target,
-   a 4-level downsample/upsample blur chain, added back. Lens glow is a small additive sprite per
+7. **Own bloom pass** (confirmed 2026-11-04): bright-pass on the air beam buffer plus the lens
+   glows into a 1/2 target, a 4-level downsample/upsample blur chain, added back. The source is
+   the emissive passes only, not the whole frame: the main pass draws straight to the antialiased
+   canvas, which can't be sampled. Lens glow is a small additive sprite per
    beam at the lens, scaled by intensity, so the bloom has something bright to catch at every
    lit level. The unused `postprocessing` dependency is removed.
 8. **Governor:** at High it first drops raymarch samples from 16 to 8, then follows unit 3's

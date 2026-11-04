@@ -52,18 +52,19 @@ brighter in the air. Movement above 0 SHALL make the haze drift over time.
 - **THEN** Density is 40
 
 ### Requirement: Older showfiles keep their fog look
-The system SHALL read the fog settings of showfiles saved before Haze existed and map them to Haze:
-fog disabled gives Density 0, fog density gives Density and fog turbulence gives Movement.
+The system SHALL open showfiles saved before Haze existed with haze Density 50, since their beams
+always showed in the air, and SHALL map their fog settings to Movement: fogging enabled gives the
+fog turbulence, fogging disabled gives 0 (still haze).
 
 #### Scenario: Fog disabled in an old showfile
 - **GIVEN** a showfile saved with fogging disabled
 - **WHEN** it is opened
-- **THEN** haze Density is 0 and no beam shows in the air
+- **THEN** beams show in the air with haze Density 50 and Movement 0
 
 #### Scenario: Demo show
-- **GIVEN** the demo showfile (fog density 80, turbulence 50)
+- **GIVEN** the demo showfile (fogging enabled, turbulence 50)
 - **WHEN** it is opened
-- **THEN** haze Density is 80, Movement is 50, and saving it writes the haze settings
+- **THEN** haze Density is 50, Movement is 50, and saving it writes the haze settings
 
 ### Requirement: Bloom and lens glow
 The system SHALL draw a glow on the lens of each lit fixture, scaled by its intensity, at the Low,
