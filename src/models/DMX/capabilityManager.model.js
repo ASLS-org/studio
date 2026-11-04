@@ -439,6 +439,22 @@ const CAPABILITY_TYPES = {
       max: 100,
     },
   },
+  Frost: {
+    frostIntensity: {
+      alias: 'frost',
+      entity: EntityManager.entities.Percent,
+      unit: ENTITY_UNIT_PERC,
+      min: 0,
+      max: 100,
+    },
+  },
+  Prism: {
+    // OFL Prism capabilities carry no "in" flag: any Prism capability means the prism is in
+    prismIn: {
+      alias: 'prism',
+      default: true,
+    },
+  },
 };
 
 /**
