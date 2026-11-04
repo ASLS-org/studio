@@ -8,6 +8,8 @@ ASLS's WebGL based visualizer enables users to visualize and monitor fixtures ac
 
 Each beam lights the floor where it lands, in its colour and intensity, and with the shape of its field angle. Gobos show in the light: the visualizer uses a built-in set of gobo patterns, picked by the fixture's gobo wheel slot, so a projected pattern looks like a gobo but not like the fixture's exact gobo image. Gobo rotation turns the pattern, frost and focus blur it, and a prism splits the beam into three.
 
+Beams also show in the air, through haze: brighter near the lens, fading with distance, and stopping at the floor. At **high** quality the gobo shows in the haze as shafts of light that match the pattern on the floor. Lit fixtures glow at the lens, and at **medium** and **high** quality bright beams and lenses get a soft bloom.
+
 > **Note:** If a fixture has several gobo wheels, only its first gobo wheel is shown.
 
 <!-- TODO media: floor lit by several beams with gobos, at High quality -->
@@ -57,14 +59,16 @@ Quality settings belong to the computer you're on, not to the show: they are kep
 
 | Level  | What you see |
 | ------ | ------------ |
-| guides | The stage unlit, with beam guides. For computers without a usable graphics card. |
-| low    | Light on the floor. |
-| medium | Light on every lit surface, at reduced resolution. |
-| high   | Light on every lit surface, at full resolution. |
+| guides | The stage unlit, with beam guides, and no beams in the air. For computers without a usable graphics card. |
+| low    | Light on the floor, plain beams in the air and lens glow. Beams aren't hidden behind fixtures. |
+| medium | Light on every lit surface at reduced resolution; beams in the air softened by their gobo; bloom. |
+| high   | Light on every lit surface at full resolution; gobo shafts and drifting haze in the beams; bloom. |
+
+With **auto**, the visualizer first lowers the detail of the beams in the air at **high**, then the resolution, then the level.
 
 Beam guides are thin lines in each beam's colour: the beam's centre line from the lens to the floor, its edges, and the outline of its footprint on the floor. They stay sharp at any resolution. A fixture with its dimmer at 0 keeps a faint guide, so you can set its position without opening the dimmer.
 
-> **Note:** Nothing is redrawn while nothing changes, so an idle visualizer costs almost nothing. Fog turbulence, strobes and rotating gobos keep it drawing.
+> **Note:** Nothing is redrawn while nothing changes, so an idle visualizer costs almost nothing. Drifting haze (at **high** quality), strobes and rotating gobos keep it drawing.
 
 ### Global Scene Illumination
 
@@ -76,14 +80,13 @@ Global scene illumination may be adjusted to fit your needs.
 
 > **Note:** High global illumination values might decrease lighting emulation and volumetric's visibility.
 
-### Fogging
+### Haze
 
-Global scene fogging may be adjusted to fit your needs through the following list of settings. 
+Haze is what makes beams visible in the air. It's saved with the show.
 
-| Setting    | Description                                         |
-| ---------- | --------------------------------------------------- |
-| Disabled   | Whether to disable fogging emulation totally or not |
-| Density    | Global scene fog density                            |
-| Turbulence | Fog dispplacement over time                         |
+| Setting  | Description |
+| -------- | ----------- |
+| Density  | How bright beams look in the air, 0 to 100. **0** hides beams in the air; light on the floor stays. |
+| Movement | How fast the haze drifts in the beams, 0 to 100. Shows at **high** quality only. |
 
-> **Note:** Fogging emulation is computational heavy and may result in rendering performance loss.
+> **Note:** Shows saved before haze existed open with a density of 50. Their fog turbulence becomes the movement, or 0 if their fogging was disabled.
