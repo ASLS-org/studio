@@ -64,13 +64,24 @@
       An unknown ID rejects with `MissingFixtureError`. The bundled pixel bar loads without
       import (modes of 38 and 5 channels). The spot's 7 gobo images decode at 256 px
       (`FixtureLibrary.wheelImages`).
-- [ ] 2.5 `Show.prepareFixtures` resolves profiles first. It handles missing GDTF types (the
+- [x] 2.5 `Show.prepareFixtures` resolves profiles first. It handles missing GDTF types (the
       popup hook, and Open anyway), and keeps their fixture, group and scene data aside and
       written back unchanged. The patch keeps their addresses reserved. `Fixture.parseFromProfile`
       no longer refuses categories other than Moving Head (design.md decision 3). Verify: spec
       "Open without, then restore", "Address stays reserved" and "Not marked unsaved" hold. An
       OFL-only showfile saved before the change re-saves identical except for the new
       `channelCount` keys.
+      Note (2026-11-04): a fixture whose type is missing is kept as a placeholder (design.md
+      decision 3, revised): the pool renumbers ids on load, so skipping fixtures would shift every
+      later reference. The placeholder has the saved mode and `channelCount` empty channels, is
+      left out of the 3D view, and its scene values are kept as saved. Checked in the page with a
+      test-only GDTF copy deleted from IndexedDB: the show opens with a 16-channel placeholder,
+      is not marked unsaved, keeps universe 1 addresses 21-36 reserved, and re-saves its
+      fixtures, universes and groups identically. After re-importing and reopening, the fixture
+      is back at its address, in its group, with the scene's Dimmer at 200. The OFL re-save check
+      is by code: `channelCount` is the only persisted field this unit adds. The missing-fixtures
+      popup hooks in through the `fixtures_missing` EventBus event (task 3.2); with no listener
+      the show opens with placeholders.
 
 ## 3. UI (views)
 

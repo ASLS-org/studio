@@ -92,6 +92,9 @@ class FixtureValue {
    * @type {Array<Number>}
    */
   set channelValues(channelValues) {
+    // A placeholder fixture (type missing on this device) has no channels to hold the values:
+    // keep them as saved so they are written back unchanged
+    this._savedChannelValues = this.fixture.isPlaceholder ? channelValues : null;
     const source = this.fixture.quickChannelsAccessors;
 
     // Preserve the existing behavior of creating an independent runtime
@@ -144,6 +147,7 @@ class FixtureValue {
    */
   // eslint-disable-next-line grouped-accessor-pairs
   get channelValues() {
+    if (this._savedChannelValues) return this._savedChannelValues;
     const channelValues = [];
 
     const channels = this._channels;

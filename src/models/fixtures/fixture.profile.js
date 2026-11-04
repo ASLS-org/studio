@@ -118,3 +118,39 @@ export function resolveModeName(profile, mode) {
   }
   return modes[0].name;
 }
+
+/**
+ * Builds a stand-in profile for a fixture whose definition is missing on this device: the saved
+ * mode with as many empty channels as the fixture had, so the fixture keeps its address, groups
+ * and scenes and is saved back unchanged
+ *
+ * @public
+ * @param {Object} fixtureData Fixture show data
+ * @returns {FixtureProfile} Placeholder profile (`placeholder` is true)
+ */
+export function placeholderProfile(fixtureData) {
+  const count = Math.max(parseInt(fixtureData.channelCount, 10) || 1, 1);
+  const channels = Array.from({ length: count }, (_, i) => ({
+    name: 'Unset',
+    attribute: 'Unknown',
+    type: 'Unset',
+    color: null,
+    isFine: false,
+    fine: [],
+    qaIndex: i,
+    capabilities: [],
+    lookup: null,
+    geometry: null,
+  }));
+  return {
+    source: fixtureData.source,
+    manufacturer: fixtureData.manufacturer,
+    model: fixtureData.model,
+    name: fixtureData.name,
+    category: fixtureData.category || null,
+    physical: {},
+    wheels: {},
+    modes: [{ name: typeof fixtureData.mode === 'string' ? fixtureData.mode : 'Missing', channels, geometry: null }],
+    placeholder: true,
+  };
+}

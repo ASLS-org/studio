@@ -177,6 +177,15 @@ a "Missing fixtures" popup. The popup:
 - lets the operator import `.gdtf` files (each import re-checks the list);
 - offers **Open anyway**.
 
+**Revised while building (2026-11-04).** The pool renumbers fixture ids in order on load, and
+universes and groups resolve fixtures by those ids, so a skipped fixture would shift every later
+reference. A missing fixture is therefore kept as a **placeholder fixture**:
+`placeholderProfile()` builds the saved mode with `channelCount` empty channels. The fixture keeps
+its id, its address (which stays reserved), its groups and its effects. A scene keeps its values
+for a placeholder exactly as saved. Placeholders are left out of the 3D view. This replaces the
+`unresolvedFixtures` and `Group.unresolved` lists described below. `Show` asks through the
+`fixtures_missing` EventBus event and waits for the popup to call `done()`.
+
 **Open anyway.** The show opens without those fixtures. Their show data, and every reference to
 them in groups and scenes, is kept aside unchanged and written back by `Show.showData`. So saving
 without the fixtures does not lose them, and importing later and reopening brings them back. The

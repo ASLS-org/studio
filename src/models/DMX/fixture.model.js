@@ -13,17 +13,6 @@ import EventBus from '../../plugins/eventbus';
 const MAX_DMX_VALUE = 255;
 
 /**
- * OFL Fixture category definitions for parsing fixture type
- *
- * @constant
- * @type {Object}
- * @default
- */
-const FIXTURE_TYPES = {
-  MOVING_HEAD: 'Moving Head',
-};
-
-/**
  * Default fixture name
  *
  * @constant
@@ -168,6 +157,18 @@ class Fixture {
       position: this.position,
       rotation: this.rotation,
     };
+  }
+
+  /**
+   * Whether the fixture stands in for a fixture type missing on this device (see
+   * placeholderProfile): it keeps its patch, groups and scenes but has no channels to play
+   *
+   * @public
+   * @readonly
+   * @type {Boolean}
+   */
+  get isPlaceholder() {
+    return Boolean(this.profile && this.profile.placeholder);
   }
 
   /**
@@ -628,8 +629,6 @@ class Fixture {
    * Prepares fixture parameters and channels from the fixture's profile
    *
    * @public
-   * @todo improve error handling.
-   * @todo Implement other fixure categories
    */
   parseFromProfile() {
     const { profile } = this;
@@ -641,9 +640,6 @@ class Fixture {
     this.prepareChannels(); // Prepare fixture's channels
     this.setupFineChannels();
     this.setupQuickAccessors();
-    if (this.category !== FIXTURE_TYPES.MOVING_HEAD) {
-      throw new Error('This fixture type is not supported yet.');
-    }
   }
 
   /**
