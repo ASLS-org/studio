@@ -14,10 +14,10 @@
       - OFL pixels split the fixture's lumens (Astera Titan Tube: 2900 lm over 16 pixels);
       - bundled pixel bar cells come out at 0.05 and the spot at 0.90;
       - heap −277 KB over 3600 frames.
-- [ ] 1.2 Air beams: inverse-square falloff softened within 1 m of the lens, with the gain
+- [x] 1.2 Air beams: inverse-square falloff softened within 1 m of the lens, with the gain
       recalibrated so a shaft 6 m out keeps today's brightness; highlight rolloff toward white
       shared with the lens glow. Verify: shaders compile in the app (user check 3.1).
-- [ ] 1.3 Lens glow sized from the lens radius (clusters by their cell count), scaled by intensity
+- [x] 1.3 Lens glow sized from the lens radius (clusters by their cell count), scaled by intensity
       and the square root of the light output; glow-only cells smaller; less glow in the bloom.
       Verify: user check 3.1.
 
@@ -28,7 +28,7 @@
 
 ## 2. Visualizer: look and settings (plugins/visualizer, views)
 
-- [ ] 2.1 Neutral tone mapping; darker, cooler checkerboard floor with a lower ambient; dark satin
+- [x] 2.1 Neutral tone mapping; darker, cooler checkerboard floor with a lower ambient; dark satin
       bodies with a hemisphere light and a key light. (A background gradient was tried and dropped:
       the user preferred the flat background.) Verify: user
       check 3.1.
@@ -38,18 +38,26 @@
 
 ## 3. In-app check (user)
 
-- [ ] 3.1 Ask the user to check in `npm start`:
+- [x] 3.1 Ask the user to check in `npm start`:
       - shafts bright at the neck and fading, strong colours paling at the neck;
       - lens glows that blend (pixel bar beside a moving head);
       - floor, bodies and background;
       - the Render resolution setting, at every quality level;
       - the demo show plays as before, with no console error.
       Fix what the user reports.
+      Done over several review rounds on 2026-11-05:
+      - neck from the lens width with falloff from the apex, and a knee on axial views;
+      - light output on a square-root scale, with OFL lumens estimated from power;
+      - background kept flat;
+      - spill soft and fading, at 0.15 of its cells' light output;
+      - cells glowing as bright as a lens, their halo in front of their face;
+      - a shader compile error in the glow pass found and fixed.
+      Final verdict from the user: "absolutely lovely".
 
 ## 4. Docs and lint
 
 - [x] 4.1 User manual, visualizer page: Render resolution, light output, lens glow. Verify:
       `npm run docs:manual:build`.
-- [ ] 4.2 AI context: `src/plugins/visualizer/CLAUDE.md` (beam row texels, light output, tone
+- [x] 4.2 AI context: `src/plugins/visualizer/CLAUDE.md` (beam row texels, light output, tone
       curve). Epic status: final pass. Verify: `openspec validate polish-visualizer-look`.
 - [x] 4.3 `npx eslint` on all touched files is clean.
