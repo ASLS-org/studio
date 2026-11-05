@@ -37,12 +37,10 @@ dimensions, with pan and tilt turning as before.
 ## ADDED Requirements
 
 ### Requirement: Fixture model detail follows the quality level
-The system SHALL pick, per fixture type, the detail level of the meshes it draws from the quality
-level in use: the low detail meshes at Guides and Low, the standard ones at Medium and the high
-detail ones at High, taking the nearest available detail when the preferred one is missing. Each
-quality level SHALL have a triangle budget per fixture type (Guides and Low: 5,000; Medium:
-30,000; High: 150,000); when no available detail fits the budget, the fixture type SHALL be drawn
-with its generated parts.
+The system SHALL draw each fixture type at the mesh detail of the quality level: low at Guides and
+Low, standard at Medium, high at High, else the nearest available detail. A fixture type whose
+meshes at that detail exceed the level's triangle budget (Guides and Low: 5,000; Medium: 30,000;
+High: 150,000) SHALL try the next detail, then fall back to its generated parts.
 
 #### Scenario: Standard meshes only
 - **GIVEN** a patched GDTF fixture whose file holds standard glTF meshes only, 1,000 triangles in
