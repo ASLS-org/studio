@@ -21,14 +21,17 @@ export const AIR_MODES = {
  */
 export const AIR_SAMPLES = [16, 8];
 
-// Light falls off as 1 / (1 + FALLOFF × distance²): inverse square, softened within 0.5 m of the
-// lens, so a shaft is brightest at its neck (about 6× its brightness 6 m out). The gain keeps a
-// shaft seen 6 m from its lens as bright as with the earlier, flatter falloff (0.04):
-// 0.35 × (1 + 4 × 36) / (1 + 0.04 × 36)
-const AIR_GAIN = 20.8; // air light per unit of haze density, before falloff
-const FALLOFF = 4;
+// A beam leaves a lens of real width: its cone is cut at the lens, and its light falls off as the
+// inverse square of the distance to the cone's apex, behind the lens (lens radius / tan half
+// angle: a few centimetres for a wash, metres for a narrow beam, whose shaft stays bright longer).
+// FALLOFF softens the square within 0.1 m: 1 / (0.1² + d²). The gain keeps a 25° shaft seen from
+// the side 6 m from its lens as bright as before (0.38 at full haze)
+const AIR_GAIN = 5.4; // air light per unit of haze density, before falloff
+const FALLOFF = 100;
+// Soft knee on each beam's light: views along a beam's axis integrate a long bright path, and
+// would blow out against side views without it
+const AIR_KNEE = 3;
 const EXTINCTION = 0.008; // haze extinction toward the camera, per meter
-const LENS_RADIUS = 0.1; // meters
 const AIR_PIECES = 4; // closed-form pieces per ray
 const PHASE = 0.3; // forward scattering (Henyey-Greenstein g): about 3× brighter head-on
 
@@ -38,7 +41,12 @@ flat out int vId;
 out vec3 vWorld;
 void main() {
   vId = gl_InstanceID;
-  vec4 w = beamMatrix(gl_InstanceID, 0) * vec4(position, 1.0);
+  // Rings scaled to the truncated cone: radius z + z0 (z0: the lens radius in cone units)
+  float tanHalf = max(beamTexel(gl_InstanceID, 9).w, 1e-3);
+  float lens = beamTexel(gl_InstanceID, 12).x;
+  float z0 = lens / tanHalf / beamTexel(gl_InstanceID, 11).w;
+  vec3 p = vec3(position.xy * (position.z + z0), position.z);
+  vec4 w = beamMatrix(gl_InstanceID, 0) * vec4(p, 1.0);
   if (beamTexel(gl_InstanceID, 8).a <= 0.0) w = vec4(0.0, 0.0, 0.0, 1.0);
   vWorld = w.xyz;
   gl_Position = projectionMatrix * viewMatrix * w;
@@ -47,10 +55,11 @@ void main() {
 
 // Back faces of the cone hull: the view ray enters the cone analytically and leaves at the back
 // face, the floor, or (with depth) the first surface. Every technique starts from the same smooth
-// single-scattering estimate along that segment: point source with inverse-square falloff
-// (closed form), soft radial beam profile, forward-scattering phase and extinction, all taken
-// where the ray passes closest to the beam axis. MODE (AIR_MODES) then modulates it: nothing,
-// the gobo at that point, or the gobo averaged over STEPS raymarch samples. The haze is uniform.
+// single-scattering estimate along that segment: the cone cut at the lens, inverse-square falloff
+// from its apex (closed form), soft radial beam profile, forward-scattering phase and extinction,
+// all taken where the ray passes closest to the beam axis, with a soft knee per beam. MODE
+// (AIR_MODES) then modulates it: nothing, the gobo at that point, or the gobo averaged over STEPS
+// raymarch samples. The haze is uniform.
 const AIR_FRAGMENT = /* glsl */`
 ${BEAM_GLSL}
 uniform highp sampler2D uDepth;
@@ -62,6 +71,7 @@ uniform float uAccum;
 uniform float uFalloff;
 uniform float uExtinction;
 uniform float uPhase;
+uniform float uKnee;
 flat in int vId;
 in vec3 vWorld;
 out highp vec4 outColor;
@@ -72,7 +82,10 @@ float endFade(float z) { return 1.0 - smoothstep(0.25, 0.9, z); }
 // Soft beam edge: full in the core, fading to 0 at the cone's rim (r = 1)
 float profile(float r) { return 1.0 - smoothstep(0.55, 1.0, r); }
 
-bool insideCone(vec3 q) { return q.z > 0.0 && q.z <= 1.0 && dot(q.xy, q.xy) < q.z * q.z; }
+// Inside the cone cut at the lens: 0 < z <= 1 and radius below z + z0
+bool insideCone(vec3 q, float z0) {
+  return q.z > 0.0 && q.z <= 1.0 && dot(q.xy, q.xy) < (q.z + z0) * (q.z + z0);
+}
 
 // Henyey-Greenstein phase, relative to a side view (1 at 90 degrees)
 float phase(float cosTheta) {
@@ -97,13 +110,19 @@ void main() {
   mat4 inv = beamMatrix(vId, 4);
   vec3 c0 = (inv * vec4(C, 1.0)).xyz;
   vec3 v = (inv * vec4(dir, 0.0)).xyz;
+  vec4 g = beamTexel(vId, 9);
+  vec4 o = beamTexel(vId, 11);
+  vec3 axis = normalize(beamTexel(vId, 2).xyz);
+  // Apex distance behind the lens (meters), and in cone units
+  float d0 = beamTexel(vId, 12).x / max(g.w, 1e-3);
+  float z0 = d0 / o.w;
 
-  // Exact segment of the ray inside the cone (0 < z <= 1, x² + y² < z²). The hull is a polygon
-  // slightly larger than the cone and only decides which pixels run; its faces never bound the
-  // segment, or brightness would step along every facet.
+  // Exact segment of the ray inside the cut cone (0 < z <= 1, x² + y² < (z + z0)²). The hull is a
+  // polygon slightly larger than the cone and only decides which pixels run; its faces never bound
+  // the segment, or brightness would step along every facet.
   float qa = dot(v.xy, v.xy) - v.z * v.z;
-  float qb = 2.0 * (dot(c0.xy, v.xy) - c0.z * v.z);
-  float qc = dot(c0.xy, c0.xy) - c0.z * c0.z;
+  float qb = 2.0 * (dot(c0.xy, v.xy) - (c0.z + z0) * v.z);
+  float qc = dot(c0.xy, c0.xy) - (c0.z + z0) * (c0.z + z0);
   float crossings[4] = float[4](-1.0, -1.0, -1.0, -1.0);
   float disc = qb * qb - 4.0 * qa * qc;
   if (abs(qa) > 1e-6 && disc >= 0.0) {
@@ -117,26 +136,24 @@ void main() {
     crossings[2] = -c0.z / v.z;
     crossings[3] = (1.0 - c0.z) / v.z;
   }
-  float tEnter = insideCone(c0) ? 0.0 : 1e9;
+  float tEnter = insideCone(c0, z0) ? 0.0 : 1e9;
   for (int i = 0; i < 4; i++) {
     float t = crossings[i];
-    if (t > 0.0 && t < tEnter && insideCone(c0 + v * (t + 1e-3 * max(t, 1.0)))) tEnter = t;
+    if (t > 0.0 && t < tEnter && insideCone(c0 + v * (t + 1e-3 * max(t, 1.0)), z0)) tEnter = t;
   }
   float tCone = 1e9;
   for (int i = 0; i < 4; i++) {
     float t = crossings[i];
-    if (t > tEnter && t < tCone && !insideCone(c0 + v * (t + 1e-3 * max(t, 1.0)))) tCone = t;
+    if (t > tEnter && t < tCone && !insideCone(c0 + v * (t + 1e-3 * max(t, 1.0)), z0)) tCone = t;
   }
   tExit = min(tExit, tCone);
   if (tEnter >= tExit) discard;
-  vec4 g = beamTexel(vId, 9);
-  vec4 o = beamTexel(vId, 11);
-  vec3 axis = normalize(beamTexel(vId, 2).xyz);
 
-  // In-scattering of a point source with 1 / (1 + k d^2) falloff, integrated in closed form over
-  // PIECES equal parts of the segment, each weighted by the beam profile, phase, extinction and
-  // end fade at its middle
-  vec3 ao = C - o.xyz;
+  // In-scattering of a point source at the apex with k / (1 + k d^2) falloff (1 / d² softened),
+  // integrated in closed form over PIECES equal parts of the segment, each weighted by the beam
+  // profile, phase, extinction and end fade at its middle
+  vec3 apex = o.xyz - axis * d0;
+  vec3 ao = C - apex;
   float b = dot(ao, dir);
   float h2 = max(dot(ao, ao) - b * b, 0.0);
   float sk = sqrt(uFalloff);
@@ -147,14 +164,14 @@ void main() {
     float t = mix(tEnter, tExit, float(k) / float(PIECES));
     float next = atan(sk * (t + b) / sa);
     float tm = t - 0.5 * (tExit - tEnter) / float(PIECES);
-    vec3 lm = C + dir * tm - o.xyz;
+    vec3 lm = C + dir * tm - apex;
     float along = max(dot(lm, axis), 1e-3);
-    // Never thinner than the lens, so a ray passing by the lens doesn't count as outside the beam
-    float r = length(lm - axis * along) / max(along * g.w, ${LENS_RADIUS.toFixed(2)});
+    float r = length(lm - axis * along) / (along * g.w);
     light += (next - prev) / (sk * sa) * profile(r) * phase(dot(normalize(lm), -dir))
-      * exp(-uExtinction * tm) * endFade(along / o.w);
+      * exp(-uExtinction * tm) * endFade((along - d0) / o.w);
     prev = next;
   }
+  light *= uFalloff;
 
   // Where the ray passes closest to the beam axis, inside the segment (soft gobo at Medium)
   float dd = dot(dir, axis);
@@ -164,7 +181,7 @@ void main() {
 
 #if MODE == 1
   vec3 closest = c0 + v * tc;
-  light *= 0.4 + 0.6 * goboAt(closest.xy / max(closest.z, 1e-4), g + vec4(0.0, 0.0, 2.5, 0.0));
+  light *= 0.4 + 0.6 * goboAt(closest.xy / (closest.z + z0), g + vec4(0.0, 0.0, 2.5, 0.0));
 #elif MODE == 2
   // Gobo variation, averaged with the same falloff weights as the base
   float dt = (tExit - tEnter) / float(STEPS);
@@ -177,15 +194,16 @@ void main() {
     float t = tEnter + (float(i) + jitter) * dt;
     vec3 q = c0 + v * t;
     if (q.z <= 0.0 || q.z > 1.0) continue;
-    float dist = q.z * o.w;
-    vec2 disk = q.xy / q.z;
+    float dist = (q.z + z0) * o.w;
+    vec2 disk = q.xy / (q.z + z0);
     float w = profile(length(disk)) / (1.0 + uFalloff * dist * dist);
     sum += w * goboAt(disk, g + vec4(0.0, 0.0, 1.0, 0.0));
     weight += w;
   }
   light *= weight > 0.0 ? sum / weight : 0.0;
 #endif
-  vec3 color = beamTexel(vId, 8).rgb * (beamPower(vId) * light * uHaze * uAccum);
+  float air = beamPower(vId) * light * uHaze;
+  vec3 color = beamTexel(vId, 8).rgb * (air / (1.0 + air / uKnee) * uAccum);
 #ifdef DITHER
   // 8-bit buffer: dither below one step, so faint beam ends fade instead of banding
   color += (fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.0671, 0.0058)))) - 0.5) / 255.0;
@@ -301,8 +319,9 @@ class AirBeams {
       uFalloff: { value: FALLOFF },
       uExtinction: { value: EXTINCTION },
       uPhase: { value: PHASE },
+      uKnee: { value: AIR_KNEE },
     };
-    this.geometry = createConeGeometry();
+    this.geometry = createConeGeometry(24, true);
     this.materials = new Map();
     this.mesh = new THREE.Mesh(this.geometry, this.material());
     this.scene = sceneOf(this.mesh);

@@ -19,7 +19,7 @@ Three.js r170 WebGL renderer for the rig. It is instantiated by
 | `stage_lighting.js` | quality levels: Guides (unlit), Low (floor decals), Medium/High (deferred light volumes on receivers at a resolution scale), beam guides; object layers RECEIVER/OCCLUDER |
 | `gobos.js`, `gobo_patterns.js` | shared gobo texture array: built-in patterns (pure module, also used by the GDTF bundle generator), then GDTF wheel images (`goboImageLayer`, up to 64 layers) |
 | `beam_shading.js` | GLSL shared by every beam pass (beam state reads, gobo lookup, light falloff), cone hull geometry, `ACCUM` |
-| `air_beams.js` | beams in the haze: closed form (Low, Medium + soft gobo) or raymarch with the gobo (High), uniform haze, 1/4 or 1/2 buffer, depth-aware upsample |
+| `air_beams.js` | beams in the haze: cone cut at the lens (hull widened in the vertex shader), inverse-square falloff from the apex behind the lens, soft knee per beam; closed form (Low, Medium + soft gobo) or raymarch with the gobo (High), uniform haze, 1/2 or full buffer, depth-aware upsample |
 | `bloom.js` | lens glow sprites (Low and up) and bloom from the air buffer and lens glows (Medium, High) |
 | `quality.js` | quality settings in `localStorage` (never in `showData`): level, lighting scale, guides, render scale (pixel ratio, default 0.8); starting level from the device, `QualityGovernor` for Auto |
 | `controls.js` | TransformControls (translate/rotate) for fixture placement |

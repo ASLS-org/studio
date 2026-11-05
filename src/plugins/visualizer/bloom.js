@@ -9,7 +9,8 @@ const GLOW_MAX = 0.35;
 const GLOW_ONLY = 0.7; // size of the glow of cells that only glow (pixels, panels)
 const GLOW_STRENGTH = [0.6, 1.6]; // glow strength limits over the light output
 const GLOW_BLOOM = 0.5; // share of the lens glows in the bloom
-const GLOW_OFFSET = 0.05; // glow centre in front of the lens, in meters
+const GLOW_OFFSET = -0.01; // glow centre behind the lens, in meters, so it sits in the lens
+const GLOW_LIFT = 0.03; // depth pulled toward the camera, so the lens and its rim don't hide it
 const BLOOM_LEVELS = 4;
 const BLOOM_THRESHOLD = 1.2; // light below this doesn't bloom (only beam cores and lenses)
 const BLOOM_STRENGTH = 0.25;
@@ -35,10 +36,14 @@ void main() {
   float size = radius * only * (0.5 + 0.5 * c.a) * (0.6 + 1.4 * facing3);
   vec4 view = viewMatrix * vec4(centre, 1.0);
   view.xy += position.xy * size;
+  // Depth only is pulled toward the camera: the glow stays on the lens on screen, in front of the
+  // lens disc, and the housing still hides it from the side
+  vec4 lifted = projectionMatrix * vec4(view.xy, min(view.z + ${GLOW_LIFT.toFixed(3)}, -1e-3), 1.0);
   vDisk = position.xy;
   float strength = clamp(lens.y, ${GLOW_STRENGTH[0].toFixed(2)}, ${GLOW_STRENGTH[1].toFixed(2)});
   vColor = c.rgb * c.a * strength * (0.15 + 0.85 * facing3) * uExposure;
   gl_Position = projectionMatrix * view;
+  gl_Position.z = lifted.z / lifted.w * gl_Position.w;
   if (c.a <= 0.0) gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
 }
 `;

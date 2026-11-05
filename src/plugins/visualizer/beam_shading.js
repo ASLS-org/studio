@@ -78,12 +78,15 @@ vec3 beamLight(int id, vec3 P, out vec3 L) {
 
 /**
  * Unit cone, apex at the origin, base radius 1 at z = 1, closed, faces outward. The ring is pushed
- * out so the polygon contains the circle.
+ * out so the polygon contains the circle. Truncated, the apex becomes a ring at z = 0 too, with
+ * its ring directions in x, y: the vertex shader scales each ring to its radius (the air beams
+ * start at the lens's width).
  *
  * @param {Number} [segments=24] Ring segments
+ * @param {Boolean} [truncated=false] Whether the apex is a ring
  * @returns {THREE.InstancedBufferGeometry} Cone geometry
  */
-export function createConeGeometry(segments = 24) {
+export function createConeGeometry(segments = 24, truncated = false) {
   const k = 1 / Math.cos(Math.PI / segments);
   const position = [];
   for (let i = 0; i < segments; i++) {
@@ -93,7 +96,13 @@ export function createConeGeometry(segments = 24) {
     const y1 = Math.sin(a1) * k;
     const x2 = Math.cos(a2) * k;
     const y2 = Math.sin(a2) * k;
-    position.push(0, 0, 0, x2, y2, 1, x1, y1, 1);
+    if (truncated) {
+      position.push(x1, y1, 0, x2, y2, 1, x1, y1, 1);
+      position.push(x1, y1, 0, x2, y2, 0, x2, y2, 1);
+      position.push(0, 0, 0, x2, y2, 0, x1, y1, 0);
+    } else {
+      position.push(0, 0, 0, x2, y2, 1, x1, y1, 1);
+    }
     position.push(0, 0, 1, x1, y1, 1, x2, y2, 1);
   }
   const geometry = new THREE.InstancedBufferGeometry();

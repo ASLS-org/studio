@@ -24,6 +24,10 @@ const MOVING_HEAD = {
 const DEFAULT_FIELD_ANGLE = 25; // degrees
 const BAR_ASPECT = 2.5; // length / width above which a body is a bar
 const PIXEL_FIELD_ANGLE = 40; // degrees, OFL pixels have no lens data of their own
+// OFL light output when the file gives no lumens: from its electrical power (the median of the
+// library's fixtures that give both is about 30 lm/W), else a typical fixture's
+const LUMENS_PER_WATT = 30;
+const DEFAULT_LUMENS = 3000;
 
 /**
  * Body roles
@@ -68,6 +72,17 @@ function node(name, kind, position, size, extra = {}) {
 }
 
 /**
+ * Light output of an OFL fixture: its lumens, else estimated from its electrical power
+ *
+ * @param {Object} physical OFL physical data
+ * @returns {Number} Lumens
+ */
+function oflLumens(physical) {
+  if (physical.bulb && physical.bulb.lumens) return physical.bulb.lumens;
+  return physical.power ? physical.power * LUMENS_PER_WATT : DEFAULT_LUMENS;
+}
+
+/**
  * Beam data of an OFL fixture
  *
  * @param {Object} physical OFL physical data
@@ -83,7 +98,7 @@ function oflBeam(physical, type, radius) {
     fieldAngle: field,
     radius,
     type,
-    flux: (physical.bulb && physical.bulb.lumens) || 10000,
+    flux: oflLumens(physical),
     colorTemperature: (physical.bulb && physical.bulb.colorTemperature) || 6500,
   };
 }
@@ -116,7 +131,7 @@ function pixelBeams(matrix, physical, face, z, type) {
       beam: {
         ...oflBeam(physical, type, radius),
         // The fixture's lumens are shared by its pixels
-        flux: ((physical.bulb && physical.bulb.lumens) || 10000) / pixels.length,
+        flux: oflLumens(physical) / pixels.length,
         fieldAngle: lens ? Math.max(lens[0], lens[1]) : PIXEL_FIELD_ANGLE,
       },
     },

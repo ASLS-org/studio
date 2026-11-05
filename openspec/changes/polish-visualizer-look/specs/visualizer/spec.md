@@ -46,12 +46,17 @@ around bright beams and lenses at Medium and High. Cells that only glow SHALL ge
 
 ### Requirement: Beams in the haze fade from the lens
 The system SHALL draw a beam in the haze brightest near its lens and fading along the shaft, as
-light falls off with distance from its source. A beam bright enough to saturate SHALL roll off
+light falls off with distance from its source, starting at the lens's width: narrow beams keep a
+bright shaft longer than wide ones. A beam bright enough to saturate SHALL roll off
 toward white where it is brightest, instead of clipping in its colour.
 
 #### Scenario: Shaft seen from the side
 - **GIVEN** a moving head at full intensity in haze, seen from the side
 - **THEN** its shaft is brightest near the lens and fades toward the floor
+
+#### Scenario: Looking into the beam
+- **GIVEN** the same moving head, seen from in front close to its axis
+- **THEN** its shaft is brighter than from the side, without blowing out the whole beam
 
 #### Scenario: Saturated neck
 - **GIVEN** a strong blue beam seen from the side
@@ -59,7 +64,8 @@ toward white where it is brightest, instead of clipping in its colour.
 
 ### Requirement: Brightness follows the fixture's light output
 The system SHALL scale each beam's light on surfaces and in the haze by its fixture's light output
-(GDTF luminous flux, OFL bulb lumens, 10,000 lm when unknown), on a compressed scale (square root,
+(GDTF luminous flux; OFL bulb lumens, else 30 lm per watt of its power, else 3,000 lm), on a
+compressed scale (square root,
 relative to 5,000 lm) and within limits, so fixtures keep their order and faint ones stay visible. The cells of a multi-cell fixture SHALL share
 its light: a cell carries its own luminous flux (GDTF) or the fixture's lumens divided by its cells
 (OFL).
