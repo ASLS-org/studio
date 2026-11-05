@@ -26,6 +26,12 @@
       ref="positionTool"
       :fixture="selectedFixture"
     />
+    <modifier-widget-cells
+      v-if="selectedFixture && selectedFixture.cells.length"
+      :key="selectedFixture.id"
+      :cells="selectedFixture.cells.map((cell) => cell.name)"
+      @change="selectedCells = $event"
+    />
     <fixture-channels-widget
       v-show="selectedFixture"
       ref="channels"
@@ -61,6 +67,7 @@ import FixturePoolWidget from '../_widgets/modifier.widget.fixture.pool.vue';
 import FixtureChannelsWidget from '../_widgets/modifier.widget.fixture.channels.vue';
 import WidgetColorPicker from '../_widgets/modifier.widget.colorpicker.vue';
 import PanTiltWidget from '../_widgets/modifier.widget.pantilt.vue';
+import ModifierWidgetCells from '../_widgets/modifier.widget.cells.vue';
 
 import UniverseSettingsWidget from './_widgets/universe.modifier.widget.settings.vue';
 import FixtureSettingsWidget from './_widgets/universe.modifier.widget.fixture.settings.vue';
@@ -83,6 +90,7 @@ export default {
     FixtureChannelsWidget,
     WidgetColorPicker,
     PanTiltWidget,
+    ModifierWidgetCells,
     PatchPopup,
   },
   mixins: [LiveMixin],
@@ -104,6 +112,10 @@ export default {
        * Index of the currently selected fixture in the universe's fixture pool.
        */
       selectedFixtureIndex: 0,
+      /**
+       * Cells of the selected fixture the controls apply to, null for all (view state only)
+       */
+      selectedCells: null,
     };
   },
   computed: {
@@ -111,22 +123,31 @@ export default {
      * Selected fixture's channels, refreshed by the live ticker (playback writes bypass Vue)
      */
     liveChannels() {
-      return this.live(this.selectedFixture ? this.selectedFixture.simplifiedChannels : []);
+      if (!this.selectedFixture) return this.live([]);
+      // The whole fixture's channels, then those of the selected cells
+      const cells = this.selectedCells;
+      return this.live(this.selectedFixture.simplifiedChannels
+        .filter((channel) => !cells || !channel.cell || cells.includes(channel.cell)));
     },
     /**
-     * Selected fixture's colour, refreshed by the live ticker
+     * Selected fixture's colour (selected cells), refreshed by the live ticker
      */
     liveColor() {
-      return this.live(this.selectedFixture ? this.selectedFixture.color : undefined);
+      return this.live(this.selectedFixture
+        ? this.selectedFixture.getColor(this.selectedCells) : undefined);
     },
     /**
-     * Selected fixture's pan/tilt, refreshed by the live ticker
+     * Selected fixture's pan/tilt (selected cells), refreshed by the live ticker
      */
     livePanTilt() {
-      return this.live(this.selectedFixture ? this.selectedFixture.panTilt : undefined);
+      return this.live(this.selectedFixture
+        ? this.selectedFixture.getPanTilt(this.selectedCells) : undefined);
     },
   },
   watch: {
+    selectedFixture() {
+      this.selectedCells = null;
+    },
     '$route.query.fixtureId': function routeQueryFixtureIdWatcher(fixtureId) {
       this.selectFixture(fixtureId);
     },
@@ -208,7 +229,7 @@ export default {
      */
     setFixtureColor(color) {
       if (this.selectedFixture) {
-        this.selectedFixture.color = color;
+        this.selectedFixture.setColor(color, this.selectedCells);
         this.$liveTicker.bump();
       }
     },
@@ -224,7 +245,7 @@ export default {
      */
     setFixturePanTilt(panTilt) {
       if (this.selectedFixture) {
-        this.selectedFixture.panTilt = panTilt;
+        this.selectedFixture.setPanTilt(panTilt, this.selectedCells);
         this.$liveTicker.bump();
       }
     },

@@ -1,6 +1,10 @@
 import { markRaw } from '../utils/reactivity';
 import Channel from './channel.model';
 import { PROFILE_SOURCES, resolveModeName } from '../fixtures/fixture.profile';
+import modeCells from '../fixtures/fixture.cells';
+import {
+  readColor, writeColor, readPanTilt, writePanTilt, isAxisChannel, hasMixing,
+} from './cell.access';
 import EventBus from '../../plugins/eventbus';
 
 /**
@@ -20,9 +24,6 @@ const MAX_DMX_VALUE = 255;
  * @default
  */
 const DEFAULT_FIXTURE_NAME = 'Unknown Fixture';
-
-const RGB_CHANNELS = ['Red', 'Green', 'Blue'];
-const CMY_CHANNELS = ['Cyan', 'Magenta', 'Yellow'];
 
 /**
  * Default fixture constructor data
@@ -107,10 +108,8 @@ class Fixture {
         y: 0,
         z: 0,
       };
+      // Channels start at their home value (GDTF Default, 0 for OFL)
       this.parseFromProfile();
-      this.channels.forEach((channel) => {
-        this.setChannel(channel.id - 1, 0);
-      });
     }
   }
 
@@ -413,87 +412,78 @@ class Fixture {
       value: channel.value.DMX,
       active: channel.active,
       qaIndex: channel.qaIndex,
+      cell: channel.cell,
     }));
   }
 
   /**
-   * Fixture's pan&tilt channels values (0-255)/(0-255)
+   * Fixture's pan&tilt channels values (0-255)/(0-255), every head's (reads the first)
    *
-   * @type {Number}
+   * @type {Object}
    */
   set panTilt(value) {
-    this.setQuickAccessor({
-      type: 'Pan',
-    }, value.pan);
-    this.setQuickAccessor({
-      type: 'Tilt',
-    }, value.tilt);
-    this.setQuickAccessor({
-      type: 'PanFine',
-    }, value.panFine);
-    this.setQuickAccessor({
-      type: 'TiltFine',
-    }, value.tiltFine);
+    this.setPanTilt(value);
   }
 
   get panTilt() {
-    return {
-      pan: this.hasQuickAccessor({
-        type: 'Pan',
-      }) ? this.getQuickAccessor({
-          type: 'Pan',
-        }).value.DMX : 0,
-      panFine: this.hasQuickAccessor({
-        type: 'PanFine',
-      }) ? this.getQuickAccessor({
-          type: 'PanFine',
-        }).value.DMX : 0,
-      tilt: this.hasQuickAccessor({
-        type: 'Tilt',
-      }) ? this.getQuickAccessor({
-          type: 'Tilt',
-        }).value.DMX : 0,
-      tiltFine: this.hasQuickAccessor({
-        type: 'TiltFine',
-      }) ? this.getQuickAccessor({
-          type: 'TiltFine',
-        }).value.DMX : 0,
-    };
+    return this.getPanTilt();
   }
 
   /**
-   * Fixture's color channels values.
-   * Only RGB color suppoprtded at the moment.
-   * @todo Implement other color changer types (HSB...). Should do for the alpha
-   * @todo, this causes massive slowdowns, this should be refactpred and optimized
-   * @type {Number}
+   * Fixture's colour (RGB 0-255), every cell's (reads the first); CMY inverted, white mixed in
+   *
+   * @type {Array<Number>}
    */
   set color(rgbValue) {
-    if (this.hasColor) {
-      this.quickChannelsAccessors.Color.forEach((channel) => {
-        if (RGB_CHANNELS.includes(channel.color)) {
-          const value = rgbValue[RGB_CHANNELS.indexOf(channel.color)];
-          this.setChannel(channel.id - 1, value);
-        } else if (CMY_CHANNELS.includes(channel.color)) {
-          const value = 255 - rgbValue[CMY_CHANNELS.indexOf(channel.color)];
-          this.setChannel(channel.id - 1, value);
-        }
-      });
-    }
+    this.setColor(rgbValue);
   }
 
   get color() {
-    const colorValues = [0, 0, 0];
-    if (this.hasColor) {
-      this.quickChannelsAccessors.Color.forEach((colorChannel) => {
-        if (RGB_CHANNELS.includes(colorChannel.color)) {
-          colorValues[RGB_CHANNELS.indexOf(colorChannel.color)] = colorChannel.value.DMX;
-        } else if (CMY_CHANNELS.includes(colorChannel.color)) {
-          colorValues[CMY_CHANNELS.indexOf(colorChannel.color)] = 255 - colorChannel.value.DMX;
-        }
-      });
-    }
-    return colorValues;
+    return this.getColor();
+  }
+
+  /**
+   * Reads the colour of the first of some cells (see cell.access.js)
+   *
+   * @public
+   * @param {?Array<String>} [cells=null] Cell names, null for all
+   * @returns {Array<Number>} RGB 0-255
+   */
+  getColor(cells = null) {
+    return readColor(this.channels, cells, (i) => this.channels[i].value.DMX);
+  }
+
+  /**
+   * Writes a colour to some cells (see cell.access.js)
+   *
+   * @public
+   * @param {Array<Number>} rgbValue RGB 0-255
+   * @param {?Array<String>} [cells=null] Cell names, null for all
+   */
+  setColor(rgbValue, cells = null) {
+    writeColor(this.channels, rgbValue, cells, (i, value) => this.setChannel(i, value));
+  }
+
+  /**
+   * Reads the pan&tilt of the first of some cells (see cell.access.js)
+   *
+   * @public
+   * @param {?Array<String>} [cells=null] Cell names, null for all
+   * @returns {Object} `pan`, `panFine`, `tilt`, `tiltFine` (0-255)
+   */
+  getPanTilt(cells = null) {
+    return readPanTilt(this.channels, cells, (i) => this.channels[i].value.DMX);
+  }
+
+  /**
+   * Writes pan&tilt to some cells (see cell.access.js)
+   *
+   * @public
+   * @param {Object} value `pan`, `panFine`, `tilt`, `tiltFine` (0-255)
+   * @param {?Array<String>} [cells=null] Cell names, null for all
+   */
+  setPanTilt(value, cells = null) {
+    writePanTilt(this.channels, value, cells, (i, v) => this.setChannel(i, v));
   }
 
   /**
@@ -537,7 +527,7 @@ class Fixture {
    * @readonly
    */
   get hasPan() {
-    return this.quickChannelsAccessors.Pan !== undefined;
+    return this.channels.some((channel) => isAxisChannel(channel, 'Pan'));
   }
 
   /**
@@ -547,7 +537,7 @@ class Fixture {
    * @readonly
    */
   get hasTilt() {
-    return this.quickChannelsAccessors.Tilt !== undefined;
+    return this.channels.some((channel) => isAxisChannel(channel, 'Tilt'));
   }
 
   /**
@@ -557,7 +547,18 @@ class Fixture {
    * @readonly
    */
   get hasColor() {
-    return this.quickChannelsAccessors.Color !== undefined;
+    return hasMixing(this.channels);
+  }
+
+  /**
+   * The fixture's cells (parts repeating a set of channels, see models/fixtures/fixture.cells.js):
+   * names and channel indexes. Empty when the fixture has none
+   *
+   * @type {Array<Object>}
+   * @readonly
+   */
+  get cells() {
+    return this._cells || [];
   }
 
   /**
@@ -653,10 +654,14 @@ class Fixture {
    */
   prepareChannels() {
     this.mode = this.modes[this.modeIndex] || this.modes[0]; // Selected profile mode
+    const { cells, cellOf, kinds } = modeCells(this.mode, this.profile && this.profile.matrix);
+    this._cells = cells;
     // Channels are raw: playback writes them every tick, widgets read them through the live ticker
     this.channels = this.mode.channels.map((profileChannel, index) => markRaw(new Channel({
       id: index + 1,
       profileChannel,
+      cell: cellOf[index],
+      kind: kinds[index],
     })));
   }
 

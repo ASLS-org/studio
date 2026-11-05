@@ -4,11 +4,14 @@ import Cue, { CUE_LOOP_STYLES } from './cue.model';
 let fxFixtureId = 0;
 
 /**
- * Available color channels
+ * The colour each colour channel removes (CMY) or adds (RGB): a red effect drives cyan inverted
  *
- * @constant {Array} COLOR_CHANNELS
+ * @constant {Object} COMPLEMENTS
  */
-const COLOR_CHANNELS = ['Red', 'Green', 'Blue', 'Cyan', 'Magenta', 'Yellow'];
+const COMPLEMENTS = {
+  Red: 'Cyan', Green: 'Magenta', Blue: 'Yellow', Cyan: 'Red', Magenta: 'Green', Yellow: 'Blue',
+};
+const MAX_DMX = 255;
 
 /**
  * Cue type "Effect" value
@@ -257,12 +260,97 @@ class FXFixture {
     },
     fxChannelHandle,
   ) {
+    const preset = fixturePreset || { active: true, phase: 0 };
     this.handle = fixture;
     this.channelHandle = fxChannelHandle;
-    this.phase = fixturePreset.phase;
-    this.active = fixturePreset.active;
+    this.phase = preset.phase;
+    this.active = preset.active;
     this.value = 0;
     this.id = fxFixtureId++;
+    this.buildTargets();
+  }
+
+  /**
+   * The fixture channels the effect channel drives, per cell (the fixture's cells in order, then
+   * the whole fixture's channels): `direct` indexes take the value, `inverted` ones 255 minus it
+   * (CMY for a colour effect). Each target has its own `phase` (radians) for phases across cells
+   *
+   * @public
+   */
+  buildTargets() {
+    const { type } = this.channelHandle;
+    const channels = this.handle.channels || [];
+    const complement = COMPLEMENTS[type];
+    const groups = new Map();
+    (this.handle.cells || []).forEach((cell) => groups.set(cell.name, null));
+    groups.set('', null);
+    channels.forEach((channel, index) => {
+      if (channel.isFine) return;
+      let inverted = false;
+      if (complement) {
+        const mixing = /^Color(Add|Sub|RGB)_/.test(channel.attribute || '');
+        if (!mixing || (channel.color !== type && channel.color !== complement)) return;
+        inverted = channel.color === complement;
+      } else if (channel.kind !== type) return;
+      const key = channel.cell || '';
+      if (!groups.get(key)) {
+        groups.set(key, {
+          cell: channel.cell, direct: [], inverted: [], phase: 0,
+        });
+      }
+      groups.get(key)[inverted ? 'inverted' : 'direct'].push(index);
+    });
+    this.targets = [...groups.values()].filter(Boolean);
+    this._channels = channels;
+  }
+
+  /**
+   * Rebuilds the targets when the fixture's channels changed (mode change)
+   *
+   * @public
+   * @returns {Boolean} Whether they were rebuilt
+   */
+  refreshTargets() {
+    if (this._channels === this.handle.channels) return false;
+    this.buildTargets();
+    return true;
+  }
+
+  /**
+   * Number of cell targets (phase slots across cells), at least 1
+   *
+   * @readonly
+   * @type {Number}
+   */
+  get cellCount() {
+    let count = 0;
+    for (let i = 0; i < this.targets.length; i++) if (this.targets[i].cell) count += 1;
+    return Math.max(count, 1);
+  }
+
+  /**
+   * Writes a value to every target channel
+   *
+   * @public
+   * @param {Number} value DMX value (0-255, fractional values set the fine channel)
+   */
+  writeAll(value) {
+    for (let k = 0; k < this.targets.length; k++) this.writeTarget(this.targets[k], value);
+  }
+
+  /**
+   * Writes a value to one target's channels
+   *
+   * @public
+   * @param {Object} target Target
+   * @param {Number} value DMX value
+   */
+  writeTarget(target, value) {
+    const { handle } = this;
+    for (let i = 0; i < target.direct.length; i++) handle.setChannel(target.direct[i], value);
+    for (let i = 0; i < target.inverted.length; i++) {
+      handle.setChannel(target.inverted[i], MAX_DMX - value);
+    }
   }
 
   /**
@@ -314,11 +402,14 @@ class FXChannel {
    * @param {Number} channel.phase FXChannel phasing in degrees
    * @param {Number} channel.fixturePhaseStart FXChannel fixtures phasing start interval in degrees
    * @param {Number} channel.fixturePhaseStop FXChannel fixtures phasing stop interval in degrees
+   * @param {Boolean} [channel.cellPhase=false] Whether the phase spreads over every cell of the
+   * fixtures rather than over the fixtures
 
    * @param {Array} fixtures Array of fixture instances
    */
   constructor(channel, fixtures, duration) {
     this.type = channel.type;
+    this._cellPhase = channel.cellPhase === true;
     this.fixtures = fixtures;
     this.direction = channel.direction;
     this.waveform = channel.waveform;
@@ -331,12 +422,24 @@ class FXChannel {
     this.time = 0;
     this.duration = duration;
     this.directionFlag = 0;
-    // Cache whether this channel drives a color component - avoids an
-    // includes() scan on the hot per-frame path (previously re-checked for
-    // every single fixture, every frame, even though the type never changes).
-    this._isColorChannel = COLOR_CHANNELS.includes(this.type);
     this.update(0);
     this.DMXData = 0;
+  }
+
+  /**
+   * Whether the phase spreads over every cell of the fixtures (fixture order, then cell order)
+   * rather than over the fixtures
+   *
+   * @type {Boolean}
+   */
+  set cellPhase(cellPhase) {
+    this._cellPhase = Boolean(cellPhase);
+    this.computeFixturesPhasing();
+    this.update(this.time);
+  }
+
+  get cellPhase() {
+    return this._cellPhase;
   }
 
   /**
@@ -631,6 +734,7 @@ class FXChannel {
       phase: this.phase,
       fixturePhaseStart: this.fixturePhaseStart,
       fixturePhaseStop: this.fixturePhaseStop,
+      cellPhase: this.cellPhase,
     };
   }
 
@@ -654,51 +758,67 @@ class FXChannel {
       }
     }
 
-    const len = activeFixtures.length;
+    // Phase slots: one per fixture, or one per cell when the phase spreads across cells
+    let len = 0;
+    for (let i = 0; i < activeFixtures.length; i++) {
+      len += this._cellPhase ? activeFixtures[i].cellCount : 1;
+    }
     const startRad = this.fixturePhaseStart * (Math.PI / 180);
     const spanRad = (this.fixturePhaseStop - this.fixturePhaseStart) * (Math.PI / 180);
 
-    for (let index = 0; index < len; index++) {
-      const fixture = activeFixtures[index];
-
-      switch (this.direction) {
-        case FX_CHANNEL_DIRECTIONS.LTR:
-          fixture.phase = spanRad * (index / len) + startRad;
-          break;
-        case FX_CHANNEL_DIRECTIONS.RTL:
-          fixture.phase = -spanRad * (index / len) + startRad;
-          break;
-        case FX_CHANNEL_DIRECTIONS.SYM: {
-          const normalizedIndex = index / (len - 1);
-          let phaseOffset;
-
-          if (normalizedIndex <= 0.5) {
-            // First half: 0 to 0.5
-            phaseOffset = normalizedIndex * 2;
-          } else {
-            // Second half: 0.5 to 0
-            phaseOffset = (1 - normalizedIndex) * 2;
-          }
-
-          fixture.phase = spanRad * phaseOffset + startRad;
+    let index = 0;
+    for (let f = 0; f < activeFixtures.length; f++) {
+      const fixture = activeFixtures[f];
+      fixture.phase = this.slotPhase(index, len, startRad, spanRad);
+      const { targets } = fixture;
+      for (let k = 0; k < targets.length; k++) {
+        if (this._cellPhase && targets[k].cell) {
+          targets[k].phase = this.slotPhase(index, len, startRad, spanRad);
+          index += 1;
+        } else {
+          targets[k].phase = fixture.phase;
         }
-          break;
-        case FX_CHANNEL_DIRECTIONS.SYMREV: {
-          const halfLength = len / 2;
-
-          if (index < halfLength) {
-            // First half: spread from 0 to π
-            const phaseOffset = index / (halfLength - 1);
-            fixture.phase = phaseOffset * Math.PI;
-          } else {
-            // Second half: spread from 2π to π
-            const normalizedIndex = (index - halfLength) / (halfLength - 1);
-            fixture.phase = (2 * Math.PI) - (normalizedIndex * Math.PI);
-          }
-        }
-          break;
-        default: break;
       }
+      if (!this._cellPhase || !targets.some((t) => t.cell)) index += 1;
+    }
+  }
+
+  /**
+   * Phase of one slot (a fixture, or a cell) among `len`, from the direction and the phase start
+   * and span
+   *
+   * @private
+   * @param {Number} index Slot index
+   * @param {Number} len Slot count
+   * @param {Number} startRad Phase start, radians
+   * @param {Number} spanRad Phase span, radians
+   * @returns {Number} Phase in radians
+   */
+  slotPhase(index, len, startRad, spanRad) {
+    switch (this.direction) {
+      case FX_CHANNEL_DIRECTIONS.LTR:
+        return spanRad * (index / len) + startRad;
+      case FX_CHANNEL_DIRECTIONS.RTL:
+        return -spanRad * (index / len) + startRad;
+      case FX_CHANNEL_DIRECTIONS.SYM: {
+        const normalizedIndex = index / (len - 1);
+        // First half: 0 to 0.5, second half: 0.5 to 0
+        const phaseOffset = normalizedIndex <= 0.5
+          ? normalizedIndex * 2
+          : (1 - normalizedIndex) * 2;
+        return spanRad * phaseOffset + startRad;
+      }
+      case FX_CHANNEL_DIRECTIONS.SYMREV: {
+        const halfLength = len / 2;
+        if (index < halfLength) {
+          // First half: spread from 0 to π
+          return (index / (halfLength - 1)) * Math.PI;
+        }
+        // Second half: spread from 2π to π
+        return (2 * Math.PI) - (((index - halfLength) / (halfLength - 1)) * Math.PI);
+      }
+      default:
+        return 0;
     }
   }
 
@@ -756,10 +876,7 @@ class FXChannel {
     this.fixtures.forEach((fixture) => {
       fixture.active = activeIds.includes(fixture.handle.id);
       if (!fixture.active) {
-        fixture.handle.setQuickAccessor({
-          type: this.type,
-          qaIndex: 0,
-        }, 0);
+        fixture.writeAll(0);
       }
     });
     this.computeFixturesPhasing();
@@ -820,21 +937,9 @@ class FXChannel {
   }
 
   /**
-   * Updates channel value over time.
-   *
-   * Rewritten from forEach() to a for-loop on this per-frame hot path, with
-   * three concrete fixes:
-   *  - COLOR_CHANNELS.includes(this.type) is now computed once at
-   *    construction (see _isColorChannel) instead of once per fixture per
-   *    frame - it can never change per-fixture since it only depends on the
-   *    channel's own type.
-   *  - The `[...fixture.handle.color]` spread was cloning an array that the
-   *    `color` getter had *already* freshly allocated, i.e. two allocations
-   *    for one read. Now only one.
-   *  - Fixed DMXData accumulation: it was unconditionally adding
-   *    `this.fixtures[0].value` (always fixture 0) instead of the fixture
-   *    actually being processed, which meant the exported DMX activity value
-   *    was wrong for any effect with more than one fixture.
+   * Updates channel value over time: writes every target channel of every active fixture (each
+   * cell at its own phase when the phase spreads across cells). No allocation per call; targets
+   * are rebuilt only when a fixture's channels change.
    *
    * @private
    * @param {Number} t update time
@@ -845,7 +950,11 @@ class FXChannel {
     this.DMXData = 0;
 
     const fixtures = this._fixtures || [];
-    const isColor = this._isColorChannel;
+    let rephase = false;
+    for (let i = 0; i < fixtures.length; i++) {
+      if (fixtures[i].refreshTargets()) rephase = true;
+    }
+    if (rephase) this.computeFixturesPhasing();
 
     for (let i = 0; i < fixtures.length; i++) {
       const fixture = fixtures[i];
@@ -859,26 +968,12 @@ class FXChannel {
       fixture.value = value;
       this.DMXData += value;
 
-      if (!isColor) {
-        fixture.handle.setQuickAccessor({
-          type: this.type,
-        }, value);
-      } else {
-        const currentColorValue = fixture.handle.color;
-
-        switch (this.type) {
-          case 'Red':
-            currentColorValue[0] = value;
-            break;
-          case 'Green':
-            currentColorValue[1] = value;
-            break;
-          case 'Blue':
-            currentColorValue[2] = value;
-            break;
-          default: break;
-        }
-        fixture.handle.color = currentColorValue;
+      const { targets } = fixture;
+      for (let k = 0; k < targets.length; k++) {
+        const target = targets[k];
+        fixture.writeTarget(target, this._cellPhase && target.cell
+          ? this.getValue(this.time, target.phase) || 0
+          : value);
       }
     }
   }

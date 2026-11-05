@@ -20,6 +20,9 @@ class Channel {
    * @param {Object} data Channel data
    * @param {Number} data.id Channel ID (1-based position in the fixture's mode)
    * @param {Object} data.profileChannel Profile channel (see models/fixtures/fixture.profile.js)
+   * @param {?String} [data.cell] Name of the fixture's cell holding the channel (see
+   * models/fixtures/fixture.cells.js), null for the whole fixture
+   * @param {String} [data.kind] Channel kind: its type without its cell's name
    */
   constructor(data) {
     const { profileChannel } = data;
@@ -28,6 +31,9 @@ class Channel {
     this.attribute = profileChannel.attribute;
     this.isFine = profileChannel.isFine;
     this.color = profileChannel.color;
+    this.geometry = profileChannel.geometry || null;
+    this.cell = data.cell || null; // the fixture's cell holding it, null for the whole fixture
+    this.kind = data.kind || profileChannel.type;
     this.capabilities = profileChannel.capabilities;
     this.fineIndexes = profileChannel.fine;
     this.fineChannels = [];

@@ -192,7 +192,8 @@ function expandTemplates(templateChannels, keys) {
  */
 function buildMode(availableChannels, mode, matrix) {
   const retyped = new Set();
-  const channels = expandEntries(mode.channels, matrix.pixels, matrix.groups).map((entry) => {
+  const entries = expandEntries(mode.channels, matrix.pixels, matrix.groups);
+  const channels = entries.map((entry) => {
     if (!entry) {
       return buildChannel(UNSET_CHANNEL_TYPE, false, null, []);
     }
@@ -220,9 +221,13 @@ function buildMode(availableChannels, mode, matrix) {
     if (channel.fineChannelAliases && !channel.isFine) {
       channel.fine = channel.fineChannelAliases.flatMap((alias) => {
         const standardizedAlias = alias.replace(' ', '').toLowerCase();
-        const index = channels.findIndex(
+        let index = channels.findIndex(
           (item) => item.type.replace(' ', '').toLowerCase() === standardizedAlias,
         );
+        // A template channel's alias names its pixel by `$pixelKey`: find the expanded entry
+        if (index < 0 && channel.geometry) {
+          index = entries.indexOf(alias.replace(/\$pixelKey/g, channel.geometry));
+        }
         return index > -1 ? [index] : [];
       });
     }

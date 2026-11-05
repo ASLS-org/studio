@@ -8,7 +8,8 @@ views/
     app/app.activity.vue   main shell: loads localStorage or demo showfile, lays out fragments
     app/_popups/           app-level popups (splash, error)
     app/fragments/<area>/  toolbar, patch-bay, group-pool, visualizer, modifiers/{universe,group,chase}
-      _widgets/            widgets scoped to that fragment
+      _widgets/            widgets scoped to that fragment (modifiers/_widgets: shared by the
+                           modifiers, e.g. the cells selector used by universe and scene views)
       _popups/             popups scoped to that fragment
     visualizer/            standalone visualizer route (/visualizer)
   components/uikit/      `uk-*` design system, registered globally in main.js
