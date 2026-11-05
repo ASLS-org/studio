@@ -344,10 +344,8 @@ dimensions, its pan/tilt axes and its beams or cells placed as described.
 ### Requirement: Fixture bodies follow their parts
 The system SHALL draw each part of a GDTF fixture with the mesh its imported file provides (glTF,
 or 3DS converted on load), sized and placed to the part's model. A part without a usable mesh
-(none, missing, unreadable, or not fitting its model's dimensions) SHALL use the shape of its GDTF
-primitive type (base, yoke and head from the bundled moving head model; cylinder, sphere,
-conventional, scanner), else of its role. OFL moving heads SHALL keep the bundled model's parts and
-proportions, sized to their dimensions, with pan and tilt turning as before.
+(none, unreadable, or not fitting its model) SHALL use its GDTF primitive's shape (bundled base,
+yoke and head; cylinder, sphere, conventional, scanner), else its role's shape.
 
 #### Scenario: GDTF fixture described by primitives only
 - **GIVEN** a patched GDTF moving head whose models name the Base, Yoke and Head primitives and no
@@ -368,6 +366,10 @@ proportions, sized to their dimensions, with pan and tilt turning as before.
 - **GIVEN** an imported GDTF fixture with one mesh whose proportions differ from its model's
   length, width and height
 - **THEN** that part is drawn with its primitive's shape and the other parts with their meshes
+
+### Requirement: OFL moving heads keep the bundled model
+The system SHALL draw OFL moving heads with the bundled moving head model's parts and proportions,
+sized to their dimensions, with pan and tilt turning as before.
 
 #### Scenario: OFL moving head
 - **GIVEN** a patched OFL moving head with Pan at 160 and Tilt at 160
