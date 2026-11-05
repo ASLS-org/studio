@@ -41,7 +41,7 @@ void main() {
   float facing3 = facing * facing * facing;
   vec4 lens = beamTexel(gl_InstanceID, 12);
   float only = cell ? ${GLOW_ONLY.toFixed(2)} : 1.0;
-  float view = cell ? 0.4 + 0.6 * facing : 0.15 + 0.85 * facing3;
+  float aside = cell ? 0.4 + 0.6 * facing : 0.15 + 0.85 * facing3;
   float grow = cell ? 0.8 + 0.4 * facing : 0.6 + 1.4 * facing3;
   float radius = clamp(lens.x * ${GLOW_LENS.toFixed(2)}, ${GLOW_MIN.toFixed(3)}, ${GLOW_MAX.toFixed(3)});
   float size = radius * only * (0.5 + 0.5 * c.a) * grow;
@@ -54,7 +54,7 @@ void main() {
   vDisk = position.xy;
   float strength = cell ? ${GLOW_CELL.toFixed(2)}
     : clamp(lens.y, ${GLOW_STRENGTH[0].toFixed(2)}, ${GLOW_STRENGTH[1].toFixed(2)});
-  vColor = c.rgb * c.a * strength * view * uExposure;
+  vColor = c.rgb * c.a * strength * aside * uExposure;
   gl_Position = projectionMatrix * view;
   gl_Position.z = lifted.z / lifted.w * gl_Position.w;
   if (c.a <= 0.0 || lens.z > 0.5) gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
