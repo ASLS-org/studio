@@ -6,7 +6,7 @@ Every patched fixture shows in the view. GDTF fixtures are drawn from their own 
 
 GDTF fixtures you import with their own 3D models show the manufacturer's parts instead: the real base, yoke and head, each sized and placed as the file describes. A part whose model is missing or doesn't match the fixture's size keeps the generated part. The models come only from the GDTF files you imported on this computer: they aren't saved in the showfile, so a show opened on another computer shows them once the same fixtures are imported there. The generic GDTF fixtures bundled with ASLS have no models of their own.
 
-Multi-cell fixtures (LED washes, pixel bars, multi-beam bars) light each cell in its own colour. The light they cast on the floor and in the haze combines neighbouring cells into a few beams, so large rigs stay smooth. Cells a fixture describes as glowing rather than projecting (LED pixels, panels) light up without casting beams.
+Multi-cell fixtures (LED washes, pixel bars, multi-beam bars) light each cell in its own colour. The light they cast on the floor and in the haze combines neighbouring cells into a few beams, so large rigs stay smooth. Cells a fixture describes as glowing rather than projecting (LED pixels, panels) light up without casting beams in the haze; they spill a soft glow on the floor and walls around them, in the colours of the nearest cells.
 
 > **_NOTE:_** The visualizer doesn't show blades, animation wheels or built-in fixture effects.
 

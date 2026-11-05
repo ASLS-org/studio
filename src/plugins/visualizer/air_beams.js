@@ -47,7 +47,10 @@ void main() {
   float z0 = lens / tanHalf / beamTexel(gl_InstanceID, 11).w;
   vec3 p = vec3(position.xy * (position.z + z0), position.z);
   vec4 w = beamMatrix(gl_InstanceID, 0) * vec4(p, 1.0);
-  if (beamTexel(gl_InstanceID, 8).a <= 0.0) w = vec4(0.0, 0.0, 0.0, 1.0);
+  // Unlit beams and spill lights (surfaces only) draw nothing in the haze
+  if (beamTexel(gl_InstanceID, 8).a <= 0.0 || beamTexel(gl_InstanceID, 12).z > 0.5) {
+    w = vec4(0.0, 0.0, 0.0, 1.0);
+  }
   vWorld = w.xyz;
   gl_Position = projectionMatrix * viewMatrix * w;
 }

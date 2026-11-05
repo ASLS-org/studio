@@ -205,6 +205,8 @@ void main() {
   vec4 c = beamTexel(gl_InstanceID, 8);
   vColor = c.rgb * weight * (uGuideFloor + (1.0 - uGuideFloor) * c.a);
   gl_Position = projectionMatrix * viewMatrix * vec4(w, 1.0);
+  // Spill lights have no guide
+  if (beamTexel(gl_InstanceID, 12).z > 0.5) gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
 }
 `;
 

@@ -14,6 +14,15 @@ const GLOW_LENGTH = 0.001; // meters: cells that only glow write a row for their
 const GLOW_HALF_ANGLE = 60; // degrees
 const MAX_HALF_ANGLE = 45; // degrees
 const MAX_PROJECTORS = 8; // projected beams per fixture
+// Cells that only glow spill soft light on nearby surfaces (no beam in the haze): one wide, short
+// light per group of neighbouring cells, coloured by its cells
+const MAX_SPILLS = 4; // spill lights per fixture
+const SPILL_HALF_ANGLE = 65; // degrees
+const SPILL_LENGTH = 3; // meters
+// Row kinds: a projected beam, a lens glow only, or a spill light on surfaces only
+const ROW_BEAM = 0;
+const ROW_GLOW = 1;
+const ROW_SPILL = 2;
 const CLUSTER_SPAN = 0.4; // meters: a group of cells wider than this is split
 const CLUSTER_COS = Math.cos((5 * Math.PI) / 180); // cells within 5° point the same way
 const PROJECTING_TYPES = ['Wash', 'Spot', 'PC', 'Fresnel'];
@@ -81,6 +90,7 @@ const row = {
   intensity: 0,
   radius: 0.05,
   power: 1,
+  spill: false,
   goboLayer: 0,
   goboRotation: 0,
   blur: 0,
@@ -616,16 +626,29 @@ class GeometryFixture {
   }
 
   /**
-   * Groups the projecting beams into at most MAX_PROJECTORS clusters: beams moving with the same
-   * axis (or the fixture body) and pointing within 5° of each other, split along their long side
-   * when wider than 0.4 m
+   * Groups the projecting beams into at most MAX_PROJECTORS clusters, and the cells that only glow
+   * into at most MAX_SPILLS spill lights
    *
    * @private
    */
   buildClusters() {
+    this._clusters = this.clusterBeams((beam) => beam.projects, MAX_PROJECTORS);
+    this._spills = this.clusterBeams((beam) => !beam.projects, MAX_SPILLS);
+  }
+
+  /**
+   * Groups beams into at most `max` clusters: beams moving with the same axis (or the fixture body)
+   * and pointing within 5° of each other, split along their long side when wider than 0.4 m
+   *
+   * @private
+   * @param {Function} test Whether a beam belongs to the clusters
+   * @param {Number} max Most clusters
+   * @returns {Array<Array<Number>>} Beam indexes per cluster
+   */
+  clusterBeams(test, max) {
     const groups = [];
     this._beams.forEach((beam, index) => {
-      if (!beam.projects) return;
+      if (!test(beam)) return;
       const { object } = beam.entry;
       const e = object.matrixWorld.elements;
       const dir = new THREE.Vector3(-e[8], -e[9], -e[10]).normalize();
@@ -647,10 +670,10 @@ class GeometryFixture {
       return { g, along, k: Math.max(1, Math.ceil(span[along] / CLUSTER_SPAN)) };
     });
     const total = parts.reduce((s, p) => s + p.k, 0);
-    if (total > MAX_PROJECTORS) {
-      parts.forEach((p) => { p.k = Math.max(1, Math.floor((p.k * MAX_PROJECTORS) / total)); });
+    if (total > max) {
+      parts.forEach((p) => { p.k = Math.max(1, Math.floor((p.k * max) / total)); });
     }
-    this._clusters = [];
+    const clusters = [];
     parts.forEach(({ g, along, k }) => {
       const sorted = g.members.slice().sort((a, b) => a.pos[along] - b.pos[along]);
       for (let i = 0; i < k; i++) {
@@ -659,11 +682,12 @@ class GeometryFixture {
           Math.floor(((i + 1) * sorted.length) / k),
         ).map((m) => m.index);
         if (members.length) {
-          if (this._clusters.length < MAX_PROJECTORS) this._clusters.push(members);
-          else this._clusters[this._clusters.length - 1].push(...members);
+          if (clusters.length < max) clusters.push(members);
+          else clusters[clusters.length - 1].push(...members);
         }
       }
     });
+    return clusters;
   }
 
   /**
@@ -1044,9 +1068,11 @@ class GeometryFixture {
    * @private
    * @param {BeamState} beamState Beam state being written
    * @param {Array<Number>} members Beam indexes
-   * @param {Boolean} glow Whether the row only carries a lens glow
+   * @param {Number} kind ROW_BEAM, ROW_GLOW (lens glow only) or ROW_SPILL (light on surfaces only)
    */
-  writeRow(beamState, members, glow) {
+  writeRow(beamState, members, kind) {
+    const glow = kind === ROW_GLOW;
+    const spill = kind === ROW_SPILL;
     row.origin.set(0, 0, 0);
     axis.set(0, 0, 0);
     right.set(0, 0, 0);
@@ -1083,13 +1109,16 @@ class GeometryFixture {
     row.power = Math.min(Math.max((flux / REFERENCE_FLUX) ** POWER_CURVE, MIN_POWER), MAX_POWER);
     row.radius = Math.min(lens * Math.sqrt(n), CLUSTER_SPAN / 2);
     const lead = this._beams[members[0]].state;
-    const half = glow ? GLOW_HALF_ANGLE : Math.min(Math.max(field / n, 0.5) / 2, MAX_HALF_ANGLE);
+    let half = glow ? GLOW_HALF_ANGLE : Math.min(Math.max(field / n, 0.5) / 2, MAX_HALF_ANGLE);
+    if (spill) half = SPILL_HALF_ANGLE;
     row.tanHalf = Math.tan(degToRad(half));
     row.length = glow ? GLOW_LENGTH : LIGHT_LENGTH;
-    row.goboLayer = lead.gobo || 0;
+    if (spill) row.length = SPILL_LENGTH;
+    row.spill = spill;
+    row.goboLayer = spill ? 0 : lead.gobo || 0;
     row.goboRotation = lead.goboAngle + degToRad(lead.goboIndex);
     row.blur = (lead.frost / 100) * FROST_BLUR + (1 - lead.focus / 100) * FOCUS_BLUR;
-    if (glow || !lead.prism) {
+    if (glow || spill || !lead.prism) {
       row.direction.copy(axis);
       row.right.copy(right);
       row.up.copy(up);
@@ -1145,14 +1174,17 @@ class GeometryFixture {
       this._colorsDirty = false;
     }
     for (let c = 0; c < this._clusters.length; c++) {
-      this.writeRow(beamState, this._clusters[c], false);
+      this.writeRow(beamState, this._clusters[c], ROW_BEAM);
     }
     if (!this._glowMembers) {
       this._glowMembers = this._beams.map((b, i) => (b.projects ? -1 : i)).filter((i) => i >= 0)
         .map((i) => [i]);
     }
     for (let g = 0; g < this._glowMembers.length; g++) {
-      this.writeRow(beamState, this._glowMembers[g], true);
+      this.writeRow(beamState, this._glowMembers[g], ROW_GLOW);
+    }
+    for (let p = 0; p < this._spills.length; p++) {
+      this.writeRow(beamState, this._spills[p], ROW_SPILL);
     }
   }
 

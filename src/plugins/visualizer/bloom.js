@@ -44,7 +44,7 @@ void main() {
   vColor = c.rgb * c.a * strength * (0.15 + 0.85 * facing3) * uExposure;
   gl_Position = projectionMatrix * view;
   gl_Position.z = lifted.z / lifted.w * gl_Position.w;
-  if (c.a <= 0.0) gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
+  if (c.a <= 0.0 || lens.z > 0.5) gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
 }
 `;
 

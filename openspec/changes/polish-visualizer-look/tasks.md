@@ -21,6 +21,11 @@
       and the square root of the light output; glow-only cells smaller; less glow in the bloom.
       Verify: user check 3.1.
 
+- [x] 1.4 Spill light for glowing cells: neighbouring cells grouped (0.4 m, at most 4 per fixture),
+      one wide (65°), short (3 m) row per group, on surfaces only (flag in the 13th texel: no haze,
+      no glow, no guide). Verified in Node: 8 of 207 GDTF fixtures get spill lights, at most 3; the
+      bundled pixel bar gets 3 groups of 4 cells; sweep with no error, heap stable.
+
 ## 2. Visualizer: look and settings (plugins/visualizer, views)
 
 - [ ] 2.1 Neutral tone mapping; darker, cooler checkerboard floor with a lower ambient; dark satin

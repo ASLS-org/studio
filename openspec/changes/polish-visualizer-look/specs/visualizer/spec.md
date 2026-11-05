@@ -77,3 +77,14 @@ its light: a cell carries its own luminous flux (GDTF) or the fixture's lumens d
 #### Scenario: Pixel bar
 - **GIVEN** an OFL pixel bar of 12 pixels and 3,000 lm
 - **THEN** each pixel lights as a 250 lm source
+
+### Requirement: Glowing cells spill light on nearby surfaces
+The system SHALL light the surfaces near a fixture's glowing cells (pixels, panels and other cells
+that cast no beam) with soft, wide light, in the colour of the cells nearest to each surface (cells
+grouped by neighbourhood, at most 4 groups per fixture), without drawing a beam in the haze.
+
+#### Scenario: Pixel bar above the floor
+- **GIVEN** a 12-pixel bar hanging above the floor, its left half red and its right half blue
+- **WHEN** the quality is Low, Medium or High
+- **THEN** the floor under it glows faintly red on the left and blue on the right, and no beam shows
+  in the haze
