@@ -42,8 +42,7 @@ level in use: the low detail meshes at Guides and Low, the standard ones at Medi
 detail ones at High, taking the nearest available detail when the preferred one is missing. Each
 quality level SHALL have a triangle budget per fixture type (Guides and Low: 5,000; Medium:
 30,000; High: 150,000); when no available detail fits the budget, the fixture type SHALL be drawn
-with its generated parts. Changing the quality level, by hand or on Auto, SHALL swap the meshes
-without reloading the show and without pausing playback.
+with its generated parts.
 
 #### Scenario: Standard meshes only
 - **GIVEN** a patched GDTF fixture whose file holds standard glTF meshes only, 1,000 triangles in
@@ -58,6 +57,15 @@ without reloading the show and without pausing playback.
 #### Scenario: Meshes over the budget
 - **GIVEN** a patched GDTF fixture whose only meshes total 20,000 triangles
 - **THEN** it shows its generated parts at Guides and Low and its meshes at Medium and High
+
+### Requirement: Fixture meshes swap live
+Changing the quality level, by hand or on Auto, SHALL swap fixture meshes without reloading the
+show and without pausing playback. A fixture SHALL never wait for its meshes to show.
+
+#### Scenario: Switch level during playback
+- **GIVEN** a show playing with modelled GDTF fixtures
+- **WHEN** the operator changes the quality from Medium to Low
+- **THEN** the fixtures swap their meshes and playback continues without a pause
 
 #### Scenario: Patch before the meshes are ready
 - **WHEN** a GDTF fixture with meshes is patched
