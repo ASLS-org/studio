@@ -28,7 +28,8 @@ when they change. When the device cannot store them, the settings SHALL fall bac
 ### Requirement: Bloom and lens glow
 The system SHALL draw a glow on the lens of each lit fixture at the Low, Medium and High levels,
 sized from the lens and scaled by the beam's intensity and light output, and SHALL add a soft bloom
-around bright beams and lenses at Medium and High. Cells that only glow SHALL get a smaller glow.
+around bright beams and lenses at Medium and High. Cells that only glow SHALL get a glow sized from the cell, as bright as a lens's whatever their
+light output.
 
 #### Scenario: Lens glow
 - **WHEN** a fixture's dimmer goes from 0 to 255
@@ -40,7 +41,8 @@ around bright beams and lenses at Medium and High. Cells that only glow SHALL ge
 
 #### Scenario: Pixel bar beside a moving head
 - **GIVEN** a 12-cell pixel bar and a moving head, both at full white
-- **THEN** each pixel's glow is small, and the bar does not glow brighter than the moving head
+- **THEN** each pixel glows small and bright, and the bar blends with the moving head instead of
+  outshining it
 
 ## ADDED Requirements
 

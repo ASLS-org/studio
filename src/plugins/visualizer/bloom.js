@@ -6,7 +6,10 @@ import {
 const GLOW_LENS = 2.5; // lens glow radius at full intensity, in lens radii
 const GLOW_MIN = 0.01; // lens glow radius limits, in meters
 const GLOW_MAX = 0.35;
-const GLOW_ONLY = 0.7; // size of the glow of cells that only glow (pixels, panels)
+const GLOW_ONLY = 0.9; // size of the glow of cells that only glow (pixels, panels)
+// Their strength: small, intense emitters look as bright as a lens on camera, whatever their
+// (small) light output, which only sets how much they light around them (spill)
+const GLOW_CELL = 1.2;
 const GLOW_STRENGTH = [0.6, 1.6]; // glow strength limits over the light output
 const GLOW_BLOOM = 0.5; // share of the lens glows in the bloom
 const GLOW_OFFSET = -0.01; // glow centre behind the lens, in meters, so it sits in the lens
@@ -44,7 +47,8 @@ void main() {
   // lens disc, and the housing still hides it from the side
   vec4 lifted = projectionMatrix * vec4(view.xy, min(view.z + ${GLOW_LIFT.toFixed(3)}, -1e-3), 1.0);
   vDisk = position.xy;
-  float strength = clamp(lens.y, ${GLOW_STRENGTH[0].toFixed(2)}, ${GLOW_STRENGTH[1].toFixed(2)});
+  float strength = cell ? ${GLOW_CELL.toFixed(2)}
+    : clamp(lens.y, ${GLOW_STRENGTH[0].toFixed(2)}, ${GLOW_STRENGTH[1].toFixed(2)});
   vColor = c.rgb * c.a * strength * view * uExposure;
   gl_Position = projectionMatrix * view;
   gl_Position.z = lifted.z / lifted.w * gl_Position.w;
