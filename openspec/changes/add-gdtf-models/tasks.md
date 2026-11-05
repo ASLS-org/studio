@@ -2,24 +2,39 @@
 
 ## 1. Fixtures: mesh files and triangle counts (models/fixtures)
 
-- [ ] 1.1 `gdtf.archive.js`: keep every detail folder per model file (`gltf_low`, `gltf`,
+- [x] 1.1 `gdtf.archive.js`: keep every detail folder per model file (`gltf_low`, `gltf`,
       `gltf_high`, `3ds_low`, `3ds`, `3ds_high`), while `modelCenter` keeps reading the standard
       glTF, then the 3DS (design decision 1). Verify with the Node harness over both GDTF test
       sets:
       - every model reads as before (same body offsets for all 757 modes);
       - 28 files report `gltf_high`.
-- [ ] 1.2 `gdtf.meshes.js`: pure triangle counts (glTF from its JSON chunk, 3DS from its face
+- [x] 1.2 `gdtf.meshes.js`: pure triangle counts (glTF from its JSON chunk, 3DS from its face
       chunks) for meshes that pass `plausible`. The adapter adds `file` and `meshes` to each
       geometry node. Verify in Node:
       - the counts match the survey (glTF median about 1k per fixture, 3DS max about 114k);
       - the sweep lists how many meshes fail `plausible`;
       - no error over all modes.
-- [ ] 1.3 `FixtureLibrary.modelFiles(profile)` (side map filled by `buildGDTFProfile`, empty for
+      Measured: 1517 modes, no error.
+      - 906 models have a mesh file, and 717 of them are usable.
+      - Usable meshes per folder: glTF 353, high-detail glTF 82, 3DS 360.
+      - Per fixture, glTF has a median of 957 triangles; 3DS has a median of 1.7k and a maximum
+        of 248k.
+      Most rejections were meshes that hang off their origin, a yoke below its base for example.
+      A drawn mesh therefore keeps its own centre, up to 1.5 sizes away. Generated bodies keep
+      the 5a rule, so all their offsets are unchanged.
+- [x] 1.3 `FixtureLibrary.modelFiles(profile)` (side map filled by `buildGDTFProfile`, empty for
       OFL), and `Show.patchSnapshot` gains `models` and `type` (design decision 3). Verify in
       Node:
       - a patched imported GDTF entry carries its files;
       - OFL and bundled GDTF entries carry an empty map;
       - `Show.showData` is byte-identical before and after on the demo show.
+      Checked in Node through `FixtureLibrary.importGDTF` with an in-memory IndexedDB:
+      - Robe DL4S: 3 glTF files;
+      - Toshiba BRGL: 3 3DS files;
+      - bundled Generic Spot and Pixel Bar: none;
+      - profiles still frozen.
+      `showData` is checked by inspection: the snapshot is not part of it and no saved field was
+      added.
 
 ## 2. Visualizer: detail rule, mesh loading, pools (plugins/visualizer)
 

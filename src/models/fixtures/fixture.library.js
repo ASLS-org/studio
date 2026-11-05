@@ -21,6 +21,36 @@ const profiles = new Map();
 const wheelImages = new WeakMap();
 
 /**
+ * Mesh files of each GDTF profile drawn in the 3D view, kept beside the frozen profile: only the
+ * files and detail folders its geometry nodes can draw (see gdtf.meshes.js modelMeshes)
+ *
+ * @constant {WeakMap<Object, Map<String, Object>>} modelFiles
+ */
+const modelFiles = new WeakMap();
+
+/**
+ * The mesh files a profile's geometry nodes can draw
+ *
+ * @param {Object} profile GDTF fixture profile (before freezing)
+ * @param {Map<String, Object>} models Mesh files by model file name (see gdtf.archive.js)
+ * @returns {Map<String, Object>} Bytes by detail folder, by model file name
+ */
+function drawableModels(profile, models) {
+  const drawable = new Map();
+  const visit = (node) => {
+    if (node.file && node.meshes && !drawable.has(node.file) && models.has(node.file)) {
+      const files = models.get(node.file);
+      const kept = {};
+      Object.keys(node.meshes).forEach((folder) => { kept[folder] = files[folder]; });
+      drawable.set(node.file, kept);
+    }
+    node.children.forEach(visit);
+  };
+  profile.modes.forEach((mode) => visit(mode.geometry));
+  return drawable;
+}
+
+/**
  * Index of the GDTF fixtures bundled with the app (public/gdtf), loaded once
  *
  * @type {?Promise<Array<Object>>}
@@ -133,6 +163,7 @@ async function buildGDTFProfile(file) {
   const { description, images, models } = await readGDTF(file);
   const profile = profileFromGDTF(description, { models });
   wheelImages.set(profile, await decodeWheelImages(profile, images));
+  modelFiles.set(profile, drawableModels(profile, models));
   return freezeProfile(profile);
 }
 
@@ -241,6 +272,19 @@ class FixtureLibrary {
    */
   static wheelImages(profile) {
     return wheelImages.get(profile) || new Map();
+  }
+
+  /**
+   * Mesh files of a GDTF profile that its geometry nodes can draw. They come from the operator's
+   * imported file and stay on this device: never saved in a showfile.
+   *
+   * @public
+   * @param {Object} profile Fixture profile
+   * @returns {Map<String, Object>} Bytes by detail folder, by model file name (empty for OFL
+   * profiles and fixtures without usable meshes)
+   */
+  static modelFiles(profile) {
+    return modelFiles.get(profile) || new Map();
   }
 }
 

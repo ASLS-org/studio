@@ -106,7 +106,8 @@ class Show extends EventEmitter {
 
   /**
    * Plain description of every patched fixture, for the visualizer. Rebuilt on `patch_changed`.
-   * `frame` is the universe's live DMX frame and `chStart` the fixture's address in it (0-based).
+   * `frame` is the universe's live DMX frame and `chStart` the fixture's address in it (0-based);
+   * `models` holds the mesh files of GDTF fixtures and `type` their fixture type ID.
    *
    * @readonly
    * @type {Array<Object>}
@@ -128,6 +129,8 @@ class Show extends EventEmitter {
           geometry: fixture.mode.geometry || null,
           matrix: fixture.profile.matrix || null,
           images: FixtureLibrary.wheelImages(fixture.profile),
+          models: FixtureLibrary.modelFiles(fixture.profile),
+          type: fixture.profile.gdtf ? fixture.profile.gdtf.fixtureTypeId : null,
           position: fixture.position,
           rotation: { ...fixture._rotation },
           frame,

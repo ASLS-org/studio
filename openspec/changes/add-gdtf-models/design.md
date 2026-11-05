@@ -60,8 +60,11 @@ Measured on 408 test files (two GDTF Share exports and the bundle, 2026-11-05):
 - `modelCenter` keeps reading the standard glTF, then the 3DS, as now.
 - The adapter adds two fields to each node from its model:
   - `file`, the model's File name;
-  - `meshes`, the triangles per detail and format, for meshes that pass `plausible`, e.g.
-    `{ gltf: 412, threeDs: 380 }`.
+  - `meshes`, for each usable mesh by detail folder, its triangles and its own normalised
+    centre, e.g. `{ gltf: { triangles: 412, center: [0, 0, -0.5] } }`.
+- A usable mesh passes `plausible` with its centre up to 1.5 sizes from the origin. Many meshes
+  hang off their origin (a yoke below its base), and a drawn mesh keeps that placement.
+  Generated bodies keep the 0.6 limit, so their offsets don't change.
 - Counting is pure, in `gdtf.meshes.js`:
   - glTF: index or vertex counts from the JSON chunk;
   - 3DS: face counts from the chunk walk it already does.
@@ -111,7 +114,7 @@ Measured on 408 test files (two GDTF Share exports and the bundle, 2026-11-05):
   - only position and normal kept; normals computed when missing;
   - indices merged with `mergeGeometries`;
   - scaled into the unit box with the same `toUnitBox` as the generated shapes.
-- The node keeps its `bodyMatrix(size, offset)`, so a mesh lands where the generated part was.
+- A mesh piece uses `bodyMatrix(size, meshCenter × size)`, so it lands where its file puts it.
 - A parse error resolves to null: that part keeps its generated body. It is reported once on the
   console as a warning, never as `app_error`, because a damaged mesh is not something the operator
   can fix in the show.
