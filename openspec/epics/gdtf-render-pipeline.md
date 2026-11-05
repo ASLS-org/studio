@@ -129,15 +129,18 @@ Open (answer in the unit that needs it):
 | 5a | `add-gdtf-fixtures` (import, adapter, any category, generated bodies, per-beam, GDTF gobos) | 1, 2, 3 | archived |
 | 5c | `add-multi-cell-control` (controls per cell in the universe and scene views, effects across cells, RGBW from the colour picker) | 5a | archived |
 | 5b | `add-gdtf-models` (GDTF glTF models, LOD, instancing) | 5a | archived |
-| final | `polish-visualizer-look` (shafts, light output, lens glow, look, render resolution), on the epic branch | 5b | applying |
-| 6 | `move-visualizer-to-worker` (optional: only if the end-of-epic smoke and performance tests call for it) | 3 | proposed |
+| final | `polish-visualizer-look` (shafts, light output, lens glow, spill, look, render resolution), on the epic branch | 5b | archived |
+| 6 | `move-visualizer-to-worker` (optional: only if the end-of-epic smoke and performance tests call for it) | 3 | deferred (2026-11-05: skipped for now; its proposal stays in `openspec/changes`) |
 
-Status values: proposed, refining, applying, archived.
+Status values: proposed, refining, applying, archived, deferred.
 
 Proposed changes hold a proposal and a draft design only, so `openspec validate` reports them as
 failing (no spec deltas) until their unit writes specs and tasks. That is expected.
 
 ## Backlog (not scheduled in this epic)
+
+- Visualizer in a Worker (`move-visualizer-to-worker`, unit 6): deferred on 2026-11-05 until
+  smoke and performance tests on the target hardware call for it.
 
 - Effect spreading over cells and the cell selection in the universe and scene views: 5c ships a
   minimum viable version (Spread over: Fixtures / Cells, a cell list); the user wants a better
