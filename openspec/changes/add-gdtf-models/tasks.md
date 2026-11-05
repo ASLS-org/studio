@@ -112,4 +112,5 @@
 
 ## 5. Lint
 
-- [ ] 5.1 `npx eslint` on all touched files is clean.
+- [x] 5.1 `npx eslint` on all touched files is clean. 0 errors; the 2 warnings are existing
+      `console` calls in `show.model.js`.
