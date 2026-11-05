@@ -3,7 +3,8 @@
 ## 1. Visualizer: beams (plugins/visualizer)
 
 - [x] 1.1 Beam rows carry the lens radius and the light output (13th texel). The light output is
-      the summed flux of the row's cells, over 10,000 lm, clamped. OFL pixels share the fixture's
+      the summed flux of the row's cells: (flux / 5,000 lm)^0.5, clamped to 0.1–3. The first version was
+      linear over 10,000 lm and made typical fixtures (median 3,000 lm) too faint. OFL pixels share the fixture's
       lumens. `beamPower` applies the light output to floor and air light. Verify in Node:
       - the sweep draws every GDTF and OFL mode with no error;
       - a 12-pixel OFL bar's cells carry 1/12 of its lumens;
@@ -23,7 +24,8 @@
 ## 2. Visualizer: look and settings (plugins/visualizer, views)
 
 - [ ] 2.1 Neutral tone mapping; darker, cooler checkerboard floor with a lower ambient; dark satin
-      bodies with a hemisphere light and a key light; a subtle background gradient. Verify: user
+      bodies with a hemisphere light and a key light. (A background gradient was tried and dropped:
+      the user preferred the flat background.) Verify: user
       check 3.1.
 - [x] 2.2 Render resolution setting (50%, 80%, 100%, default 80%) in `quality.js`, applied by the
       visualizer and shown in the visualizer popup. Verify in Node that settings load with the

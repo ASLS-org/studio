@@ -21,11 +21,12 @@ export const AIR_MODES = {
  */
 export const AIR_SAMPLES = [16, 8];
 
-// Light falls off as 1 / (1 + FALLOFF × distance²): inverse square, softened within 1 m of the
-// lens, so a shaft is brightest at its neck. The gain keeps a shaft seen 6 m from its lens as
-// bright as with the earlier, flatter falloff (0.04): 0.35 × (1 + 36) / (1 + 0.04 × 36)
-const AIR_GAIN = 5.3; // air light per unit of haze density, before falloff
-const FALLOFF = 1;
+// Light falls off as 1 / (1 + FALLOFF × distance²): inverse square, softened within 0.5 m of the
+// lens, so a shaft is brightest at its neck (about 6× its brightness 6 m out). The gain keeps a
+// shaft seen 6 m from its lens as bright as with the earlier, flatter falloff (0.04):
+// 0.35 × (1 + 4 × 36) / (1 + 0.04 × 36)
+const AIR_GAIN = 20.8; // air light per unit of haze density, before falloff
+const FALLOFF = 4;
 const EXTINCTION = 0.008; // haze extinction toward the camera, per meter
 const LENS_RADIUS = 0.1; // meters
 const AIR_PIECES = 4; // closed-form pieces per ray

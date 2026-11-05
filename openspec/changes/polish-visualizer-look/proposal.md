@@ -19,8 +19,8 @@ flat floor and bodies drawn as black holes.
 - Lens glow is sized from the lens and scaled by the light output, so bars, pixels and moving heads
   blend at the same rule. Glow-only cells get a small glow, and lens glows feed the bloom less.
 - Look: a neutral tone curve that keeps hues; the checkerboard floor darker and less flat; dark
-  satin fixture bodies with soft ambient light, so their shapes read; a subtle background gradient
-  close to today's colour.
+  satin fixture bodies with soft ambient light, so their shapes read. The background stays as it
+  is (a gradient was tried and dropped on the user's review).
 - A Render resolution setting in the visualizer popup (default 80%, today's value), kept on the
   device like the other quality settings.
 

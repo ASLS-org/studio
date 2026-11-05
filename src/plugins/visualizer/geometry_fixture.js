@@ -26,9 +26,13 @@ const PRISM_FACET_INTENSITY = 0.6; // most light per facet (3 facets, as the ori
 const PRISM_TOTAL = 1.8;
 const PRISM_MAX_FACETS = 16;
 const CELL_OFF = 0.04; // brightness of an unlit cell
-const REFERENCE_FLUX = 10000; // lumens of a beam at light output 1 (GDTF's default flux)
-const MIN_POWER = 0.05; // light output limits, so faint and very bright fixtures stay usable
-const MAX_POWER = 4;
+// Light output: (flux / REFERENCE_FLUX)^POWER_CURVE, within limits. A square root, as screens
+// can't show the real range (7 lm pixels to 27,000 lm spots in the GDTF test files, median 3,000):
+// fixtures keep their order while faint ones stay visible
+const REFERENCE_FLUX = 5000; // lumens at light output 1
+const POWER_CURVE = 0.5;
+const MIN_POWER = 0.1;
+const MAX_POWER = 3;
 const MIN_IRIS = 0.05; // smallest aperture drawn, share of the beam
 const WARM_KELVIN = 2700; // colour temperature of relative CTO values at -100 (OFL)
 const COLD_KELVIN = 10000; // and of relative CTB values at 100
@@ -1076,7 +1080,7 @@ class GeometryFixture {
     row.color.multiplyScalar(1 / intensity);
     row.intensity = intensity / n;
     // The row stands for all its cells: their light together, from a lens as large as their area
-    row.power = Math.min(Math.max(flux / REFERENCE_FLUX, MIN_POWER), MAX_POWER);
+    row.power = Math.min(Math.max((flux / REFERENCE_FLUX) ** POWER_CURVE, MIN_POWER), MAX_POWER);
     row.radius = Math.min(lens * Math.sqrt(n), CLUSTER_SPAN / 2);
     const lead = this._beams[members[0]].state;
     const half = glow ? GLOW_HALF_ANGLE : Math.min(Math.max(field / n, 0.5) / 2, MAX_HALF_ANGLE);

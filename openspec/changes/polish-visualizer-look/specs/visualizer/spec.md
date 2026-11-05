@@ -59,8 +59,8 @@ toward white where it is brightest, instead of clipping in its colour.
 
 ### Requirement: Brightness follows the fixture's light output
 The system SHALL scale each beam's light on surfaces and in the haze by its fixture's light output
-(GDTF luminous flux, OFL bulb lumens, 10,000 lm when unknown), relative to 10,000 lm and within
-limits so faint and very bright fixtures stay usable. The cells of a multi-cell fixture SHALL share
+(GDTF luminous flux, OFL bulb lumens, 10,000 lm when unknown), on a compressed scale (square root,
+relative to 5,000 lm) and within limits, so fixtures keep their order and faint ones stay visible. The cells of a multi-cell fixture SHALL share
 its light: a cell carries its own luminous flux (GDTF) or the fixture's lumens divided by its cells
 (OFL).
 

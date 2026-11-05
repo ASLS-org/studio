@@ -88,13 +88,6 @@ const BODY_LIGHT = {
 };
 
 /**
- * Background gradient, top to bottom (the bottom is the app's background colour)
- *
- * @constant {Array<String>}
- */
-const BACKGROUND = ['#181b1f', '#0C0D0A'];
-
-/**
  * @class
  * @classdesc WebGL Visualizer instance
  */
@@ -461,7 +454,6 @@ class Visualizer {
     this.skyLightHandle = new THREE.HemisphereLight(BODY_LIGHT.SKY_COLOR, BODY_LIGHT.GROUND_COLOR,
       this._globalBrightness * BODY_LIGHT.SKY);
     this.skyLightHandle.position.set(0, 0, 1);
-    SceneManager.background = this.backgroundTexture();
 
     GeometryFixture.prepareInstanciation(SceneManager);
     this.fixtureRenderer = new FixtureRenderer(this.invalidate);
@@ -583,27 +575,6 @@ class Visualizer {
     AnimationManager.add(() => {
       this.controls.update();
     });
-  }
-
-  /**
-   * Vertical background gradient, drawn once
-   *
-   * @private
-   * @returns {THREE.Texture} Background texture
-   */
-  backgroundTexture() {
-    const canvas = document.createElement('canvas');
-    canvas.width = 2;
-    canvas.height = 256;
-    const context = canvas.getContext('2d');
-    const gradient = context.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, BACKGROUND[0]);
-    gradient.addColorStop(1, BACKGROUND[1]);
-    context.fillStyle = gradient;
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.colorSpace = THREE.SRGBColorSpace;
-    return texture;
   }
 
   /**
