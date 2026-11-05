@@ -69,8 +69,15 @@ vec3 beamLight(int id, vec3 P, out vec3 L) {
   vec4 loc = beamMatrix(id, 4) * vec4(P, 1.0);
   if (loc.z <= 0.0 || loc.z > 1.0) return vec3(0.0);
   vec2 uv = loc.xy / loc.z;
-  // Field falloff: brightest on the axis, about 80% towards the rim, like a real beam
-  float g = goboAt(uv, beamTexel(id, 9)) * (1.0 - 0.2 * dot(uv, uv));
+  float g;
+  if (beamTexel(id, 12).z > 0.5) {
+    // Spill light of glowing cells: soft over its whole width, fading out before its end
+    float r2 = min(dot(uv, uv), 1.0);
+    g = (1.0 - r2) * (1.0 - r2) * (1.0 - smoothstep(0.5, 1.0, loc.z));
+  } else {
+    // Field falloff: brightest on the axis, about 80% towards the rim, like a real beam
+    g = goboAt(uv, beamTexel(id, 9)) * (1.0 - 0.2 * dot(uv, uv));
+  }
   float d = loc.z * o.w;
   return beamTexel(id, 8).rgb * (beamPower(id) * g * uGain / (4.0 + d * d));
 }

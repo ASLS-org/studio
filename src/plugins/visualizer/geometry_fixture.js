@@ -17,8 +17,9 @@ const MAX_PROJECTORS = 8; // projected beams per fixture
 // Cells that only glow spill soft light on nearby surfaces (no beam in the haze): one wide, short
 // light per group of neighbouring cells, coloured by its cells
 const MAX_SPILLS = 4; // spill lights per fixture
-const SPILL_HALF_ANGLE = 65; // degrees
-const SPILL_LENGTH = 3; // meters
+const SPILL_HALF_ANGLE = 70; // degrees
+const SPILL_LENGTH = 8; // meters, faded out from half of it
+const SPILL_POWER = 0.15; // share of the cells' light output: wide lights spread it thin
 // Row kinds: a projected beam, a lens glow only, or a spill light on surfaces only
 const ROW_BEAM = 0;
 const ROW_GLOW = 1;
@@ -1113,7 +1114,10 @@ class GeometryFixture {
     if (spill) half = SPILL_HALF_ANGLE;
     row.tanHalf = Math.tan(degToRad(half));
     row.length = glow ? GLOW_LENGTH : LIGHT_LENGTH;
-    if (spill) row.length = SPILL_LENGTH;
+    if (spill) {
+      row.length = SPILL_LENGTH;
+      row.power *= SPILL_POWER;
+    }
     row.spill = spill;
     row.goboLayer = spill ? 0 : lead.gobo || 0;
     row.goboRotation = lead.goboAngle + degToRad(lead.goboIndex);

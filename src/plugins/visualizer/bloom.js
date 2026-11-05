@@ -31,9 +31,13 @@ void main() {
   float facing = max(dot(axis, normalize(cameraPosition - centre)), 0.0);
   float facing3 = facing * facing * facing;
   vec4 lens = beamTexel(gl_InstanceID, 12);
-  float only = o.w < 0.01 ? ${GLOW_ONLY.toFixed(2)} : 1.0;
+  // Glowing cells emit over a wide angle: they fade much less than a lens when seen from aside
+  bool cell = o.w < 0.01;
+  float only = cell ? ${GLOW_ONLY.toFixed(2)} : 1.0;
+  float view = cell ? 0.4 + 0.6 * facing : 0.15 + 0.85 * facing3;
+  float grow = cell ? 0.8 + 0.4 * facing : 0.6 + 1.4 * facing3;
   float radius = clamp(lens.x * ${GLOW_LENS.toFixed(2)}, ${GLOW_MIN.toFixed(3)}, ${GLOW_MAX.toFixed(3)});
-  float size = radius * only * (0.5 + 0.5 * c.a) * (0.6 + 1.4 * facing3);
+  float size = radius * only * (0.5 + 0.5 * c.a) * grow;
   vec4 view = viewMatrix * vec4(centre, 1.0);
   view.xy += position.xy * size;
   // Depth only is pulled toward the camera: the glow stays on the lens on screen, in front of the
@@ -41,7 +45,7 @@ void main() {
   vec4 lifted = projectionMatrix * vec4(view.xy, min(view.z + ${GLOW_LIFT.toFixed(3)}, -1e-3), 1.0);
   vDisk = position.xy;
   float strength = clamp(lens.y, ${GLOW_STRENGTH[0].toFixed(2)}, ${GLOW_STRENGTH[1].toFixed(2)});
-  vColor = c.rgb * c.a * strength * (0.15 + 0.85 * facing3) * uExposure;
+  vColor = c.rgb * c.a * strength * view * uExposure;
   gl_Position = projectionMatrix * view;
   gl_Position.z = lifted.z / lifted.w * gl_Position.w;
   if (c.a <= 0.0 || lens.z > 0.5) gl_Position = vec4(0.0, 0.0, 2.0, 1.0);

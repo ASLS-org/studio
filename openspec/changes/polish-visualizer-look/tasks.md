@@ -22,7 +22,7 @@
       Verify: user check 3.1.
 
 - [x] 1.4 Spill light for glowing cells: neighbouring cells grouped (0.4 m, at most 4 per fixture),
-      one wide (65°), short (3 m) row per group, on surfaces only (flag in the 13th texel: no haze,
+      one wide (70°) row per group, fading out from 4 m to 8 m, at 0.15 of its cells' light output, on surfaces only (flag in the 13th texel: no haze,
       no glow, no guide). Verified in Node: 8 of 207 GDTF fixtures get spill lights, at most 3; the
       bundled pixel bar gets 3 groups of 4 cells; sweep with no error, heap stable.
 
