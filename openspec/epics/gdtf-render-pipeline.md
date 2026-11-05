@@ -124,7 +124,7 @@ Open (answer in the unit that needs it):
 | 4 | `add-volumetric-beams` | 3 | archived |
 | 5a | `add-gdtf-fixtures` (import, adapter, any category, generated bodies, per-beam, GDTF gobos) | 1, 2, 3 | archived |
 | 5c | `add-multi-cell-control` (controls per cell in the universe and scene views, effects across cells, RGBW from the colour picker) | 5a | archived |
-| 5b | `add-gdtf-models` (GDTF glTF models, LOD, instancing) | 5a | proposed |
+| 5b | `add-gdtf-models` (GDTF glTF models, LOD, instancing) | 5a | refining |
 | 6 | `move-visualizer-to-worker` (optional: only if the end-of-epic smoke and performance tests call for it) | 3 | proposed |
 
 Status values: proposed, refining, applying, archived.
