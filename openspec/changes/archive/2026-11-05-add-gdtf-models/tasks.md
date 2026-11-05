@@ -87,7 +87,7 @@
 
 ## 3. In-app check (user)
 
-- [ ] 3.1 Ask the user to run `npm start` and check, without me opening a browser:
+- [x] 3.1 Ask the user to run `npm start` and check, without me opening a browser:
       - import a GDTF file with glTF meshes (any of the test-set files holding `models/gltf`) and
         one with 3DS only; patch both;
       - the bodies show the manufacturer's parts, and pan/tilt, beams and the selection outline
@@ -96,6 +96,8 @@
       - the demo show and an OFL rig look exactly as before;
       - save: no `*` from mesh loading, and the showfile is unchanged.
       Fix what the user reports before going on.
+      Done on 2026-11-05 with the DL4S, Toshiba BRGL, Ayrton Bora and ACME XP-1000SZ files. The
+      user's verdict: "things working great".
 
 ## 4. Docs and AI context
 
@@ -107,7 +109,7 @@
       `FixtureLibrary.modelFiles` side map; in `.claude/skills/fixture-library/SKILL.md`, mesh
       folders and the plausibility rule (skill `ai-context-maintenance`). Verify that every path
       and symbol mentioned exists (`grep -rn`).
-- [ ] 4.3 Epic status table: 5b refining → applying → archived, and decisions recorded. Verify
+- [x] 4.3 Epic status table: 5b refining → applying → archived, and decisions recorded. Verify
       that `openspec validate add-gdtf-models` passes.
 
 ## 5. Lint

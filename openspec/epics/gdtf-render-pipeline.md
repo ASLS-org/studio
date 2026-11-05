@@ -96,6 +96,10 @@ Confirmed by the user:
   between them (2026-11-04).
 - Bodies without a mesh use one shape per GDTF PrimitiveType; base, yoke and head come from the
   bundled moving head model. `MovingHead` is retired: one fixture class (2026-11-04).
+- GDTF bodies use the file's own meshes (glTF, or 3DS converted on load), at the detail of the
+  quality level within a triangle budget per fixture type (Low 5k, Medium 30k, High 150k); meshes
+  that don't fit their model fall back to the generated part. Meshes keep the single body
+  material (no manufacturer colours) and stay on the device (2026-11-05).
 - Decouple first, GDTF after.
 - Fresh rendering design. The current `moving_head.js` look is a benchmark to match or beat on the
   same rig, not a template.
@@ -124,7 +128,7 @@ Open (answer in the unit that needs it):
 | 4 | `add-volumetric-beams` | 3 | archived |
 | 5a | `add-gdtf-fixtures` (import, adapter, any category, generated bodies, per-beam, GDTF gobos) | 1, 2, 3 | archived |
 | 5c | `add-multi-cell-control` (controls per cell in the universe and scene views, effects across cells, RGBW from the colour picker) | 5a | archived |
-| 5b | `add-gdtf-models` (GDTF glTF models, LOD, instancing) | 5a | applying |
+| 5b | `add-gdtf-models` (GDTF glTF models, LOD, instancing) | 5a | archived |
 | 6 | `move-visualizer-to-worker` (optional: only if the end-of-epic smoke and performance tests call for it) | 3 | proposed |
 
 Status values: proposed, refining, applying, archived.
