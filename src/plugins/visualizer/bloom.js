@@ -10,6 +10,8 @@ const GLOW_ONLY = 0.9; // size of the glow of cells that only glow (pixels, pane
 // Their strength: small, intense emitters look as bright as a lens on camera, whatever their
 // (small) light output, which only sets how much they light around them (spill)
 const GLOW_CELL = 1.2;
+// A glowing cell's halo sits in front of its face (diffuse emitter), a lens's inside the lens
+const GLOW_CELL_OFFSET = 0.04; // meters
 const GLOW_STRENGTH = [0.6, 1.6]; // glow strength limits over the light output
 const GLOW_BLOOM = 0.5; // share of the lens glows in the bloom
 const GLOW_OFFSET = -0.01; // glow centre behind the lens, in meters, so it sits in the lens
@@ -32,12 +34,12 @@ void main() {
   vec4 o = beamTexel(gl_InstanceID, 11);
   vec3 axis = normalize(beamTexel(gl_InstanceID, 2).xyz);
   vec4 c = beamTexel(gl_InstanceID, 8);
-  vec3 centre = o.xyz + axis * uOffset;
+  // Glowing cells emit over a wide angle: they fade much less than a lens when seen from aside
+  bool cell = o.w < 0.01;
+  vec3 centre = o.xyz + axis * (cell ? ${GLOW_CELL_OFFSET.toFixed(3)} : uOffset);
   float facing = max(dot(axis, normalize(cameraPosition - centre)), 0.0);
   float facing3 = facing * facing * facing;
   vec4 lens = beamTexel(gl_InstanceID, 12);
-  // Glowing cells emit over a wide angle: they fade much less than a lens when seen from aside
-  bool cell = o.w < 0.01;
   float only = cell ? ${GLOW_ONLY.toFixed(2)} : 1.0;
   float view = cell ? 0.4 + 0.6 * facing : 0.15 + 0.85 * facing3;
   float grow = cell ? 0.8 + 0.4 * facing : 0.6 + 1.4 * facing3;
