@@ -4,7 +4,8 @@
  * Length, Width and Height, so the centre times those sizes places the body, whatever the mesh's
  * units. Manufacturers' meshes differ (a yoke usually hangs from its origin, a head is centred),
  * so the mesh is read when the file has one; otherwise the GDTF primitive meshes' convention is
- * used.
+ * used. It also counts each mesh's triangles, so the visualizer can choose a detail level without
+ * parsing every mesh.
  *
  * Must stay free of Vue, Three.js and `import.meta` (see fixture.profile.js).
  */
@@ -25,17 +26,36 @@ const PRIMITIVE_CENTERS = {
 
 const CENTERED = [0, 0, 0];
 const MAX_CENTER = 0.6; // a body further off its origin than this means the mesh is misplaced
+// A drawn mesh keeps its own placement, which may hang off its origin (a yoke below its base),
+// up to this far
+const MAX_MESH_CENTER = 1.5;
 const MAX_ASPECT_ERROR = 0.25;
+const TRIANGLES = 4; // glTF primitive mode
+
+/**
+ * Mesh format of each detail folder
+ *
+ * @constant {Object} FOLDER_FORMATS
+ */
+const FOLDER_FORMATS = {
+  gltf_low: 'glb',
+  gltf: 'glb',
+  gltf_high: 'glb',
+  '3ds_low': '3ds',
+  '3ds': '3ds',
+  '3ds_high': '3ds',
+};
 
 /**
  * Bounding box accumulator
  *
- * @returns {Object} Box with `add(x, y, z)` and `center()`
+ * @returns {Object} Box with `add(x, y, z)`, `triangles` and `center()`
  */
 function box() {
   const min = [Infinity, Infinity, Infinity];
   const max = [-Infinity, -Infinity, -Infinity];
   return {
+    triangles: 0,
     add(x, y, z) {
       const p = [x, y, z];
       for (let k = 0; k < 3; k++) {
@@ -48,19 +68,19 @@ function box() {
       const size = [0, 1, 2].map((k) => max[k] - min[k]);
       const center = [0, 1, 2].map((k) => (size[k] > 0
         ? +(((max[k] + min[k]) / 2 / size[k]).toFixed(3)) : 0));
-      return { center, size };
+      return { center, size, triangles: this.triangles };
     },
   };
 }
 
 /**
- * Normalised centre of a binary glTF (GLB) mesh, in GDTF axes (glTF is Y-up, GDTF Z-up). Node
- * matrices are applied (one level, as GDTF exporters write them).
+ * Box of a binary glTF (GLB) mesh, in GDTF axes (glTF is Y-up, GDTF Z-up). Node matrices are
+ * applied (one level, as GDTF exporters write them).
  *
  * @param {Uint8Array} bytes GLB file
- * @returns {?Array<Number>} Normalised centre, or null when it can't be read
+ * @returns {?Object} Normalised `center`, `size` and `triangles`, or null when it can't be read
  */
-function glbCenter(bytes) {
+function glbBox(bytes) {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   if (bytes.byteLength < 20 || view.getUint32(0, true) !== 0x46546c67) return null;
   const jsonLength = view.getUint32(12, true);
@@ -75,6 +95,11 @@ function glbCenter(bytes) {
     json.meshes[node.mesh].primitives.forEach((primitive) => {
       const accessor = json.accessors[primitive.attributes.POSITION];
       if (!accessor || accessor.bufferView === undefined) return;
+      const indices = primitive.indices !== undefined ? json.accessors[primitive.indices] : null;
+      const count = indices ? indices.count : accessor.count;
+      const mode = primitive.mode === undefined ? TRIANGLES : primitive.mode;
+      if (mode === TRIANGLES) b.triangles += Math.floor(count / 3);
+      else if (mode > TRIANGLES) b.triangles += Math.max(count - 2, 0);
       const bufferView = json.bufferViews[accessor.bufferView];
       const stride = bufferView.byteStride || 12;
       const start = binStart + (bufferView.byteOffset || 0) + (accessor.byteOffset || 0);
@@ -101,12 +126,12 @@ function glbCenter(bytes) {
 }
 
 /**
- * Normalised centre of a 3DS mesh (Z-up, like GDTF)
+ * Box of a 3DS mesh (Z-up, like GDTF)
  *
  * @param {Uint8Array} bytes 3DS file
- * @returns {?Array<Number>} Normalised centre, or null when it can't be read
+ * @returns {?Object} Normalised `center`, `size` and `triangles`, or null when it can't be read
  */
-function threeDsCenter(bytes) {
+function threeDsBox(bytes) {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const b = box();
   const walk = (start, end) => {
@@ -131,6 +156,8 @@ function threeDsCenter(bytes) {
             view.getFloat32(o + 8, true),
           );
         }
+      } else if (id === 0x4120) {
+        b.triangles += view.getUint16(offset + 6, true);
       }
       offset += length;
     }
@@ -146,12 +173,13 @@ function threeDsCenter(bytes) {
  *
  * @param {?Object} measured Mesh box: normalised `center` and `size`
  * @param {Array<Number>} dims Model length, width, height
+ * @param {Number} [maxCenter=MAX_CENTER] Furthest normalised centre
  * @returns {Boolean} Whether the mesh can place the body
  */
-function plausible(measured, dims) {
+function plausible(measured, dims, maxCenter = MAX_CENTER) {
   if (!measured) return false;
   const { center, size } = measured;
-  if (center.some((c) => Math.abs(c) > MAX_CENTER)) return false;
+  if (center.some((c) => Math.abs(c) > maxCenter)) return false;
   const usable = [0, 1, 2].filter((k) => dims[k] > 0 && size[k] > 0);
   if (usable.length < 2) return false;
   const scale = usable.map((k) => size[k] / dims[k]);
@@ -160,24 +188,59 @@ function plausible(measured, dims) {
 }
 
 /**
- * Normalised centre of a model: from its mesh when the file has a plausible one, else from its
- * primitive
+ * Box of one mesh file, or null when it can't be read
+ *
+ * @param {String} folder Detail folder
+ * @param {Uint8Array} bytes Mesh file
+ * @returns {?Object} Normalised `center`, `size` and `triangles`
+ */
+function meshBox(folder, bytes) {
+  try {
+    return FOLDER_FORMATS[folder] === 'glb' ? glbBox(bytes) : threeDsBox(bytes);
+  } catch (error) {
+    return null; // An unreadable mesh is left out
+  }
+}
+
+/**
+ * Meshes of a model that fit its dimensions, with their triangle counts and normalised centres
+ * (where each mesh sits around the node's origin, so a drawn mesh keeps its own placement)
+ *
+ * @public
+ * @param {?Object} files Mesh files of the model, bytes by detail folder (see gdtf.archive.js)
+ * @param {Array<Number>} dims Model length, width, height
+ * @returns {Object} `{ triangles, center }` by detail folder (`gltf`, `3ds_high`, ...), only for
+ * usable meshes
+ */
+export function modelMeshes(files, dims) {
+  const meshes = {};
+  Object.keys(files || {}).forEach((folder) => {
+    if (!FOLDER_FORMATS[folder]) return;
+    const measured = meshBox(folder, files[folder]);
+    if (plausible(measured, dims, MAX_MESH_CENTER)) {
+      meshes[folder] = { triangles: measured.triangles, center: measured.center };
+    }
+  });
+  return meshes;
+}
+
+/**
+ * Normalised centre of a model: from its standard glTF mesh (else its low, then high detail one),
+ * then its 3DS mesh, when one fits its dimensions; else from its primitive
  *
  * @public
  * @param {String} primitive GDTF primitive type
- * @param {?Object} files Mesh files of the model: `glb` and/or `threeDs` bytes
+ * @param {?Object} files Mesh files of the model, bytes by detail folder (see gdtf.archive.js)
  * @param {Array<Number>} dims Model length, width, height
  * @returns {Array<Number>} Normalised centre [x, y, z]
  */
 export default function modelCenter(primitive, files, dims) {
   if (files) {
-    try {
-      const glb = files.glb && glbCenter(files.glb);
-      if (plausible(glb, dims)) return glb.center;
-      const threeDs = files.threeDs && threeDsCenter(files.threeDs);
-      if (plausible(threeDs, dims)) return threeDs.center;
-    } catch (error) {
-      // An unreadable mesh falls back to the primitive's convention
+    const glb = ['gltf', 'gltf_low', 'gltf_high'].find((folder) => files[folder]);
+    const candidates = [glb, '3ds'].filter((folder) => folder && files[folder]);
+    for (let i = 0; i < candidates.length; i++) {
+      const measured = meshBox(candidates[i], files[candidates[i]]);
+      if (plausible(measured, dims)) return measured.center;
     }
   }
   return PRIMITIVE_CENTERS[primitive] || CENTERED;

@@ -2,8 +2,11 @@ import * as THREE from 'three';
 import { LIGHT_LAYERS } from './stage_lighting';
 import { goboLayer, goboImageLayer } from './gobos';
 import InstanceHighlight from './instance_highlight';
-import { assignRoles, shapeOf } from './fixture_shapes';
+import {
+  assignRoles, shapeOf, modelDetail, meshFolder,
+} from './fixture_shapes';
 import unitShape from './fixture_meshes';
+import modelGeometry from './fixture_models';
 import { NO_CAPABILITY } from '../../models/fixtures/fixture.profile';
 
 const LIGHT_LENGTH = 60; // meters
@@ -51,6 +54,7 @@ const BODY_MATERIAL = new THREE.MeshPhongMaterial({ color: 0xffffff, side: THREE
 const LENS_MATERIAL = new THREE.MeshBasicMaterial({ color: 0x0d0d0d, side: THREE.DoubleSide });
 const CELL_MATERIAL = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
 const POOL_CAPACITY = 4096; // body pieces per shape, for the whole rig
+const MESH_POOL_CAPACITY = 16; // body pieces per fixture mesh at first, doubled when full
 const ZERO_MATRIX = new THREE.Matrix4().makeScale(0, 0, 0);
 
 const DISC = new THREE.CircleGeometry(0.5, 20);
@@ -159,28 +163,78 @@ function angleCenter(channel) {
 
 /**
  * @class ShapePool
- * @classdesc One instanced mesh per body shape (fixture_meshes.js) holding every fixture body
- * piece, with the selection highlight (InstanceHighlight) attached: one draw per shape for the
- * whole rig, and the same highlight look for every fixture.
+ * @classdesc One instanced mesh per body shape (fixture_meshes.js), or per fixture mesh
+ * (fixture_models.js), holding every fixture body piece drawn with it, with the selection
+ * highlight (InstanceHighlight) attached: one draw per shape or mesh for the whole rig, and the
+ * same highlight look for every fixture. Mesh pools start small, double when full and are
+ * disposed when their last piece goes.
  */
 class ShapePool {
   /**
-   * @param {THREE.BufferGeometry} geometry Unit shape
+   * @param {THREE.BufferGeometry} geometry Unit shape or mesh
    * @param {THREE.Scene} scene Scene
+   * @param {Number} [capacity=POOL_CAPACITY] Slots
+   * @param {?Function} [onEmpty=null] Called when the last slot is released; the pool then grows
+   * when full and is disposed when empty
    */
-  constructor(geometry, scene) {
+  constructor(geometry, scene, capacity = POOL_CAPACITY, onEmpty = null) {
+    this.source = geometry;
+    this.scene = scene;
+    this.capacity = capacity;
+    this.onEmpty = onEmpty;
+    this.free = [];
+    this.used = 0;
+    this.build();
+  }
+
+  /**
+   * Creates the instanced mesh and its highlight at the current capacity
+   *
+   * @private
+   */
+  build() {
     this.geometry = new THREE.InstancedBufferGeometry();
-    THREE.BufferGeometry.prototype.copy.call(this.geometry, geometry);
-    this.mesh = new THREE.InstancedMesh(this.geometry, BODY_MATERIAL, POOL_CAPACITY);
-    this.mesh.count = 0;
+    THREE.BufferGeometry.prototype.copy.call(this.geometry, this.source);
+    this.mesh = new THREE.InstancedMesh(this.geometry, BODY_MATERIAL, this.capacity);
+    this.mesh.count = this.used;
     this.mesh.frustumCulled = false;
     this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.mesh.layers.enable(LIGHT_LAYERS.OCCLUDER);
-    this.highlight = new InstanceHighlight(POOL_CAPACITY);
-    const overlays = this.highlight.attach(this.mesh);
-    this.free = [];
-    this.used = 0;
-    scene.add(this.mesh, ...overlays);
+    this.highlight = new InstanceHighlight(this.capacity);
+    this.overlays = this.highlight.attach(this.mesh);
+    this.highlight.setCount(this.used);
+    this.scene.add(this.mesh, ...this.overlays);
+  }
+
+  /**
+   * Removes the instanced mesh and its highlight from the scene and frees them
+   *
+   * @private
+   */
+  teardown() {
+    this.scene.remove(this.mesh, ...this.overlays);
+    this.mesh.dispose();
+    this.geometry.dispose();
+    this.overlays[1].geometry.dispose();
+    this.highlight.fillMaterial.dispose();
+    this.highlight.outlineMaterial.dispose();
+  }
+
+  /**
+   * Doubles the slots, keeping every piece's matrix and highlight
+   *
+   * @private
+   */
+  grow() {
+    const matrices = this.mesh.instanceMatrix.array;
+    const highlights = this.highlight.attribute.array;
+    this.teardown();
+    this.capacity *= 2;
+    this.build();
+    this.mesh.instanceMatrix.array.set(matrices);
+    this.mesh.instanceMatrix.needsUpdate = true;
+    this.highlight.attribute.array.set(highlights);
+    this.highlight.attribute.needsUpdate = true;
   }
 
   /**
@@ -190,7 +244,10 @@ class ShapePool {
    */
   alloc() {
     if (this.free.length) return this.free.pop();
-    if (this.used >= POOL_CAPACITY) return -1;
+    if (this.used >= this.capacity) {
+      if (!this.onEmpty) return -1;
+      this.grow();
+    }
     this.used += 1;
     this.mesh.count = this.used;
     this.highlight.setCount(this.used);
@@ -198,7 +255,7 @@ class ShapePool {
   }
 
   /**
-   * Frees a slot (hidden until reused)
+   * Frees a slot (hidden until reused). A mesh pool whose last slot is freed is disposed.
    *
    * @param {Number} index Slot index
    */
@@ -208,6 +265,10 @@ class ShapePool {
     this.mesh.instanceMatrix.needsUpdate = true;
     this.highlight.set(index, false);
     this.free.push(index);
+    if (this.onEmpty && this.free.length === this.used) {
+      this.teardown();
+      this.onEmpty();
+    }
   }
 
   /**
@@ -224,6 +285,7 @@ class ShapePool {
 }
 
 const pools = {};
+const meshPools = new Map();
 
 /**
  * The shared pool of a body shape, created on first use
@@ -234,6 +296,22 @@ const pools = {};
 function poolOf(shape) {
   if (!pools[shape]) pools[shape] = new ShapePool(unitShape(shape), sceneHandle);
   return pools[shape];
+}
+
+/**
+ * The shared pool of a fixture mesh, created when a piece needs it and disposed when empty
+ *
+ * @param {String} key Fixture type, model file and detail folder
+ * @param {THREE.BufferGeometry} geometry Mesh in the unit box
+ * @returns {ShapePool} Pool
+ */
+function meshPoolOf(key, geometry) {
+  if (!meshPools.has(key)) {
+    meshPools.set(key, new ShapePool(geometry, sceneHandle, MESH_POOL_CAPACITY, () => {
+      meshPools.delete(key);
+    }));
+  }
+  return meshPools.get(key);
 }
 
 /**
@@ -271,10 +349,14 @@ class GeometryFixture {
    * range (OFL "narrow" / "wide" presets) rather than degrees
    * @param {Boolean} [data.centerAngles=false] Whether Pan/Tilt ranges start at 0 (OFL) and are
    * turned around their middle, as GDTF ranges are
+   * @param {Map<String, Object>} [data.models] Mesh files by model file name (GDTF, see
+   * FixtureLibrary.modelFiles)
+   * @param {?String} [data.type=null] Fixture type ID, which mesh pools are shared by
+   * @param {Function} [data.onChange] Called when a mesh replaces a part after loading
    */
   constructor({
     geometry, channels, wheels, matrix, centerAngles = false, images = new Map(),
-    lens = null, zoomInPercent = false,
+    lens = null, zoomInPercent = false, models = new Map(), type = null, onChange = () => {},
   }) {
     this._lens = lens;
     this._zoomInPercent = zoomInPercent;
@@ -311,8 +393,15 @@ class GeometryFixture {
     this._axes = [];
     this._beams = [];
     this._pieces = [];
-    const roles = assignRoles(geometry);
-    this.buildNode(geometry, this._frame, 0, roles, null);
+    this._geometry = geometry;
+    this._roles = assignRoles(geometry);
+    this._models = models;
+    this._type = type;
+    this._onChange = onChange;
+    this._detail = null;
+    this._swap = 0; // bumped on each level change, so late meshes of an older one are ignored
+    this._disposed = false;
+    this.buildNode(geometry, this._frame, 0, this._roles, null);
 
     this._cells = new THREE.InstancedMesh(DISC, CELL_MATERIAL, Math.max(this._beams.length, 1));
     this._cells.count = this._beams.length;
@@ -358,8 +447,9 @@ class GeometryFixture {
     const shape = shapeOf(data, roles.get(data));
     if (shape) {
       const pool = poolOf(shape);
+      const local = bodyMatrix(data.size, data.offset);
       this._pieces.push({
-        object, local: bodyMatrix(data.size, data.offset), pool, index: pool.alloc(),
+        object, data, shape, shapeLocal: local, local, pool, index: pool.alloc(),
       });
     }
     if (data.kind === 'axis') this._axes.push(entry);
@@ -1047,11 +1137,69 @@ class GeometryFixture {
   }
 
   /**
+   * Draws the fixture's parts with its meshes at the detail of a quality level (see
+   * fixture_shapes.js modelDetail), or with the generated parts. A part keeps what it shows until
+   * its mesh is read, then swaps; results of an older level are ignored.
+   *
+   * @public
+   * @param {?String} level Quality level, null for the generated parts
+   */
+  setModelLevel(level) {
+    if (!this._models.size) return;
+    const detail = level ? modelDetail(this._geometry, level, this._roles) : null;
+    if (detail === this._detail) return;
+    this._detail = detail;
+    this._swap += 1;
+    const swap = this._swap;
+    this._pieces.forEach((p) => {
+      const folder = meshFolder(p.data, detail);
+      const files = folder && this._models.get(p.data.file);
+      if (!files || !files[folder]) {
+        this.placePiece(p, poolOf(p.shape), p.shapeLocal);
+        return;
+      }
+      const key = `${this._type}|${p.data.file}|${folder}`;
+      modelGeometry(key, folder, files[folder]).then((mesh) => {
+        if (this._disposed || swap !== this._swap) return;
+        if (!mesh) {
+          this.placePiece(p, poolOf(p.shape), p.shapeLocal);
+        } else {
+          const offset = mesh.center.map((c, k) => c * p.data.size[k]);
+          this.placePiece(p, meshPoolOf(key, mesh.geometry), bodyMatrix(p.data.size, offset));
+        }
+        this._onChange();
+      });
+    });
+  }
+
+  /**
+   * Moves a body piece to a pool (shape or mesh), keeping its place and highlight
+   *
+   * @private
+   * @param {Object} piece Body piece
+   * @param {ShapePool} pool Pool
+   * @param {THREE.Matrix4} local Placement in the node's frame
+   */
+  placePiece(piece, pool, local) {
+    const p = piece;
+    p.local = local;
+    if (p.pool !== pool) {
+      p.pool.release(p.index);
+      p.pool = pool;
+      p.index = pool.alloc();
+    }
+    if (p.index < 0) return;
+    pool.setMatrix(p.index, cellMatrix.multiplyMatrices(p.object.matrixWorld, p.local));
+    pool.highlight.set(p.index, this._highlighted);
+  }
+
+  /**
    * Removes the fixture from the scene
    *
    * @public
    */
   dispose() {
+    this._disposed = true;
     this._pieces.forEach((p) => p.pool.release(p.index));
     sceneHandle.remove(this._dummy, this._cells);
     this._cells.dispose();

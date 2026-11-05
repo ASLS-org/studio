@@ -2,7 +2,7 @@ import Capability from '../DMX/capabilityManager.model';
 import { PROFILE_SOURCES, buildCapabilityLookup } from './fixture.profile';
 import { FINE_CHANNEL_TERMINOLOGY, deriveTypeKey } from './channel.types';
 import { GDTFError } from './gdtf.archive';
-import modelCenter from './gdtf.meshes';
+import modelCenter, { modelMeshes } from './gdtf.meshes';
 
 /**
  * GDTF (`description.xml`) to fixture profile adapter, for GDTF 1.0, 1.1 and 1.2.
@@ -288,6 +288,9 @@ function buildNode(element, context, prefix = '', reference = null) {
     offset: model ? model.center.map((c, k) => c * [model.length, model.width, model.height][k])
       : [0, 0, 0],
     shape: model ? model.primitive : null,
+    // Mesh file of the model and its usable meshes by detail folder (triangles, centre)
+    file: model && model.file ? model.file : null,
+    meshes: model ? model.meshes : null,
     beam: null,
     children: [],
   };
@@ -802,7 +805,8 @@ function buildPhysical(geometry, channels) {
  * @public
  * @param {Object} description `GDTF` root element (see gdtf.archive.js readGDTF)
  * @param {Object} [files] Files of the archive
- * @param {Map<String, Object>} [files.models] Mesh files by model file name (body placement)
+ * @param {Map<String, Object>} [files.models] Mesh files by model file name (body placement and
+ * triangle counts)
  * @returns {Object} Fixture profile (see fixture.profile.js)
  * @throws {GDTFError} When the description has no fixture type or no usable DMX mode
  */
@@ -811,17 +815,20 @@ export default function profileFromGDTF(description, { models: meshes = new Map(
   if (!fixtureType || !fixtureType.attrs.FixtureTypeID) {
     throw new GDTFError('The GDTF description has no fixture type');
   }
-  const models = new Map(childrenOf(child(fixtureType, 'Models'), 'Model').map((m) => [m.attrs.Name, {
-    length: float(m.attrs.Length),
-    width: float(m.attrs.Width),
-    height: float(m.attrs.Height),
-    primitive: m.attrs.PrimitiveType || null,
-    center: modelCenter(
-      m.attrs.PrimitiveType,
-      m.attrs.File ? meshes.get(m.attrs.File) : null,
-      [float(m.attrs.Length), float(m.attrs.Width), float(m.attrs.Height)],
-    ),
-  }]));
+  const models = new Map(childrenOf(child(fixtureType, 'Models'), 'Model').map((m) => {
+    const dims = [float(m.attrs.Length), float(m.attrs.Width), float(m.attrs.Height)];
+    const files = m.attrs.File ? meshes.get(m.attrs.File) : null;
+    const usable = modelMeshes(files, dims);
+    return [m.attrs.Name, {
+      length: dims[0],
+      width: dims[1],
+      height: dims[2],
+      primitive: m.attrs.PrimitiveType || null,
+      center: modelCenter(m.attrs.PrimitiveType, files, dims),
+      file: Object.keys(usable).length ? m.attrs.File : null,
+      meshes: Object.keys(usable).length ? usable : null,
+    }];
+  }));
   const geometries = new Map(
     (child(fixtureType, 'Geometries') || { children: [] }).children.map((g) => [g.attrs.Name, g]),
   );

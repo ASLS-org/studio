@@ -22,11 +22,18 @@ const DESCRIPTION_FILE = 'description.xml';
 const WHEELS_FOLDER = 'wheels/';
 
 /**
- * Mesh files read for body placement: glTF binaries (any detail level), then 3DS
+ * Mesh files, by detail folder (`gltf_low`, `gltf`, `gltf_high`, `3ds_low`, `3ds`, `3ds_high`)
  *
  * @constant {RegExp} MESH_FILE
  */
-const MESH_FILE = /^models\/(gltf\w*|3ds)\/(.+)\.(glb|3ds)$/i;
+const MESH_FILE = /^models\/((?:gltf|3ds)(?:_low|_high)?)\/(.+)\.(glb|3ds)$/i;
+
+/**
+ * File extension of each mesh format
+ *
+ * @constant {Object} MESH_EXTENSIONS
+ */
+const MESH_EXTENSIONS = { gltf: 'glb', '3ds': '3ds' };
 
 /**
  * Error raised when a file is not a usable GDTF fixture
@@ -83,7 +90,8 @@ function unzipArchive(bytes) {
  * @param {ArrayBuffer|Uint8Array} data File content
  * @returns {Promise<{description: XMLElement, images: Map<String, Uint8Array>,
  * models: Map<String, Object>}>} The `GDTF` root element of `description.xml`, the wheel images
- * by media file name and the mesh files (`glb`, `threeDs`) by model file name (without extension)
+ * by media file name and the mesh files by model file name (without extension), each an object of
+ * bytes by detail folder (`gltf_low`, `gltf`, `gltf_high`, `3ds_low`, `3ds`, `3ds_high`)
  * @throws {GDTFError} When the file is not a readable GDTF archive
  */
 export async function readGDTF(data) {
@@ -122,13 +130,10 @@ export async function readGDTF(data) {
   Object.keys(files).forEach((path) => {
     const match = MESH_FILE.exec(path);
     if (!match || !files[path].length) return;
+    const folder = match[1].toLowerCase();
+    if (MESH_EXTENSIONS[folder.split('_')[0]] !== match[3].toLowerCase()) return;
     const entry = models.get(match[2]) || {};
-    if (match[3].toLowerCase() === 'glb') {
-      // The standard glTF folder wins over the low and high detail ones
-      if (!entry.glb || match[1].toLowerCase() === 'gltf') entry.glb = files[path];
-    } else {
-      entry.threeDs = files[path];
-    }
+    entry[folder] = files[path];
     models.set(match[2], entry);
   });
   return { description: toElement(root), images, models };

@@ -45,7 +45,10 @@ previous build's output.
 
 - **Category.** Any category patches. OFL fixtures get a body generated from category,
   `physical.dimensions` and `matrix` (`src/plugins/visualizer/fixture_shapes.js`); GDTF bodies use
-  each model's PrimitiveType, else the node's role.
+  each model's mesh from the file (`models/gltf*`, `models/3ds*`), else its PrimitiveType, else
+  the node's role. A mesh is used only when its box matches the model's Length/Width/Height within
+  25% and its centre is within 1.5 sizes of the origin (`gdtf.meshes.js` `modelMeshes`); misfit
+  meshes (other axes, stray offsets) fall back to the primitive.
 - **Modes.** A fixture with no `modes` is rejected by the library ("defines no modes").
 - **Capabilities.** Channel type keys come from the rules in `src/models/fixtures/ofl.adapter.js`;
   value handling comes from `CAPABILITY_TYPES` in `capabilityManager.model.js` and the cases in

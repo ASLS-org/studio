@@ -77,6 +77,25 @@ class FixtureRenderer {
      * @type {Map<Number, Object>}
      */
     this.instances = new Map();
+    /**
+     * Quality level fixture meshes are drawn at, null for the generated parts
+     *
+     * @type {?String}
+     */
+    this.modelLevel = null;
+  }
+
+  /**
+   * Draws every fixture's meshes at the detail of a quality level
+   *
+   * @public
+   * @param {?String} level Quality level (see QUALITY_LEVELS)
+   */
+  setModelLevel(level) {
+    if (level === this.modelLevel) return;
+    this.modelLevel = level;
+    this.instances.forEach((instance) => instance.model.setModelLevel(level));
+    this.onChange();
   }
 
   /**
@@ -119,7 +138,7 @@ class FixtureRenderer {
    */
   createInstance(entry) {
     const {
-      channels, wheels, matrix, images,
+      channels, wheels, matrix, images, models, type,
     } = entry;
     const geometry = entry.geometry || synthesizeGeometry(entry, channels);
     const model = new GeometryFixture({
@@ -131,7 +150,11 @@ class FixtureRenderer {
       centerAngles: !entry.geometry,
       lens: entry.physical && entry.physical.lens ? entry.physical.lens.degreesMinMax : null,
       zoomInPercent: FixtureRenderer.zoomInPercent(channels.find((c) => c.type === 'Zoom')),
+      models,
+      type,
+      onChange: () => this.onChange(),
     });
+    model.setModelLevel(this.modelLevel);
     model.position = { ...entry.position };
     model.rotation = { ...entry.rotation };
     const instance = {

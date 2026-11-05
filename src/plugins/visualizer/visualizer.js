@@ -336,6 +336,7 @@ class Visualizer {
     }
     const level = auto ? this.governor.level : quality;
     this.lighting.level = level;
+    if (this.fixtureRenderer) this.fixtureRenderer.setModelLevel(level);
     this.lighting.scale = auto ? this.governor.scale : scale;
     this.lighting.airSamples = auto ? this.governor.airSamples : AIR_SAMPLES[0];
     this.lighting.guides = guides === GUIDE_SETTINGS.ON
@@ -407,6 +408,7 @@ class Visualizer {
 
     GeometryFixture.prepareInstanciation(SceneManager);
     this.fixtureRenderer = new FixtureRenderer(this.invalidate);
+    if (this.lighting) this.fixtureRenderer.setModelLevel(this.lighting.level);
 
     // Floor
     const loader = new THREE.TextureLoader()
