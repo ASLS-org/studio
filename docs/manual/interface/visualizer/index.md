@@ -4,6 +4,8 @@ ASLS's WebGL based visualizer enables users to visualize and monitor fixtures ac
 
 Every patched fixture shows in the view. GDTF fixtures are drawn from their own description: their body, pan and tilt axes and every beam or cell sit where the fixture places them. Bodies follow the fixture's parts: a base, yoke and head for moving heads, a can for PARs and profiles, a scanner body, a bar or a panel, each sized like the real fixture. Fixtures without a description of their own (Open Fixture Library) get the same parts, built from their type and size.
 
+GDTF fixtures you import with their own 3D models show the manufacturer's parts instead: the real base, yoke and head, each sized and placed as the file describes. A part whose model is missing or doesn't match the fixture's size keeps the generated part. The models come only from the GDTF files you imported on this computer: they aren't saved in the showfile, so a show opened on another computer shows them once the same fixtures are imported there. The generic GDTF fixtures bundled with ASLS have no models of their own.
+
 Multi-cell fixtures (LED washes, pixel bars, multi-beam bars) light each cell in its own colour. The light they cast on the floor and in the haze combines neighbouring cells into a few beams, so large rigs stay smooth. Cells a fixture describes as glowing rather than projecting (LED pixels, panels) light up without casting beams.
 
 > **_NOTE:_** The visualizer doesn't show blades, animation wheels or built-in fixture effects.
@@ -69,6 +71,8 @@ Quality settings belong to the computer you're on, not to the show: they are kep
 | high   | Light on every lit surface at full resolution; gobo shafts in the beams; bloom. |
 
 With **auto**, the visualizer first lowers the detail of the beams in the air at **high**, then the resolution, then the level.
+
+Fixture models follow the level too. **guides** and **low** use the file's low detail models, **medium** its standard ones and **high** its high detail ones, each falling back to the nearest detail the file has. A fixture whose models are too detailed for the level shows its generated parts at that level, so a large rig stays smooth on a slow computer. A fixture you've just patched shows its generated parts for a moment while its models load.
 
 Beam guides are thin lines in each beam's colour: the beam's centre line from the lens to the floor, its edges, and the outline of its footprint on the floor. They stay sharp at any resolution. A fixture with its dimmer at 0 keeps a faint guide, so you can set its position without opening the dimmer.
 

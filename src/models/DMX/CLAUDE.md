@@ -33,7 +33,9 @@ Enums live next to their model and are exported: `CUE_TYPES`, `CUE_STATES`,
   `gdtf.adapter.js` + `gdtf.archive.js` (`.gdtf` zip). GDTF files come from `gdtf.store.js`
   (IndexedDB, imported with `FixtureLibrary.importGDTF`), then the `public/gdtf/` bundle; neither →
   `MissingFixtureError`. Adapters, `channel.types.js` and `fixture.profile.js` stay pure (no Vue,
-  Three.js, `import.meta`). GDTF profiles carry a geometry tree per mode (`mode.geometry`).
+  Three.js, `import.meta`). GDTF profiles carry a geometry tree per mode (`mode.geometry`);
+  wheel images and mesh files stay beside the frozen profile (`FixtureLibrary.wheelImages` /
+  `modelFiles`) and reach the visualizer through `Show.patchSnapshot`, never `showData`.
 - **Channel `type` keys and `qaIndex` are stored in showfile scenes.** `channel.types.js` keeps
   the original derivation (typos included); OFL pixel channels keep `type` = their name.
 - A show whose GDTF type is missing asks through `MISSING_FIXTURES_EVENT` (show.model.js), then

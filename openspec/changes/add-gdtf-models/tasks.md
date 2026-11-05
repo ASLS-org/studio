@@ -99,10 +99,10 @@
 
 ## 4. Docs and AI context
 
-- [ ] 4.1 User manual, visualizer page: fixture bodies from the imported file's meshes, what each
+- [x] 4.1 User manual, visualizer page: fixture bodies from the imported file's meshes, what each
       quality level shows, and that meshes stay on the device (skill `user-manual`). Verify with
       `npm run docs:manual:build`: it builds with no dead link.
-- [ ] 4.2 AI context: in `src/plugins/visualizer/CLAUDE.md`, the `fixture_models.js` row, the
+- [x] 4.2 AI context: in `src/plugins/visualizer/CLAUDE.md`, the `fixture_models.js` row, the
       model pools and model detail per level; in `src/models/DMX/CLAUDE.md`, the
       `FixtureLibrary.modelFiles` side map; in `.claude/skills/fixture-library/SKILL.md`, mesh
       folders and the plausibility rule (skill `ai-context-maintenance`). Verify that every path
