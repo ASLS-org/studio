@@ -38,36 +38,52 @@
 
 ## 2. Visualizer: detail rule, mesh loading, pools (plugins/visualizer)
 
-- [ ] 2.1 `fixture_shapes.js` `modelDetail(tree, level)`: detail order and triangle budget per
+- [x] 2.1 `fixture_shapes.js` `modelDetail(tree, level)`: detail order and triangle budget per
       level, one detail per fixture type, `null` when nothing fits (design decision 2). Verify in
       Node over both test sets:
       - the share of fixtures drawn with meshes at each level;
       - a 20k-triangle 3DS fixture gets `null` at Low and its meshes at Medium;
       - a fixture with `gltf` and `gltf_high` gets `gltf_high` at High only.
-- [ ] 2.2 `fixture_models.js`: parse glTF (`GLTFLoader.parseAsync`) and 3DS (`TDSLoader.parse`)
+      Measured on 408 fixtures, 263 of them with usable meshes:
+      - Guides and Low draw 227 with meshes;
+      - Medium draws 253;
+      - High draws 259, 28 of them at high detail (the Ayrton range).
+      The ACME XP-1000SZ (3DS) gets generated parts at Low and its meshes from Medium.
+- [x] 2.2 `fixture_models.js`: parse glTF (`GLTFLoader.parseAsync`) and 3DS (`TDSLoader.parse`)
       into one unit-box geometry per (type, file, detail), in GDTF axes, cached, with null on
       error and one console warning (design decision 4). Verify in Node, with the DOM stubs:
       - every plausible mesh of both test sets parses;
       - each result fills the unit box;
       - its centre over its size matches `modelCenter`.
-- [ ] 2.3 Model pools in `geometry_fixture.js`: keyed `type|file|detail`, 16 slots doubling,
+      Measured: all 795 usable meshes parse and each fills the unit box. Only 2 centres differ
+      from the import-time measure, by 0.04. The slowest parse is 149 ms, for a 248k-triangle 3DS
+      mesh that is over every budget.
+      3DS texture maps are skipped (`MeshTDSLoader`), so no stray texture requests are made.
+- [x] 2.3 Model pools in `geometry_fixture.js`: keyed `type|file|detail`, 16 slots doubling,
       highlight resized, disposed when empty; shape pools unchanged (design decision 5). Verify
       in Node:
       - patching 40 copies of one modelled fixture uses one pool per mesh, grown to 64 slots;
       - removing them all disposes those pools and leaves the shape pools as they were.
-- [ ] 2.4 Piece swap: `GeometryFixture.setModelLevel(level)`, `FixtureRenderer.setModelLevel`,
+      Passed: 40 Robe DL4S use 3 mesh pools at 64 slots; removing them disposes all 3.
+- [x] 2.4 Piece swap: `GeometryFixture.setModelLevel(level)`, `FixtureRenderer.setModelLevel`,
       called from `Visualizer.applyQuality()`. Fixtures start with generated parts and swap when
       their geometry resolves; a removed fixture or a stale level ignores the result (design
       decision 6). Verify in Node:
       - a patch then an immediate unpatch leaves no slot taken;
       - Medium → High → Medium swaps, then returns to the same pools;
       - highlight state survives a swap.
-- [ ] 2.5 Regression sweep in Node:
+      Passed. The Ayrton Bora swaps Medium → High → Medium and returns to the same meshes; level
+      null brings back the generated parts. The first quality apply runs before the renderer
+      exists, so `main()` passes the current level to it.
+- [x] 2.5 Regression sweep in Node:
       - every mode of both GDTF test sets, the bundled GDTF and the OFL library draws at the
         four levels with no error;
       - OFL fixtures and bundled GDTF fixtures use exactly the shape pools they use today;
       - no allocation in `update(t)` after the swap (heap stable over 3600 frames on a 40-fixture
         rig).
+      Passed. GDTF: 1517 modes, 0 errors, 1161 drawn with meshes at High, no mesh pool left.
+      OFL: 2240 modes, 0 errors, all on the shape pools. Rig of 40 DL4S at Medium: heap −176 KB
+      over 3600 frames.
 
 ## 3. In-app check (user)
 

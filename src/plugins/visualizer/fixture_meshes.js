@@ -48,10 +48,11 @@ const cache = new Map();
 /**
  * Scales and centres a geometry into the unit box
  *
+ * @public
  * @param {THREE.BufferGeometry} geometry Geometry
  * @returns {THREE.BufferGeometry} The same geometry
  */
-function toUnitBox(geometry) {
+export function toUnitBox(geometry) {
   geometry.computeBoundingBox();
   const center = geometry.boundingBox.getCenter(new THREE.Vector3());
   const size = geometry.boundingBox.getSize(new THREE.Vector3());

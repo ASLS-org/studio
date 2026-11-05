@@ -298,3 +298,72 @@ export function assignRoles(geometry) {
   relabel(geometry);
   return roles;
 }
+
+/**
+ * Mesh detail levels and their folders in a GDTF file, glTF before 3DS
+ *
+ * @constant {Object} DETAIL_FOLDERS
+ */
+const DETAIL_FOLDERS = {
+  low: ['gltf_low', '3ds_low'],
+  standard: ['gltf', '3ds'],
+  high: ['gltf_high', '3ds_high'],
+};
+
+/**
+ * Per quality level: the mesh details tried, in order, and the triangle budget of one fixture
+ *
+ * @constant {Object} LEVEL_DETAILS
+ */
+const LEVEL_DETAILS = {
+  guides: { order: ['low', 'standard', 'high'], budget: 5000 },
+  low: { order: ['low', 'standard', 'high'], budget: 5000 },
+  medium: { order: ['standard', 'low', 'high'], budget: 30000 },
+  high: { order: ['high', 'standard', 'low'], budget: 150000 },
+};
+
+/**
+ * Folder of the mesh a node draws at a detail: glTF, else 3DS
+ *
+ * @public
+ * @param {Object} geometryNode Geometry node (with `meshes`, see gdtf.meshes.js modelMeshes)
+ * @param {?String} detail Mesh detail (`low`, `standard`, `high`), null for none
+ * @returns {?String} Detail folder, or null when the node has no mesh at that detail
+ */
+export function meshFolder(geometryNode, detail) {
+  if (!detail || !geometryNode.meshes) return null;
+  return DETAIL_FOLDERS[detail].find((folder) => geometryNode.meshes[folder]) || null;
+}
+
+/**
+ * Mesh detail a fixture is drawn with at a quality level: the first detail of the level's order
+ * that some body has a mesh at and whose meshes fit the level's triangle budget. Only nodes with a
+ * body draw a mesh (a mesh replaces a generated part); one detail for the whole fixture.
+ *
+ * @public
+ * @param {Object} geometry Geometry tree
+ * @param {String} level Quality level (`guides`, `low`, `medium`, `high`)
+ * @param {Map<Object, String>} [roles] Body role by node (see assignRoles)
+ * @returns {?String} Mesh detail (`low`, `standard`, `high`), or null for the generated parts
+ */
+export function modelDetail(geometry, level, roles = assignRoles(geometry)) {
+  const { order, budget } = LEVEL_DETAILS[level] || LEVEL_DETAILS.medium;
+  const bodies = [];
+  const visit = (n) => {
+    if (n.meshes && shapeOf(n, roles.get(n))) bodies.push(n);
+    n.children.forEach(visit);
+  };
+  visit(geometry);
+  if (!bodies.length) return null;
+  return order.find((detail) => {
+    let triangles = 0;
+    let drawn = 0;
+    bodies.forEach((n) => {
+      const folder = meshFolder(n, detail);
+      if (!folder) return;
+      triangles += n.meshes[folder].triangles;
+      drawn += 1;
+    });
+    return drawn > 0 && triangles <= budget;
+  }) || null;
+}
