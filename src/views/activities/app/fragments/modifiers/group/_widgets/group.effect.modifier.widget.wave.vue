@@ -54,7 +54,7 @@
           </uk-flex>
         </uk-flex>
         <uk-flex
-          style="width: 80px"
+          style="width: 120px"
           col
           :gap="8"
         >
@@ -64,20 +64,29 @@
             label="Direction"
             :options="channel.directionOptions"
           />
-          <uk-num-input
-            v-model="channel.fixturePhaseStart"
+          <uk-select-input
+            :model-value="channel.cellPhase ? 1 : 0"
             :disabled="!channel.type"
-            :min="-360"
-            :max="360"
-            label="Phase start"
+            label="Spread over"
+            :options="spreadOptions"
+            @update:model-value="channel.cellPhase = $event === 1"
           />
-          <uk-num-input
-            v-model="channel.fixturePhaseStop"
-            :disabled="!channel.type"
-            :min="-360"
-            :max="360"
-            label="Phase stop"
-          />
+          <uk-flex :gap="8">
+            <uk-num-input
+              v-model="channel.fixturePhaseStart"
+              :disabled="!channel.type"
+              :min="-360"
+              :max="360"
+              label="Phase start"
+            />
+            <uk-num-input
+              v-model="channel.fixturePhaseStop"
+              :disabled="!channel.type"
+              :min="-360"
+              :max="360"
+              label="Phase stop"
+            />
+          </uk-flex>
         </uk-flex>
       </uk-flex>
       <div class="widget_wave_modifier">
@@ -110,6 +119,7 @@
 
 <script>
 import colorMixin from '@/views/mixins/color.mixin';
+import LiveMixin from '@/views/mixins/live.mixin';
 
 export default {
   name: 'GroupEffectModifierWidgetWave',
@@ -117,7 +127,7 @@ export default {
     // or, for full vue 3 compat in this component:
     MODE: 3,
   },
-  mixins: [colorMixin],
+  mixins: [colorMixin, LiveMixin],
   props: {
     channel: {
       type: Object,
@@ -133,6 +143,7 @@ export default {
           directionOptions: ['No Channel'],
           fixturePhaseStart: 0,
           fixturePhaseStop: 0,
+          cellPhase: false,
           fixtures: [],
           getValue: () => {},
         };
@@ -141,6 +152,10 @@ export default {
   },
   data() {
     return {
+      /**
+       * What the phase spreads over (index 1 spreads it across every cell of the fixtures)
+       */
+      spreadOptions: ['Fixtures', 'Cells'],
       /**
        * Handle to the canvas element
        */
@@ -260,6 +275,8 @@ export default {
      * @param {Number} index index of the fixture within channel.fixtures
      */
     getTickPosition(fixture) {
+      // channel.time and fixture.value are written by playback outside Vue: refresh with the ticker
+      this.live();
       const { width: w, height: h } = this.canvasSize;
       if (!w || !h) {
         return { left: '0px', top: '0px' };

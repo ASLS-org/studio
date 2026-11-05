@@ -19,10 +19,12 @@ Toolbar → popup.connections.vue ─► OutputPool.addRaw({remote, port, name})
                                                                           └─ client = WscClientManager.createClient(...)
 Universe modifier → universe.modifier.widget.connection.vue
    └─ universe.setupConnection(connection, protocol, address)
-        └─ connection.setupStream(universeId, protocol, address, () => universe.DMX512Data)
-             └─ WscConnectionStream: start() → Live.add(forward) → every tick:
-                  WscPacket.create(STREAM_CHANNELS, {universe, startChannel, values}, {transport})
-                  → connection.client.send(packet)
+        └─ connection.setupStream(universeId, protocol, address, () => universe.frame)
+             └─ WscConnectionStream: start()/stop() only flip its state
+Every Live tick (Live.onFrame, after the animations, also while paused or stopped):
+   UniversePool.processFrame() → universe.packFrame() → stream.forward(frame) if running:
+        WscPacket.create(STREAM_CHANNELS, {universe, startChannel, values}, {transport})
+        → connection.client.send(packet)
 Electron: main.js spawns bundled `wsc-server-node18-<os>-<arch>` (version = WSC_VERSION in .env)
 Browser: user runs the gateway (`@asls/wsc-server`) themselves, default 127.0.0.1:4515
 ```
@@ -69,7 +71,7 @@ change (`fix-wsc-output`).
    attached. That is a spec violation, and `validate()` throws on it. The gateway may not forward.
 2. `startChannel: 0` is sent, but the SDK default is 1-based (`startChannel = 1`). Confirm against
    the WSC spec and fix.
-3. `stop()` never clears `streamId`, so `start()` after a `stop()` is a no-op.
+3. ~~`stop()` never clears `streamId`~~: fixed, streams are no longer `Live` animations.
 4. The connection widget writes `stream.iface` and `stream.params`, but the stream class exposes
    `interface` and has no `params`. Interface changes don't rebuild the transport, and
    baud/priority/portIndex/TTL are ignored. `_rebuildTransport()` calls `serial(proto)` without
@@ -88,11 +90,12 @@ change (`fix-wsc-output`).
 
 - Build every packet through `WscPacket.create` with explicit `flags` and `transport`. In dev,
   run `WscPacket.validate(packet)` once when a stream (re)configures, not on every tick.
-- Streaming is per-tick (`Live`, 60 fps). In `forward()`: no allocations beyond the packet, no
-  logging, no validation. Rebuild the transport only when protocol, interface, address or params
+- Streaming is per-tick (`Live` frame phase, 60 fps), whatever the play state: output keeps
+  running while the show is paused or stopped. `forward(frame)` receives the universe's reused
+  frame: no allocations beyond the packet, no logging, no validation. Rebuild the transport only when protocol, interface, address or params
   change.
-- Always pair `Live.add` with `Live.remove`, and stop streams before disconnecting or deleting
-  a connection, universe or output.
+- Streams are not `Live` animations. Stop them before disconnecting or deleting a connection,
+  universe or output.
 - Persist user-entered output config through `showData` and the load path (skill
   `dmx-model-change`).
 - Keep the browser build working without Electron. In the browser the gateway is external.

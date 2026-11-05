@@ -8,8 +8,22 @@ import ModelInstancer from './model_instancer';
 import SceneManager from './scene_manager';
 import AnimationManager from './animation_manager';
 import Controls from './controls';
-import MovingHead from './moving_head';
+import GeometryFixture from './geometry_fixture';
+import FixtureRenderer from './fixture_renderer';
 import InfiniteGridHelper from './grid';
+import BeamState from './beam_state';
+import StageLighting, { QUALITY_LEVELS } from './stage_lighting';
+import { AIR_SAMPLES } from './air_beams';
+import {
+  QUALITY_SETTINGS,
+  GUIDE_SETTINGS,
+  RESOLUTION_SCALES,
+  RENDER_SCALES,
+  QualityGovernor,
+  loadQualitySettings,
+  saveQualitySettings,
+  startingLevel,
+} from './quality';
 
 /**
  * THREE.Vector3 round prototype override.
@@ -35,10 +49,42 @@ THREE.Vector3.prototype.round = function vector3RoundPolyfill(digits) {
  * @default
  */
 const DEFAULT_PREFERENCES = {
-  FOGGING_STATE: true,
-  FOGGING_DENSITY: 0,
-  GLOBAL_FOGGING_TURBULENCES: 0,
+  HAZE_DENSITY: 50,
+  EXPOSURE: 100,
   GLOBAL_BRIGHTNESS: 80,
+};
+
+/**
+ * Floor size in meters (square, centred on the origin)
+ *
+ * @constant {Number}
+ */
+const FLOOR_SIZE = 50;
+
+/**
+ * Floor brightness without beam light, at a global brightness of 100
+ *
+ * @constant {Number}
+ */
+const FLOOR_AMBIENT = 0.16;
+
+/**
+ * Tint of the checkerboard floor (albedo): darker and slightly cool, like a stage floor
+ *
+ * @constant {THREE.Color}
+ */
+const FLOOR_TINT = new THREE.Color(0.58, 0.6, 0.64);
+
+/**
+ * Light on fixture bodies at a global brightness of 100: a key light and a sky/ground ambient
+ *
+ * @constant {Object}
+ */
+const BODY_LIGHT = {
+  KEY: 1.5,
+  SKY: 2.5,
+  SKY_COLOR: 0xb8c4d6,
+  GROUND_COLOR: 0x3a3430,
 };
 
 /**
@@ -57,6 +103,33 @@ class Visualizer {
     this.camera = null;
     this.controls = null;
     this.animation = null;
+    /**
+     * Draws patched fixtures from the universes' DMX frames (see fixture_renderer.js)
+     */
+    this.fixtureRenderer = null;
+    /**
+     * Per-beam state read by the lighting passes
+     */
+    this.beamState = new BeamState();
+    /**
+     * Beam light on the stage (quality levels, guides)
+     */
+    this.lighting = null;
+    /**
+     * Quality settings stored on this device (never in the showfile)
+     */
+    this.qualitySettings = loadQualitySettings();
+    this.governor = null;
+    this.floorMaterial = null;
+    this._hazeDensity = DEFAULT_PREFERENCES.HAZE_DENSITY;
+    this._exposure = DEFAULT_PREFERENCES.EXPOSURE;
+    /**
+     * Whether something changed since the last drawn frame (render on demand)
+     */
+    this.needsRender = true;
+    this.lastFrameAt = null;
+    this.lastView = new THREE.Matrix4();
+    this.lastProjection = new THREE.Matrix4();
     this.finalComposer = null;
     this.globalBrightness = 100;
     this.globalLightHandle = null;
@@ -78,8 +151,10 @@ class Visualizer {
     this.prepareRenderer();
     this.prepareCamera();
     this.prepareControls();
+    this.prepareLighting();
     this.resize();
     Controls.init(this.camera, this.domElement, this.controls);
+    Controls.handle.addEventListener('change', this.invalidate);
     this.startRender();
     this.main();
     this.resize();
@@ -93,55 +168,53 @@ class Visualizer {
   set preferences(preferences) {
     if (preferences) {
       this.globalBrightness = preferences.globalBrightness;
-      this.globalFoggingDensity = preferences.globalFoggingDensity;
-      this.globalFoggingState = preferences.globalFoggingState;
-      this.globalFoggingTurbulences = preferences.globalFoggingTurbulences;
+      this.exposure = preferences.exposure;
+      // Showfiles from before Haze (fog settings only) open with the default density: their beams
+      // always showed, fogging only added moving noise
+      this.hazeDensity = preferences.hazeDensity;
     }
   }
 
   /**
-   * Global scene fogging state
-   * @type {Boolean}
-   * @param {boolean} value
-   */
-  // eslint-disable-next-line class-methods-use-this
-  set globalFoggingState(value) {
-    MovingHead.fogState = value || DEFAULT_PREFERENCES.GLOBAL_FOGGING_STATE;
-  }
-
-  // eslint-disable-next-line class-methods-use-this
-  get globalFoggingState() {
-    return MovingHead.fogState ? 1 : 0;
-  }
-
-  /**
-   * Global scene fogging density
+   * Haze density, 0 to 100 (0 hides beams in the air)
    *
    * @type {Number}
    */
-  // eslint-disable-next-line class-methods-use-this
-  set globalFoggingDensity(value) {
-    MovingHead.fogDensity = value ? value / 100 : DEFAULT_PREFERENCES.GLOBAL_FOGGING_DENSITY;
+  set hazeDensity(value) {
+    const density = Number.isFinite(value) ? value : DEFAULT_PREFERENCES.HAZE_DENSITY;
+    this._hazeDensity = Math.min(Math.max(density, 0), 100);
+    this.applyHaze();
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  get globalFoggingDensity() {
-    return MovingHead.fogDensity * 100;
+  get hazeDensity() {
+    return this._hazeDensity;
   }
 
   /**
-   * Global scene fogging turbulence
+   * Exposure, 25 to 400 (%): brightness of everything the beams light and the whole picture's tone
+   * curve, for a physically accurate (100) or a more readable view
    *
    * @type {Number}
    */
-  // eslint-disable-next-line class-methods-use-this
-  set globalFoggingTurbulences(value) {
-    MovingHead.fogTurbulence = value ? value / 50 : DEFAULT_PREFERENCES.GLOBAL_FOGGING_TURBULENCES;
+  set exposure(value) {
+    const exposure = Number.isFinite(value) ? value : DEFAULT_PREFERENCES.EXPOSURE;
+    this._exposure = Math.min(Math.max(exposure, 25), 400);
+    if (this.lighting) this.lighting.setExposure(this._exposure / 100);
+    this.invalidate();
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  get globalFoggingTurbulences() {
-    return MovingHead.fogTurbulence * 50;
+  get exposure() {
+    return this._exposure;
+  }
+
+  /**
+   * Passes the haze settings to the lighting
+   *
+   * @private
+   */
+  applyHaze() {
+    if (this.lighting) this.lighting.setHaze(this._hazeDensity);
+    this.invalidate();
   }
 
   /**
@@ -152,8 +225,17 @@ class Visualizer {
   set globalBrightness(value) {
     this._globalBrightness = value ? value / 100 : DEFAULT_PREFERENCES.GLOBAL_BRIGHTNESS;
     if (this.globalLightHandle) {
-      this.globalLightHandle.intensity = this._globalBrightness * 0.25;
+      this.globalLightHandle.intensity = this._globalBrightness * BODY_LIGHT.KEY;
     }
+    if (this.skyLightHandle) {
+      this.skyLightHandle.intensity = this._globalBrightness * BODY_LIGHT.SKY;
+    }
+    if (this.floorMaterial) {
+      this.floorMaterial.color.copy(FLOOR_TINT)
+        .multiplyScalar(this._globalBrightness * FLOOR_AMBIENT);
+    }
+    if (this.lighting) this.lighting.setAmbient(this._globalBrightness * FLOOR_AMBIENT);
+    this.invalidate();
   }
 
   get globalBrightness() {
@@ -191,11 +273,135 @@ class Visualizer {
     return false;
   }
 
+  /**
+   * Quality setting index (see QUALITY_OPTIONS): Auto, Guides, Low, Medium, High
+   *
+   * @type {Number}
+   */
+  set quality(index) {
+    const quality = Visualizer.QUALITY_OPTIONS[index];
+    if (!quality) return;
+    if (quality === QUALITY_SETTINGS.AUTO && this.qualitySettings.quality !== quality) {
+      this.governor = null;
+    }
+    this.qualitySettings.quality = quality;
+    this.saveQuality();
+  }
+
+  get quality() {
+    return Visualizer.QUALITY_OPTIONS.indexOf(this.qualitySettings.quality);
+  }
+
+  /**
+   * Resolution scale index of the lighting (see RESOLUTION_SCALES), used when quality isn't Auto
+   *
+   * @type {Number}
+   */
+  set resolutionScale(index) {
+    if (RESOLUTION_SCALES[index] === undefined) return;
+    this.qualitySettings.scale = RESOLUTION_SCALES[index];
+    this.saveQuality();
+  }
+
+  get resolutionScale() {
+    return RESOLUTION_SCALES.indexOf(this.qualitySettings.scale);
+  }
+
+  /**
+   * Beam guides setting index (see GUIDE_OPTIONS): Auto, On, Off
+   *
+   * @type {Number}
+   */
+  set beamGuides(index) {
+    const guides = Visualizer.GUIDE_OPTIONS[index];
+    if (!guides) return;
+    this.qualitySettings.guides = guides;
+    this.saveQuality();
+  }
+
+  get beamGuides() {
+    return Visualizer.GUIDE_OPTIONS.indexOf(this.qualitySettings.guides);
+  }
+
+  /**
+   * Render resolution index (see RENDER_SCALES): pixel ratio of the whole view
+   *
+   * @type {Number}
+   */
+  set renderScale(index) {
+    if (RENDER_SCALES[index] === undefined) return;
+    this.qualitySettings.renderScale = RENDER_SCALES[index];
+    this.saveQuality();
+  }
+
+  get renderScale() {
+    return RENDER_SCALES.indexOf(this.qualitySettings.renderScale);
+  }
+
+  /**
+   * Quality level and lighting resolution in use (with Auto, the governor's choice)
+   *
+   * @type {Object}
+   */
+  get effectiveQuality() {
+    return {
+      level: this.lighting ? this.lighting.level : null,
+      scale: this.lighting ? this.lighting.scale : null,
+      guides: this.lighting ? this.lighting.guides : null,
+    };
+  }
+
+  /**
+   * Stores the quality settings on this device and applies them
+   *
+   * @private
+   */
+  saveQuality() {
+    saveQualitySettings(this.qualitySettings);
+    this.applyQuality();
+  }
+
+  /**
+   * Applies the quality settings (or the governor's choice with Auto) to the lighting
+   *
+   * @private
+   */
+  applyQuality() {
+    if (!this.lighting) return;
+    const {
+      quality, scale, guides, renderScale,
+    } = this.qualitySettings;
+    if (this.renderer.getPixelRatio() !== renderScale) {
+      this.renderer.setPixelRatio(renderScale);
+      this.lighting.resize();
+    }
+    const auto = quality === QUALITY_SETTINGS.AUTO;
+    if (auto && !this.governor) {
+      this.governor = new QualityGovernor(startingLevel(this.renderer.getContext()));
+    }
+    const level = auto ? this.governor.level : quality;
+    this.lighting.level = level;
+    if (this.fixtureRenderer) this.fixtureRenderer.setModelLevel(level);
+    this.lighting.scale = auto ? this.governor.scale : scale;
+    this.lighting.airSamples = auto ? this.governor.airSamples : AIR_SAMPLES[0];
+    this.lighting.guides = guides === GUIDE_SETTINGS.ON
+      || (guides === GUIDE_SETTINGS.AUTO && level === QUALITY_LEVELS.GUIDES);
+    this.invalidate();
+  }
+
+  /**
+   * Asks for a new frame (nothing is drawn while nothing changes)
+   *
+   * @public
+   */
+  invalidate = () => {
+    this.needsRender = true;
+  };
+
   get showData() {
     return {
-      globalFoggingState: this.globalFoggingState,
-      globalFoggingDensity: this.globalFoggingDensity,
-      globalFoggingTurbulences: this.globalFoggingTurbulences,
+      hazeDensity: this.hazeDensity,
+      exposure: this.exposure,
       globalBrightness: this.globalBrightness,
       autoRotate: this.autoRotate,
     };
@@ -241,15 +447,17 @@ class Visualizer {
    * @async
    */
   async main() {
-    this.globalLightHandle = new THREE.DirectionalLight('white', this._globalBrightness * 100);
+    // Body light: a key light and a sky/ground ambient, so fixture bodies read in the dark
+    this.globalLightHandle = new THREE.DirectionalLight('white', this._globalBrightness * BODY_LIGHT.KEY);
     this.globalLightHandle.castShadow = false;
     this.globalLightHandle.position.set(-10, -10, 10);
+    this.skyLightHandle = new THREE.HemisphereLight(BODY_LIGHT.SKY_COLOR, BODY_LIGHT.GROUND_COLOR,
+      this._globalBrightness * BODY_LIGHT.SKY);
+    this.skyLightHandle.position.set(0, 0, 1);
 
-    MovingHead.prepareInstanciation(this.camera, SceneManager);
-
-    AnimationManager.add((t) => {
-      MovingHead.update(t);
-    });
+    GeometryFixture.prepareInstanciation(SceneManager);
+    this.fixtureRenderer = new FixtureRenderer(this.invalidate);
+    if (this.lighting) this.fixtureRenderer.setModelLevel(this.lighting.level);
 
     // Floor
     const loader = new THREE.TextureLoader()
@@ -279,25 +487,38 @@ class Visualizer {
       new THREE.Color('#4da6ff')  // Z
     );
 
-    const checkerMaterial = new THREE.MeshStandardMaterial({ map: texture });
+    // The floor is unlit: beam light is added by the lighting passes (see stage_lighting.js)
+    this.floorMaterial = new THREE.MeshBasicMaterial({ map: texture });
+    this.floorMaterial.color.copy(FLOOR_TINT).multiplyScalar(this._globalBrightness * FLOOR_AMBIENT);
 
-    const sideMaterial = new THREE.MeshStandardMaterial();
-
-    const floorMaterial = [];
-
-    floorMaterial.push(sideMaterial);
-    floorMaterial.push(sideMaterial);
-    floorMaterial.push(sideMaterial);
-    floorMaterial.push(sideMaterial);
-    floorMaterial.push(checkerMaterial);
-
-    const floor_geometry = new THREE.BoxGeometry(50, 50, 0.5, 1, 1, 1);
-    const floor = new THREE.Mesh(floor_geometry, checkerMaterial);
+    const floor_geometry = new THREE.BoxGeometry(FLOOR_SIZE, FLOOR_SIZE, 0.5, 1, 1, 1);
+    const floor = new THREE.Mesh(floor_geometry, this.floorMaterial);
     floor.position.setZ(-0.25);
+    this.lighting.addReceiver(floor, new THREE.MeshBasicMaterial({ map: texture, color: FLOOR_TINT }));
+    this.lighting.setFloor(texture, FLOOR_SIZE, FLOOR_TINT);
 
     this.globalLightHandle.target = floor;
 
-    SceneManager.add(this.globalLightHandle, floor, axesHelper);
+    SceneManager.add(this.globalLightHandle, this.skyLightHandle, floor, axesHelper);
+    this.invalidate();
+  }
+
+  /**
+   * Prepares the beam lighting and applies the stored quality settings
+   *
+   * @public
+   */
+  prepareLighting() {
+    this.lighting = new StageLighting(this.renderer, SceneManager, this.camera, this.beamState);
+    this.applyQuality();
+    this.applyHaze();
+    this.lighting.setAmbient(this._globalBrightness * FLOOR_AMBIENT);
+    this.lighting.setExposure(this._exposure / 100);
+    this.domElement.addEventListener('pointermove', this.invalidate);
+    this.domElement.addEventListener('pointerdown', this.invalidate);
+    this.domElement.addEventListener('pointerup', this.invalidate);
+    this.domElement.addEventListener('wheel', this.invalidate);
+    window.addEventListener('keydown', this.invalidate);
   }
 
   /**
@@ -314,8 +535,10 @@ class Visualizer {
     this.renderer.autoClear = true;
     this.renderer.shadowMap.autoUpdate = true;
     this.renderer.physicallyCorrectLights = true;
-    this.renderer.setPixelRatio(0.8); // Forcing pixel ratio to 1 to avoid unnecessary computations
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    // Pixel ratio of the view: the Render resolution setting (applyQuality), 80% by default
+    this.renderer.setPixelRatio(this.qualitySettings.renderScale);
+    // Neutral keeps hues (ACES turned saturated blues purple and greyed colours)
+    this.renderer.toneMapping = THREE.NeutralToneMapping;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
   }
 
@@ -370,17 +593,80 @@ class Visualizer {
       this.renderer.setSize(width, height);
       this.camera.aspect = aspect;
       this.camera.updateProjectionMatrix();
+      if (this.lighting) this.lighting.resize();
+      this.invalidate();
     }
   }
 
   /**
-   * Render function
+   * Render function: decodes changed fixtures, then draws a frame only when something changed
+   * (DMX, camera, gizmo, settings, a running beam animation)
    *
    * @public
+   * @param {Number} t Time in seconds
    */
-  render() {
-    this.renderer.render(SceneManager, this.camera);
+  render(t) {
+    if (this.fixtureRenderer && this.fixtureRenderer.update()) this.needsRender = true;
+    this.beamState.begin();
+    if (GeometryFixture.update(t, this.beamState)) this.needsRender = true;
+    this.beamState.end();
+    this.camera.updateMatrixWorld();
+    if (Visualizer.matrixMoved(this.lastView, this.camera.matrixWorld)
+      || Visualizer.matrixMoved(this.lastProjection, this.camera.projectionMatrix)) {
+      this.lastView.copy(this.camera.matrixWorld);
+      this.lastProjection.copy(this.camera.projectionMatrix);
+      this.needsRender = true;
+    }
+    if (!this.needsRender) {
+      this.lastFrameAt = null;
+      return;
+    }
+    this.needsRender = false;
+    const now = performance.now();
+    this.lighting.render();
+    const work = performance.now() - now;
+    if (this.governor && this.lastFrameAt !== null
+      && this.qualitySettings.quality === QUALITY_SETTINGS.AUTO
+      && this.governor.sample(now - this.lastFrameAt, work, now)) {
+      this.applyQuality();
+    }
+    this.lastFrameAt = now;
   }
 }
+
+/**
+ * Whether a matrix moved since its last copy. Orbit controls recompute the camera every frame,
+ * which changes the last bits of its matrix even when it stands still.
+ *
+ * @param {THREE.Matrix4} last Last copy
+ * @param {THREE.Matrix4} current Current matrix
+ * @returns {Boolean} Whether an element changed by more than 1e-6
+ */
+Visualizer.matrixMoved = (last, current) => {
+  for (let i = 0; i < 16; i++) {
+    if (Math.abs(last.elements[i] - current.elements[i]) > 1e-6) return true;
+  }
+  return false;
+};
+
+/**
+ * Quality setting options, in the order the settings popup lists them
+ *
+ * @type {Array<String>}
+ */
+Visualizer.QUALITY_OPTIONS = [
+  QUALITY_SETTINGS.AUTO,
+  QUALITY_SETTINGS.GUIDES,
+  QUALITY_SETTINGS.LOW,
+  QUALITY_SETTINGS.MEDIUM,
+  QUALITY_SETTINGS.HIGH,
+];
+
+/**
+ * Beam guides setting options, in the order the settings popup lists them
+ *
+ * @type {Array<String>}
+ */
+Visualizer.GUIDE_OPTIONS = [GUIDE_SETTINGS.AUTO, GUIDE_SETTINGS.ON, GUIDE_SETTINGS.OFF];
 
 export default Visualizer;

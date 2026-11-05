@@ -1,84 +1,20 @@
-import { markRaw } from 'vue';
+import { markRaw } from '../utils/reactivity';
 import Channel from './channel.model';
-import MovingHead from '../../plugins/visualizer/moving_head';
-import Controls from '../../plugins/visualizer/controls';
+import { PROFILE_SOURCES, resolveModeName } from '../fixtures/fixture.profile';
+import modeCells from '../fixtures/fixture.cells';
+import {
+  readColor, writeColor, readPanTilt, writePanTilt, isAxisChannel, hasMixing,
+} from './cell.access';
+import EventBus from '../../plugins/eventbus';
 
 /**
- * Splitting pattern for parsing fine channels
+ * Highest DMX channel value
  *
  * @constant
- * @type {String}
+ * @type {Number}
  * @default
  */
-const FINE_CHANNEL_SPLIT_PATERN = ' fine';
-
-/**
- * Fine channel terminology to be used for fine channel detection
- *
- * @constant
- * @type {String}
- * @default
- */
-const FINE_CHANNEL_TERMINOLOGY = 'Fine';
-
-/**
- * OFL Capability types strings for parsing OFL Fixture channels
- *
- * @constant
- * @type {String}
- * @default
- */
-const CAPABILITY_TYPES = {
-  ShutterStrobe: 'ShutterStrobe',
-  StrobeSpeed: 'StrobeSpeed',
-  StrobeDuration: 'StrobeDuration',
-  Intensity: 'Intensity',
-  ColorIntensity: 'ColorIntensity',
-  ColorPreset: 'ColorPreset',
-  ColorTemperature: 'ColorTemperature',
-  Pan: 'Pan',
-  PanFine: 'PanFine',
-  PanContinuous: 'PanContinuous',
-  Tilt: 'Tilt',
-  TiltFine: 'TiltFine',
-  TiltContinuous: 'TiltContinuous',
-  PanTiltSpeed: 'PanTiltSpeed',
-  WheelSlot: 'WheelSlot',
-  WheelShake: 'WheelShake',
-  WheelSlotRotation: 'WheelSlotRotation',
-  Effect: 'Effect',
-  BeamAngle: 'BeamAngle',
-  BeamPosition: 'BeamPosition',
-  EffectSpeed: 'EffectSpeed',
-  EffectDuration: 'EffectDuration',
-  EffectPrameter: 'EffectPrameter',
-  SoundSensitivity: 'SoundSensitivity',
-  Focus: 'Focus',
-  Zoom: 'Zoom',
-};
-
-/**
- * OFL Wheel channels types strings for parsing OFL Fixture wheels
- *
- * @constant
- * @type {Object}
- * @default
- */
-const WHEEL_CHANNEL_TYPES = {
-  COLOR_WHEEL: 'Color Wheel',
-  GOBO_WHEEL: 'Gobo Wheel',
-};
-
-/**
- * OFL Fixture category definitions for parsing fixture type
- *
- * @constant
- * @type {Object}
- * @default
- */
-const FIXTURE_TYPES = {
-  MOVING_HEAD: 'Moving Head',
-};
+const MAX_DMX_VALUE = 255;
 
 /**
  * Default fixture name
@@ -89,9 +25,6 @@ const FIXTURE_TYPES = {
  */
 const DEFAULT_FIXTURE_NAME = 'Unknown Fixture';
 
-const RGB_CHANNELS = ['Red', 'Green', 'Blue'];
-const CMY_CHANNELS = ['Cyan', 'Magenta', 'Yellow'];
-
 /**
  * Default fixture constructor data
  *
@@ -100,10 +33,10 @@ const CMY_CHANNELS = ['Cyan', 'Magenta', 'Yellow'];
  * @default
  */
 const DEFAULT_FIXTURE_DATA = {
-  OFLData: undefined,
+  profile: undefined,
   manufacturer: undefined,
   model: undefined,
-  modeName: undefined,
+  mode: undefined,
   id: 0,
   chStart: 0,
   universe: 0,
@@ -126,33 +59,35 @@ const DEFAULT_FIXTURE_DATA = {
 class Fixture {
   /**
    * @param {Object} data Fixture initialisation data
-   * @param {Object} data.OFLData OFL Object fixture configuration
+   * @param {Object} data.profile Fixture profile (see models/fixtures/fixture.profile.js)
    * @param {Object} data.id Fixture's unique identifier
    * @param {Object} data.universe Fixture's DMX512 Universe
    * @param {Object} data.manufacturer Fixture manufacturer name as described in fixture_list.json
    * @param {Object} data.model Manufacturer's fixture model name as described in fixture_list.json
-   * @param {Object} data.modeName Mode name of the fixture's selected running mode
-   * @param {Object} data.wheels Fixture's wheels data
-   * @param {Object} data.category Fixture category as parsed from OFL data
+   * @param {String|Number} data.mode Name (or index) of the fixture's selected running mode
    * @param {Object} data.chStart FIxture's universe address/starting channel
+   * @param {Number} [data.channelCount] Channel count saved with the show
    * @param {Object} data.position Fixture's position in 3D space
-   * @param {Object} data.OFLData Fixture's rotation in 3D space
+   * @param {Object} data.rotation Fixture's rotation in 3D space
    */
   constructor(data = DEFAULT_FIXTURE_DATA) {
     if (!data.isStub) {
-      this.OFLData = data.OFLData;
+      this.profile = data.profile;
+      this.source = data.profile.source || PROFILE_SOURCES.OFL;
       this.id = parseInt(data.id, 10);
       this.universe = parseInt(data.universe, 10);
       this.manufacturer = data.manufacturer;
       this.model = data.model;
-      this.modeName = data.mode;
+      this.modeName = resolveModeName(data.profile, data.mode);
       this.wheels = {};
       this.name = data.name || DEFAULT_FIXTURE_NAME;
       this.category = data.category;
       this.chStart = parseInt(data.chStart, 10);
+      // Channel count saved with the show (absent in showfiles saved before it existed)
+      this.savedChannelCount = Number.isInteger(data.channelCount) ? data.channelCount : null;
       this.channels = [];
       this.quickChannelsAccessors = {};
-      this._3DModel = null;
+      this._highlighted = false;
       this._rotation = {
         x: 0,
         y: 0,
@@ -173,10 +108,8 @@ class Fixture {
         y: 0,
         z: 0,
       };
-      this.parseFromOFLData();
-      this.channels.forEach((channel) => {
-        this.setChannel(channel.id - 1, 0);
-      });
+      // Channels start at their home value (GDTF Default, 0 for OFL)
+      this.parseFromProfile();
     }
   }
 
@@ -217,15 +150,59 @@ class Fixture {
       name: this.name,
       universe: this.universe,
       chStart: this.chStart,
-      mode: this.modeNam,
+      channelCount: this.channels.length,
+      mode: this.modeName,
+      source: this.source,
       position: this.position,
       rotation: this.rotation,
     };
   }
 
+  /**
+   * Whether the fixture stands in for a fixture type missing on this device (see
+   * placeholderProfile): it keeps its patch, groups and scenes but has no channels to play
+   *
+   * @public
+   * @readonly
+   * @type {Boolean}
+   */
+  get isPlaceholder() {
+    return Boolean(this.profile && this.profile.placeholder);
+  }
+
+  /**
+   * Whether the fixture's channel count differs from the one saved with the show: the profile
+   * changed since (for OFL modes with pixel channels, which used to drop them, shows saved before
+   * the count existed count as changed)
+   *
+   * @public
+   * @readonly
+   * @type {Boolean}
+   */
+  get footprintChanged() {
+    if (this.savedChannelCount !== null) return this.savedChannelCount !== this.channels.length;
+    return Boolean(this.mode && this.mode.matrixInserts);
+  }
+
   /** *******************************************
    * POSITION MODIFIERS                        *
    ******************************************** */
+
+  /**
+   * Tells the visualizer the fixture's position or rotation changed
+   *
+   * @private
+   * @param {Boolean} [reattach=false] Whether the move/rotate gizmo should be re-attached to the
+   * fixture (position tool edits), as opposed to loads and gizmo write-backs
+   */
+  emitPose(reattach = false) {
+    EventBus.emit('fixture_pose', {
+      id: this.id,
+      position: this.position,
+      rotation: { ...this._rotation },
+      reattach,
+    });
+  }
 
   /**
    * Fixture's X position in 3D space (meter)
@@ -234,10 +211,8 @@ class Fixture {
    */
   set posX(xVal) {
     if (!Number.isNaN(xVal)) {
-      Controls.detach(this);
       this._position.x = xVal;
-      this._3DModel.position = this.position;
-      Controls.attach(this);
+      this.emitPose(true);
     } else {
       this._position.x = this.position.x;
     }
@@ -254,10 +229,8 @@ class Fixture {
    */
   set posY(yVal) {
     if (!Number.isNaN(yVal)) {
-      Controls.detach(this);
       this._position.y = yVal;
-      this._3DModel.position = this.position;
-      Controls.attach(this);
+      this.emitPose(true);
     } else {
       this._position.y = this.position.y;
     }
@@ -274,10 +247,8 @@ class Fixture {
    */
   set posZ(zVal) {
     if (!Number.isNaN(zVal)) {
-      Controls.detach(this);
       this._position.z = zVal;
-      this._3DModel.position = this.position;
-      Controls.attach(this);
+      this.emitPose(true);
     } else {
       this._position.z = this.position.z;
     }
@@ -298,9 +269,7 @@ class Fixture {
       y: positionData.y,
       z: positionData.z, // Math.max(positionData.z, 0)
     };
-    if (this._3DModel) {
-      this._3DModel.position = this._position;
-    }
+    this.emitPose();
   }
 
   get position() {
@@ -317,10 +286,8 @@ class Fixture {
    * @type {Number}
    */
   set rotX(xVal) {
-    Controls.detach(this);
     this._rotation.x = Fixture.degToRad(xVal);
-    this._3DModel.rotation = this._rotation;
-    Controls.attach(this);
+    this.emitPose(true);
   }
 
   get rotX() {
@@ -333,10 +300,8 @@ class Fixture {
    * @type {Number}
    */
   set rotY(yVal) {
-    Controls.detach(this);
     this._rotation.y = Fixture.degToRad(yVal);
-    this._3DModel.rotation = this._rotation;
-    Controls.attach(this);
+    this.emitPose(true);
   }
 
   get rotY() {
@@ -349,10 +314,8 @@ class Fixture {
    * @type {Number}
    */
   set rotZ(zVal) {
-    Controls.detach(this);
     this._rotation.z = Fixture.degToRad(zVal);
-    this._3DModel.rotation = this._rotation;
-    Controls.attach(this);
+    this.emitPose(true);
   }
 
   get rotZ() {
@@ -360,7 +323,7 @@ class Fixture {
   }
 
   /**
-   * Fixture's rotation in 3D space (meter)
+   * Fixture's rotation in 3D space (degree)
    *
    * @type {Object}
    */
@@ -370,9 +333,7 @@ class Fixture {
       y: Fixture.degToRad(rotationData.y),
       z: Fixture.degToRad(rotationData.z),
     };
-    if (this._3DModel) {
-      this._3DModel.rotation = this._rotation;
-    }
+    this.emitPose();
   }
 
   get rotation() {
@@ -390,9 +351,7 @@ class Fixture {
         y: rotationData.y,
         z: rotationData.z,
       };
-      if (this._3DModel) {
-        this._3DModel.rotation = this._rotation;
-      }
+      this.emitPose();
     }
   }
 
@@ -407,13 +366,26 @@ class Fixture {
    * @type {Number}
    */
   set modeIndex(modeIndex) {
+    const previousValues = {};
+    this.channels.forEach((channel) => {
+      previousValues[`${channel.type}#${channel.qaIndex}`] = channel.value.DMX;
+    });
     this.channels = [];
     this.quickChannelsAccessors = {};
     this.modeName = this.modeNames[modeIndex];
-    // this.parseFromOFLData();
     this.prepareChannels();
     this.setupFineChannels();
     this.setupQuickAccessors();
+    // Channels the old mode didn't have keep their home value. Coarse channels first: writing a
+    // coarse channel resets its fine byte
+    const home = this.channels.map((channel) => channel.value.DMX);
+    const restore = (channel) => {
+      const key = `${channel.type}#${channel.qaIndex}`;
+      const value = key in previousValues ? previousValues[key] : home[channel.id - 1];
+      this.setChannel(channel.id - 1, value);
+    };
+    this.channels.filter((channel) => !channel.isFine).forEach(restore);
+    this.channels.filter((channel) => channel.isFine).forEach(restore);
   }
 
   get modeIndex() {
@@ -440,87 +412,78 @@ class Fixture {
       value: channel.value.DMX,
       active: channel.active,
       qaIndex: channel.qaIndex,
+      cell: channel.cell,
     }));
   }
 
   /**
-   * Fixture's pan&tilt channels values (0-255)/(0-255)
+   * Fixture's pan&tilt channels values (0-255)/(0-255), every head's (reads the first)
    *
-   * @type {Number}
+   * @type {Object}
    */
   set panTilt(value) {
-    this.setQuickAccessor({
-      type: 'Pan',
-    }, value.pan);
-    this.setQuickAccessor({
-      type: 'Tilt',
-    }, value.tilt);
-    this.setQuickAccessor({
-      type: 'PanFine',
-    }, value.panFine);
-    this.setQuickAccessor({
-      type: 'TiltFine',
-    }, value.tiltFine);
+    this.setPanTilt(value);
   }
 
   get panTilt() {
-    return {
-      pan: this.hasQuickAccessor({
-        type: 'Pan',
-      }) ? this.getQuickAccessor({
-          type: 'Pan',
-        }).value.DMX : 0,
-      panFine: this.hasQuickAccessor({
-        type: 'PanFine',
-      }) ? this.getQuickAccessor({
-          type: 'PanFine',
-        }).value.DMX : 0,
-      tilt: this.hasQuickAccessor({
-        type: 'Tilt',
-      }) ? this.getQuickAccessor({
-          type: 'Tilt',
-        }).value.DMX : 0,
-      tiltFine: this.hasQuickAccessor({
-        type: 'TiltFine',
-      }) ? this.getQuickAccessor({
-          type: 'TiltFine',
-        }).value.DMX : 0,
-    };
+    return this.getPanTilt();
   }
 
   /**
-   * Fixture's color channels values.
-   * Only RGB color suppoprtded at the moment.
-   * @todo Implement other color changer types (HSB...). Should do for the alpha
-   * @todo, this causes massive slowdowns, this should be refactpred and optimized
-   * @type {Number}
+   * Fixture's colour (RGB 0-255), every cell's (reads the first); CMY inverted, white mixed in
+   *
+   * @type {Array<Number>}
    */
   set color(rgbValue) {
-    if (this.hasColor) {
-      this.quickChannelsAccessors.Color.forEach((channel) => {
-        if (RGB_CHANNELS.includes(channel.color)) {
-          const value = rgbValue[RGB_CHANNELS.indexOf(channel.color)];
-          this.setChannel(channel.id - 1, value);
-        } else if (CMY_CHANNELS.includes(channel.color)) {
-          const value = 255 - rgbValue[CMY_CHANNELS.indexOf(channel.color)];
-          this.setChannel(channel.id - 1, value);
-        }
-      });
-    }
+    this.setColor(rgbValue);
   }
 
   get color() {
-    const colorValues = [0, 0, 0];
-    if (this.hasColor) {
-      this.quickChannelsAccessors.Color.forEach((colorChannel) => {
-        if (RGB_CHANNELS.includes(colorChannel.color)) {
-          colorValues[RGB_CHANNELS.indexOf(colorChannel.color)] = colorChannel.value.DMX;
-        } else if (CMY_CHANNELS.includes(colorChannel.color)) {
-          colorValues[CMY_CHANNELS.indexOf(colorChannel.color)] = 255 - colorChannel.value.DMX;
-        }
-      });
-    }
-    return colorValues;
+    return this.getColor();
+  }
+
+  /**
+   * Reads the colour of the first of some cells (see cell.access.js)
+   *
+   * @public
+   * @param {?Array<String>} [cells=null] Cell names, null for all
+   * @returns {Array<Number>} RGB 0-255
+   */
+  getColor(cells = null) {
+    return readColor(this.channels, cells, (i) => this.channels[i].value.DMX);
+  }
+
+  /**
+   * Writes a colour to some cells (see cell.access.js)
+   *
+   * @public
+   * @param {Array<Number>} rgbValue RGB 0-255
+   * @param {?Array<String>} [cells=null] Cell names, null for all
+   */
+  setColor(rgbValue, cells = null) {
+    writeColor(this.channels, rgbValue, cells, (i, value) => this.setChannel(i, value));
+  }
+
+  /**
+   * Reads the pan&tilt of the first of some cells (see cell.access.js)
+   *
+   * @public
+   * @param {?Array<String>} [cells=null] Cell names, null for all
+   * @returns {Object} `pan`, `panFine`, `tilt`, `tiltFine` (0-255)
+   */
+  getPanTilt(cells = null) {
+    return readPanTilt(this.channels, cells, (i) => this.channels[i].value.DMX);
+  }
+
+  /**
+   * Writes pan&tilt to some cells (see cell.access.js)
+   *
+   * @public
+   * @param {Object} value `pan`, `panFine`, `tilt`, `tiltFine` (0-255)
+   * @param {?Array<String>} [cells=null] Cell names, null for all
+   */
+  setPanTilt(value, cells = null) {
+    writePanTilt(this.channels, value, cells, (i, v) => this.setChannel(i, v));
   }
 
   /**
@@ -564,7 +527,7 @@ class Fixture {
    * @readonly
    */
   get hasPan() {
-    return this.quickChannelsAccessors.Pan !== undefined;
+    return this.channels.some((channel) => isAxisChannel(channel, 'Pan'));
   }
 
   /**
@@ -574,7 +537,7 @@ class Fixture {
    * @readonly
    */
   get hasTilt() {
-    return this.quickChannelsAccessors.Tilt !== undefined;
+    return this.channels.some((channel) => isAxisChannel(channel, 'Tilt'));
   }
 
   /**
@@ -584,7 +547,18 @@ class Fixture {
    * @readonly
    */
   get hasColor() {
-    return this.quickChannelsAccessors.Color !== undefined;
+    return hasMixing(this.channels);
+  }
+
+  /**
+   * The fixture's cells (parts repeating a set of channels, see models/fixtures/fixture.cells.js):
+   * names and channel indexes. Empty when the fixture has none
+   *
+   * @type {Array<Object>}
+   * @readonly
+   */
+  get cells() {
+    return this._cells || [];
   }
 
   /**
@@ -607,8 +581,14 @@ class Fixture {
     return this.channels.length;
   }
 
+  /**
+   * Whether the fixture is highlighted in the visualizer
+   *
+   * @readonly
+   * @type {Boolean}
+   */
   get highlighted() {
-    return this._3DModel.highlighted;
+    return this._highlighted;
   }
 
   setQuickAccessor(channel, value) {
@@ -630,153 +610,59 @@ class Fixture {
   }
 
   /**
-   *
-   * @param {Object} fixtureData
-   * @todo check and remove this, it's not used anymore.
-   */
-  init(fixtureData) {
-    this.parseFromOFLData(fixtureData);
-  }
-
-  /**
-   * Sets specified channel value for given fixture channel index.
+   * Sets specified channel value for given fixture channel index. A channel with a fine
+   * companion takes the integer part and its fine channel the fractional part (16-bit);
+   * other channels take the value rounded to the nearest step. The visualizer reads the
+   * resulting values from the universe frame.
    *
    * @param {Number} id fixture's channel index
-   * @param {Number} value channel value (0-255)
+   * @param {Number} value channel value (0-255, fractional values allowed)
    */
-  /* eslint-disable max-len */
   setChannel(id, value) {
-    const channel = this.channels[id]; // Getting channel instance from ID
-    if (channel.fineChannels.length > 0) { // Channel has fine capabilities ?
-      this.setChannel(channel.fineChannels[0].id - 1, (value % 1) * 255); // Setting fine channel values recursively
-    }
-    value = Math.ceil(Math.min(Math.max(value, 0), 255)); // Clamping value between 0 and 255
-    const capability = channel.getCapability(value); // Fetching channel's capability from value
-    this.channels[id].value = value; // Setting channel's value
-    if (id === 0) { // If channel is first
-      this._3DModel.colorPreset = null; // Defaulting color preset to null
-    }
-    if (capability) { // Making sure channel's capability is defined
-      const values = capability.getValue(value); // Fetching values from capability value
-      switch (capability.type) { // Checking capability type
-        case CAPABILITY_TYPES.ColorIntensity: // Capability is color
-          this._3DModel.colorIntensity = values; // Updating fixture 3D model color intensity with provided color value
-          break;
-        case CAPABILITY_TYPES.WheelSlot: { // Capability is wheelSlot
-          const slot = Math.floor(capability.getValue(value).slotNumber) - 1.0; // Parsing slot number from value
-          switch (channel.type) { // Dtermining wheel type
-            case WHEEL_CHANNEL_TYPES.COLOR_WHEEL: // Wheel is color wheel
-              this._3DModel.colorWheelSlot = slot; // Updating 3D model's color wheel slot in use
-              break;
-            case WHEEL_CHANNEL_TYPES.GOBO_WHEEL: // Wheel is gobo wheel
-              // TODO handle gobo selection here
-              break;
-            default: break;
-          }
-          break;
-        }
-        case CAPABILITY_TYPES.ColorPreset:
-          this._3DModel.colorPreset = values.color ? values.color[0] : null;
-          break;
-        default:
-          Object.keys(values).forEach((val) => {
-            this._3DModel[val] = values[val];
-          });
-          break;
-      }
+    const channel = this.channels[id];
+    const clampedValue = Math.min(Math.max(Number(value) || 0, 0), MAX_DMX_VALUE);
+    if (channel.fineChannels.length > 0) {
+      // Fine channel takes the fractional part
+      this.setChannel(channel.fineChannels[0].id - 1, (clampedValue % 1) * MAX_DMX_VALUE);
+      channel.value = Math.floor(clampedValue);
+    } else {
+      channel.value = Math.round(clampedValue);
     }
   }
-  /* eslint-disable max-len */
 
   /**
-   * Parses OFL data and rpepares fixture parameters and channels
+   * Prepares fixture parameters and channels from the fixture's profile
    *
    * @public
-   * @todo improve error handling.
-   * @todo Implement other fixure categories
    */
-  parseFromOFLData() {
-    // eslint-disable-next-line prefer-destructuring
-    this.category = this.OFLData.categories[0]; // We're only interested in the first category asset ATM.
-    this.wheels = this.OFLData.wheels; // Isolating and setting fixture's wheels configuration from OFL data
-    this.bulb = this.OFLData.physical.bulb; // Isolating and setting fixture's bulb configuration from OFL data
-    this._name = this.OFLData.name; // Isolating and setting fixture's default name from OFL data
-    this.modes = this.OFLData.modes; // Isolating and setting fixture's modes configuration from OFL data
+  parseFromProfile() {
+    const { profile } = this;
+    this.category = profile.category; // Main category of the fixture type
+    this.wheels = profile.wheels; // Fixture's wheels configuration
+    this.bulb = profile.physical.bulb; // Fixture's bulb configuration
+    this._name = profile.name; // Fixture type's default name
+    this.modes = profile.modes; // Fixture's modes, shared with every fixture of this type
     this.prepareChannels(); // Prepare fixture's channels
     this.setupFineChannels();
     this.setupQuickAccessors();
-    this.prepare3DModelInstance();
   }
 
   /**
-   * Handles instanciation of 3D model to be bound to fixture instance
-   *
-   * @pulic
-   * @todo implement every fixture type
-   */
-  prepare3DModelInstance() {
-    switch (this.category) { // Checking fixture category
-      case FIXTURE_TYPES.MOVING_HEAD: { // Fixture is a moving head
-        const movingHead = new MovingHead({ // Creating new moving head instance
-          minAngle: this.OFLData.physical.lens ? this.OFLData.physical.lens.degreesMinMax[0] : 10, // Setting moving head's minimum beam angle
-          maxAngle: this.OFLData.physical.lens ? this.OFLData.physical.lens.degreesMinMax[1] : 25, // Setting moving head's maximum beam angle
-          minTilt: this.quickChannelsAccessors.Tilt ? this.quickChannelsAccessors.Tilt[0].minVal : 0,
-          maxTilt: this.quickChannelsAccessors.Tilt ? this.quickChannelsAccessors.Tilt[0].maxVal : 0,
-          minPan: this.quickChannelsAccessors.Pan ? this.quickChannelsAccessors.Pan[0].minVal : 0,
-          maxPan: this.quickChannelsAccessors.Pan ? this.quickChannelsAccessors.Pan[0].maxVal : 0,
-          colorTemp: this.OFLData.physical.bulb.colorTemperature, // Setting moving head's default bulb color temperature
-          intensity: 0.0, // Setting moving head's default intensity
-          pan: 128, // Setting moving head's default pan value
-          tilt: 128, // Setting moving head's default tilt value
-          colorWheel: this.OFLData.wheels && this.OFLData.wheels['Color Wheel'] ? this.OFLData.wheels['Color Wheel'].slots : [], // Providing color wheel data (if necessary)
-          goboWheel: this.OFLData.wheels && this.OFLData.wheels['Gobo Wheel'] ? this.OFLData.wheels['Gobo Wheel'].slots : [], // Providing gobo wheel data (if necessary) (not supported in renderer yet...)
-        });
-        movingHead.position = this._position; // Setting moving head's position in 3D space
-        movingHead.rotation = this._rotation; // Setting moving head's rotation in 3D space
-        this._3DModel = markRaw(movingHead); // Binding moving head instance, kept out of Vue reactivity
-        break;
-      }
-      default: { // Do nothing for every other fixture types.
-        throw new Error('This fixture type is not supported yet.');
-      }
-    }
-  }
-
-  /**
-   * Prepare fixture's channel from provided OFL configuration data
+   * Prepares fixture's channels from the selected mode of its profile
    *
    * @public
    */
   prepareChannels() {
-    const OFLData = JSON.parse(JSON.stringify(this.OFLData));
-    this.channels = [];
-    let channelId = 0; // Initialising channel index to 0
-    this.mode = OFLData.modes[this.modeIndex] || OFLData.modes[0]; // Parsing and setting fixture channel mode
-    this.mode.channels.forEach((channel) => { // Looping through channel modes
-      if (channel && typeof channel === 'string') { // Making sure the OFL mode data contains a channel value
-        const split = channel.split(FINE_CHANNEL_SPLIT_PATERN); // Looking for and parsing fine channel aliases
-        const channelName = split[0]; // Getting channel name from split result
-        const isFine = split.length > 1; // Checking if split result contains a result for fine alias
-        const channelData = OFLData.availableChannels[channelName]; // Isolating channel data
-        if (channelData && channelData.capability && isFine) { // Checking if the channel has a fine alias
-          channelData.capability.type = `${channelName}${FINE_CHANNEL_TERMINOLOGY}`; // Setting fine terminology to channel's capability type
-        }
-        const chn = new Channel({ // Instanciating new channel
-          id: ++channelId, // Channel's ID is set and incremented for the next loop occurence
-          type: channelName, // Setting channel type name @see channel.model.js
-          name: `${channelName}${isFine ? FINE_CHANNEL_TERMINOLOGY : ''}`, // Setting channel name and fine terminology @see channel.model.js
-          OFLData: channelData, // Providing channel data
-          isFine, // Setting fine flag
-        });
-        this.channels.push(chn); // Instanciating channel in the fixture's channel pool
-      } else { // In case the OFL channel configuration is emty/undefined
-        const chn = new Channel({ // Instanciating a new empty channel
-          type: 'Unset',
-          id: ++channelId, // Setting channel's ID and incrementing for the next loop occurence
-        });
-        this.channels.push(chn); // Pushing empty channel in to the fixture's channel pool
-      }
-    });
+    this.mode = this.modes[this.modeIndex] || this.modes[0]; // Selected profile mode
+    const { cells, cellOf, kinds } = modeCells(this.mode, this.profile && this.profile.matrix);
+    this._cells = cells;
+    // Channels are raw: playback writes them every tick, widgets read them through the live ticker
+    this.channels = this.mode.channels.map((profileChannel, index) => markRaw(new Channel({
+      id: index + 1,
+      profileChannel,
+      cell: cellOf[index],
+      kind: kinds[index],
+    })));
   }
 
   /**
@@ -803,68 +689,45 @@ class Fixture {
    */
   setupFineChannels() {
     this.channels.forEach((channel) => {
-      if (channel.fineChannelAliases && !channel.isFine) {
-        channel.fineChannels = channel.fineChannelAliases.flatMap((alias) => {
-          const standardizedAlias = alias.replace(' ', '').toLowerCase();
-          const fineChannel = this.channels.find((item) => item.type.replace(' ', '').toLowerCase() === standardizedAlias);
-          return fineChannel || [];
-        });
-      }
+      channel.fineChannels = channel.fineIndexes.map((index) => this.channels[index]);
     });
   }
 
   /**
-   * Highlights the fixture model
+   * Highlights the fixture in the visualizer
    *
-   * @param {Boolean} state wheter the fixture Model should be highlighted or not
+   * @param {Boolean} state wheter the fixture should be highlighted or not
+   * @param {Boolean} [centerControls=false] whether the move/rotate gizmo follows the highlight
    */
   highlight(state, centerControls = false) {
-    if (this._3DModel) {
-      this._3DModel.highlighted = state;
-      if (centerControls) {
-        if (state) {
-          Controls.attach(this);
-        } else {
-          Controls.detach(this);
-        }
-      }
-    }
+    this._highlighted = state;
+    EventBus.emit('fixture_highlight', {
+      id: this.id, state, single: false, center: centerControls,
+    });
   }
 
   /**
-   * Highlights the fixture model while unhighlighting any other already highlighted instance
+   * Highlights the fixture in the visualizer while unhighlighting any other highlighted fixture
    *
-   * @param {Boolean} state wheter the fixture Model should be highlighted or not
+   * @param {Boolean} state wheter the fixture should be highlighted or not
+   * @param {Boolean} [centerControls=false] whether the move/rotate gizmo follows the highlight
    */
   highlightSingle(state, centerControls = false) {
-    if (this._3DModel) {
-      this._3DModel.setSinglyHighlighted(state);
-      if (state && centerControls) {
-        Controls.detachAll();
-        Controls.attach(this);
-      } else if (!state) {
-        Controls.detachAll();
-        Controls.setFocus(false);
-      }
-    }
+    this._highlighted = state;
+    EventBus.emit('fixture_highlight', {
+      id: this.id, state, single: true, center: centerControls,
+    });
   }
 
   /**
-   * Delete fixture instance by removing the model from the instanced mesh pool
-   * and unreferencing each instance property.
+   * Releases a fixture instance. Its 3D instance is removed by the visualizer when the patch
+   * changes.
    *
-   * @param {Fixture}
+   * @param {Fixture} instance fixture instance
    * @static
    */
   static deleteInstance(instance) {
-    switch (instance.category) {
-      case FIXTURE_TYPES.MOVING_HEAD:
-        MovingHead.deleteInstance(instance._3DModel);
-        break;
-      default:
-        break;
-    }
-    instance = null;
+    instance.channels = [];
   }
 
   /**

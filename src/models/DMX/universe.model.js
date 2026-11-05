@@ -1,5 +1,6 @@
 import ukColors from '@/views/components/uikit/colors/uikit.colors';
 import FixturePool from './fixture.pool.model';
+import EventBus from '../../plugins/eventbus';
 
 /**
  * DMX512 universe length
@@ -149,18 +150,35 @@ class Universe {
   }
 
   get DMX512Data() {
-    const DMX_PACKET_LENGTH = 512;
-    const DMX_BUFF = new Uint8Array(DMX_PACKET_LENGTH);
-    this._addressMap.forEach((address, index) => {
-      const fixture = this._patch[address];
-      if (fixture) {
-        const fixtureChannelIndex = index - fixture.chStart;
-        DMX_BUFF[index] = fixture.channels[fixtureChannelIndex].value.DMX || 0;
-      } else {
-        DMX_BUFF[index] = 0;
-      }
-    });
-    return DMX_BUFF;
+    return this._dmxBuffer;
+  }
+
+  /**
+   * Universe's current DMX frame (512 channels), packed once per Live tick by the universe pool.
+   * The buffer is reused: copy it to keep a snapshot.
+   *
+   * @readonly
+   * @type {Uint8Array}
+   */
+  get frame() {
+    return this._dmxBuffer;
+  }
+
+  /**
+   * Copies the patched fixtures' channel values into the universe frame
+   *
+   * @public
+   * @returns {Uint8Array} The universe frame
+   */
+  packFrame() {
+    const frame = this._dmxBuffer;
+    for (let i = 0; i < DMX_UNIVERSE_LENGTH; i++) {
+      const address = this._addressMap[i];
+      const fixture = address === undefined ? undefined : this._patch[address];
+      const channel = fixture ? fixture.channels[i - address] : undefined;
+      frame[i] = channel ? channel.value.DMX : 0;
+    }
+    return frame;
   }
 
   /**
@@ -194,6 +212,7 @@ class Universe {
       for (let i = fixture.chStart; i < fixture.chStop; i++) {
         this._addressMap[i] = fixture.chStart;
       }
+      EventBus.emit('patch_changed');
     } else {
       throw new Error('Cannot patch fixture on this interval');
     }
@@ -213,6 +232,35 @@ class Universe {
         ? undefined
         : address
     ));
+    EventBus.emit('patch_changed');
+  }
+
+  /**
+   * Switches a patched fixture to another mode and moves its address range to the new mode's
+   * channel count. Refuses the change when the new range would overlap another fixture or pass
+   * the end of the universe.
+   *
+   * @public
+   * @param {Object} fixture Fixture instance (or reactive proxy) patched in this universe
+   * @param {Number} modeIndex Index of the new mode in the fixture's modes
+   */
+  changeFixtureMode(fixture, modeIndex) {
+    const chCount = fixture.modes[modeIndex].channels.length;
+    const chStop = fixture.chStart + chCount;
+    const overlaps = Object.values(this._patch).some((patched) => (
+      patched.id !== fixture.id && chStop > patched.chStart && fixture.chStart < patched.chStop
+    ));
+    if (overlaps || chStop > DMX_UNIVERSE_LENGTH) {
+      throw new Error(`Mode "${fixture.modeNames[modeIndex]}" needs ${chCount} channels and would overlap another fixture or exceed the universe`);
+    }
+    for (let i = fixture.chStart; i < fixture.chStop; i++) {
+      this._addressMap[i] = undefined;
+    }
+    fixture.modeIndex = modeIndex;
+    for (let i = fixture.chStart; i < fixture.chStop; i++) {
+      this._addressMap[i] = fixture.chStart;
+    }
+    EventBus.emit('patch_changed');
   }
 
   /**
@@ -291,7 +339,7 @@ class Universe {
       this.id,
       protocol,
       address,
-      () => this.DMX512Data,
+      () => this.frame,
     );
   }
 

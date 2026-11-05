@@ -57,16 +57,29 @@ A selected fixture's [Settings](#fixture-settings) can be modified by modifying 
 <Video src="/interface/modifier_universe_fixture_settings_widget.webm"/>
 
 
-| Setting | Description                           |
-| ------- | ------------------------------------- |
-| Name    | The fixture's nickname                |
-| Address | The fixture's address on the universe |
-| Mode    | The fixture's operating mode          |
+| Setting | Description                                                         |
+| ------- | ------------------------------------------------------------------- |
+| Name    | The fixture's nickname                                              |
+| Address | The fixture's address on the universe                               |
+| Mode    | The fixture's operating mode. It is saved with the show and restored when the show is reopened. |
+
+When you change a fixture's mode, channels that exist in both modes (for example Dimmer or Pan) keep their current value and channels new to the mode start at 0. The fixture's address range grows or shrinks to the new mode's channel count. If the new mode needs more addresses than are free after the fixture, or would go past address 512, the change is refused and the fixture stays in its current mode.
 
 ## Fixture Position Tool
 
 While a fixture can be positionned through the [visualizer's tranform controls](/interface/visualizer/#transform-controls) feature, it's position may be fine-tuned by using the [universe modifier's](#universe-modifier) position tool widget. Fixture's position in space can be specified with cm accuracy while rotation in every axes can be specified in steps of 1 degrees.
 
+
+## Cells
+
+Some fixtures are made of several cells: the pixels of a bar or a matrix, the heads of a multi-head fixture. When the selected fixture has cells, the **Cells** widget lists them, after **All cells**.
+
+- Select **All cells** (the default) to control every cell at once.
+- Select a cell to control it on its own, or several cells by holding <kbd>`Ctrl`</kbd> or <kbd>`Shift`</kbd>.
+
+The [channels](#fixture-channels) widget then shows the channels of the selected cells, plus the channels that belong to the whole fixture (a master dimmer, a strobe). The [Color Picker](#color-picker) and [Pan & Tilt](#pan--tilt) widgets set the selected cells only. Fixtures without cells don't show the widget.
+
+<!-- TODO media: universe modifier with an 8-pixel bar, cell 3 selected and set to blue -->
 
 ## Fixture Channels
 A selected fixture's [channels](#fixture-channels) can be modified on the fly by playing around with the channel faders available through the [channels widget](#fixture-channels).
@@ -87,7 +100,7 @@ All channel types are virtually supported. However, some might not have been imp
 | Strobe Speed         | Strobe Speed                      |     ✅      |                            |
 | Strobe Duration      | Strobe Duration                   |     ✅      |                            |
 | Intensity            | Dimmer/Brightness                 |     ✅      |                            |
-| Color Intensity      | Color Channel Intensity           |     ✅      | Supported: **R,G,B,C,M,Y** |
+| Color Intensity      | Color Channel Intensity           |     ✅      | Supported: **R, G, B, C, M, Y, white, warm and cold white, amber, UV, lime**|
 | Color Preset         | Color preset selection            |     ✅      |                            |
 | Color Temperature    | Color temperatrue                 |     ✅      |                            |
 | Pan                  | Pan                               |     ✅      |                            |
@@ -95,9 +108,9 @@ All channel types are virtually supported. However, some might not have been imp
 | Tilt                 | Tilt                              |     ✅      |                            |
 | Tilt Continuous      | Continuous tilting Speed          |     ⬜️      |                            |
 | Pan TiltSpeed        | Pan & Tilt speed selection        |     ⬜️      |                            |
-| Wheel Slot           | Wheel selection                   |     ✅      | Supported: **Color wheel** |
+| Wheel Slot           | Wheel selection                   |     ✅      | Supported: **Color, gobo and prism wheels** |
 | Wheel Shake          | Wheel slot shaking                |     ⬜️      |                            |
-| Wheel SlotRotation   | Full wheel roration               |     ⬜️      |                            |
+| Wheel SlotRotation   | Full wheel roration               |     ✅      | Gobo rotation and gobo index|
 | Wheel Rotation       | Wheel slot rotation               |     ⬜️      |                            |
 | Effect               | Fixture built-in effect selection |     ⬜️      |                            |
 | Beam Angle           | Beam angle value                  |     ✅      |                            |
@@ -108,12 +121,12 @@ All channel types are virtually supported. However, some might not have been imp
 | Sound Sensitivity    | Fixture sound sensitivity         |     ⬜️      |                            |
 | Focus                | Focus distance                    |     ✅      |                            |
 | Zoom                 | Zoom / Beam angle                 |     ✅      |                            |
-| Iris                 | Iris  Opening                     |     ⬜️      |                            |
+| Iris                 | Iris  Opening                     |     ✅      | Narrows the beam           |
 | Iris Effect          | Fixture built-in iris effect      |     ⬜️      |                            |
-| Frost                | Frosting                          |     ⬜️      |                            |
+| Frost                | Frosting                          |     ✅      |                            |
 | Frost Effect         | Fixture built-in frosting effect  |     ⬜️      |                            |
-| Prism                | Prism selection                   |     ⬜️      |                            |
-| Prism Rotation       | Prism rotation speed              |     ⬜️      |                            |
+| Prism                | Prism selection                   |     ✅      | The fixture's facets (GDTF), else three|
+| Prism Rotation       | Prism rotation speed              |     ✅      | Speed and index            |
 | Blade Insertion      | blade selection / insertion       |     ⬜️      |                            |
 | Blade SystemRotation | blade rotation selection          |     ⬜️      |                            |
 | Fog                  | Fogging                           |     ⬜️      |                            |
@@ -127,7 +140,7 @@ All channel types are virtually supported. However, some might not have been imp
 
 ## Color Picker
 
-The color picker widget can be used to manipulate a fixture's [color intensity channels](#supported-channel-types). Color systems can differ from one fixture to another (RGB, CMY, HSV...). To ease color manipulation, the chosen color value is automatically converted to match the fixture's color system.
+The color picker widget can be used to manipulate a fixture's [color intensity channels](#supported-channel-types). Color systems can differ from one fixture to another (RGB, CMY, HSV...). To ease color manipulation, the chosen color value is automatically converted to match the fixture's color system. On a fixture with a white channel (RGBW), the white channel takes the part shared by red, green and blue: picking red 255, green 128, blue 128 sets white 128 and red 127. Amber, UV and lime are left to their faders.
 
 <Video src="/interface/modifier_universe_colorpicker_widget.webm"/>
 

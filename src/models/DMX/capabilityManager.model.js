@@ -218,7 +218,8 @@ const CAPABILITY_TYPES = {
       max: 100,
     },
   },
-  ColorTeperature: {
+  ColorTemperature: {
+    // Kelvin, or relative values (-100 warm / CTO to 100 cold / CTB) for percentages and presets
     colorTemperature: {
       alias: 'colorTemperature',
       entity: EntityManager.entities.ColorTemperature,
@@ -350,17 +351,17 @@ const CAPABILITY_TYPES = {
     },
     speed: {
       alias: 'wheelRotationSpeed',
-      entity: EntityManager.entities.Speed,
+      entity: EntityManager.entities.RotationSpeed,
       unit: ENTITY_UNIT_RPM,
       min: 0,
       max: 360,
     },
-    shakeAngle: {
+    angle: {
       alias: 'wheelRotationAngle',
-      entity: EntityManager.entities.SwingAngle,
+      entity: EntityManager.entities.RotationAngle,
       unit: ENTITY_UNIT_DEG,
       min: 0,
-      max: 90,
+      max: 360,
     },
   },
   Effect: {
@@ -439,6 +440,56 @@ const CAPABILITY_TYPES = {
       max: 100,
     },
   },
+  Frost: {
+    frostIntensity: {
+      alias: 'frost',
+      entity: EntityManager.entities.Percent,
+      unit: ENTITY_UNIT_PERC,
+      min: 0,
+      max: 100,
+    },
+  },
+  Prism: {
+    // OFL Prism capabilities carry no "in" flag: any Prism capability means the prism is in
+    prismIn: {
+      alias: 'prism',
+      default: true,
+    },
+  },
+  PrismRotation: {
+    wheel: {
+      alias: 'wheel',
+      default: '',
+    },
+    // GDTF: rotation ranges of the prism channel itself mean the prism is in
+    prismIn: {
+      alias: 'prism',
+      default: false,
+    },
+    speed: {
+      alias: 'prismRotationSpeed',
+      entity: EntityManager.entities.RotationSpeed,
+      unit: ENTITY_UNIT_RPM,
+      min: 0,
+      max: 360,
+    },
+    angle: {
+      alias: 'prismRotationAngle',
+      entity: EntityManager.entities.RotationAngle,
+      unit: ENTITY_UNIT_DEG,
+      min: 0,
+      max: 360,
+    },
+  },
+  Iris: {
+    openPercent: {
+      alias: 'iris',
+      entity: EntityManager.entities.IrisPercent,
+      unit: ENTITY_UNIT_PERC,
+      min: 0,
+      max: 100,
+    },
+  },
 };
 
 /**
@@ -461,6 +512,10 @@ class Capability {
     this.parameters = {};
     this.isFine = false;
     this.init(capabilityData);
+    this._entityNames = Object.keys(this.entities);
+    this._parameterNames = Object.keys(this.parameters);
+    this.valueKeys = this._entityNames.concat(this._parameterNames);
+    this._value = {};
   }
 
   /**
@@ -527,6 +582,8 @@ class Capability {
             );
           }
           if (!entityValue && !entityValueStart && !entityValueStop) {
+            // Not in the data: the entity spans its whole range, flagged so readers can skip it
+            this.entities[alias].implicit = true;
             this.entities[alias].start = setting.entity.getValue(
               setting.min + setting.unit,
               setting.unit,
@@ -548,23 +605,23 @@ class Capability {
   }
 
   /**
-   * Returns capability value from DMX channel value
+   * Returns capability value from DMX channel value. The returned object is reused by every
+   * call (capabilities are shared by every fixture of a type): read it right away, don't keep it.
    *
    * @public
    * @param {Number} DMXValue DMX channel value
+   * @returns {Object} Values keyed by `valueKeys`
    */
   getValue(DMXValue) {
-    const value = {};
-    Object.keys(this.entities).forEach((entityName) => {
-      value[entityName] = this.getEntityValue(
-        this.entities[entityName],
-        DMXValue,
-        this.isFine,
-      );
-    });
-    Object.keys(this.parameters).forEach((parameterName) => {
+    const value = this._value;
+    for (let i = 0; i < this._entityNames.length; i++) {
+      const entityName = this._entityNames[i];
+      value[entityName] = this.getEntityValue(this.entities[entityName], DMXValue, this.isFine);
+    }
+    for (let i = 0; i < this._parameterNames.length; i++) {
+      const parameterName = this._parameterNames[i];
       value[parameterName] = this.parameters[parameterName];
-    });
+    }
     return value;
   }
 

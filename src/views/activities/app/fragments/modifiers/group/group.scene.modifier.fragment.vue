@@ -13,6 +13,12 @@
       :scene="scene ? scene : undefined"
       @select="selectFixtures"
     />
+    <modifier-widget-cells
+      v-if="fixtureValue && sceneCells.length"
+      :key="selectionKey"
+      :cells="sceneCells"
+      @change="selectedCells = $event"
+    />
     <widget-fixture-channels
       v-show="fixtureValue"
       ref="channels"
@@ -26,14 +32,14 @@
       v-show="colorPickerState && fixtureValue"
       ref="colorPicker"
       tabindex="0"
-      :rgb-data="fixtureValue ? fixtureValue.color : undefined"
+      :rgb-data="fixtureValue ? fixtureValue.getColor(selectedCells) : undefined"
       @input="updateFixtureColor"
     />
     <widget-pan-tilt
       v-show="panTiltPickerState && fixtureValue"
       ref="panTiltPicker"
       tabindex="0"
-      :pan-tilt="fixtureValue ? fixtureValue.panTilt : undefined"
+      :pan-tilt="fixtureValue ? fixtureValue.getPanTilt(selectedCells) : undefined"
       @input="updateFixturePanTilt"
     />
   </uk-flex>
@@ -44,6 +50,7 @@ import WidgetCurve from '../_widgets/modifier.widget.curve.vue';
 import WidgetColorPicker from '../_widgets/modifier.widget.colorpicker.vue';
 import WidgetPanTilt from '../_widgets/modifier.widget.pantilt.vue';
 import WidgetFixtureChannels from '../_widgets/modifier.widget.fixture.channels.vue';
+import ModifierWidgetCells from '../_widgets/modifier.widget.cells.vue';
 
 import WidgetSceneFixtures from './_widgets/group.scene.modifier.widget.fixtures.vue';
 
@@ -59,6 +66,7 @@ export default {
     WidgetSceneFixtures,
     WidgetColorPicker,
     WidgetPanTilt,
+    ModifierWidgetCells,
   },
   props: {
     /**
@@ -87,21 +95,77 @@ export default {
        * Scene pan & tilt picker display state
        */
       panTiltPickerState: false,
+      /**
+       * Cells the controls apply to, null for all (view state only)
+       */
+      selectedCells: null,
     };
   },
   computed: {
     /**
-     * list of channelValues to be displayed. WHenever a list of
-     * fixture is selected, a channelValues union of each individual fixtures channels is created.
+     * Fader rows: each whole-fixture channel, then one row per channel kind and colour for the
+     * selected cells. A row writes every matching channel of the selected fixtures (its targets)
      */
     channelValues() {
-      return this.selectedFixtureValues
-        .map((fixtureValue) => fixtureValue.channelValues.map((channelValue) => channelValue))
-        .flat()
-        .filter((v, i, a) => a.findIndex((v2) => v2.type === v.type && v2.color === v.color) === i);
+      const rows = [];
+      const byKey = new Map();
+      const cells = this.selectedCells;
+      this.selectedFixtureValues.forEach((fixtureValue) => {
+        const ranks = new Map();
+        fixtureValue.fixture.channels.forEach((channel, index) => {
+          const entry = fixtureValue.entryOf(index);
+          if (!entry) return;
+          let key;
+          if (!channel.cell) {
+            key = `fixture|${channel.type}|${channel.color}|${channel.qaIndex}`;
+          } else if (!cells || cells.includes(channel.cell)) {
+            // The n-th channel of a kind and colour in its cell
+            const rankKey = `${channel.cell}|${channel.kind}|${channel.color}`;
+            const rank = ranks.get(rankKey) || 0;
+            ranks.set(rankKey, rank + 1);
+            key = `cell|${channel.kind}|${channel.color}|${rank}`;
+          } else {
+            return;
+          }
+          if (!byKey.has(key)) {
+            const row = {
+              type: channel.cell ? channel.kind : channel.type,
+              color: channel.color,
+              value: entry.value,
+              active: entry.active,
+              targets: [],
+            };
+            byKey.set(key, row);
+            rows.push(row);
+          }
+          byKey.get(key).targets.push({ fixtureValue, type: entry.type, qaIndex: entry.qaIndex });
+        });
+      });
+      return rows;
+    },
+    /**
+     * Cell names of the selected fixtures, in fixture order
+     */
+    sceneCells() {
+      const names = [];
+      this.selectedFixtureValues.forEach((fixtureValue) => {
+        fixtureValue.fixture.cells.forEach((cell) => {
+          if (!names.includes(cell.name)) names.push(cell.name);
+        });
+      });
+      return names;
+    },
+    /**
+     * Resets the cell selector when the fixture selection changes
+     */
+    selectionKey() {
+      return this.selectedFixtureValues.map((fixtureValue) => fixtureValue.fixture.id).join(',');
     },
   },
   watch: {
+    selectionKey() {
+      this.selectedCells = null;
+    },
     scene() {
       this.initSceneValues();
     },
@@ -162,8 +226,13 @@ export default {
      * @param {Object} channel channel object
      */
     updateFixtureChannels(channel) {
-      this.selectedFixtureValues.forEach((fixtureValue) => {
-        fixtureValue.setQuickAccessor(channel);
+      channel.targets.forEach((target) => {
+        target.fixtureValue.setQuickAccessor({
+          type: target.type,
+          qaIndex: target.qaIndex,
+          value: channel.value,
+          active: channel.active,
+        });
       });
     },
     /**
@@ -174,7 +243,7 @@ export default {
      */
     updateFixtureColor(rgbValue) {
       this.selectedFixtureValues.forEach((fixtureValue) => {
-        fixtureValue.color = rgbValue;
+        fixtureValue.setColor(rgbValue, this.selectedCells);
       });
     },
     /**
@@ -189,7 +258,7 @@ export default {
      */
     updateFixturePanTilt(panTilt) {
       this.selectedFixtureValues.forEach((fixtureValue) => {
-        fixtureValue.panTilt = panTilt;
+        fixtureValue.setPanTilt(panTilt, this.selectedCells);
       });
     },
   },

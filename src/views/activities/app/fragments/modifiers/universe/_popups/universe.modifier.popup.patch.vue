@@ -7,12 +7,39 @@
     @input="update()"
   >
     <uk-flex class="patch_popup">
-      <uk-list
-        class="fixture_list"
-        :items="fixtures"
-        filterable
-        @select="loadFixture"
-      />
+      <uk-flex
+        col
+        class="fixture_sources"
+        :class="{ dragging }"
+        @dragover.prevent="dragging = true"
+        @dragleave="dragging = false"
+        @drop.prevent="dropFiles"
+      >
+        <uk-list
+          class="fixture_list"
+          :items="fixtures"
+          filterable
+          @select="loadFixture"
+        />
+        <div class="import_bar">
+          <uk-button
+            square
+            icon="library"
+            label="Import GDTF…"
+            :disabled="importing"
+            style="width: 100%; height: 25px"
+            @click="$refs.gdtfFiles.click()"
+          />
+          <input
+            ref="gdtfFiles"
+            type="file"
+            accept=".gdtf"
+            multiple
+            hidden
+            @change="pickFiles"
+          >
+        </div>
+      </uk-flex>
       <uk-flex
         col
         class="patch_form"
@@ -229,6 +256,9 @@
 
 <script>
 import PopupMixin from '@/views/mixins/popup.mixin';
+import EventBus from '@/plugins/eventbus';
+import FixtureLibrary from '@/models/fixtures/fixture.library';
+import { PROFILE_SOURCES } from '@/models/fixtures/fixture.profile';
 
 const NO_FIXTURE_STR = 'No fixture model selected';
 const DEFAULT_FIXTURE_AMOUNT = 1;
@@ -270,6 +300,8 @@ export default {
       chStart: 0,
       patchError: false,
       loading: false,
+      importing: false,
+      dragging: false,
     };
   },
   computed: {
@@ -297,7 +329,7 @@ export default {
      * @public
      */
     init() {
-      this.fixtures = this.prepareFixtures();
+      this.refreshFixtures();
       this.fixture = JSON.parse(JSON.stringify(DEFAULT_FIXTURE_DATA));
       this.amount = DEFAULT_FIXTURE_AMOUNT;
       this.positionOffsets = { x: 0, y: 0, z: 0 };
@@ -334,11 +366,18 @@ export default {
                 y: rotation_tmp.y + this.rotationOffsets.y * i,
                 z: rotation_tmp.z + this.rotationOffsets.z * i,
               };
-              const fixture = this.$show.fixturePool.addRaw(
-                JSON.parse(
-                  JSON.stringify(this.fixture),
-                ),
-              );
+              const fixture = this.$show.fixturePool.addRaw({
+                profile: this.fixture.profile,
+                manufacturer: this.fixture.manufacturer,
+                model: this.fixture.model,
+                name: this.fixture.name,
+                category: this.fixture.category,
+                mode: this.fixture.modeNames[this.fixture.mode],
+                universe: this.fixture.universe,
+                chStart: this.fixture.chStart,
+                position: { ...this.fixture.position },
+                rotation: { ...this.fixture.rotation },
+              });
               this.universe.patchFixture(fixture);
             }
             this.loading = false;
@@ -361,17 +400,18 @@ export default {
      * @async
      */
     async loadFixture(item) {
-      const { manufacturer } = item;
-      const { fixture } = item;
-      const res = await this.$http.get(`${import.meta.env.VITE_STATIC_URL}fixtures/${manufacturer.name}/${fixture}`);
+      if (!item || !item.fixture) return;
+      const { source, manufacturer, fixture } = item;
+      const profile = await FixtureLibrary.getProfile(source, manufacturer, fixture);
       Object.assign(this.fixture, {
-        OFLData: res.data,
-        modes: res.data.modes,
-        modeNames: res.data.modes.map((mode) => mode.name),
-        name: res.data.name,
-        model: fixture,
-        manufacturer: manufacturer.name,
-        category: res.data.categories[0],
+        profile,
+        modes: profile.modes,
+        modeNames: profile.modes.map((mode) => mode.name),
+        name: profile.name,
+        model: profile.model,
+        manufacturer: profile.manufacturer,
+        category: profile.category,
+        mode: 0,
         loaded: true,
       });
       this.patchError = false;
@@ -409,22 +449,83 @@ export default {
       }
     },
     /**
-     * Prepare fixture list
+     * Lists the fixtures to patch: imported GDTF fixtures (this device's library), bundled GDTF
+     * fixtures, then the OFL library by manufacturer
      *
-     * @todo this shouldn't be called in a watcher. it might (and does) waste event loop time.
      * @public
+     * @async
      */
-    prepareFixtures() {
-      return this.$show.rawOFLFixtures.map((manufacturer) => ({
+    async refreshFixtures() {
+      const gdtfItem = (f) => ({
+        name: f.name,
+        more: f.manufacturer,
+        icon: 'wave',
+        source: PROFILE_SOURCES.GDTF,
+        manufacturer: f.manufacturer,
+        fixture: f.fixtureTypeId,
+      });
+      const { imported, bundled } = await FixtureLibrary.listGDTF();
+      const ofl = this.$show.rawOFLFixtures.map((manufacturer) => ({
         name: manufacturer.name,
         icon: 'folder',
         unfold: manufacturer.fixtures.map((fixture) => ({
           name: fixture,
           icon: 'wave',
-          manufacturer,
+          source: PROFILE_SOURCES.OFL,
+          manufacturer: manufacturer.name,
           fixture,
         })),
       }));
+      this.fixtures = [
+        { name: 'Imported (GDTF)', icon: 'library', unfold: imported.map(gdtfItem) },
+        { name: 'Bundled (GDTF)', icon: 'library', unfold: bundled.map(gdtfItem) },
+        ...ofl,
+      ];
+    },
+    /**
+     * Imports `.gdtf` files into this device's fixture library, then refreshes the list. A file
+     * that is not a usable GDTF fixture is reported and skipped.
+     *
+     * @public
+     * @async
+     * @param {Array<File>} files Picked or dropped files
+     */
+    async importFiles(files) {
+      this.importing = true;
+      try {
+        for (let i = 0; i < files.length; i++) {
+          try {
+            await FixtureLibrary.importGDTF(await files[i].arrayBuffer());
+          } catch (error) {
+            EventBus.emit('app_error', new Error(`${files[i].name}: ${error.message}`));
+          }
+        }
+        await this.refreshFixtures();
+      } finally {
+        this.importing = false;
+      }
+    },
+    /**
+     * Imports the files picked with the Import GDTF button
+     *
+     * @public
+     * @param {Event} event File input change event
+     */
+    pickFiles(event) {
+      const files = [...event.target.files];
+      event.target.value = '';
+      this.importFiles(files);
+    },
+    /**
+     * Imports the `.gdtf` files dropped on the fixture list
+     *
+     * @public
+     * @param {DragEvent} event Drop event
+     */
+    dropFiles(event) {
+      this.dragging = false;
+      const files = [...event.dataTransfer.files].filter((f) => /\.gdtf$/i.test(f.name));
+      if (files.length) this.importFiles(files);
     },
   },
 };
@@ -440,12 +541,23 @@ export default {
 .patch_form_subsection {
   margin-bottom: unset;
 }
+.fixture_sources {
+  width: 300px;
+  border-right: 1px solid var(--primary-dark);
+}
+.fixture_sources.dragging {
+  outline: 1px dashed var(--accent-blue);
+  outline-offset: -2px;
+}
 .fixture_list {
   height: 350px;
   width: 300px;
   max-height: 350px;
   overflow: hidden;
-  border-right: 1px solid var(--primary-dark);
+}
+.import_bar {
+  padding: 8px;
+  border-top: 1px solid var(--primary-dark);
 }
 .field {
   display: flex;

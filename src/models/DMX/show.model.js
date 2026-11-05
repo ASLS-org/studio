@@ -5,6 +5,7 @@ import {
 import {
   parseStringPromise as XMLParse,
 } from 'xml2js';
+import EventBus from '../../plugins/eventbus';
 
 import Master from './master.model';
 import GroupPool from './group.pool.model';
@@ -12,6 +13,8 @@ import UniversePool from './universe.pool.model';
 import FixturePool from './fixture.pool.model';
 import Live from './live.model';
 import OutputPool from './output.pool.model';
+import FixtureLibrary, { MissingFixtureError } from '../fixtures/fixture.library';
+import { PROFILE_SOURCES, placeholderProfile } from '../fixtures/fixture.profile';
 
 const LOCALSTORAGE_SHOWFILE_KEY = 'ASLS_STUDIO_SHOWFILE';
 const DEFAULT_PROJECT_NAME = 'new_project.asls';
@@ -22,7 +25,13 @@ const SHOWFILE_EXTENSIONS = {
   ASLS: 'json',
 };
 
-const fixtureDataCache = {};
+/**
+ * EventBus event asking the operator about fixture types missing on this device. Its payload is
+ * `{ missing: [{ manufacturer, fixtureTypeId, name }], done }`; call `done()` to go on loading.
+ *
+ * @constant {String} MISSING_FIXTURES_EVENT
+ */
+export const MISSING_FIXTURES_EVENT = 'fixtures_missing';
 
 /**
  * Storage for show definitions
@@ -93,6 +102,42 @@ class Show extends EventEmitter {
       visualizer: this.visualizerHandle.showData,
       outputs: this.outputPool.showData,
     };
+  }
+
+  /**
+   * Plain description of every patched fixture, for the visualizer. Rebuilt on `patch_changed`.
+   * `frame` is the universe's live DMX frame and `chStart` the fixture's address in it (0-based);
+   * `models` holds the mesh files of GDTF fixtures and `type` their fixture type ID.
+   *
+   * @readonly
+   * @type {Array<Object>}
+   */
+  get patchSnapshot() {
+    const entries = [];
+    this.universePool.universes.forEach((universe) => {
+      const { frame } = universe;
+      Object.entries(universe._patch).forEach(([address, fixture]) => {
+        if (fixture.isPlaceholder) return;
+        entries.push({
+          id: fixture.id,
+          universe: universe.id,
+          chStart: Number(address),
+          channels: fixture.mode.channels,
+          category: fixture.category,
+          physical: fixture.profile.physical,
+          wheels: fixture.profile.wheels,
+          geometry: fixture.mode.geometry || null,
+          matrix: fixture.profile.matrix || null,
+          images: FixtureLibrary.wheelImages(fixture.profile),
+          models: FixtureLibrary.modelFiles(fixture.profile),
+          type: fixture.profile.gdtf ? fixture.profile.gdtf.fixtureTypeId : null,
+          position: fixture.position,
+          rotation: { ...fixture._rotation },
+          frame,
+        });
+      });
+    });
+    return entries;
   }
 
   /**
@@ -407,15 +452,51 @@ class Show extends EventEmitter {
    * @async
    */
   async prepareFixtures(showData) {
-    for (let i = 0; i < showData.fixtures.length; i++) {
-      const fixtureData = showData.fixtures[i];
-      fixtureData.OFLData = JSON.parse(fixtureDataCache[`${fixtureData.manufacturer}/${fixtureData.model}`] || null);
-      if (!fixtureData.OFLData) {
-        const res = await axios.get(`${import.meta.env.VITE_STATIC_URL}fixtures/${fixtureData.manufacturer}/${fixtureData.model}.json`);
-        fixtureData.OFLData = res.data;
-        fixtureDataCache[`${fixtureData.manufacturer}/${fixtureData.model}`] = JSON.stringify(fixtureData.OFLData);
+    const keyOf = (f) => `${f.source || PROFILE_SOURCES.OFL}/${f.manufacturer}/${f.model}`;
+    const resolve = async () => {
+      const resolved = new Map();
+      const missing = [];
+      for (let i = 0; i < showData.fixtures.length; i++) {
+        const fixtureData = showData.fixtures[i];
+        const key = keyOf(fixtureData);
+        if (!resolved.has(key)) {
+          try {
+            resolved.set(key, await FixtureLibrary.getProfile(
+              fixtureData.source || PROFILE_SOURCES.OFL,
+              fixtureData.manufacturer,
+              fixtureData.model,
+            ));
+          } catch (error) {
+            if (!(error instanceof MissingFixtureError)) throw error;
+            resolved.set(key, null);
+            missing.push({
+              manufacturer: fixtureData.manufacturer,
+              fixtureTypeId: fixtureData.model,
+              name: fixtureData.name,
+            });
+          }
+        }
       }
-      this.fixturePool.addRaw(fixtureData);
+      return { resolved, missing };
+    };
+    let { resolved, missing } = await resolve();
+    if (missing.length && EventBus.all.has(MISSING_FIXTURES_EVENT)) {
+      // The missing fixtures popup imports files, then resolves (or the operator opens anyway)
+      await new Promise((done) => {
+        EventBus.emit(MISSING_FIXTURES_EVENT, { missing, done });
+      });
+      ({ resolved, missing } = await resolve());
+    }
+    showData.fixtures.forEach((fixtureData) => {
+      // A fixture still missing is kept as a placeholder, so its data is saved back unchanged
+      const profile = resolved.get(keyOf(fixtureData)) || placeholderProfile(fixtureData);
+      this.fixturePool.addRaw({ ...fixtureData, profile });
+    });
+    const changed = this.fixturePool.fixtures.filter((fixture) => fixture.footprintChanged);
+    if (changed.length) {
+      const list = changed.map((f) => `${f.name} (universe ${f.universe}, address ${f.chStart + 1})`);
+      EventBus.emit('app_error', new Error('These fixtures now use their full channel list, so '
+        + `their DMX footprint changed. Check their addresses and scenes: ${list.join(', ')}`));
     }
   }
 

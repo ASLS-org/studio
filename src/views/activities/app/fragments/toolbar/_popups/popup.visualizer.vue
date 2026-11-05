@@ -17,53 +17,88 @@
         col
         class="title"
       >
-        <h3>Fogging</h3>
+        <h3>Quality</h3>
         <p class="subtitle">
-          Global scene fogging settings.
+          Rendering quality on this device. Not saved in the show.
         </p>
       </uk-flex>
-
       <uk-flex center-h>
         <div>
-          <h4>State:</h4>
+          <h4>Quality:</h4>
           <p class="subtitle">
-            Turn global scene fogging on/off
+            Auto adapts to this device's frame rate.
           </p>
         </div>
         <uk-spacer />
         <uk-select-input
-          v-model="$show.visualizerHandle.globalFoggingState"
-          :min="0"
-          :max="100"
+          v-model="$show.visualizerHandle.quality"
           style="width: 100px"
-          :options="['disabled', 'enabled']"
+          :options="qualityOptions"
         />
+      </uk-flex>
+      <uk-flex center-h>
+        <div>
+          <h4>Lighting resolution:</h4>
+          <p class="subtitle">
+            Resolution of the stage lighting (when quality isn't Auto).
+          </p>
+        </div>
+        <uk-spacer />
+        <uk-select-input
+          v-model="$show.visualizerHandle.resolutionScale"
+          style="width: 100px"
+          :options="scaleOptions"
+        />
+      </uk-flex>
+      <uk-flex center-h>
+        <div>
+          <h4>Render resolution:</h4>
+          <p class="subtitle">
+            Resolution of the whole view. Higher is sharper and slower.
+          </p>
+        </div>
+        <uk-spacer />
+        <uk-select-input
+          v-model="$show.visualizerHandle.renderScale"
+          style="width: 100px"
+          :options="renderScaleOptions"
+        />
+      </uk-flex>
+      <uk-flex center-h>
+        <div>
+          <h4>Beam guides:</h4>
+          <p class="subtitle">
+            Lines showing each beam's path and footprint. Auto shows them at Guides quality.
+          </p>
+        </div>
+        <uk-spacer />
+        <uk-select-input
+          v-model="$show.visualizerHandle.beamGuides"
+          style="width: 100px"
+          :options="guideOptions"
+        />
+      </uk-flex>
+      <div class="separator" />
+      <uk-flex
+        :gap="8"
+        col
+        class="title"
+      >
+        <h3>Haze</h3>
+        <p class="subtitle">
+          Haze the beams shine through. Saved in the show.
+        </p>
       </uk-flex>
       <uk-flex center-h>
         <div>
           <h4>Density:</h4>
           <p class="subtitle">
-            Sets the global scene fog density amount.
+            How bright beams look in the air. 0 hides them.
           </p>
         </div>
         <uk-spacer />
         <uk-num-input
-          v-model="$show.visualizerHandle.globalFoggingDensity"
-          :min="0"
-          :max="100"
-          style="width: 100px"
-        />
-      </uk-flex>
-      <uk-flex center-h>
-        <div>
-          <h4>Turbulence:</h4>
-          <p class="subtitle">
-            Sets fog turbulence behavior over time.
-          </p>
-        </div>
-        <uk-spacer />
-        <uk-num-input
-          v-model="$show.visualizerHandle.globalFoggingTurbulences"
+          v-model="$show.visualizerHandle.hazeDensity"
           :min="0"
           :max="100"
           style="width: 100px"
@@ -95,6 +130,21 @@
           style="width: 100px"
         />
       </uk-flex>
+      <uk-flex center-h>
+        <div>
+          <h4>Exposure:</h4>
+          <p class="subtitle">
+            Brightness of the beams and their light, in %. 100 is physically accurate.
+          </p>
+        </div>
+        <uk-spacer />
+        <uk-num-input
+          v-model="$show.visualizerHandle.exposure"
+          :min="25"
+          :max="400"
+          style="width: 100px"
+        />
+      </uk-flex>
     </uk-flex>
   </uk-popup>
 </template>
@@ -115,12 +165,36 @@ export default {
        * Popup header data
        */
       headerData: { title: 'Visualizer settings' },
+      /**
+       * Quality setting labels, in Visualizer.QUALITY_OPTIONS order
+       */
+      qualityOptions: ['auto', 'guides', 'low', 'medium', 'high'],
+      /**
+       * Resolution scale labels, in RESOLUTION_SCALES order
+       */
+      scaleOptions: ['100%', '75%', '50%', '35%'],
+      /**
+       * Render resolution labels, in RENDER_SCALES order
+       */
+      renderScaleOptions: ['50%', '80%', '100%'],
+      /**
+       * Beam guides setting labels, in Visualizer.GUIDE_OPTIONS order
+       */
+      guideOptions: ['auto', 'on', 'off'],
     };
   },
   watch: {
     state(state) {
       if (state && !this.initialValues && this.$show.visualizerHandle) {
         this.initialValues = this.$show.visualizerHandle.showData;
+      }
+      if (state && this.$show.visualizerHandle) {
+        const {
+          quality, resolutionScale, beamGuides, renderScale,
+        } = this.$show.visualizerHandle;
+        this.initialQuality = {
+          quality, resolutionScale, beamGuides, renderScale,
+        };
       }
     },
   },
@@ -136,11 +210,15 @@ export default {
        * @public
      */
     resetInitialValues() {
-      this.$show.visualizerHandle.globalFoggingState = this.initialValues.globalFoggingState;
-      this.$show.visualizerHandle.globalFoggingDensity = this.initialValues.globalFoggingDensity;
-      // eslint-disable-next-line max-len
-      this.$show.visualizerHandle.globalFoggingTurbulences = this.initialValues.globalFoggingTurbulences;
+      this.$show.visualizerHandle.hazeDensity = this.initialValues.hazeDensity;
       this.$show.visualizerHandle.globalBrightness = this.initialValues.globalBrightness;
+      this.$show.visualizerHandle.exposure = this.initialValues.exposure;
+      if (this.initialQuality) {
+        this.$show.visualizerHandle.quality = this.initialQuality.quality;
+        this.$show.visualizerHandle.resolutionScale = this.initialQuality.resolutionScale;
+        this.$show.visualizerHandle.beamGuides = this.initialQuality.beamGuides;
+        this.$show.visualizerHandle.renderScale = this.initialQuality.renderScale;
+      }
       this.close();
     },
   },

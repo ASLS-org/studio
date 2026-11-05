@@ -364,7 +364,7 @@ export default {
     },
     handleFocusOut(e) {
       // focus moving between elements inside the list isn't a real focus loss
-      if (this.$refs.body?.contains(e.relatedTarget)) return;
+      if (e && this.$refs.body?.contains(e.relatedTarget)) return;
       this.hasFocus = false;
       this.$emit('focused', false);
     },

@@ -4,7 +4,12 @@ import {
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import axios from 'axios';
 
-const dracoLoader = new DRACOLoader();
+/**
+ * Draco decoder shared by every glTF loader
+ *
+ * @constant dracoLoader
+ */
+export const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath('libs/gltf/');
 
 /**

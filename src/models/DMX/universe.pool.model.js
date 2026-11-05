@@ -1,4 +1,6 @@
 import Universe from './universe.model';
+import Live from './live.model';
+import EventBus from '../../plugins/eventbus';
 
 /**
  * @class UniversePool
@@ -8,6 +10,23 @@ class UniversePool {
   constructor() {
     this.universes = [];
     this.selected = [0];
+    this.frameCallbackId = Live.onFrame(this.processFrame.bind(this));
+  }
+
+  /**
+   * Live frame phase: packs every universe's frame, then sends it on its running stream.
+   * Runs after the animations of every tick, also while the show is paused or stopped.
+   *
+   * @public
+   */
+  processFrame() {
+    for (let i = 0; i < this.universes.length; i++) {
+      const universe = this.universes[i];
+      const frame = universe.packFrame();
+      if (universe.stream && universe.stream.isRunning) {
+        universe.stream.forward(frame);
+      }
+    }
   }
 
   /**
@@ -78,6 +97,7 @@ class UniversePool {
     const universeIndex = this.universes.findIndex((item) => item.id === universe.id);
     if (universeIndex > -1) {
       this.universes.splice(universeIndex, 1);
+      EventBus.emit('patch_changed');
     } else {
       throw new Error('Could not find universe in universe pool');
     }

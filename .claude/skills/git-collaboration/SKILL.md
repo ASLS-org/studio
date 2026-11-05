@@ -1,6 +1,6 @@
 ---
 name: git-collaboration
-description: Branching, commit messages, pull requests and release flow for ASLS Studio (one branch per change from develop, hotfixes from master, quickwins on develop, no pushes to long-lived branches without validation, Conventional Commits, semantic-release). Use before starting any implementation or /opsx:apply, when creating a branch, writing a commit message, committing, pushing, opening or describing a PR, or answering questions about releases.
+description: Branching, commit messages, pull requests and release flow for ASLS Studio (one branch per change from develop, epics with unit branches, hotfixes from master, quickwins on develop, no pushes to long-lived branches without validation, Conventional Commits, semantic-release). Use before starting any implementation or /opsx:apply, when creating a branch, writing a commit message, committing, pushing, opening or describing a PR, or answering questions about releases.
 ---
 
 # Git, PRs and releases
@@ -27,6 +27,7 @@ Decide this before the first edit of any implementation (including `/opsx:apply`
 | nothing special (default) | `feat/` `fix/` `perf/` `refactor/` `docs/` `chore/<change-name>` | `develop` | PR into `develop` |
 | a **hotfix** | `hotfix/<change-name>` | `master` | PR into `master`, then a back-merge PR of `master` into `develop` |
 | a **quickwin** | none: commit on `develop` | `develop` | direct push to `develop`, **only after the user validates that push** |
+| a change that belongs to an **epic** | `<type>/<change-name>` | `epic/<epic-name>` | PR into `epic/<epic-name>` |
 
 - Every OpenSpec change gets its own branch, named after the change
   (`openspec/changes/<change-name>`), with the prefix matching its main commit type.
@@ -36,6 +37,29 @@ Decide this before the first edit of any implementation (including `/opsx:apply`
   Branch from the base anyway and say so.
 - Only the user's own words make something a hotfix or a quickwin. Don't classify it yourself;
   when it looks like one, ask.
+
+### Epics (complex work spanning several changes)
+
+```
+develop ──► epic/<epic-name>          plan only: openspec/epics/<epic-name>.md + change proposals
+               │  ▲
+               │  └── PR ◄── <type>/<change-1>   refine specs/design/tasks → apply → archive
+               │  └── PR ◄── <type>/<change-2>   branched after change-1 is merged, and so on
+               ▼
+            PR into develop, once every change of the epic is archived
+```
+
+- The epic branch starts from `develop` and holds the plan: the epic doc
+  `openspec/epics/<epic-name>.md` (goal, decisions, order, status) and one OpenSpec change per
+  digestible unit of work, usually proposal and design only.
+- Each unit gets its own branch from the up-to-date epic branch. In it: refine that change's
+  artifacts (`/opsx:update`, write specs and tasks), `/opsx:apply`, verify, `/opsx:archive`, update
+  the epic doc's status table, then open a PR into the epic branch.
+- Start the next unit only after the previous PR is merged into the epic branch, from the updated
+  epic branch. A later unit may refine its own artifacts with what earlier units taught.
+- Plan edits outside a unit (reordering, a new unit) are committed on the epic branch when the user
+  asks for them.
+- When every change in the epic is archived, open a PR from the epic branch into `develop`.
 
 ### Pushing
 
