@@ -29,11 +29,19 @@ export const GUIDE_SETTINGS = {
  */
 export const RESOLUTION_SCALES = [1, 0.75, 0.5, 0.35];
 
+/**
+ * Render resolution steps (pixel ratio of the whole view), lowest first
+ *
+ * @constant {Array<Number>} RENDER_SCALES
+ */
+export const RENDER_SCALES = [0.5, 0.8, 1];
+
 const STORAGE_KEY = 'asls.visualizer.quality';
 const DEFAULT_SETTINGS = {
   quality: QUALITY_SETTINGS.AUTO,
   scale: 1,
   guides: GUIDE_SETTINGS.AUTO,
+  renderScale: 0.8,
 };
 
 const LEVEL_ORDER = [
@@ -68,7 +76,7 @@ const SCALE_AFTER_RAISE = RESOLUTION_SCALES.length - 1;
  * Reads the quality settings stored on this device, with defaults for anything missing or invalid
  *
  * @public
- * @returns {Object} Settings: quality, scale, guides
+ * @returns {Object} Settings: quality, scale, guides, renderScale
  */
 export function loadQualitySettings() {
   let stored = null;
@@ -82,6 +90,7 @@ export function loadQualitySettings() {
     if (Object.values(QUALITY_SETTINGS).includes(stored.quality)) settings.quality = stored.quality;
     if (RESOLUTION_SCALES.includes(stored.scale)) settings.scale = stored.scale;
     if (Object.values(GUIDE_SETTINGS).includes(stored.guides)) settings.guides = stored.guides;
+    if (RENDER_SCALES.includes(stored.renderScale)) settings.renderScale = stored.renderScale;
   }
   return settings;
 }
@@ -90,7 +99,7 @@ export function loadQualitySettings() {
  * Stores the quality settings on this device (ignored when storage is unavailable)
  *
  * @public
- * @param {Object} settings Settings: quality, scale, guides
+ * @param {Object} settings Settings: quality, scale, guides, renderScale
  */
 export function saveQualitySettings(settings) {
   try {

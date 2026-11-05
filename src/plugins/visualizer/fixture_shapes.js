@@ -115,6 +115,8 @@ function pixelBeams(matrix, physical, face, z, type) {
     {
       beam: {
         ...oflBeam(physical, type, radius),
+        // The fixture's lumens are shared by its pixels
+        flux: ((physical.bulb && physical.bulb.lumens) || 10000) / pixels.length,
         fieldAngle: lens ? Math.max(lens[0], lens[1]) : PIXEL_FIELD_ANGLE,
       },
     },

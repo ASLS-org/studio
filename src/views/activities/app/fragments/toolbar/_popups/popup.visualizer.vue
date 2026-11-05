@@ -38,7 +38,7 @@
       </uk-flex>
       <uk-flex center-h>
         <div>
-          <h4>Resolution:</h4>
+          <h4>Lighting resolution:</h4>
           <p class="subtitle">
             Resolution of the stage lighting (when quality isn't Auto).
           </p>
@@ -48,6 +48,20 @@
           v-model="$show.visualizerHandle.resolutionScale"
           style="width: 100px"
           :options="scaleOptions"
+        />
+      </uk-flex>
+      <uk-flex center-h>
+        <div>
+          <h4>Render resolution:</h4>
+          <p class="subtitle">
+            Resolution of the whole view. Higher is sharper and slower.
+          </p>
+        </div>
+        <uk-spacer />
+        <uk-select-input
+          v-model="$show.visualizerHandle.renderScale"
+          style="width: 100px"
+          :options="renderScaleOptions"
         />
       </uk-flex>
       <uk-flex center-h>
@@ -160,6 +174,10 @@ export default {
        */
       scaleOptions: ['100%', '75%', '50%', '35%'],
       /**
+       * Render resolution labels, in RENDER_SCALES order
+       */
+      renderScaleOptions: ['50%', '80%', '100%'],
+      /**
        * Beam guides setting labels, in Visualizer.GUIDE_OPTIONS order
        */
       guideOptions: ['auto', 'on', 'off'],
@@ -171,8 +189,12 @@ export default {
         this.initialValues = this.$show.visualizerHandle.showData;
       }
       if (state && this.$show.visualizerHandle) {
-        const { quality, resolutionScale, beamGuides } = this.$show.visualizerHandle;
-        this.initialQuality = { quality, resolutionScale, beamGuides };
+        const {
+          quality, resolutionScale, beamGuides, renderScale,
+        } = this.$show.visualizerHandle;
+        this.initialQuality = {
+          quality, resolutionScale, beamGuides, renderScale,
+        };
       }
     },
   },
@@ -195,6 +217,7 @@ export default {
         this.$show.visualizerHandle.quality = this.initialQuality.quality;
         this.$show.visualizerHandle.resolutionScale = this.initialQuality.resolutionScale;
         this.$show.visualizerHandle.beamGuides = this.initialQuality.beamGuides;
+        this.$show.visualizerHandle.renderScale = this.initialQuality.renderScale;
       }
       this.close();
     },

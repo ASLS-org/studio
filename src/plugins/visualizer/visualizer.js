@@ -18,6 +18,7 @@ import {
   QUALITY_SETTINGS,
   GUIDE_SETTINGS,
   RESOLUTION_SCALES,
+  RENDER_SCALES,
   QualityGovernor,
   loadQualitySettings,
   saveQualitySettings,
@@ -65,7 +66,33 @@ const FLOOR_SIZE = 50;
  *
  * @constant {Number}
  */
-const FLOOR_AMBIENT = 0.3;
+const FLOOR_AMBIENT = 0.16;
+
+/**
+ * Tint of the checkerboard floor (albedo): darker and slightly cool, like a stage floor
+ *
+ * @constant {THREE.Color}
+ */
+const FLOOR_TINT = new THREE.Color(0.58, 0.6, 0.64);
+
+/**
+ * Light on fixture bodies at a global brightness of 100: a key light and a sky/ground ambient
+ *
+ * @constant {Object}
+ */
+const BODY_LIGHT = {
+  KEY: 1.5,
+  SKY: 2.5,
+  SKY_COLOR: 0xb8c4d6,
+  GROUND_COLOR: 0x3a3430,
+};
+
+/**
+ * Background gradient, top to bottom (the bottom is the app's background colour)
+ *
+ * @constant {Array<String>}
+ */
+const BACKGROUND = ['#181b1f', '#0C0D0A'];
 
 /**
  * @class
@@ -205,10 +232,14 @@ class Visualizer {
   set globalBrightness(value) {
     this._globalBrightness = value ? value / 100 : DEFAULT_PREFERENCES.GLOBAL_BRIGHTNESS;
     if (this.globalLightHandle) {
-      this.globalLightHandle.intensity = this._globalBrightness * 0.25;
+      this.globalLightHandle.intensity = this._globalBrightness * BODY_LIGHT.KEY;
+    }
+    if (this.skyLightHandle) {
+      this.skyLightHandle.intensity = this._globalBrightness * BODY_LIGHT.SKY;
     }
     if (this.floorMaterial) {
-      this.floorMaterial.color.setScalar(this._globalBrightness * FLOOR_AMBIENT);
+      this.floorMaterial.color.copy(FLOOR_TINT)
+        .multiplyScalar(this._globalBrightness * FLOOR_AMBIENT);
     }
     if (this.lighting) this.lighting.setAmbient(this._globalBrightness * FLOOR_AMBIENT);
     this.invalidate();
@@ -300,6 +331,21 @@ class Visualizer {
   }
 
   /**
+   * Render resolution index (see RENDER_SCALES): pixel ratio of the whole view
+   *
+   * @type {Number}
+   */
+  set renderScale(index) {
+    if (RENDER_SCALES[index] === undefined) return;
+    this.qualitySettings.renderScale = RENDER_SCALES[index];
+    this.saveQuality();
+  }
+
+  get renderScale() {
+    return RENDER_SCALES.indexOf(this.qualitySettings.renderScale);
+  }
+
+  /**
    * Quality level and lighting resolution in use (with Auto, the governor's choice)
    *
    * @type {Object}
@@ -329,7 +375,13 @@ class Visualizer {
    */
   applyQuality() {
     if (!this.lighting) return;
-    const { quality, scale, guides } = this.qualitySettings;
+    const {
+      quality, scale, guides, renderScale,
+    } = this.qualitySettings;
+    if (this.renderer.getPixelRatio() !== renderScale) {
+      this.renderer.setPixelRatio(renderScale);
+      this.lighting.resize();
+    }
     const auto = quality === QUALITY_SETTINGS.AUTO;
     if (auto && !this.governor) {
       this.governor = new QualityGovernor(startingLevel(this.renderer.getContext()));
@@ -402,9 +454,14 @@ class Visualizer {
    * @async
    */
   async main() {
-    this.globalLightHandle = new THREE.DirectionalLight('white', this._globalBrightness * 100);
+    // Body light: a key light and a sky/ground ambient, so fixture bodies read in the dark
+    this.globalLightHandle = new THREE.DirectionalLight('white', this._globalBrightness * BODY_LIGHT.KEY);
     this.globalLightHandle.castShadow = false;
     this.globalLightHandle.position.set(-10, -10, 10);
+    this.skyLightHandle = new THREE.HemisphereLight(BODY_LIGHT.SKY_COLOR, BODY_LIGHT.GROUND_COLOR,
+      this._globalBrightness * BODY_LIGHT.SKY);
+    this.skyLightHandle.position.set(0, 0, 1);
+    SceneManager.background = this.backgroundTexture();
 
     GeometryFixture.prepareInstanciation(SceneManager);
     this.fixtureRenderer = new FixtureRenderer(this.invalidate);
@@ -440,17 +497,17 @@ class Visualizer {
 
     // The floor is unlit: beam light is added by the lighting passes (see stage_lighting.js)
     this.floorMaterial = new THREE.MeshBasicMaterial({ map: texture });
-    this.floorMaterial.color.setScalar(this._globalBrightness * FLOOR_AMBIENT);
+    this.floorMaterial.color.copy(FLOOR_TINT).multiplyScalar(this._globalBrightness * FLOOR_AMBIENT);
 
     const floor_geometry = new THREE.BoxGeometry(FLOOR_SIZE, FLOOR_SIZE, 0.5, 1, 1, 1);
     const floor = new THREE.Mesh(floor_geometry, this.floorMaterial);
     floor.position.setZ(-0.25);
-    this.lighting.addReceiver(floor, new THREE.MeshBasicMaterial({ map: texture }));
-    this.lighting.setFloor(texture, FLOOR_SIZE);
+    this.lighting.addReceiver(floor, new THREE.MeshBasicMaterial({ map: texture, color: FLOOR_TINT }));
+    this.lighting.setFloor(texture, FLOOR_SIZE, FLOOR_TINT);
 
     this.globalLightHandle.target = floor;
 
-    SceneManager.add(this.globalLightHandle, floor, axesHelper);
+    SceneManager.add(this.globalLightHandle, this.skyLightHandle, floor, axesHelper);
     this.invalidate();
   }
 
@@ -486,8 +543,10 @@ class Visualizer {
     this.renderer.autoClear = true;
     this.renderer.shadowMap.autoUpdate = true;
     this.renderer.physicallyCorrectLights = true;
-    this.renderer.setPixelRatio(0.8); // Forcing pixel ratio to 1 to avoid unnecessary computations
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    // Pixel ratio of the view: the Render resolution setting (applyQuality), 80% by default
+    this.renderer.setPixelRatio(this.qualitySettings.renderScale);
+    // Neutral keeps hues (ACES turned saturated blues purple and greyed colours)
+    this.renderer.toneMapping = THREE.NeutralToneMapping;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
   }
 
@@ -524,6 +583,27 @@ class Visualizer {
     AnimationManager.add(() => {
       this.controls.update();
     });
+  }
+
+  /**
+   * Vertical background gradient, drawn once
+   *
+   * @private
+   * @returns {THREE.Texture} Background texture
+   */
+  backgroundTexture() {
+    const canvas = document.createElement('canvas');
+    canvas.width = 2;
+    canvas.height = 256;
+    const context = canvas.getContext('2d');
+    const gradient = context.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, BACKGROUND[0]);
+    gradient.addColorStop(1, BACKGROUND[1]);
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    return texture;
   }
 
   /**

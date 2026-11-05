@@ -13,6 +13,19 @@ const SPREAD_EXPONENT = 1.5;
 const MIN_SPREAD = 0.25;
 const MAX_SPREAD = 4;
 
+// Highlight rolloff shared by the air beams and the lens glows: the brightest channel is
+// compressed (hue kept) and what goes past the knee bleeds toward white, so a saturating beam pales
+// where it is brightest, as on camera, instead of clipping in its colour
+export const ROLLOFF_GLSL = /* glsl */`
+vec3 rolloff(vec3 c) {
+  float peak = max(max(c.r, c.g), c.b);
+  if (peak <= 0.0) return vec3(0.0);
+  float mapped = 1.0 - exp(-peak);
+  float bleed = 1.0 - exp(-max(peak - 1.0, 0.0) * 0.6);
+  return mix(c * (mapped / peak), vec3(mapped), bleed);
+}
+`;
+
 // Shared by every pass: reads one beam's row of the state texture (see beam_state.js)
 export const BEAM_GLSL = /* glsl */`
 uniform highp sampler2D uBeams;
@@ -45,7 +58,8 @@ float goboAt(vec2 uv, vec4 g) {
 float beamPower(int id) {
   float tanHalf = max(beamTexel(id, 9).w, 1e-3);
   float spread = pow(${TAN_REFERENCE.toFixed(4)} / tanHalf, ${SPREAD_EXPONENT.toFixed(2)});
-  return beamTexel(id, 8).a * clamp(spread, ${MIN_SPREAD.toFixed(2)}, ${MAX_SPREAD.toFixed(2)});
+  return beamTexel(id, 8).a * beamTexel(id, 12).y
+    * clamp(spread, ${MIN_SPREAD.toFixed(2)}, ${MAX_SPREAD.toFixed(2)});
 }
 
 // Light a beam casts on world point P, before the surface's angle term; L: direction to the lens

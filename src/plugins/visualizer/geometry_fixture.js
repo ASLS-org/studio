@@ -26,6 +26,9 @@ const PRISM_FACET_INTENSITY = 0.6; // most light per facet (3 facets, as the ori
 const PRISM_TOTAL = 1.8;
 const PRISM_MAX_FACETS = 16;
 const CELL_OFF = 0.04; // brightness of an unlit cell
+const REFERENCE_FLUX = 10000; // lumens of a beam at light output 1 (GDTF's default flux)
+const MIN_POWER = 0.05; // light output limits, so faint and very bright fixtures stay usable
+const MAX_POWER = 4;
 const MIN_IRIS = 0.05; // smallest aperture drawn, share of the beam
 const WARM_KELVIN = 2700; // colour temperature of relative CTO values at -100 (OFL)
 const COLD_KELVIN = 10000; // and of relative CTB values at 100
@@ -50,7 +53,10 @@ const EMITTER_COLORS = {
 const SUBTRACTIVE = { Cyan: 0, Magenta: 1, Yellow: 2 };
 const BLACK = [0, 0, 0];
 
-const BODY_MATERIAL = new THREE.MeshPhongMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+// Fixture housings: dark satin, lit by the visualizer's key and sky lights
+const BODY_MATERIAL = new THREE.MeshStandardMaterial({
+  color: 0x55585e, roughness: 0.45, metalness: 0.15, side: THREE.DoubleSide,
+});
 const LENS_MATERIAL = new THREE.MeshBasicMaterial({ color: 0x0d0d0d, side: THREE.DoubleSide });
 const CELL_MATERIAL = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
 const POOL_CAPACITY = 4096; // body pieces per shape, for the whole rig
@@ -69,6 +75,8 @@ const row = {
   length: LIGHT_LENGTH,
   color: new THREE.Color(),
   intensity: 0,
+  radius: 0.05,
+  power: 1,
   goboLayer: 0,
   goboRotation: 0,
   blur: 0,
@@ -465,6 +473,7 @@ class GeometryFixture {
         entry,
         radius,
         fieldAngle: beam.fieldAngle || 25,
+        flux: beam.flux || REFERENCE_FLUX,
         projects: PROJECTING_TYPES.includes(beam.type || 'Wash'),
         kelvin: beam.colorTemperature || 6500,
         white: kelvinToRGB(beam.colorTemperature || 6500),
@@ -1040,9 +1049,13 @@ class GeometryFixture {
     row.color.setRGB(0, 0, 0);
     let intensity = 0;
     let field = 0;
+    let flux = 0;
+    let lens = 0;
     for (let i = 0; i < members.length; i++) {
       const beam = this._beams[members[i]];
       const s = beam.state;
+      flux += beam.flux;
+      lens = Math.max(lens, beam.radius);
       const e = beam.entry.object.matrixWorld.elements;
       row.origin.add(point.set(e[12], e[13], e[14]));
       axis.add(point.set(-e[8], -e[9], -e[10]));
@@ -1062,6 +1075,9 @@ class GeometryFixture {
     up.crossVectors(axis, right);
     row.color.multiplyScalar(1 / intensity);
     row.intensity = intensity / n;
+    // The row stands for all its cells: their light together, from a lens as large as their area
+    row.power = Math.min(Math.max(flux / REFERENCE_FLUX, MIN_POWER), MAX_POWER);
+    row.radius = Math.min(lens * Math.sqrt(n), CLUSTER_SPAN / 2);
     const lead = this._beams[members[0]].state;
     const half = glow ? GLOW_HALF_ANGLE : Math.min(Math.max(field / n, 0.5) / 2, MAX_HALF_ANGLE);
     row.tanHalf = Math.tan(degToRad(half));

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import {
-  BEAM_GLSL, ACCUM, createConeGeometry, sceneOf,
+  BEAM_GLSL, ROLLOFF_GLSL, ACCUM, createConeGeometry, sceneOf,
 } from './beam_shading';
 
 /**
@@ -21,8 +21,11 @@ export const AIR_MODES = {
  */
 export const AIR_SAMPLES = [16, 8];
 
-const AIR_GAIN = 0.35; // air light per unit of haze density, before falloff
-const FALLOFF = 0.04; // inverse-square falloff: 1 / (1 + FALLOFF × distance²)
+// Light falls off as 1 / (1 + FALLOFF × distance²): inverse square, softened within 1 m of the
+// lens, so a shaft is brightest at its neck. The gain keeps a shaft seen 6 m from its lens as
+// bright as with the earlier, flatter falloff (0.04): 0.35 × (1 + 36) / (1 + 0.04 × 36)
+const AIR_GAIN = 5.3; // air light per unit of haze density, before falloff
+const FALLOFF = 1;
 const EXTINCTION = 0.008; // haze extinction toward the camera, per meter
 const LENS_RADIUS = 0.1; // meters
 const AIR_PIECES = 4; // closed-form pieces per ray
@@ -216,6 +219,7 @@ void main() {
 // Adds the air buffer to the canvas. With depth, each of the 4 nearest air texels is weighted by
 // how close its depth is to this pixel's, so beams don't bleed over fixture bodies.
 const COMPOSITE_FRAGMENT = /* glsl */`
+${ROLLOFF_GLSL}
 uniform sampler2D uAir;
 uniform highp sampler2D uDepth;
 uniform float uUseDepth;
@@ -253,8 +257,8 @@ void main() {
   } else {
     air = texture(uAir, vUv).rgb;
   }
-  // Soft saturation: overlapping or head-on beams roll off to white instead of clipping
-  outColor = linearToOutputTexel(vec4(1.0 - exp(-air / uAccum), 1.0));
+  // Overlapping, head-on or strong beams roll off toward white instead of clipping
+  outColor = linearToOutputTexel(vec4(rolloff(air / uAccum), 1.0));
 }
 `;
 

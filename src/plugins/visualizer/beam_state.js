@@ -1,11 +1,12 @@
 import * as THREE from 'three';
 
 /**
- * Texels per beam row: cone matrix (4), its inverse (4), colour, gobo, floor footprint, origin
+ * Texels per beam row: cone matrix (4), its inverse (4), colour, gobo, floor footprint, origin,
+ * lens (radius, light output)
  *
  * @constant {Number} BEAM_TEXELS
  */
-export const BEAM_TEXELS = 12;
+export const BEAM_TEXELS = 13;
 
 /**
  * Rows added when the state outgrows its texture
@@ -133,6 +134,8 @@ class BeamState {
    * @param {Number} beam.goboLayer Gobo texture layer (0 is open)
    * @param {Number} beam.goboRotation Gobo rotation (radian)
    * @param {Number} beam.blur Gobo blur, in mip levels
+   * @param {Number} [beam.radius=0.05] Lens radius (meter), cells of a cluster together
+   * @param {Number} [beam.power=1] Light output relative to 10,000 lm
    */
   push(beam) {
     const {
@@ -165,6 +168,10 @@ class BeamState {
     data[base + 45] = origin.y;
     data[base + 46] = origin.z;
     data[base + 47] = length;
+    data[base + 48] = beam.radius || 0.05;
+    data[base + 49] = beam.power === undefined ? 1 : beam.power;
+    data[base + 50] = 0;
+    data[base + 51] = 0;
     this._count++;
   }
 

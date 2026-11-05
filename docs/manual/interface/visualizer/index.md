@@ -14,6 +14,8 @@ Multi-cell fixtures (LED washes, pixel bars, multi-beam bars) light each cell in
 
 Each beam lights the floor where it lands, in its colour and intensity, and with the shape of its field angle. Gobos show in the light: GDTF fixtures project their real gobo images; other fixtures use a built-in set of gobo patterns, picked by the gobo wheel slot. Gobo rotation and the gobo index turn the pattern, frost and focus blur it, and the iris narrows the beam. A prism splits the beam into its facets (three when the fixture doesn't describe them) and turns with the prism rotation. Colour temperature (CTO, CTB) warms or cools the light.
 
+Each fixture is as bright as its light output: a 20,000 lm spot lights the floor and the haze more than a 2,000 lm PAR at the same dimmer. The cells of a multi-cell fixture share its light. In the haze, a beam is brightest near its lens and fades along its shaft; a strong beam pales toward white at its neck, as on camera. Lenses glow in proportion to their size and light, so pixel bars and moving heads blend side by side.
+
 Beams also show in the air, through haze: brighter near the lens, fading with distance, and stopping at the floor. At **high** quality the gobo shows in the haze as shafts of light that match the pattern on the floor. Lit fixtures glow at the lens, and at **medium** and **high** quality bright beams and lenses get a soft bloom.
 
 > **Note:** If a fixture has several gobo wheels, only its first gobo wheel is shown.
@@ -60,7 +62,8 @@ Quality settings belong to the computer you're on, not to the show: they are kep
 | Setting     | Description |
 | ----------- | ----------- |
 | Quality     | **auto** picks a level from the computer's graphics and adapts it while you work: when frames get slow it lowers the lighting resolution, then the level, and raises them again once there's time to spare. Choose a level to fix it. |
-| Resolution  | Resolution of the stage lighting when quality isn't **auto**: **100%**, **75%**, **50%** or **35%**. Lower values are faster and softer. |
+| Lighting resolution | Resolution of the stage lighting when quality isn't **auto**: **100%**, **75%**, **50%** or **35%**. Lower values are faster and softer. |
+| Render resolution | Resolution of the whole view: **50%**, **80%** (default) or **100%**. Higher is sharper and slower; it applies at every quality level, also with **auto**. |
 | Beam guides | **auto** shows guides at **guides** quality only; **on** and **off** show or hide them at every level. |
 
 | Level  | What you see |

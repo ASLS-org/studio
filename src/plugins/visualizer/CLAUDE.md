@@ -15,13 +15,13 @@ Three.js r170 WebGL renderer for the rig. It is instantiated by
 | `fixture_shapes.js` | pure: body role and shape per node (GDTF primitive, else role), synthesized trees for OFL fixtures (moving heads keep the bundled model's proportions, pivot at the origin), mesh detail per quality level (`modelDetail`: detail order and triangle budget) |
 | `fixture_meshes.js` | unit meshes per body shape (box, cylinder, sphere, conventional, scanner, base, yoke, head), GDTF axes, built on first use |
 | `fixture_models.js` | GDTF fixture meshes from the imported file (patch entry `models`): glTF or 3DS (texture maps skipped) baked into one unit-box geometry in GDTF axes with its centre, cached per `type|file|folder` |
-| `beam_state.js` | per-beam float texture (cone matrix, inverse, colour, gobo, floor footprint, origin), rewritten each frame; read by every lighting pass |
+| `beam_state.js` | per-beam float texture, 13 texels per row (cone matrix, inverse, colour, gobo, floor footprint, origin, lens radius and light output = summed cell flux / 10,000 lm), rewritten each frame; read by every lighting pass |
 | `stage_lighting.js` | quality levels: Guides (unlit), Low (floor decals), Medium/High (deferred light volumes on receivers at a resolution scale), beam guides; object layers RECEIVER/OCCLUDER |
 | `gobos.js`, `gobo_patterns.js` | shared gobo texture array: built-in patterns (pure module, also used by the GDTF bundle generator), then GDTF wheel images (`goboImageLayer`, up to 64 layers) |
 | `beam_shading.js` | GLSL shared by every beam pass (beam state reads, gobo lookup, light falloff), cone hull geometry, `ACCUM` |
 | `air_beams.js` | beams in the haze: closed form (Low, Medium + soft gobo) or raymarch with the gobo (High), uniform haze, 1/4 or 1/2 buffer, depth-aware upsample |
 | `bloom.js` | lens glow sprites (Low and up) and bloom from the air buffer and lens glows (Medium, High) |
-| `quality.js` | quality settings in `localStorage` (never in `showData`), starting level from the device, `QualityGovernor` for Auto |
+| `quality.js` | quality settings in `localStorage` (never in `showData`): level, lighting scale, guides, render scale (pixel ratio, default 0.8); starting level from the device, `QualityGovernor` for Auto |
 | `controls.js` | TransformControls (translate/rotate) for fixture placement |
 | `instance_highlight.js` | selection outline |
 | `grid.js` | infinite grid helper |
@@ -43,6 +43,8 @@ Three.js r170 WebGL renderer for the rig. It is instantiated by
   move, gizmo `change`, pointer/key input, settings, patch/pose/highlight via `FixtureRenderer`'s
   `onChange`) or something animates (strobe, gobo rotation). Anything new that changes
   the picture must call `visualizer.invalidate()`.
+- Tone curve: `NeutralToneMapping` for the scene and the surface light; air beams and lens glows
+  use `ROLLOFF_GLSL` (beam_shading.js), which keeps hues and pales toward white past the knee.
 - There are no three.js lights for fixtures. Beam light comes from `stage_lighting.js`; a surface
   lit by beams registers with `lighting.addReceiver(mesh, albedoMaterial)`, and fixture bodies sit on
   the OCCLUDER layer. The world floor is the plane z = 0.

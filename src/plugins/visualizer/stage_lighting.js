@@ -121,6 +121,7 @@ ${LIT_GLSL}
 uniform sampler2D uLight;
 uniform vec2 uCanvasSize;
 uniform sampler2D uFloorMap;
+uniform vec3 uFloorTint;
 uniform vec2 uFloorRepeat;
 uniform float uFloorSize;
 uniform float uAccum;
@@ -128,7 +129,7 @@ in vec3 vWorld;
 out highp vec4 outColor;
 void main() {
   vec3 light = texture(uLight, gl_FragCoord.xy / uCanvasSize).rgb / uAccum;
-  vec3 albedo = texture(uFloorMap, (vWorld.xy / uFloorSize + 0.5) * uFloorRepeat).rgb;
+  vec3 albedo = texture(uFloorMap, (vWorld.xy / uFloorSize + 0.5) * uFloorRepeat).rgb * uFloorTint;
   outColor = litDifference(albedo, light);
 }
 `;
@@ -286,6 +287,7 @@ class StageLighting {
     this.decalGeometry.instanceCount = 0;
     this.floorUniforms = {
       uFloorMap: { value: null },
+      uFloorTint: { value: new THREE.Color(1, 1, 1) },
       uFloorRepeat: { value: new THREE.Vector2(1, 1) },
       uFloorSize: { value: 1 },
     };
@@ -449,9 +451,11 @@ class StageLighting {
    * @public
    * @param {THREE.Texture} map Floor texture (repeat wrapping)
    * @param {Number} size Floor width (meter), centred on the origin
+   * @param {THREE.Color} [tint] Floor albedo tint
    */
-  setFloor(map, size) {
+  setFloor(map, size, tint = new THREE.Color(1, 1, 1)) {
     this.floorUniforms.uFloorMap.value = map;
+    this.floorUniforms.uFloorTint.value.copy(tint);
     this.floorUniforms.uFloorRepeat.value.copy(map.repeat);
     this.floorUniforms.uFloorSize.value = size;
     this.floorScene = sceneOf(new THREE.Mesh(
