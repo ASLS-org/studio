@@ -1,3 +1,5 @@
+@import './tokens.css';
+
 @font-face{
   font-family: 'Roboto-Regular';
   src: url(../fonts/Roboto/Roboto-Regular.ttf);
@@ -9,59 +11,6 @@
 @font-face{
   font-family: 'Roboto-Bold';
   src: url(../fonts/Roboto/Roboto-Bold.ttf);
-}
-
-/** Global Color Variables **/
-:root{
-  --primary-dark: #0B0D0A;
-  --primary-dark-alt: #12140F;
-  --primary-light: #141A13;
-  --primary-light-alt: #181B16;
-  --primary-lighter: #2C2E2B;
-  --primary-lighter-alt: #1F221D;
-  
-  --test: #343434;
-
-  --some: #0b0b0b52;
-  
-  --secondary-lighter: #FFFFFFB3;
-  --secondary-lighter-alt: #FFFFFFA3;
-  --secondary-light-alt: #FFFFFF63;
-  --secondary-light: #FFFFFF33;
-  --secondary-dark: #FFFFFF14;  /* Lightened off-white */
-  --secondary-darker: #FFFFFF0C;  /* Further lightened off-white */
-
-  --accent-maroon: #D9416B;
-  --accent-pink: #E046A6;
-  --accent-violet: #A45BC9;
-  --accent-purple: #8F5BC9;
-  --accent-dark-purple: #7760B6;
-  --accent-blue: #5A71D3;
-  --accent-light-blue: #5A8CD3;
-  --accent-teal: #2EA1A3;
-  --accent-sea-green: #4DBE7A;
-  --accent-green: #38B553;
-  --accent-light-green: #94BF52;
-  --accent-gold: #E2C753;
-  --accent-orange: #E76D58;
-  --accent-red: #E25D6A;
-}
-
-[data-theme="light"] {
-  --primary-dark: #a8a7a7;
-  --primary-dark-alt: #eceaef;
-  --primary-light: #e9e6ec;
-  --primary-light-alt: #e3e0e7;
-  --primary-lighter: #d1cfd44d;
-  --primary-lighter-alt: var(--primary-light);
-
-  
-  --some: #f4f4f452;
-  
-  --secondary-lighter: #000000B3;
-  --secondary-light: #00000033;
-  --secondary-dark: #0000001A;
-  --secondary-darker: #0000001D;
 }
 
 /** App's main containers initialisation **/

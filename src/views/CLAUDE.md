@@ -27,8 +27,8 @@ views/
   playback outside Vue: read them through `views/mixins/live.mixin.js` (`live(value)`), which
   refreshes with `$liveTicker` (25 Hz while playing; `$liveTicker.bump()` after edits).
 - Navigation: `this.$router.push(path).catch(() => {})`. Routes are in `plugins/router.js`.
-- Styling: `<style scoped>` plain CSS using the variables in `src/assets/styles/global.css`
-  (`--primary-*`, `--secondary-*`, …). No new hard-coded colours; palette lives in
-  `uikit/colors/uikit.colors.js` and `views/utils/palette.js`.
+- Styling: `<style scoped>` plain CSS using the design tokens in `src/assets/styles/tokens.css`
+  (`--primary-*`, `--secondary-*`, `--accent-*`; shared with the user manual). No new hard-coded
+  colours; palette lives in `uikit/colors/uikit.colors.js` and `views/utils/palette.js`.
 - File names: `<area>.<kind>.<thing>.vue`, e.g. `group.modifier.widget.cuepool.vue`,
   `popup.connections.vue`, `uikit.input.select.vue`.

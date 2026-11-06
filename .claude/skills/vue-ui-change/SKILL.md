@@ -97,9 +97,15 @@ export default {
   `views/mixins/live.mixin.js`: read them through `live(value)` (template) or a computed that calls
   `this.live(...)`, and call `this.$liveTicker.bump()` after an operator edit. A plain reactive
   binding to those fields stops updating during playback.
-- **Style.** Scoped plain CSS, snake_case class names, CSS variables from
-  `src/assets/styles/global.css`. No inline hard-coded colours except data-driven ones
-  (group/universe/cue colours).
+- **Style.** Scoped plain CSS, snake_case class names, CSS variables (design tokens) from
+  `src/assets/styles/tokens.css` (`:root` dark values, `[data-theme="light"]` overrides),
+  imported by `global.css`. The user manual reuses the same file, so a new or changed token
+  shows up there too; keep `tokens.css` custom properties only. No inline hard-coded colours
+  except data-driven ones (group/universe/cue colours).
+- **List rows** (`uk-list-item`): `tall` (40px) and `large` (40px, 16px padding, 14px labels,
+  16px icons) are opt-in modes; defaults stay as in the app. `large` is for lists people read
+  (the user manual's navigation). Extend components with opt-in props like these rather than
+  restyling them from outside.
 - **Icons.** `<uk-icon name="...">` maps to `components/uikit/icons/images/*.svg`. Add new SVGs
   there.
 - **Keyboard.** Reuse the existing patterns: Ctrl/Shift multi-select in lists, Del/Backspace
