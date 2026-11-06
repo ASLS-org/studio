@@ -1,114 +1,181 @@
+/* eslint-disable import/no-extraneous-dependencies */
+import { fileURLToPath } from 'node:url';
+import fs from 'node:fs';
+import path from 'node:path';
+import { execSync } from 'node:child_process';
+import { loadEnv } from 'vite';
+import { APP_STATIC_FILES } from '../vite.config';
+
+/*
+ * Resource links. Studio-hosted URLs come from the repo's .env (MANUAL_URL_*) so they are set in
+ * one place; GitHub URLs are fixed. An empty value hides the link everywhere (nav, hero,
+ * <ResourceLink>) and is reported by the build.
+ */
+const env = loadEnv('production', fileURLToPath(new URL('../../..', import.meta.url)), 'MANUAL_URL_');
+const repository = 'https://github.com/ASLS-org/studio';
+const links = {
+  demo: env.MANUAL_URL_DEMO || '',
+  website: env.MANUAL_URL_WEBSITE || '',
+  devDocs: env.MANUAL_URL_DEV_DOCS || '',
+  download: env.MANUAL_URL_DOWNLOAD || '',
+  repository,
+  releases: `${repository}/releases`,
+  discussions: `${repository}/discussions`,
+  issues: `${repository}/issues`,
+  license: `${repository}/blob/master/COPYING`,
+};
+/*
+ * Version shown in the footer: the last release tag reachable from the built commit (the deploy
+ * workflow fetches tags), else package.json's version.
+ */
+let version;
+try {
+  version = execSync('git describe --tags --abbrev=0', { stdio: ['ignore', 'pipe', 'ignore'] })
+    .toString().trim();
+} catch (e) {
+  version = `v${JSON.parse(fs.readFileSync(new URL('../../../package.json', import.meta.url))).version}`;
+}
+
+const unset = Object.keys(links).filter((key) => !links[key]);
+if (unset.length) {
+  // eslint-disable-next-line no-console
+  console.warn(`manual: unset resource URLs: ${unset.join(', ')} (set MANUAL_URL_* in .env)`);
+}
+
+/**
+ * Nav entries whose URL is configured.
+ * @type {Array<Object>}
+ */
+const nav = [
+  { text: 'User Manual', link: '/introduction/' },
+  { text: 'Live Demo', link: links.demo },
+  { text: 'Download', link: links.download },
+  { text: 'Developer Docs', link: links.devDocs },
+].filter((item) => item.link);
+
+// Studio's tokens switch on html[data-theme]. Set it before first paint from VitePress's saved
+// appearance (dark unless the visitor chose light), so light-mode readers see no dark flash.
+const themeBootScript = 'try{var m=localStorage.getItem(\'asls-manual-appearance\')'
+  + '||localStorage.getItem(\'vitepress-theme-appearance\');'
+  + 'var d=m===\'system\'||m===\'auto\'?matchMedia(\'(prefers-color-scheme: dark)\').matches'
+  + ':m!==\'light\';var h=document.documentElement;h.dataset.theme=d?\'dark\':\'light\';'
+  + 'h.classList.toggle(\'dark\',d)}catch(e){}';
+
 export default {
-  title: "ASLS Studio",
-  description: "Open-source, web-based DMX lighting control software.",
+  title: 'ASLS Studio',
+  description: 'Open-source DMX lighting control and real-time 3D visualizer, in the browser or on the desktop.',
   // The installation page links to the local dev server
   ignoreDeadLinks: 'localhostLinks',
-  head:[
-    ['link', { rel: "icon", type: "image/png", sizes: "32x32", href: "/studio_standalone_logo.png"}],
+  appearance: 'dark',
+  // Copies the app's public files the manual uses (see vite.config.js) into the build
+  buildEnd(siteConfig) {
+    const appPublic = fileURLToPath(new URL('../../../public', import.meta.url));
+    APP_STATIC_FILES.forEach((file) => {
+      const target = path.join(siteConfig.outDir, file);
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      fs.copyFileSync(path.join(appPublic, file), target);
+    });
+  },
+  // Anchor scrolling clears the 48px toolbar
+  scrollOffset: 72,
+  head: [
+    ['link', {
+      rel: 'icon', type: 'image/png', sizes: '32x32', href: '/studio_standalone_logo.png',
+    }],
+    ['script', {}, themeBootScript],
   ],
   themeConfig: {
-    siteTitle: "ASLS Studio",
-    search:{
+    siteTitle: 'ASLS Studio',
+    links,
+    version,
+    search: {
       provider: 'local',
     },
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/asls-org/studio' },
+      { icon: 'github', link: repository },
     ],
-    logo: '/studio_standalone_logo.png',
-    nav: [{
-        text: 'User Manual',
-        link: '/introduction/'
-      },
-      {
-        text: 'Developer Resources',
-        link: 'https://dev.studio.asls.timekadel.com'
-      },
-      {
-        text: 'Live Example',
-        link: 'https://demo.studio.asls.timekadel.com'
-      },
-      {
-        text: 'Download',
-        link: 'https://github.com/ASLS-org/studio'
-      },
-    ],
+    logo: { dark: '/studio_standalone_logo.png', light: '/studio_standalone_logo_dark.png' },
+    nav,
     sidebar: {
       '/': [{
         text: 'Introduction',
         collapsible: true,
         items: [{
           text: 'About',
-          link: '/introduction/'
+          link: '/introduction/',
+        }, {
+          text: 'How Studio Works',
+          link: '/introduction/overview',
         }, {
           text: 'Installation',
-          link: '/introduction/installation'
+          link: '/introduction/installation',
         }, {
           text: 'License',
-          link: '/introduction/license'
-        }]
+          link: '/introduction/license',
+        }],
       }, {
         text: 'Interface',
         collapsible: true,
         items: [{
           text: 'Toolbar',
-          link: '/interface/toolbar/'
+          link: '/interface/toolbar/',
         }, {
           text: 'Patch Bay',
-          link: '/interface/patchbay/'
+          link: '/interface/patchbay/',
         }, {
           text: 'Group Pool',
-          link: '/interface/grouppool/'
+          link: '/interface/grouppool/',
         }, {
           text: 'Visualizer',
-          link: '/interface/visualizer/'
+          link: '/interface/visualizer/',
         }, {
           text: 'Modifier',
-          link: '/interface/modifier/'
-        }]
+          link: '/interface/modifier/',
+        }],
       }, {
         text: 'Modifiers',
         collapsible: true,
         items: [{
           text: 'Universe',
-          link: '/modifiers/universe/'
+          link: '/modifiers/universe/',
         }, {
           text: 'Group',
-          link: '/modifiers/group/'
+          link: '/modifiers/group/',
         }, {
           text: 'Chase',
-          link: '/modifiers/chase/'
-        }]
+          link: '/modifiers/chase/',
+        }],
       }, {
         text: 'Workflow',
         collapsible: true,
         items: [{
           text: 'Setting up Environment',
-          link: '/workflow/environment/'
+          link: '/workflow/environment/',
         }, {
           text: 'Patching Fixtures',
-          link: '/workflow/patching/'
+          link: '/workflow/patching/',
         }, {
           text: 'Setting up Groups',
-          link: '/workflow/grouping/'
+          link: '/workflow/grouping/',
         }, {
           text: 'Creating Scenes',
-          link: '/workflow/scenes/'
+          link: '/workflow/scenes/',
         }, {
           text: 'Creating Effects',
-          link: '/workflow/effects/'
+          link: '/workflow/effects/',
         }, {
           text: 'Triggering Cues',
-          link: '/workflow/triggering/'
-        }]
+          link: '/workflow/triggering/',
+        }],
       }],
     },
     footer: {
-      message: "ASLS Studio - Released under the GPLv3 License",
-      copyright: `Copyright (©) 2021-${new Date().getFullYear()} Timé Kadel.`
+      message: 'ASLS Studio - Released under the GPLv3 License',
+      copyright: `Copyright (©) 2021-${new Date().getFullYear()} Timé Kadel.`,
     },
     markdown: {
       // theme: 'material-palenight'
-      toc: "every"
-    }
-  }
-}
+      toc: 'every',
+    },
+  },
+};

@@ -1,15 +1,76 @@
-:root {
-  --vp-home-hero-image-background-image: linear-gradient(-45deg, #A45BC9 50%, #5A71D3 50%);
-  --vp-home-hero-image-filter: blur(90px);
-  --vp-home-hero-name-background: linear-gradient(-45deg, #A45BC9, #5A71D3);
-  --vp-home-hero-name-color: transparent;
-  --vp-c-brand-1:hsl(229, 58%, 59%);/*#8F5BC9;*/
-  --vp-c-brand-2:#A45BC9;/*#7760B6*/
-  --vp-c-brand-3:hwb(229 35% 17%);
+/*
+ * Tokens and fonts for the manual, and the VitePress variables its remaining built-in pieces
+ * still read (local search box, base styles). The look itself is the Studio shell
+ * (shell/Layout.vue, prose.css). Only tokens defined in both themes are used.
+ */
+@import '../../../../src/assets/styles/tokens.css';
+@import '../../../../src/assets/styles/fonts.css';
+@import './fonts.css';
+
+:root,
+.dark {
+  /* Surfaces */
+  --vp-c-bg: var(--primary-light);
+  --vp-c-bg-alt: var(--primary-dark-alt);
+  --vp-c-bg-soft: var(--primary-light-alt);
+  --vp-c-bg-elv: var(--primary-light-alt);
+  --vp-c-divider: var(--secondary-dark);
+  --vp-c-border: var(--secondary-light);
+  --vp-c-gutter: var(--primary-dark-alt);
+
+  /* Text */
+  --vp-c-text-1: var(--secondary-lighter);
+  --vp-c-text-2: color-mix(in srgb, var(--secondary-lighter) 78%, transparent);
+  --vp-c-text-3: color-mix(in srgb, var(--secondary-lighter) 55%, transparent);
+
+  /* Neutral buttons, badges, code */
+  --vp-c-default-1: var(--secondary-light);
+  --vp-c-default-2: var(--secondary-dark);
+  --vp-c-default-3: var(--secondary-dark);
+  --vp-c-default-soft: var(--secondary-darker);
+
+  /* Brand: Studio's selection blue, with its violet as the second stop */
+  --vp-c-brand-1: var(--accent-light-blue);
+  --vp-c-brand-2: var(--accent-blue);
+  --vp-c-brand-3: var(--accent-blue);
+  --vp-c-brand-soft: color-mix(in srgb, var(--accent-blue) 18%, transparent);
+
+  /* Custom blocks */
+  --vp-c-tip-1: var(--accent-sea-green);
+  --vp-c-tip-2: var(--accent-green);
+  --vp-c-tip-3: var(--accent-green);
+  --vp-c-tip-soft: color-mix(in srgb, var(--accent-green) 14%, transparent);
+  --vp-c-note-1: var(--accent-light-blue);
+  --vp-c-note-soft: color-mix(in srgb, var(--accent-blue) 14%, transparent);
+  --vp-c-warning-1: var(--accent-gold);
+  --vp-c-warning-2: var(--accent-gold);
+  --vp-c-warning-3: var(--accent-orange);
+  --vp-c-warning-soft: color-mix(in srgb, var(--accent-gold) 14%, transparent);
+  --vp-c-danger-1: var(--accent-red);
+  --vp-c-danger-2: var(--accent-maroon);
+  --vp-c-danger-3: var(--accent-maroon);
+  --vp-c-danger-soft: color-mix(in srgb, var(--accent-red) 14%, transparent);
+
+  /* Code */
+  --vp-code-bg: var(--secondary-darker);
+  --vp-code-color: var(--accent-light-blue);
+  --vp-code-block-bg: var(--primary-dark-alt);
+  --vp-code-copy-code-bg: var(--primary-light-alt);
+
+  /* Typography */
+  --vp-font-family-base: 'Roboto', 'Roboto-Regular', system-ui, -apple-system, sans-serif;
+  --vp-font-family-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --vp-local-search-bg: var(--primary-light);
+  --vp-local-search-result-bg: var(--primary-light-alt);
 }
 
-@media (min-width: 960px) {
-  div.VPHome div.VPHomeHero div.VPHero.has-image div.container div.image div.image-container img.image-src{
-  max-width: 450px!important;
-  }
+body {
+  background: var(--primary-dark);
+}
+
+/* Same thin scrollbars as the app */
+* {
+  scrollbar-color: var(--secondary-dark) transparent;
+  scrollbar-width: thin;
 }

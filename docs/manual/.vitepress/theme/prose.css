@@ -1,0 +1,341 @@
+/*
+ * Manual page content (.studio_prose) on the panel shade (--primary-light). Blocks that need to
+ * stand out (tables, callouts, code, quotes) are darker rounded panels (--prose-panel), the way
+ * dark areas sit inside Studio's panels. Accents mark meaning (callout types, the section kicker),
+ * not furniture. Text reads at 15px / 1.65. Selectors are prefixed with .asls-scope to win over
+ * the app's element rules replayed in asls-scope.css.
+ */
+.asls-scope .studio_prose {
+  --prose-panel: var(--primary-dark);
+  --prose-panel-alt: var(--primary-dark-alt);
+  --prose-rule: var(--secondary-darker);
+  width: 100%;
+  max-width: 840px;
+  margin: 0 auto;
+  padding: 48px 32px 0;
+  font-family: Roboto, Roboto-Regular, sans-serif;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--secondary-lighter);
+  white-space: normal;
+  user-select: text;
+}
+
+[data-theme='light'] .asls-scope .studio_prose {
+  --prose-panel: var(--primary-light-alt);
+  --prose-panel-alt: var(--primary-dark-alt);
+}
+
+.asls-scope .studio_prose * {
+  user-select: text;
+}
+
+/* ── Headings ──────────────────────────────────────────── */
+.asls-scope .studio_prose h1,
+.asls-scope .studio_prose h2,
+.asls-scope .studio_prose h3,
+.asls-scope .studio_prose h4,
+.asls-scope .studio_prose h5,
+.asls-scope .studio_prose h6 {
+  color: var(--secondary-lighter);
+  white-space: normal;
+  overflow: visible;
+  scroll-margin-top: 72px;
+}
+
+.asls-scope .studio_prose h1 {
+  margin: 0 0 16px;
+  font-family: Roboto, Roboto-Medium, sans-serif;
+  font-weight: 500;
+  font-size: 36px;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
+
+.asls-scope .studio_prose h1 + p {
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.asls-scope .studio_prose h2 {
+  margin: 64px 0 16px;
+  padding-top: 28px;
+  border-top: 1px solid var(--prose-rule);
+  font-family: Roboto, Roboto-Medium, sans-serif;
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+}
+
+.asls-scope .studio_prose h3 {
+  margin: 40px 0 12px;
+  font-family: Roboto, Roboto-Medium, sans-serif;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 1.35;
+  text-transform: none;
+}
+
+.asls-scope .studio_prose h4 {
+  margin: 28px 0 8px;
+  font-family: Roboto, Roboto-Bold, sans-serif;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.asls-scope .studio_prose h5 {
+  margin: 24px 0 8px;
+  font-family: Roboto-Bold, sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.asls-scope .studio_prose h6 {
+  margin: 20px 0 8px;
+  font-family: Roboto-Bold, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.65;
+}
+
+.asls-scope .studio_prose .header-anchor {
+  display: none;
+}
+
+/* ── Text ──────────────────────────────────────────────── */
+.asls-scope .studio_prose p {
+  display: block;
+  margin: 0 0 16px;
+  font-family: Roboto, Roboto-Regular, sans-serif;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--secondary-lighter);
+}
+
+.asls-scope .studio_prose strong,
+.asls-scope .studio_prose b {
+  font-family: Roboto-Medium, sans-serif;
+  font-weight: normal;
+}
+
+.asls-scope .studio_prose a {
+  color: var(--accent-light-blue);
+  text-decoration: none;
+}
+
+.asls-scope .studio_prose a:hover {
+  text-decoration: underline;
+}
+
+.asls-scope .studio_prose ul,
+.asls-scope .studio_prose ol {
+  margin: 0 0 16px;
+  padding-left: 22px;
+}
+
+.asls-scope .studio_prose ul {
+  list-style: disc;
+}
+
+.asls-scope .studio_prose ol {
+  list-style: decimal;
+}
+
+.asls-scope .studio_prose li {
+  margin: 6px 0;
+}
+
+.asls-scope .studio_prose li::marker {
+  color: var(--secondary-light);
+}
+
+.asls-scope .studio_prose li > p {
+  margin: 0 0 8px;
+}
+
+.asls-scope .studio_prose hr {
+  margin: 40px 0;
+  border: none;
+  border-top: 1px solid var(--prose-rule);
+}
+
+.asls-scope .studio_prose img,
+.asls-scope .studio_prose video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ── Keys: Studio's small buttons ──────────────────────── */
+.asls-scope .studio_prose kbd {
+  display: inline-block;
+  padding: 0 8px;
+  border-radius: 10px;
+  background: var(--secondary-dark);
+  font-family: Roboto-Regular, sans-serif;
+  font-size: 11px;
+  line-height: 20px;
+  text-transform: uppercase;
+  color: var(--secondary-lighter);
+}
+
+/* ── Code ──────────────────────────────────────────────── */
+.asls-scope .studio_prose :not(pre) > code {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--prose-panel);
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.86em;
+  color: var(--secondary-lighter);
+}
+
+.asls-scope .studio_prose div[class*='language-'] {
+  position: relative;
+  margin: 0 0 20px;
+  border-radius: 4px;
+  background: var(--prose-panel);
+  overflow-x: auto;
+}
+
+.asls-scope .studio_prose div[class*='language-'] pre {
+  margin: 0;
+  padding: 16px 20px;
+  background: transparent !important;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.asls-scope .studio_prose .vp-code span {
+  color: var(--shiki-dark, inherit);
+}
+
+[data-theme='light'] .asls-scope .studio_prose .vp-code span {
+  color: var(--shiki-light, inherit);
+}
+
+.asls-scope .studio_prose div[class*='language-'] > button.copy,
+.asls-scope .studio_prose div[class*='language-'] > span.lang {
+  display: none;
+}
+
+/* Any other preformatted block (indented code in Markdown) scrolls inside the page */
+.asls-scope .studio_prose pre {
+  max-width: 100%;
+  overflow-x: auto;
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 13px;
+}
+
+/* ── Tables: dark rounded panels, list-style rows ──────── */
+.asls-scope .studio_prose table {
+  display: table;
+  width: 100%;
+  margin: 8px 0 24px;
+  overflow: hidden;
+  border-collapse: collapse;
+  border-radius: 4px;
+  background: var(--prose-panel);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.asls-scope .studio_prose th {
+  padding: 14px 16px 12px;
+  background: var(--prose-panel-alt);
+  font-family: Roboto-Bold, sans-serif;
+  font-size: 11px;
+  font-weight: normal;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--secondary-lighter);
+}
+
+.asls-scope .studio_prose td {
+  padding: 12px 16px;
+  border-top: 1px solid var(--prose-rule);
+  vertical-align: top;
+}
+
+.asls-scope .studio_prose td:first-child {
+  font-family: Roboto-Medium, sans-serif;
+}
+
+/* ── Callouts: dark panels titled in their accent ──────── */
+.asls-scope .studio_prose .custom-block {
+  --callout: var(--accent-light-blue);
+  margin: 8px 0 24px;
+  padding: 16px 20px;
+  border: none;
+  border-radius: 4px;
+  background: var(--prose-panel);
+}
+
+.asls-scope .studio_prose .custom-block.tip { --callout: var(--accent-sea-green); }
+.asls-scope .studio_prose .custom-block.warning { --callout: var(--accent-gold); }
+.asls-scope .studio_prose .custom-block.danger { --callout: var(--accent-red); }
+.asls-scope .studio_prose .custom-block.details { --callout: var(--accent-violet); }
+
+.asls-scope .studio_prose .custom-block > :last-child {
+  margin-bottom: 0;
+}
+
+.asls-scope .studio_prose .custom-block p {
+  font-size: 14px;
+}
+
+.asls-scope .studio_prose .custom-block-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 8px;
+  font-family: Roboto-Bold, sans-serif;
+  font-size: 11px;
+  line-height: 1.4;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--callout);
+}
+
+.asls-scope .studio_prose .custom-block-title::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--callout);
+}
+
+.asls-scope .studio_prose .custom-block a {
+  color: var(--callout);
+}
+
+.asls-scope .studio_prose blockquote {
+  margin: 8px 0 24px;
+  padding: 16px 20px;
+  border-radius: 4px;
+  background: var(--prose-panel);
+}
+
+.asls-scope .studio_prose blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 767px) {
+  .asls-scope .studio_prose {
+    padding: 28px 16px 0;
+  }
+
+  /* Wide tables scroll sideways on phones */
+  .asls-scope .studio_prose table {
+    display: block;
+    overflow-x: auto;
+  }
+
+  .asls-scope .studio_prose h1 {
+    font-size: 30px;
+  }
+}

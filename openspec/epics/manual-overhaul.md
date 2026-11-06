@@ -21,6 +21,12 @@ clips that nobody re-records.
 
 ## Decisions (2026-11-05, with the user)
 
+- **Revision after the first review of unit 1:** the manual must look like Studio itself (its
+  toolbar, patch bay, widgets, icons and borders, built from real `uk-*` components), not a
+  recoloured VitePress theme. The home hero is a cinematic 3D scene rendered live by Studio's
+  visualizer and doesn't have to follow the uikit. No agent-made screenshots: product visuals
+  are live.
+
 - **Design source = the app's own uikit.** The manual reuses Studio's CSS tokens
   (`--primary-*`, `--secondary-*`, `--accent-*` in `src/assets/styles/global.css`, light variant
   under `[data-theme="light"]`), Roboto, and the `uk-*` components. There's no separate brand
@@ -36,6 +42,11 @@ clips that nobody re-records.
 - **Live previews run real app components** against a manual-only dummy show, loaded on the
   client only. Videos stay only where a live component can't show the point (for example
   dragging across several regions of the full app).
+
+- **Home page fine-tuning waits for the end of the epic (2026-11-06).** Unit 1 shipped the
+  scroll story (2D hero, liquid reveal, four MAC Auras, live widgets, scroll-driven show,
+  global autoplay and Next, final hero). The user called it good enough for now; a polish pass
+  happens once units 2–5 are done.
 
 ## Findings that shaped the plan (2026-11-05)
 
@@ -60,8 +71,8 @@ clips that nobody re-records.
 
 | # | Change | Depends on | Status |
 |---|---|---|---|
-| 1 | `restyle-manual-site`: Studio look (tokens, fonts, dark default + light), hero and product presentation, URL config, a working docs build and deploy | none | proposed (full artifacts, ready to refine/apply) |
-| 2 | `add-manual-live-previews`: `<LivePreview>` harness, manual dummy showfile, presets per widget, video fallback | 1 | proposed |
+| 1 | `restyle-manual-site`: Studio look (tokens, fonts, dark default + light), hero and product presentation, URL config, a working docs build and deploy | none | archived (branch `docs/restyle-manual-site`) |
+| 2 | `add-manual-live-previews`: `<LivePreview>` harness, manual dummy showfile, presets per widget, video fallback; the home page already runs Studio's real widgets live (unit 1), so this unit covers the manual pages (no screenshots anywhere) | 1 | proposed |
 | 3 | `document-show-programming`: concepts + patch → group → scene → effect → chase → master/live, with live previews | 2 | proposed |
 | 4 | `document-rig-and-output`: fixture library/OFL/GDTF, outputs and gateway, visualizer, showfiles, desktop app, shortcuts, glossary, troubleshooting | 2 (can run beside 3) | proposed |
 | 5 | `gate-manual-upkeep`: OpenSpec rules, archive check, PR template, `user-manual` skill + coverage map | 3, 4 | proposed |

@@ -1,26 +1,53 @@
 <template>
   <div class="wrapper">
     <Transition name="fade">
-      <div class="pause_overlay" v-show="!playing">
+      <div
+        v-show="!playing"
+        class="pause_overlay"
+      >
         <div class="pause_bar" />
         <div class="pause_bar" />
       </div>
     </Transition>
-    <video class="video" ref="video" loop="true" muted>
-      <source :src="src" type="video/webm" />
+    <video
+      ref="video"
+      class="video"
+      loop
+      muted
+    >
+      <source
+        :src="src"
+        type="video/webm"
+      >
       Your browser does not support the video tag.
     </video>
     <div class="loader">
-      <span ref="progress" class="loader_progress" />
+      <span
+        ref="progress"
+        class="loader_progress"
+      />
     </div>
   </div>
 </template>
 
 <script>
+/**
+ * Muted looping screen recording that plays while it sits near the middle of the viewport.
+ * @example <Video src="/interface/toolbar.webm" />
+ */
 export default {
-  name: "Video",
+  // Existing pages use <Video>; renaming it would break them
+  // eslint-disable-next-line vue/multi-word-component-names, vue/no-reserved-component-names
+  name: 'Video',
   props: {
-    src: String,
+    /**
+     * WebM file path under docs/manual/public
+     * @type {String}
+     */
+    src: {
+      type: String,
+      required: true,
+    },
   },
   data() {
     return {
@@ -29,12 +56,23 @@ export default {
       intervalHandle: null,
     };
   },
+  mounted() {
+    this.videoElHandle = this.$refs.video;
+    this.intervalHandle = setInterval(this.toggleVisibility, 250);
+  },
+  beforeUnmount() {
+    clearInterval(this.intervalHandle);
+  },
   methods: {
+    /**
+     * Plays the video while its centre is within one video height of the viewport centre,
+     * otherwise pauses and rewinds it.
+     */
     toggleVisibility() {
-      let box = this.videoElHandle.getBoundingClientRect();
-      let boxCenterY = box.top + box.height / 2.0;
-      let screenCenterY = window.innerHeight / 2;
-      let playing = this.playing;
+      const box = this.videoElHandle.getBoundingClientRect();
+      const boxCenterY = box.top + box.height / 2.0;
+      const screenCenterY = window.innerHeight / 2;
+      const wasPlaying = this.playing;
       if (boxCenterY <= screenCenterY + box.height && boxCenterY >= screenCenterY - box.height) {
         this.playing = true;
       } else {
@@ -42,22 +80,24 @@ export default {
         this.videoElHandle.pause();
         this.videoElHandle.currentTime = 0;
       }
-      playing ? this.videoElHandle.play() : this.videoElHandle.pause();
+      if (wasPlaying) {
+        this.videoElHandle.play();
+      } else {
+        this.videoElHandle.pause();
+      }
       this.updateProgress();
     },
+    /**
+     * Moves the progress bar to the video's current time.
+     */
     updateProgress() {
-      if (this.$refs.progress) {
-        this.$refs.progress.style.transition = this.videoElHandle.currentTime >= 0.5 ? 'width .5s' : 'width 0s';
-        this.$refs.progress.style.width = `${(this.videoElHandle.currentTime / this.videoElHandle.duration) * 100}%`;
+      const { progress } = this.$refs;
+      if (progress) {
+        const { currentTime, duration } = this.videoElHandle;
+        progress.style.transition = currentTime >= 0.5 ? 'width .5s' : 'width 0s';
+        progress.style.width = `${(currentTime / duration) * 100}%`;
       }
     },
-  },
-  beforeDestroy() {
-    clearInterval(this.intervalHandle);
-  },
-  mounted() {
-    this.videoElHandle = this.$refs.video;
-    this.intervalHandle = setInterval(this.toggleVisibility, 250);
   },
 };
 </script>
@@ -67,16 +107,16 @@ export default {
   position: relative;
   display: inline-block;
   border-radius: 5px;
-  border: 1px solid #0c0e0a;
+  border: 1px solid var(--secondary-dark);
   overflow: hidden;
-  background: #0c0e0a;
+  background: var(--primary-dark);
 }
 .pause_overlay {
   border-radius: 5px;
   position: absolute;
   height: 100%;
   width: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: color-mix(in srgb, var(--primary-dark) 50%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -85,7 +125,7 @@ export default {
 .pause_bar {
   height: 64px;
   width: 16px;
-  background: rgba(255, 255, 255, 0.63);
+  background: var(--secondary-lighter);
   border-radius: 5px;
 }
 .loader {
@@ -94,13 +134,13 @@ export default {
   height: 5px;
   bottom: 0px;
   left: 0px;
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--secondary-light);
 }
 .loader_progress {
   position: absolute;
   width: 10%;
   height: 100%;
-  background: var(--vp-c-brand);
+  background: var(--vp-c-brand-1);
   transition: width 1s;
   opacity: .8
 }
