@@ -5,6 +5,7 @@ import { onMounted, watch } from 'vue';
 import uikit from '../../../../src/views/components/uikit';
 import Video from './components/video.vue';
 import StudioFrame from './components/StudioFrame.vue';
+import LivePreview from './components/LivePreview.vue';
 import ResourceLink from './components/ResourceLink.vue';
 import StudioLayout from './shell/Layout.vue';
 import HomeStory from './hero/HomeStory.vue';
@@ -41,6 +42,7 @@ export default {
     // eslint-disable-next-line vue/multi-word-component-names, vue/no-reserved-component-names
     app.component('Video', Video);
     app.component('StudioFrame', StudioFrame);
+    app.component('LivePreview', LivePreview);
     app.component('ResourceLink', ResourceLink);
     app.component('HomeStory', HomeStory);
   },

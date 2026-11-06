@@ -2,13 +2,13 @@
 
 Groups are used to create and manage and distribute cues over a set of given fixtures. The group modifier comes with a set of widgets that allow for [cue definitions](#creating-cues) such as [scenes](#scenes) and [effects](#effects). Fixtures that are patched in a [group](/interface/grouppool/) may come from different universes, thus allowing for cues to be distributed over the show's ntire set of fixtures. 
 
-<Video src="/interface/modifier_group.webm"/>
+<LivePreview preset="group-modifier" />
 
 ## Group Settings
 
 [Group settings](#group-settings) are very basic. They offer a way to visually differentiate one group from another by attributing it with a unique name and color.
 
-<Video src="/interface/modifier_group_settings_widget.webm"/>
+<LivePreview preset="group-settings" />
 
 
 ## Fixture Pool
@@ -19,40 +19,40 @@ Similarly to The [patch bay](/interface/patchbay/), the fixture pool widget hold
 
 The add button allows for new fixtures to be added into the group's fixture list.
 
-<img style="border-radius:5px" src="/interface/patch_bay_add_fixture.png" alt="patch bay" width="300"/>
+<LivePreview preset="group-patch-add" />
 
 ### Selecting Fixtures
 
 One or many fixtures may be selected for deletion. to do so, you may either hold the <kbd>`Ctrl`</kbd> key and select multiple individual list entries or start by clicking on the first list entry index to be selected and select a second entry while holding the <kbd>`Shift`</kbd> key, thus resulting in the selection of every fixture in between these two indices.
 
-<Video src="/interface/modifier_universe_fixturepool_widget_select.webm"/>
+<LivePreview preset="group-fixture-pool" />
 
 
 ### Filtering Fixtures
 
 Once patched, group's fixtures may be filtered by inputing a search string within the Search Items textbox.
 
-<Video src="/interface/modifier_universe_fixturepool_widget_filter.webm"/>
+<LivePreview preset="group-fixture-pool" />
 
 
 ### Deleting Fixtures
 
 You may delete every selected fixture from  a group by pressing the <kbd>`Del`</kbd> or <kbd>`Backspace`</kbd> key. You will then be prompted with a validation popup. Deleting a group's fixture will automatically remove the references to the specified fixture(s) instance(s) throughout the whole group.
 
-<img style="border-radius:5px" src="/interface/patch_bay_delete_fixture.png" alt="delete fixture" width="400"/>
+<LivePreview preset="group-fixture-pool-delete" />
 
 ## Cue Pool
 
 The [cue pool](#cue-pool) holds a reference to each individual cues that are part of a group. It provides users with a way to [create](#creating-cues), [edit](#editing-cues) and [trigger](#running-cues) cues. Cue pools can hold up to 120 unique cues.
 
-<Video src="/interface/modifier_group_cuepool_widget.webm"/>
+<LivePreview preset="group-cuepool" />
 
 
 ### Creating Cues
 
 Cues can be created at will by double-clicking on a cuepool's empty slot, prompting the user with a cue creation popup.
 
-<Video src="/interface/modifier_group_cuepool_popup_add.webm"/>
+<LivePreview preset="cuepool-add" />
   
 The cue creation popup allows for cue type selection ([scene](#scenes) or [effects](#effects)), as well as name definition and color attribution. While a cues' name and color may be modified later through the [cue settings](#cue-settings) widget, the cue's type cannot be modified. 
 
@@ -67,14 +67,14 @@ Effect are cues which allow for parametric modulation of a fixture's channel ove
 
 Cues can be selected for modification by clicking on a cue's footer section within the cuepool. You may also opt to both [run](#running-cues) and [select](#editing-cues) the cue for edit by clicking on a cue's body (cue section containing the cue type icon). cues may be reordered by dragging and dropping them in any of the cuepool's empty spot.
 
-<Video src="/interface/modifier_group_cuepool_widget_edit.webm"/>
+<LivePreview preset="group-cuepool" />
 
 
 ### Running Cues
 
 A cue's running state may be toggled on or off by clicking its body (cue section containing the cue type icon). Once in running mode, tha cue's progress over time can be visualized within the cue's body. It's playing state is given by hovering the mouse cursor over the cue's body. The overview section of the cue pool allows for quick identification of running cues without the need for the container to be scrolled through. Playing cues can be easily identified thanks to their blinking animation.
 
-<Video src="/interface/modifier_group_cuepool_widget_play.webm"/>
+<LivePreview preset="group-cuepool" />
 
 ### Deleting Cues
 
@@ -85,7 +85,7 @@ A selected cue may be deleted by pressing the <kbd>`Del`</kbd> or <kbd>`Backspac
 
 Every cue type comes with a similar set of features that can be edited through the [cue settings](#cue-settings) widget. These features define the cue's triggering and playing behavior, both when manually played through the cuepool widget's [running cues](#running-cues) feature or automatically played in group [chases](/modifiers/chase/).
 
-<Video src="/interface/modifier_group_cue-settings_widget.webm"/>
+<LivePreview preset="cue-settings" />
 
 | Setting       | Description                                                                                                               |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------- |
@@ -113,7 +113,7 @@ Scene cues can be edited and manipulated through the scene-specific widgets list
 
 Fade editor is a **scene-specific** widget. It allows to define a scene's fade-in/out easing function. It is based around the [Bézier curve](https://en.wikipedia.org/wiki/B%C3%A9zier_curve) which allows for both starndard and custom easing function definition.
 
-<Video src="/interface/modifier_group_fade-editor_widget.webm"/>
+<LivePreview preset="scene-curve" />
 
 > **Note:** Manipulating control point values manually, either through the `CP?X/Y` or the curve editor will automatically set the selected preset to "custom".
 
@@ -137,7 +137,7 @@ In order to define custom easing function, you may either opt to drag the contro
 
 Scene Fixtures and channels are scene-specific widgets. they allows for fixtures to be picked in order to display and set their channel values. While single fixtures can be selected, a set of multiple fixtures may be seleted for edition by holding the <kbd>`Ctrl`</kbd> or <kbd>`Shift`</kbd> key. When multiple fixtures are selected, the modifications applied to the channels through the [Fixture Channels](#scene-fixture-channels), [Color Picker](#color-picker) and [pan & tilt](#pan--tilt) widgets will be applied to each individual fixture taht is part of the selection list. Thus allowing for quick scene definitions. The values that are set through the **Channels** widget will be the fixture(s)'s end values once the scene is triggered.
 
-<Video src="/interface/modifier_group_fixture-channels_widget.webm"/>
+<LivePreview preset="scene-modifier" />
 
 
 ::: info Note: 
@@ -163,13 +163,12 @@ When the selected fixtures have cells (the pixels of a bar or a matrix, the head
 
 Channels that belong to the whole fixture (a master dimmer, a strobe) are always shown. The [Color Picker](#color-picker) and [Pan & Tilt](#pan--tilt) widgets also set the selected cells only. The scene keeps every cell's value, so a scene can give each pixel its own colour.
 
-<!-- TODO media: scene modifier with a pixel bar, the Cells widget and cell 7's dimmer -->
+<LivePreview preset="scene-modifier-bar" />
 
 ### Color Picker
 
 The color picker widget can be used to manipulate a fixture's [color intensity channels](#supported-channel-types). Color systems can differ from one fixture to another (RGB, CMY, HSV...). To ease color manipulation, the chosen color value is automatically converted to match the fixture's color system. On a fixture with a white channel (RGBW), the white channel takes the part shared by red, green and blue. Similarly to the channels widget, the color picker widget may be used in to set the color value of **one or multiple** selected fixtures at a time.
 
-<Video src="/interface/modifier_universe_colorpicker_widget.webm" style="margin-bottom:16px;"/>
 
 
 #### Modes
@@ -181,7 +180,6 @@ Color values can also be inputed manually through the widget's input. You may op
 
 A fixture's Pan and Tilt values may be adjusted manually by using the [Pan & Tilt](#pan--tilt) widget. Similarly to the channels widget, the pan & tilt widget may be used in to set the color value of **one or multiple** selected fixtures at a time.
 
-<Video src="/interface/modifier_universe_pantilt_widget.webm" style="margin-bottom:16px;"/>
 
 #### Fine Adjustments
 
@@ -226,7 +224,7 @@ Modulated channels are effect channels that are bound to a waveform which will r
 
 New modular effect channel can be created by click on the widget's `ADD` button. A popup containing a list of modular channels and presets will be displayed. 
 
-<img style="border-radius:5px" src="/interface/group-pool_modulate-channels_new.png" alt="add modulateed channel button" width="300"/>
+<LivePreview preset="effect-channel-add" />
 
 
 > **Note:** Selecting an item from the list will either create and associate a new modular channel to the effect or assign the preset values to channels that may already be existing.
@@ -245,7 +243,7 @@ By default, every fixture that is part of a group is added to the list of active
 
 The effect tool is used to configure a selected modular channel's waveform and fixture phase distribution. It helps configure and visualise the modulation that will actually be applied to the seleted channel.
 
-<Video src="/interface/modifier_group_effect-tool_widget.webm"/>
+<LivePreview preset="effect-modifier" />
 
 This widget is highly configurable and comes with many features:
 

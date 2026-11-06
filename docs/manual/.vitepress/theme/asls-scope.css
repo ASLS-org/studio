@@ -6,8 +6,11 @@
  */
 .asls-scope {
   font-family: Roboto-Regular, sans-serif;
+  /* The browser default Studio runs on; a frame inside a manual page must not inherit 15px prose */
+  font-size: 16px;
   color: var(--secondary-lighter);
   line-height: normal;
+  white-space: normal;
 }
 
 .asls-scope,

@@ -30,5 +30,13 @@ views/
 - Styling: `<style scoped>` plain CSS using the design tokens in `src/assets/styles/tokens.css`
   (`--primary-*`, `--secondary-*`, `--accent-*`; shared with the user manual). No new hard-coded
   colours; palette lives in `uikit/colors/uikit.colors.js` and `views/utils/palette.js`.
+- The user manual mounts real widgets and panels as live previews
+  (`docs/manual/.vitepress/theme/previews/presets.js`). Renaming or moving a widget, or changing
+  its props, breaks them: update the preset (the dev page `/_dev/previews` mounts all of them).
+  `previews/FixtureControl.vue` copies the universe fragment's wiring of the channels, colour,
+  pan/tilt and cells widgets.
+- `uk-popup` opens in the injected `popupHost` element when one is provided (the manual's
+  previews), else on the body. Idle surfaces (empty lists, the modifier strip, the group pool)
+  use `var(--idle-stripes)` over their base colour.
 - File names: `<area>.<kind>.<thing>.vue`, e.g. `group.modifier.widget.cuepool.vue`,
   `popup.connections.vue`, `uikit.input.select.vue`.

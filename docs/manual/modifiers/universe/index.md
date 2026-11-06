@@ -4,14 +4,14 @@
 
 Universes can be setup and modified through the Universe [Modifier](/interface/modifier/). This modifier comes with a set of widgets that allow for fixture [patching](#fixture-pool), [setup](#settings) and [positioning](#position). It also comes with a set of widgets which purpose is to edit a seleced fixture's channel on the fly. 
 
-<Video src="/interface/modifier_universe_4.webm"/>
+<LivePreview preset="universe-modifier" />
 
 
 ## Universe Settings
 
 The [Universe Settings](#universe-settings) widgets offers a way to setup and customize universes settings on the fly.
 
-<Video src="/interface/modifier_universe_settings_widget.webm"/>
+<LivePreview preset="universe-settings" />
 
 
 | Setting | Description                                        |
@@ -28,33 +28,33 @@ Similarly to The [patch bay](/interface/patchbay/), the fixture pool widget cont
 
 The add button allows for new fixtures to be patchied allong the universe's fixture list. For further information please see [Patching Fixtures](/workflow/patching/) under the workflow section.
 
-<img style="border-radius:5px" src="/interface/patch_bay_add_fixture.png" alt="patch bay" width="300"/>
+<LivePreview preset="patch-add" />
 
 ### Selecting Fixtures
 
 One or many fixtures may be selected for deletion. to do so, you may either hold the <kbd>`Ctrl`</kbd> key and select multiple individual list entries or start by clicking on the first list entry index to be selected and select a second entry while holding the <kbd>`Shift`</kbd> key, thus resulting in the selection of every fixture in between these two indices.
 
-<Video src="/interface/modifier_universe_fixturepool_widget_select.webm"/>
+<LivePreview preset="fixture-pool" />
 
 
 ### Filtering Fixtures
 
 Once patched, universe's fixtures may be filtered by inputing a search string within the Search Items textbox.
 
-<Video src="/interface/modifier_universe_fixturepool_widget_filter.webm"/>
+<LivePreview preset="fixture-pool" />
 
 
 ### Deleting Fixtures
 
 Once fixtures are selected, you may delete every selected entry by pressing the <kbd>`Del`</kbd> or <kbd>`Backspace`</kbd> key. You will then be prompted with a validation popup. Deleting a universe's fixture will automatically remove the references to the specified fixture(s) instance(s) throughout the whole show.
 
-<img style="border-radius:5px" src="/interface/patch_bay_delete_fixture.png" alt="delete fixture" width="400"/>
+<LivePreview preset="fixture-pool-delete" />
 
 ## Fixture Settings
 
 A selected fixture's [Settings](#fixture-settings) can be modified by modifying values in the fixture settings widget.
 
-<Video src="/interface/modifier_universe_fixture_settings_widget.webm"/>
+<LivePreview preset="fixture-settings" />
 
 
 | Setting | Description                                                         |
@@ -79,12 +79,12 @@ Some fixtures are made of several cells: the pixels of a bar or a matrix, the he
 
 The [channels](#fixture-channels) widget then shows the channels of the selected cells, plus the channels that belong to the whole fixture (a master dimmer, a strobe). The [Color Picker](#color-picker) and [Pan & Tilt](#pan--tilt) widgets set the selected cells only. Fixtures without cells don't show the widget.
 
-<!-- TODO media: universe modifier with an 8-pixel bar, cell 3 selected and set to blue -->
+<LivePreview preset="fixture-cells" />
 
 ## Fixture Channels
 A selected fixture's [channels](#fixture-channels) can be modified on the fly by playing around with the channel faders available through the [channels widget](#fixture-channels).
 
-<Video src="/interface/modifier_universe_fixture_channels_widget.webm"/>
+<LivePreview preset="fixture-channels" />
 
 
 > **Note** Fixture channels modified using the [Universe Modifier](#universe-modifier) can only be manipulated live. Set values cannot be stored nor exported. Please refer to the [Group Modier](/modifiers/group/) in order to learn how to create registerable cues.
@@ -142,7 +142,7 @@ All channel types are virtually supported. However, some might not have been imp
 
 The color picker widget can be used to manipulate a fixture's [color intensity channels](#supported-channel-types). Color systems can differ from one fixture to another (RGB, CMY, HSV...). To ease color manipulation, the chosen color value is automatically converted to match the fixture's color system. On a fixture with a white channel (RGBW), the white channel takes the part shared by red, green and blue: picking red 255, green 128, blue 128 sets white 128 and red 127. Amber, UV and lime are left to their faders.
 
-<Video src="/interface/modifier_universe_colorpicker_widget.webm"/>
+<LivePreview preset="fixture-color" />
 
 
 ### Modes
@@ -158,7 +158,7 @@ This color picker does not scale color intensities based on the  [CIE 1931 RGB c
 
 A fixture's Pan and Tilt values may be adjusted manually by using the [Pan & Tilt](#pan--tilt) widget.
 
-<Video src="/interface/modifier_universe_pantilt_widget.webm"/>
+<LivePreview preset="fixture-pantilt" />
 
 
 ### Fine Adjustments

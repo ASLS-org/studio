@@ -3,7 +3,8 @@
  * stand out (tables, callouts, code, quotes) are darker rounded panels (--prose-panel), the way
  * dark areas sit inside Studio's panels. Accents mark meaning (callout types, the section kicker),
  * not furniture. Text reads at 15px / 1.65. Selectors are prefixed with .asls-scope to win over
- * the app's element rules replayed in asls-scope.css.
+ * the app's element rules replayed in asls-scope.css, and skip Studio blocks inside the page
+ * (.vp-raw: StudioFrame, live previews) so the real components keep the app's look.
  */
 .asls-scope .studio_prose {
   --prose-panel: var(--primary-dark);
@@ -26,24 +27,24 @@
   --prose-panel-alt: var(--primary-dark-alt);
 }
 
-.asls-scope .studio_prose * {
+.asls-scope .studio_prose *:not(.vp-raw, .vp-raw *) {
   user-select: text;
 }
 
 /* ── Headings ──────────────────────────────────────────── */
-.asls-scope .studio_prose h1,
-.asls-scope .studio_prose h2,
-.asls-scope .studio_prose h3,
-.asls-scope .studio_prose h4,
-.asls-scope .studio_prose h5,
-.asls-scope .studio_prose h6 {
+.asls-scope .studio_prose h1:not(.vp-raw, .vp-raw *),
+.asls-scope .studio_prose h2:not(.vp-raw, .vp-raw *),
+.asls-scope .studio_prose h3:not(.vp-raw, .vp-raw *),
+.asls-scope .studio_prose h4:not(.vp-raw, .vp-raw *),
+.asls-scope .studio_prose h5:not(.vp-raw, .vp-raw *),
+.asls-scope .studio_prose h6:not(.vp-raw, .vp-raw *) {
   color: var(--secondary-lighter);
   white-space: normal;
   overflow: visible;
   scroll-margin-top: 72px;
 }
 
-.asls-scope .studio_prose h1 {
+.asls-scope .studio_prose h1:not(.vp-raw, .vp-raw *) {
   margin: 0 0 16px;
   font-family: Roboto, Roboto-Medium, sans-serif;
   font-weight: 500;
@@ -52,12 +53,12 @@
   letter-spacing: -0.025em;
 }
 
-.asls-scope .studio_prose h1 + p {
+.asls-scope .studio_prose h1 + p:not(.vp-raw, .vp-raw *) {
   font-size: 17px;
   line-height: 1.6;
 }
 
-.asls-scope .studio_prose h2 {
+.asls-scope .studio_prose h2:not(.vp-raw, .vp-raw *) {
   margin: 64px 0 16px;
   padding-top: 28px;
   border-top: 1px solid var(--prose-rule);
@@ -68,7 +69,7 @@
   letter-spacing: -0.015em;
 }
 
-.asls-scope .studio_prose h3 {
+.asls-scope .studio_prose h3:not(.vp-raw, .vp-raw *) {
   margin: 40px 0 12px;
   font-family: Roboto, Roboto-Medium, sans-serif;
   font-weight: 500;
@@ -77,14 +78,14 @@
   text-transform: none;
 }
 
-.asls-scope .studio_prose h4 {
+.asls-scope .studio_prose h4:not(.vp-raw, .vp-raw *) {
   margin: 28px 0 8px;
   font-family: Roboto, Roboto-Bold, sans-serif;
   font-weight: 700;
   font-size: 15px;
 }
 
-.asls-scope .studio_prose h5 {
+.asls-scope .studio_prose h5:not(.vp-raw, .vp-raw *) {
   margin: 24px 0 8px;
   font-family: Roboto-Bold, sans-serif;
   font-size: 12px;
@@ -92,7 +93,7 @@
   text-transform: uppercase;
 }
 
-.asls-scope .studio_prose h6 {
+.asls-scope .studio_prose h6:not(.vp-raw, .vp-raw *) {
   margin: 20px 0 8px;
   font-family: Roboto-Bold, sans-serif;
   font-size: 11px;
@@ -101,12 +102,12 @@
   opacity: 0.65;
 }
 
-.asls-scope .studio_prose .header-anchor {
+.asls-scope .studio_prose .header-anchor:not(.vp-raw, .vp-raw *) {
   display: none;
 }
 
 /* ── Text ──────────────────────────────────────────────── */
-.asls-scope .studio_prose p {
+.asls-scope .studio_prose p:not(.vp-raw, .vp-raw *) {
   display: block;
   margin: 0 0 16px;
   font-family: Roboto, Roboto-Regular, sans-serif;
@@ -115,61 +116,61 @@
   color: var(--secondary-lighter);
 }
 
-.asls-scope .studio_prose strong,
-.asls-scope .studio_prose b {
+.asls-scope .studio_prose strong:not(.vp-raw, .vp-raw *),
+.asls-scope .studio_prose b:not(.vp-raw, .vp-raw *) {
   font-family: Roboto-Medium, sans-serif;
   font-weight: normal;
 }
 
-.asls-scope .studio_prose a {
+.asls-scope .studio_prose a:not(.vp-raw, .vp-raw *) {
   color: var(--accent-light-blue);
   text-decoration: none;
 }
 
-.asls-scope .studio_prose a:hover {
+.asls-scope .studio_prose a:hover:not(.vp-raw, .vp-raw *) {
   text-decoration: underline;
 }
 
-.asls-scope .studio_prose ul,
-.asls-scope .studio_prose ol {
+.asls-scope .studio_prose ul:not(.vp-raw, .vp-raw *),
+.asls-scope .studio_prose ol:not(.vp-raw, .vp-raw *) {
   margin: 0 0 16px;
   padding-left: 22px;
 }
 
-.asls-scope .studio_prose ul {
+.asls-scope .studio_prose ul:not(.vp-raw, .vp-raw *) {
   list-style: disc;
 }
 
-.asls-scope .studio_prose ol {
+.asls-scope .studio_prose ol:not(.vp-raw, .vp-raw *) {
   list-style: decimal;
 }
 
-.asls-scope .studio_prose li {
+.asls-scope .studio_prose li:not(.vp-raw, .vp-raw *) {
   margin: 6px 0;
 }
 
-.asls-scope .studio_prose li::marker {
+.asls-scope .studio_prose li:not(.vp-raw, .vp-raw *)::marker {
   color: var(--secondary-light);
 }
 
-.asls-scope .studio_prose li > p {
+.asls-scope .studio_prose li > p:not(.vp-raw, .vp-raw *) {
   margin: 0 0 8px;
 }
 
-.asls-scope .studio_prose hr {
+.asls-scope .studio_prose hr:not(.vp-raw, .vp-raw *) {
   margin: 40px 0;
   border: none;
   border-top: 1px solid var(--prose-rule);
 }
 
-.asls-scope .studio_prose img,
-.asls-scope .studio_prose video {
+.asls-scope .studio_prose img:not(.vp-raw, .vp-raw *),
+.asls-scope .studio_prose video:not(.vp-raw, .vp-raw *) {
   max-width: 100%;
   height: auto;
 }
 
 /* ── Keys: Studio's small buttons ──────────────────────── */
-.asls-scope .studio_prose kbd {
+.asls-scope .studio_prose kbd:not(.vp-raw, .vp-raw *) {
   display: inline-block;
   padding: 0 8px;
   border-radius: 10px;
@@ -182,7 +183,7 @@
 }
 
 /* ── Code ──────────────────────────────────────────────── */
-.asls-scope .studio_prose :not(pre) > code {
+.asls-scope .studio_prose :not(pre) > code:not(.vp-raw, .vp-raw *) {
   padding: 2px 6px;
   border-radius: 4px;
   background: var(--prose-panel);
@@ -191,7 +192,7 @@
   color: var(--secondary-lighter);
 }
 
-.asls-scope .studio_prose div[class*='language-'] {
+.asls-scope .studio_prose div[class*='language-']:not(.vp-raw, .vp-raw *) {
   position: relative;
   margin: 0 0 20px;
   border-radius: 4px;
@@ -199,7 +200,7 @@
   overflow-x: auto;
 }
 
-.asls-scope .studio_prose div[class*='language-'] pre {
+.asls-scope .studio_prose div[class*='language-'] pre:not(.vp-raw, .vp-raw *) {
   margin: 0;
   padding: 16px 20px;
   background: transparent !important;
@@ -207,21 +208,21 @@
   line-height: 1.65;
 }
 
-.asls-scope .studio_prose .vp-code span {
+.asls-scope .studio_prose .vp-code span:not(.vp-raw, .vp-raw *) {
   color: var(--shiki-dark, inherit);
 }
 
-[data-theme='light'] .asls-scope .studio_prose .vp-code span {
+[data-theme='light'] .asls-scope .studio_prose .vp-code span:not(.vp-raw, .vp-raw *) {
   color: var(--shiki-light, inherit);
 }
 
-.asls-scope .studio_prose div[class*='language-'] > button.copy,
-.asls-scope .studio_prose div[class*='language-'] > span.lang {
+.asls-scope .studio_prose div[class*='language-'] > button.copy:not(.vp-raw, .vp-raw *),
+.asls-scope .studio_prose div[class*='language-'] > span.lang:not(.vp-raw, .vp-raw *) {
   display: none;
 }
 
 /* Any other preformatted block (indented code in Markdown) scrolls inside the page */
-.asls-scope .studio_prose pre {
+.asls-scope .studio_prose pre:not(.vp-raw, .vp-raw *) {
   max-width: 100%;
   overflow-x: auto;
   font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
@@ -229,7 +230,7 @@
 }
 
 /* ── Tables: dark rounded panels, list-style rows ──────── */
-.asls-scope .studio_prose table {
+.asls-scope .studio_prose table:not(.vp-raw, .vp-raw *) {
   display: table;
   width: 100%;
   margin: 8px 0 24px;
@@ -241,7 +242,7 @@
   line-height: 1.55;
 }
 
-.asls-scope .studio_prose th {
+.asls-scope .studio_prose th:not(.vp-raw, .vp-raw *) {
   padding: 14px 16px 12px;
   background: var(--prose-panel-alt);
   font-family: Roboto-Bold, sans-serif;
@@ -254,18 +255,18 @@
   color: var(--secondary-lighter);
 }
 
-.asls-scope .studio_prose td {
+.asls-scope .studio_prose td:not(.vp-raw, .vp-raw *) {
   padding: 12px 16px;
   border-top: 1px solid var(--prose-rule);
   vertical-align: top;
 }
 
-.asls-scope .studio_prose td:first-child {
+.asls-scope .studio_prose td:first-child:not(.vp-raw, .vp-raw *) {
   font-family: Roboto-Medium, sans-serif;
 }
 
 /* ── Callouts: dark panels titled in their accent ──────── */
-.asls-scope .studio_prose .custom-block {
+.asls-scope .studio_prose .custom-block:not(.vp-raw, .vp-raw *) {
   --callout: var(--accent-light-blue);
   margin: 8px 0 24px;
   padding: 16px 20px;
@@ -274,20 +275,20 @@
   background: var(--prose-panel);
 }
 
-.asls-scope .studio_prose .custom-block.tip { --callout: var(--accent-sea-green); }
-.asls-scope .studio_prose .custom-block.warning { --callout: var(--accent-gold); }
-.asls-scope .studio_prose .custom-block.danger { --callout: var(--accent-red); }
-.asls-scope .studio_prose .custom-block.details { --callout: var(--accent-violet); }
+.asls-scope .studio_prose .custom-block.tip:not(.vp-raw, .vp-raw *){ --callout: var(--accent-sea-green); }
+.asls-scope .studio_prose .custom-block.warning:not(.vp-raw, .vp-raw *){ --callout: var(--accent-gold); }
+.asls-scope .studio_prose .custom-block.danger:not(.vp-raw, .vp-raw *){ --callout: var(--accent-red); }
+.asls-scope .studio_prose .custom-block.details:not(.vp-raw, .vp-raw *){ --callout: var(--accent-violet); }
 
-.asls-scope .studio_prose .custom-block > :last-child {
+.asls-scope .studio_prose .custom-block > :last-child:not(.vp-raw, .vp-raw *) {
   margin-bottom: 0;
 }
 
-.asls-scope .studio_prose .custom-block p {
+.asls-scope .studio_prose .custom-block p:not(.vp-raw, .vp-raw *) {
   font-size: 14px;
 }
 
-.asls-scope .studio_prose .custom-block-title {
+.asls-scope .studio_prose .custom-block-title:not(.vp-raw, .vp-raw *) {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -300,7 +301,7 @@
   color: var(--callout);
 }
 
-.asls-scope .studio_prose .custom-block-title::before {
+.asls-scope .studio_prose .custom-block-title:not(.vp-raw, .vp-raw *)::before {
   content: '';
   flex: 0 0 auto;
   width: 8px;
@@ -309,18 +310,18 @@
   background: var(--callout);
 }
 
-.asls-scope .studio_prose .custom-block a {
+.asls-scope .studio_prose .custom-block a:not(.vp-raw, .vp-raw *) {
   color: var(--callout);
 }
 
-.asls-scope .studio_prose blockquote {
+.asls-scope .studio_prose blockquote:not(.vp-raw, .vp-raw *) {
   margin: 8px 0 24px;
   padding: 16px 20px;
   border-radius: 4px;
   background: var(--prose-panel);
 }
 
-.asls-scope .studio_prose blockquote > :last-child {
+.asls-scope .studio_prose blockquote > :last-child:not(.vp-raw, .vp-raw *) {
   margin-bottom: 0;
 }
 
@@ -330,12 +331,12 @@
   }
 
   /* Wide tables scroll sideways on phones */
-  .asls-scope .studio_prose table {
+  .asls-scope .studio_prose table:not(.vp-raw, .vp-raw *) {
     display: block;
     overflow-x: auto;
   }
 
-  .asls-scope .studio_prose h1 {
+  .asls-scope .studio_prose h1:not(.vp-raw, .vp-raw *) {
     font-size: 30px;
   }
 }

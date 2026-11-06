@@ -53,6 +53,30 @@ const nav = [
   { text: 'Developer Docs', link: links.devDocs },
 ].filter((item) => item.link);
 
+/*
+ * Live preview ids, read from the preset registry's source (it lazy-imports app components, so
+ * it isn't imported here). A page naming an unknown preset is reported at build time.
+ */
+const presetIds = new Set([...fs.readFileSync(
+  fileURLToPath(new URL('./theme/previews/presets.js', import.meta.url)),
+  'utf8',
+).matchAll(/^ {2}'?([a-z0-9-]+)'?: \{/gm)].map((match) => match[1]));
+
+/**
+ * Reports `<LivePreview preset="…">` tags whose preset doesn't exist
+ * @param {String} file page source path
+ * @param {String} page page path relative to the manual
+ */
+function checkPresets(file, page) {
+  const source = fs.readFileSync(file, 'utf8');
+  [...source.matchAll(/<LivePreview[^>]*\spreset="([^"]+)"/g)].forEach(([, id]) => {
+    if (!presetIds.has(id)) {
+      // eslint-disable-next-line no-console
+      console.warn(`[manual] ${page}: unknown live preview "${id}" (see theme/previews/presets.js)`);
+    }
+  });
+}
+
 // Studio's tokens switch on html[data-theme]. Set it before first paint from VitePress's saved
 // appearance (dark unless the visitor chose light), so light-mode readers see no dark flash.
 const themeBootScript = 'try{var m=localStorage.getItem(\'asls-manual-appearance\')'
@@ -67,6 +91,8 @@ export default {
   // The installation page links to the local dev server
   ignoreDeadLinks: 'localhostLinks',
   appearance: 'dark',
+  // Never published: the AI context notes, and the dev-only check pages (built in dev only)
+  srcExclude: ['CLAUDE.md', ...(process.argv.includes('dev') ? [] : ['_dev/**'])],
   // Copies the app's public files the manual uses (see vite.config.js) into the build
   buildEnd(siteConfig) {
     const appPublic = fileURLToPath(new URL('../../../public', import.meta.url));
@@ -75,6 +101,10 @@ export default {
       fs.mkdirSync(path.dirname(target), { recursive: true });
       fs.copyFileSync(path.join(appPublic, file), target);
     });
+  },
+  // Pages naming an unknown live preview are reported
+  transformPageData(pageData, { siteConfig }) {
+    checkPresets(path.join(siteConfig.srcDir, pageData.relativePath), pageData.relativePath);
   },
   // Anchor scrolling clears the 48px toolbar
   scrollOffset: 72,
