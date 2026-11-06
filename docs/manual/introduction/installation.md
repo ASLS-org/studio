@@ -1,27 +1,20 @@
-<p align="center">
-  <a href="https://studio.asls.io/" target="blank"><img src="../../../src/assets/images/studio_logo_textual.svg" height="100" alt="ASLS Studio logo" /></a>
-  <p align="center">Open source, web-based, show control software and visualizer </p>
-</p>
+# Installation
 
-<p align="center">
-  <a href="https://madewithvuejs.com/p/asls-studio/shield-link" target="_blank">
-    <img src="https://madewithvuejs.com/storage/repo-shields/4381-shield.svg" alt="MadeWithVueJs.com shield" />
-  </a>
-  <a href="https://github.com/ASLS-org/studio/?tab=GPL-3.0-1-ov-file" target="_blank">
-    <img src="https://img.shields.io/github/license/asls-org/studio" alt="License" />
-  </a>
-  <a href="https://github.com/ASLS-org/studio/releases" target="_blank">
-    <img src="https://img.shields.io/github/v/tag/asls-org/studio?include_prereleases&sort=semver&style=flat&label=version" alt="Version" />
-  </a>
-</p>
+There are three ways to run ASLS Studio. Pick the one that fits you.
 
-## Overview
+| Option | Best for | What you need |
+|---|---|---|
+| **In the browser** | Trying Studio, programming anywhere | A recent Chrome, Edge or Firefox. Open the <ResourceLink to="demo">live demo</ResourceLink> |
+| **Desktop app** | Running shows on real lights | A build from the <ResourceLink to="releases">releases page</ResourceLink> for macOS, Windows or Linux, when one is attached |
+| **From source** | Self-hosting the web version, contributing | Node.js and Git, steps below |
 
-ASLS Studio is currently in beta version and available for download through its GitHub repository. This guide will help you set up ASLS Studio on your machine.
+::: warning Beta software
+Studio is in beta. Features are provided as-is, without guarantees. Please report problems on
+the <ResourceLink to="issues">issue tracker</ResourceLink>.
+:::
 
-> **Warning**: ASLS Studio is in early beta phase. Features are provided as-is, without guarantees. Please report any issues on the project's repository.
-
-Full software documentation is available at [studio.asls.io](http://studio.asls.io).
+To drive real fixtures from the browser version, you also need the WSC gateway running on your
+computer. See [How Studio works](/introduction/overview#from-studio-to-your-lights).
 
 ## System Requirements
 
@@ -31,17 +24,17 @@ Full software documentation is available at [studio.asls.io](http://studio.asls.
 
 ### Software
 - Operating System: Any OS supporting the required software
-- Node.js: v16.15.1 or higher
-- Browser: Latest version of Chrome, Firefox, or Opera
+- Node.js: 18 (for running from source)
+- Browser: a recent version of Chrome, Edge or Firefox
 
-## Installation Process
+## From source
 
 1. **Clone the Repository**
 
    Open a terminal and navigate to your desired installation directory. Then run:
 
    ```
-   git clone https://github.com/ASLS-org/studio
+   git clone https://github.com/ASLS-org/studio.git
    ```
 
 2. **Navigate to Project Directory**
@@ -84,4 +77,4 @@ To create a production build:
 
 ## Troubleshooting
 
-If you encounter any issues during installation or usage, please report them on the [ASLS Studio GitHub repository](https://github.com/ASLS-org/studio/issues).
+If you run into a problem during installation or use, please report it on the <ResourceLink to="issues">issue tracker</ResourceLink>.

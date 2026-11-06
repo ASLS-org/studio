@@ -1,10 +1,23 @@
-import DefaultTheme from 'vitepress/theme'
-import './custom.css'
+/* eslint-disable import/no-extraneous-dependencies */
+import DefaultTheme from 'vitepress/theme-without-fonts';
+import { useData } from 'vitepress';
+import { onMounted, watch } from 'vue';
 import uikit from '../../../../src/views/components/uikit';
-// TODO: find a way to prevent css overrides. (import ui-kit build ?)
-// import '../../../../src/assets/styles/global.css';
-// import '../../../../src/assets/styles/fonts.css';
+import Video from './components/video.vue';
+import StudioFrame from './components/StudioFrame.vue';
+import ResourceLink from './components/ResourceLink.vue';
+import StudioLayout from './shell/Layout.vue';
+import HomeStory from './hero/HomeStory.vue';
+import ManualTicker from './hero/ticker';
+import './custom.css';
+import './asls-scope.css';
+import './prose.css';
 
+/**
+ * Registers every uk-* component of Studio's uikit, as src/main.js does.
+ * @param {Object} components nested component map
+ * @param {Object} app Vue app
+ */
 function registerComponents(components, app) {
   Object.keys(components).forEach((componentKey) => {
     const component = components[componentKey];
@@ -17,8 +30,27 @@ function registerComponents(components, app) {
 }
 
 export default {
-  ...DefaultTheme,
-  enhanceApp({ app }) {
+  extends: DefaultTheme,
+  Layout: StudioLayout,
+  enhanceApp({ app, siteData }) {
+    // Resource URLs from config.js, for Options API components (this.$links)
+    app.config.globalProperties.$links = siteData.value.themeConfig.links || {};
+    // Studio widgets read live values through $liveTicker; the manual's own ticker stands in
+    app.config.globalProperties.$liveTicker = ManualTicker;
     registerComponents(uikit, app);
-  }
-}
+    // eslint-disable-next-line vue/multi-word-component-names, vue/no-reserved-component-names
+    app.component('Video', Video);
+    app.component('StudioFrame', StudioFrame);
+    app.component('ResourceLink', ResourceLink);
+    app.component('HomeStory', HomeStory);
+  },
+  setup() {
+    // Studio's tokens switch on html[data-theme]; VitePress switches html.dark. Keep them in step.
+    const { isDark } = useData();
+    onMounted(() => {
+      watch(isDark, (dark) => {
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      }, { immediate: true });
+    });
+  },
+};
