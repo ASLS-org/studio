@@ -258,13 +258,7 @@ export default {
 }
 .group_pool_body {
   height: calc(100% - 40px);
-  background: var(--primary-dark-alt) repeating-linear-gradient(
-    45deg,
-    #1619130a,
-    #1619130a 10px,
-    #0c0e0a38 10px,
-    #0c0e0a38 20px
-  );
+  background: var(--primary-dark-alt) var(--idle-stripes);
 }
 .group_pool_groups {
   display: flex;

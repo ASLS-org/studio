@@ -595,15 +595,7 @@ export default {
   color: var(--secondary-light);
   text-transform: uppercase;
   font-family: roboto-regular;
-  background:
-    var(--primary-light)
-    repeating-linear-gradient(
-      45deg,
-      #1619130a,
-      #1619130a 10px,
-      #0c0e0a38 10px,
-      #0c0e0a38 20px
-    );
+  background: var(--primary-light) var(--idle-stripes);
   border-bottom: 1px solid var(--primary-dark);
 }
 .uikit_list_body_empty > h3 {

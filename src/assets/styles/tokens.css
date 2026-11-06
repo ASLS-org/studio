@@ -37,6 +37,16 @@
   --accent-gold: #E2C753;
   --accent-orange: #E76D58;
   --accent-red: #E25D6A;
+
+  /* "Idle" surface: diagonal stripes over the panel shade, behind empty or resting areas
+     (empty lists, the modifier strip, the group pool) */
+  --idle-stripes: repeating-linear-gradient(
+    45deg,
+    #1619130a,
+    #1619130a 10px,
+    #0c0e0a38 10px,
+    #0c0e0a38 20px
+  );
 }
 
 [data-theme="light"] {
