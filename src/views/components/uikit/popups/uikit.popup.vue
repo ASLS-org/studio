@@ -59,6 +59,13 @@ export default {
     // or, for full vue 3 compat in this component:
     MODE: 3,
   },
+  /**
+   * Element popups open in (default: the page body). An embedding page (the user manual's live
+   * previews) provides its own, so popups stay inside it and never blur the host page
+   */
+  inject: {
+    popupHost: { default: null },
+  },
   props: {
     /**
      * Header definition object:
@@ -161,18 +168,16 @@ export default {
     },
   },
   mounted() {
-    const { body } = document;
-    body.appendChild(this.$el);
+    this.host().appendChild(this.$el);
     this.update();
   },
   beforeUnmount() {
-    const { body } = document;
     window.removeEventListener('keydown', this.handleKeydown);
     if (this.backdrop && this.backdropEl) {
-      body.removeChild(this.backdropEl);
+      this.backdropEl.remove();
     }
     if (this.opaque) {
-      const app = document.getElementById('app');
+      const app = this.blurTarget();
       if (app) {
         app.classList.remove('blurred-sm');
       }
@@ -185,7 +190,6 @@ export default {
      */
     update() {
       window.removeEventListener('keydown', this.handleKeydown);
-      const { body } = document;
       this.displayed = this.modelValue;
       if (this.displayed) {
         window.addEventListener('keydown', this.handleKeydown);
@@ -193,22 +197,38 @@ export default {
       if (this.displayed && this.backdrop) {
         this.backdropEl = document.createElement('div');
         this.backdropEl.className = `backdrop${this.opaque ? ' opaque' : ''}`;
-        body.appendChild(this.backdropEl);
+        this.host().appendChild(this.backdropEl);
         if (this.opaque) {
-          const app = document.getElementById('app');
+          const app = this.blurTarget();
           if (app) {
             app.classList.add('blurred-sm');
           }
         }
       } else if (this.backdrop && this.backdropEl) {
-        body.removeChild(this.backdropEl);
+        this.backdropEl.remove();
         if (this.opaque) {
-          const app = document.getElementById('app');
+          const app = this.blurTarget();
           if (app) {
             app.classList.remove('blurred-sm');
           }
         }
       }
+    },
+    /**
+     * Element the popup and its backdrop are attached to
+     *
+     * @returns {HTMLElement} the provided popup host, else the page body
+     */
+    host() {
+      return this.popupHost || document.body;
+    },
+    /**
+     * Element an opaque popup blurs: the app root, none when hosted elsewhere
+     *
+     * @returns {?HTMLElement} element to blur
+     */
+    blurTarget() {
+      return this.popupHost ? null : document.getElementById('app');
     },
     /**
      * Close the popup

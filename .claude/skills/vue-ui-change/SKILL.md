@@ -102,6 +102,11 @@ export default {
   imported by `global.css`. The user manual reuses the same file, so a new or changed token
   shows up there too; keep `tokens.css` custom properties only. No inline hard-coded colours
   except data-driven ones (group/universe/cue colours).
+- **Idle surfaces** (empty or resting areas: empty lists, the modifier strip, the group pool)
+  use `background: var(--primary-light) var(--idle-stripes);` (or their own base colour). Don't
+  copy the gradient.
+- **Popups** (`uk-popup`) attach to the injected `popupHost` when a parent provides one (the
+  manual's previews), else to the body; don't append popups to `document.body` yourself.
 - **List rows** (`uk-list-item`): `tall` (40px) and `large` (40px, 16px padding, 14px labels,
   16px icons) are opt-in modes; defaults stay as in the app. `large` is for lists people read
   (the user manual's navigation). Extend components with opt-in props like these rather than
