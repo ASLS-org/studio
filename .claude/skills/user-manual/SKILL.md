@@ -38,8 +38,9 @@ docs/manual/
   interface/<area>/index.md      one page per screen region: toolbar, patchbay, grouppool, visualizer, modifier
   modifiers/<area>/index.md      one page per modifier: universe, group, chase
   workflow/<task>/index.md       task guides: environment, patching, grouping, scenes, effects, triggering
-  public/home/*.webp             product screenshots used by the home page and introduction
-  public/interface/*.png|webm    screenshots and screen recordings
+  public/interface/*.png|webm    remaining screenshots and recordings (flows a preview can't show)
+  public/presets/manual.showfile.json   the live previews' demo show
+  _dev/*.md                      dev-only check pages (previews, behaviour, visualizer), never built
   .vitepress/config.js           nav, sidebar (add every new page here), resource links
   .vitepress/theme/              look, global components, home sections
 ```
@@ -87,11 +88,70 @@ mode) on the `--primary-light` page; headings follow a 36/24/18/15/12/11px scale
   uikit components look exactly as in the app. Anything of your own inside the shell that is a
   paragraph needs `display: block` (the app's `p` is a flex row).
 - **Embedding app controls in a page**: wrap them in `<StudioFrame caption="…">` (`vp-raw` +
-  the scope). Unit 2 of epic `manual-overhaul` adds `<LivePreview>` on top of it.
+  the scope), or use a live preview (below). `prose.css` element rules skip `.vp-raw` blocks
+  (`:not(.vp-raw, .vp-raw *)` on every rule's last element) and `.asls-scope` resets the
+  inherited font size to 16px: keep both when adding prose rules, or Studio components inside a
+  page pick up the manual's headings and paragraphs.
 - **No screenshots of the app as product imagery.** Product visuals are live: the 3D hero and
-  real Studio components. Existing `<Video>` clips stay until unit 2 replaces them.
+  real Studio components. A recording stays only where a preview can't show the point.
 - **Global components** (`theme/index.js`): every `uk-*`, `<Video src>`, `<StudioFrame>`,
-  `<ResourceLink to>`, `<HomeStory>`.
+  `<LivePreview preset>`, `<ResourceLink to>`, `<HomeStory>`.
+
+### Live previews
+
+`<LivePreview preset="group-cuepool" caption="…" />` mounts a **real** Studio widget or panel,
+working on the demo show: readers move faders, trigger cues, watch effects and chases run.
+Flows to watch rather than try are **demos**: a cursor plays them on the real component.
+- **Studio's proportions**: every preset shows its component at its size in Studio (the modifier
+  strip is 239px tall in a 1440×900 window and each widget keeps its own width; patch bay and
+  group pool 620px tall), on Studio's idle stripes (`--idle-stripes`), scaled down whole to fit
+  (`fit: 'scale'`) or scrolling sideways (`fit: 'scroll'`, modifier panels). Measure a new
+  widget in Studio with the demo show before adding its preset; never stretch a widget to the
+  page width.
+- **Presets** (`theme/previews/presets.js`): id → `component` (lazy import of the real `.vue`),
+  `props(show)` (objects picked by id from the demo show; the ids are listed at the top of the
+  file), `width`/`height` (the stage, Studio's size), `componentWidth`/`componentHeight` (when
+  the component differs from the stage: a row-filling widget, a demo needing room for its
+  popup), `fit`, `clock` (runs Studio's clock while visible), `route` + `panel` (panels that read
+  the route), `warmRoute` (group and chase panels: their route watchers aren't immediate, so the
+  router starts on a sibling route), `demo`, `webgl`, `video` (fallback). To add one: add the
+  entry, add it to `_dev/previews.md`, check it mounts. Never offer anything interactive that
+  saves or connects (connections widget/popup); the toolbar only as a demo.
+- **Demos** (`theme/previews/demo.js`, preset `demo: [steps]`): `move`, `click` (`ctrl`,
+  `shift`), `dblclick`, `type` (`text`), `key`, `wait`, `caption` (a hint by the cursor); targets
+  are selectors narrowed by `has` (text) and `nth`, innermost match wins. Real DOM events on the
+  real component; the reader's input is blocked; each loop remounts it. A demo closes what it
+  opens and never changes the show for good (close delete popups, point at toolbar entries,
+  never run them). Scripted keys stop at the preview (Studio components listen on `window`);
+  demos never take focus on click or type. CSS `:hover` can't be triggered. Check each demo
+  reaches its key moment (`/_dev/previews`).
+- **Popups** open in an overlay over the preview: `uk-popup` injects `popupHost` (provided by the
+  host; Studio itself uses the body). The overlay scales a popup down to fit the frame.
+- **Reset** is enabled by a real reader input in a preview of the page, and disabled again after
+  a reset. Runtime errors are logged and the component goes on (as Studio's error handler).
+- **Host** (`theme/previews/host.js`, client only, loaded when a preview comes within a screen
+  height): one Vue app per preview with `main.js`'s setup and its own memory router; one shared
+  `Show` loaded from `public/presets/manual.showfile.json` per page; saving replaced by a no-op
+  bookkeeping version; `axios.defaults.baseURL` = site root (the engine fetches page-relative
+  URLs); Studio's clock runs only while a visible preview needs it; a visualizer stand-in
+  holds the show's preferences when no visualizer preview is mounted. **Reset** unmounts every
+  preview on the page, reloads the show, mounts them again.
+- **`FixtureControl.vue`** binds the channels, colour, pan/tilt and cells widgets to a fixture,
+  copying `universe.modifier.fragment.vue`'s wiring (those widgets only emit events). Keep it in
+  step with that fragment. **`VisualizerPreview.vue`** runs the visualizer at Guides quality,
+  renders only on screen, resolves relative asset URLs from the site root and releases its
+  WebGL context on unmount.
+- **Fallback**: no Workers, no WebGL (`webgl` presets), or an error → the preset's `video`, else
+  a short message. Never a picture of the app, including while loading (title + empty widget).
+- **Unknown ids**: an error box in dev; `docs:manual:build` prints `[manual] <page>: unknown live
+  preview "<id>"`.
+- **Demo show**: one universe "Stage"; two MAC Auras, a ColorBand Pix (12 cells), two PARs;
+  groups Moving heads / Pixel bar / PARs, each with scenes, an effect and a chase. Rebuild it in
+  Studio (and export) rather than editing the JSON by hand: scene channel `type` keys come from
+  the fixture adapter. Every fixture profile it uses, plus `fixtures/fixture_list.json`, must be
+  in `APP_STATIC_FILES`.
+- **Check**: `npx vitepress dev docs/manual` then `/_dev/previews` (every preset),
+  `/_dev/behaviour` (lazy load, sync, Reset, clock), `/_dev/visualizer`.
 
 ### Resource links
 
@@ -196,15 +256,17 @@ outlined pills, no coloured shadows: plain type and Studio's solid round buttons
 
 - `#` page title = the UI name. `##` per widget or feature, `###` per action ("Adding Fixtures",
   "Deleting Cue").
-- Open with 1–2 sentences on what it is and why you'd use it, then show it:
-  `<Video src="/interface/<name>.webm"/>` (global component) or
-  `<img style="border-radius:5px" src="/interface/<name>.png" alt="..." width="300"/>`.
+- Open with 1–2 sentences on what it is and why you'd use it, then show it live:
+  `<LivePreview preset="<id>" />`. Only when no preview can show it (a flow across several
+  panels, the toolbar's menus): `<Video src="/interface/<name>.webm"/>`.
 - Settings go in a `| Setting | Description |` table. Shortcuts use `<kbd>`, e.g. <kbd>`Ctrl`</kbd>.
 - Use `> **Note:**` for behaviour that surprises users (BPM sync, quantization).
 - Link related pages with absolute paths: `[cues](/modifiers/group/)`.
 - Second person, present tense, short sentences, the UI's exact labels in **bold**.
-- Media: name files `<area>_<widget>_<action>.<ext>` in `public/interface/`. If you can't capture
-  media, put `<!-- TODO media: <what to record> -->` in its place and list it in the PR.
+- Media (recordings only, for what previews can't show): name files
+  `<area>_<widget>_<action>.<ext>` in `public/interface/`. If you can't capture media, put
+  `<!-- TODO media: <what to record> -->` in its place and list it in the PR. Delete media no
+  page references any more.
 
 ## Steps
 

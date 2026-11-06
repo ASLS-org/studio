@@ -3,7 +3,7 @@ Chases are collections of group predefined [cues](/modifiers/group/) (effect and
 
 The chase modifier allows for quick and easy chases definition through a timeline-based cue definition.  
 
-<Video src="/interface/modifier_chase.webm"/>
+<LivePreview preset="chase-modifier" />
 
 
 ## Chase Settings
@@ -23,7 +23,7 @@ A chases settings may be edited at will through the chase settings widget. It co
 
 The timeline widget is the key element when it comes to chases. It allows for group cues to be sequenced at will over time.
 
-<Video src="/interface/modifier_chase_timeline_widget.webm"/>
+<LivePreview preset="chase-timeline" />
 
 
 ### Adding Cue

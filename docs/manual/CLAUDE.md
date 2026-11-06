@@ -9,4 +9,6 @@ The manual is built from Studio's own interface (`.vitepress/theme/shell/Layout.
 patch bay, widgets) and Studio's design tokens: no colour values in the shell or prose CSS, and
 no screenshots of the app as product imagery. The home hero is Studio's visualizer in showcase
 mode (`.vitepress/theme/hero/`). Studio URLs come from `MANUAL_URL_*` in the repo `.env`, never
-hard-coded. Details: skill `user-manual` § Theme, § Resource links, § Home page.
+hard-coded. Pages show Studio's widgets and panels live with `<LivePreview preset="…">`
+(`.vitepress/theme/previews/`, demo show in `public/presets/`); recordings only for what a preview
+can't show. Details: skill `user-manual` § Theme, § Live previews, § Resource links, § Home page.

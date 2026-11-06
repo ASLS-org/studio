@@ -46,7 +46,8 @@ clips that nobody re-records.
 - **Home page fine-tuning waits for the end of the epic (2026-11-06).** Unit 1 shipped the
   scroll story (2D hero, liquid reveal, four MAC Auras, live widgets, scroll-driven show,
   global autoplay and Next, final hero). The user called it good enough for now; a polish pass
-  happens once units 2–5 are done.
+  happens once units 2–5 are done. Also for that pass (unit 2, 2026-11-06): the visualizer
+  preview's framing of the demo rig.
 
 ## Findings that shaped the plan (2026-11-05)
 
@@ -72,7 +73,7 @@ clips that nobody re-records.
 | # | Change | Depends on | Status |
 |---|---|---|---|
 | 1 | `restyle-manual-site`: Studio look (tokens, fonts, dark default + light), hero and product presentation, URL config, a working docs build and deploy | none | archived (branch `docs/restyle-manual-site`) |
-| 2 | `add-manual-live-previews`: `<LivePreview>` harness, manual dummy showfile, presets per widget, video fallback; the home page already runs Studio's real widgets live (unit 1), so this unit covers the manual pages (no screenshots anywhere) | 1 | proposed |
+| 2 | `add-manual-live-previews`: `<LivePreview>` harness, manual dummy showfile, presets per widget, video fallback; the home page already runs Studio's real widgets live (unit 1), so this unit covers the manual pages (no screenshots anywhere) | 1 | archived (branch `docs/add-manual-live-previews`) |
 | 3 | `document-show-programming`: concepts + patch → group → scene → effect → chase → master/live, with live previews | 2 | proposed |
 | 4 | `document-rig-and-output`: fixture library/OFL/GDTF, outputs and gateway, visualizer, showfiles, desktop app, shortcuts, glossary, troubleshooting | 2 (can run beside 3) | proposed |
 | 5 | `gate-manual-upkeep`: OpenSpec rules, archive check, PR template, `user-manual` skill + coverage map | 3, 4 | proposed |

@@ -2,7 +2,7 @@
 
 Patching places fixtures on a universe's DMX addresses. Open the patch popup with the **Add** button of a universe's [fixture pool](/modifiers/universe/#fixture-pool), pick a fixture, set its mode and address, then press **OK**.
 
-<!-- TODO media: patch popup with the Imported, Bundled and OFL library sections unfolded -->
+<LivePreview preset="patch-add" />
 
 ## Choosing a Fixture
 

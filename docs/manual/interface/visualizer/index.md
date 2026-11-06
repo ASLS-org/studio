@@ -22,7 +22,7 @@ Beams also show in the air, through haze: brighter near the lens, fading with di
 
 <!-- TODO media: floor lit by several beams with gobos, at High quality -->
 
-<Video src="/interface/visualizer.webm"/>
+<LivePreview preset="visualizer" />
 
 ## Camera
 
