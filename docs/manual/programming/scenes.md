@@ -4,6 +4,11 @@ A scene is a look: values for some of a group's channels (a colour, a position, 
 reached with a fade when you play it. Scenes and [effects](/programming/effects) are the group's
 **cues**, kept in its **Cue Pool**.
 
+Here the demo show's moving heads play two scenes in turn: *Open white*, then *Deep blue*. Each
+fades from where the lights are to the scene's values over its duration (one bar), then holds.
+
+<LivePreview preset="scene-stage" />
+
 ## Creating a Cue
 
 1. Open the group (click it in the group pool).
@@ -47,6 +52,13 @@ can spot them without scrolling.
 
 > **Note:** A scene that has played to its end stays on stage: it stops, but its values remain on
 > the fixtures until something else changes them.
+
+### How a scene fades
+
+Over its **Duration**, a scene moves each active channel from its start value to the scene's value,
+following its **Fade in** curve. **Start** picks the start value:
+
+<SceneFade />
 
 ## Setting a Scene's Values
 

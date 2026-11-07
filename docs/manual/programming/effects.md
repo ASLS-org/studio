@@ -4,6 +4,12 @@ An effect moves channels over time: a dimmer pulse, a colour cycle, heads drawin
 **modulated channel** follows a waveform between a minimum and a maximum, and the waveform can be
 offset from fixture to fixture (or pixel to pixel) so the movement travels across the rig.
 
+Here the demo show's moving heads play two effects: *Circle* moves pan and tilt on two sine waves
+a quarter cycle apart, so the beams draw circles; *Hue shift* runs red, green and blue a third of a
+cycle apart, so the colour cycles through the rainbow.
+
+<LivePreview preset="effect-stage" />
+
 Create an effect like any cue: double click an empty slot of the group's **Cue Pool** and choose
 **effect** (see [Creating a cue](/programming/scenes#creating-a-cue)). Effects loop by default.
 Selecting an effect shows its widgets in the group view.
@@ -38,6 +44,20 @@ Every fixture of the group takes part in each modulated channel by default. Unti
 leave it out of the selected channel, or use **Check All**. Drag fixtures to change their order:
 the order is the one the movement travels in.
 
+## How an effect moves
+
+Each modulated channel follows its waveform between **Min** and **Max**. Every fixture runs the same
+waveform, but offset: its **phase**. Spreading the phases makes the movement travel across the rig.
+Try the settings below on four PARs:
+
+<EffectWave />
+
+- **Phase stop** 0°: every PAR is at the same point of the wave: they pulse together.
+- **Phase stop** 360° with **LTR**: the offsets are 0°, 90°, 180°, 270°: the pulse runs from the
+  first PAR to the last, as a wave.
+- **SYM**: the offsets grow from both ends towards the middle: the movement opens and closes like a
+  curtain.
+
 ## Effect Tool
 
 Shapes the selected channel's movement. The graph shows the waveform and where each fixture sits
@@ -57,6 +77,11 @@ on it.
 
 With **Phase start** 0 and **Phase stop** 360, the fixtures are spread over one whole cycle: a
 "wave" running through the rig. With both at 0, every fixture moves together.
+
+With **Spread over** set to **Cells**, the offsets go from cell to cell: the demo bar's *Rainbow*
+runs its colour cycle along its 12 pixels.
+
+<LivePreview preset="pixel-stage" />
 
 > **Note:** An effect moves its channel in every cell of a fixture (each pixel's dimmer, each head's
 > pan).
