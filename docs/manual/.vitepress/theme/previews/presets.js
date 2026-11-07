@@ -49,6 +49,7 @@ const GroupPool = () => import('@/views/activities/app/fragments/group-pool/grou
 const CuePool = () => import('@/views/activities/app/fragments/modifiers/group/_widgets/group.modifier.widget.cuepool.vue');
 const EffectModifier = () => import('@/views/activities/app/fragments/modifiers/group/group.effect.modifier.fragment.vue');
 const Toolbar = () => import('@/views/activities/app/fragments/toolbar/toolbar.fragment.vue');
+const CuePoolStage = () => import('./CuePoolStage.vue');
 
 /* ── Demo steps ─────────────────────────────────────────────────────── */
 
@@ -62,6 +63,8 @@ const closePopup = { click: '.popup_close_icon' };
 const openMenu = (has) => ({ click: '.header_menu', has });
 /** Points at a menu entry (never clicks: entries run Studio actions) */
 const pointEntry = (has) => ({ move: '.menu_list .uikit_list_item', has, after: 500 });
+/** With a menu open, hovering another header switches to it (as in Studio) */
+const hoverMenu = (has) => ({ move: '.header_menu', has });
 const FILE_MENU = [
   { caption: 'File' },
   openMenu('File'),
@@ -302,6 +305,8 @@ const PRESETS = {
   visualizer: {
     title: 'Visualizer',
     width: 639,
+    // The visualizer sizes its canvas from its box: give the box Studio's size
+    componentWidth: 639,
     height: 580,
     component: () => import('./VisualizerPreview.vue'),
     webgl: true,
@@ -465,13 +470,117 @@ const PRESETS = {
       { wait: 1200 },
     ],
   },
+  /* ── On stage: a cue pool next to the visualizer, a cursor plays cues ── */
+  'scene-stage': {
+    // Two scenes of the moving heads, one after the other: each fades in over its duration
+    title: 'Cue Pool',
+    width: 1016,
+    height: 400,
+    component: CuePoolStage,
+    props: (show) => ({ group: group(show, 0) }),
+    webgl: true,
+    clock: true,
+    demo: [
+      { caption: 'Open white: fades in over 1 bar' },
+      { click: '.grid_item:not(.empty) .grid_item_body', nth: 0 },
+      { wait: 3200 },
+      { caption: 'Deep blue: fades in over 1 bar' },
+      { click: '.grid_item:not(.empty) .grid_item_body', nth: 1 },
+      { wait: 3600 },
+      { caption: null },
+    ],
+  },
+  'effect-stage': {
+    // The moving heads' effects: a circle (pan and tilt), then a hue shift (colour)
+    title: 'Cue Pool',
+    width: 1016,
+    height: 400,
+    component: CuePoolStage,
+    props: (show) => ({ group: group(show, 0) }),
+    webgl: true,
+    clock: true,
+    demo: [
+      { caption: 'Circle: pan and tilt follow sine waves' },
+      { click: '.grid_item:not(.empty) .grid_item_body', nth: 2 },
+      { wait: 6000 },
+      { click: '.grid_item:not(.empty) .grid_item_body', nth: 2 },
+      { caption: 'Hue shift: red, green, blue offset by a third' },
+      { click: '.grid_item:not(.empty) .grid_item_body', nth: 3 },
+      { wait: 6000 },
+      { click: '.grid_item:not(.empty) .grid_item_body', nth: 3 },
+      { caption: null },
+    ],
+  },
+  'pixel-stage': {
+    // The pixel bar's rainbow, spread over its 12 cells
+    title: 'Cue Pool',
+    width: 1016,
+    height: 400,
+    component: CuePoolStage,
+    props: (show) => ({ group: group(show, 1) }),
+    webgl: true,
+    clock: true,
+    demo: [
+      { caption: 'Rainbow, spread over cells' },
+      { click: '.grid_item:not(.empty) .grid_item_body', nth: 2 },
+      { wait: 7000 },
+      { click: '.grid_item:not(.empty) .grid_item_body', nth: 2 },
+      { caption: 'Split: one colour per cell' },
+      { click: '.grid_item:not(.empty) .grid_item_body', nth: 1 },
+      { wait: 3000 },
+      { caption: null },
+    ],
+  },
+  'master-row': {
+    title: 'Group Pool',
+    width: 601,
+    height: 620,
+    component: GroupPool,
+    clock: true,
+    demo: [
+      { caption: 'Master row' },
+      { click: '.uikit_chase.master .uikit_chase_btn' },
+      { caption: null },
+      { wait: 4500 },
+      { caption: 'Again to stop' },
+      { click: '.uikit_chase.master .uikit_chase_btn' },
+      { caption: null },
+      { wait: 1200 },
+    ],
+  },
+  'timeline-add': {
+    // Adds a Hue shift item to the Looks chase, then removes it: the show ends as it began
+    title: 'Timeline',
+    width: 760,
+    componentWidth: 760,
+    height: STRIP,
+    component: () => import('@/views/activities/app/fragments/modifiers/chase/_widgets/chase.modifier.widget.timeline.vue'),
+    props: (show) => ({ pool: group(show, 0).chasePool.getFromId(0) }),
+    route: '/group/0/chase/0',
+    demo: [
+      { caption: 'Double click a cue row' },
+      { dblclick: '.widget_pool_timeline_grid_row', nth: 3, x: 90 },
+      { caption: null },
+      { wait: 2200 },
+      { caption: 'Right click to remove' },
+      // The new item starts where the row was double clicked: right click it there
+      { context: '.widget_pool_timeline_grid_row', nth: 3, x: 110 },
+      { caption: null },
+      { wait: 1200 },
+    ],
+  },
   'toolbar-menus': {
     ...TOOLBAR,
     demo: [
       ...FILE_MENU,
-      ...PREFERENCES_MENU,
+      { caption: 'Preferences' },
+      hoverMenu('Preferences'),
+      { caption: null },
+      pointEntry('Visualizer'),
+      pointEntry('Outputs'),
+      { wait: 900 },
       { caption: 'About' },
-      openMenu('About'),
+      hoverMenu('About'),
       { caption: null },
       pointEntry('Manual'),
       pointEntry('License'),

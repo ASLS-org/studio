@@ -32,22 +32,28 @@ Pure refactors, perf work and invisible fixes need no manual update. Say so in t
 
 ```
 docs/manual/
-  index.md                       home page, composed of theme/components/home/* (no prose here)
+  index.md                       home page (theme/hero/HomeStory.vue, no prose here)
   introduction/                  about (product presentation), overview ("How Studio works"),
                                  installation, license
-  interface/<area>/index.md      one page per screen region: toolbar, patchbay, grouppool, visualizer, modifier
-  modifiers/<area>/index.md      one page per modifier: universe, group, chase
-  workflow/<task>/index.md       task guides: environment, patching, grouping, scenes, effects, triggering
-  public/interface/*.png|webm    remaining screenshots and recordings (flows a preview can't show)
+  getting-started/               first-show (tutorial, blank show → playing chase), interface (tour)
+  concepts/                      index (show structure: what owns what), timing (BPM, bars,
+                                 quantize, playback)
+  programming/<task>.md          one page per task, in build order: patching, groups, scenes,
+                                 effects, chases, playback
+  interface/toolbar, visualizer  "Rig & output" until unit 4 rewrites them
+  interface/{patchbay,grouppool,modifier}, modifiers/*, workflow/*
+                                 one-line "This page moved" stubs (old URLs keep working; not in
+                                 the sidebar; remove in a later release)
+  public/interface/*.webm        the few recordings a preview can't show
   public/presets/manual.showfile.json   the live previews' demo show
   _dev/*.md                      dev-only check pages (previews, behaviour, visualizer), never built
-  .vitepress/config.js           nav, sidebar (add every new page here), resource links
-  .vitepress/theme/              look, global components, home sections
+  .vitepress/config.js           sidebar (add every new page here), resource links
+  .vitepress/theme/              Studio shell, live previews, home story
 ```
 
-Gaps known on 2026-11-05: all `workflow/*` pages are "Documentation in progress", and there is
-no page for **outputs/connections (WSC)** or the **desktop app**. Epic `manual-overhaul`
-(`openspec/epics/manual-overhaul.md`) plans to fill them and restructure the sidebar.
+Sidebar sections, in order: **Getting started**, **Concepts**, **Programming a show**, **Rig &
+output** (accent and icon per section and page in `theme/shell/nav.js`). Unit 4 of epic
+`manual-overhaul` (`openspec/epics/manual-overhaul.md`) adds the rig, output and reference pages.
 
 ### Theme: the manual is built from Studio's interface
 
@@ -125,6 +131,17 @@ Flows to watch rather than try are **demos**: a cursor plays them on the real co
   never run them). Scripted keys stop at the preview (Studio components listen on `window`);
   demos never take focus on click or type. CSS `:hover` can't be triggered. Check each demo
   reaches its key moment (`/_dev/previews`).
+- **On stage** presets (`scene-stage`, `effect-stage`, `pixel-stage`, `CuePoolStage.vue`): a
+  group's cue pool next to the visualizer, a demo plays cues so readers see what they do to the
+  rig. Use them where a page explains what a cue does, not only which widget edits it.
+- **Illustrations** (global, in `theme/components/`): `<ShowMap />` draws the demo show from its
+  showfile (structure, what owns what); `<SceneFade />` animates a scene's fade (Absolute vs
+  Relative start); `<EffectWave />` animates four PARs on a waveform with Waveform / Phase stop /
+  Direction switches. Diagrams, not pictures of the app: tokens and fonts only, animate only on
+  screen, still for reduced motion.
+- **Demo show rules**: cue and group colours come from Studio's palette (the accent tokens), never
+  a custom colour; fixtures hang from two trusses pointing down (rotation 180° on X); an effect's
+  range suits hung heads (Circle 100–156). The visualizer preview runs at High quality.
 - **Popups** open in an overlay over the preview: `uk-popup` injects `popupHost` (provided by the
   host; Studio itself uses the body). The overlay scales a popup down to fit the frame.
 - **Reset** is enabled by a real reader input in a preview of the page, and disabled again after
@@ -252,16 +269,28 @@ outlined pills, no coloured shadows: plain type and Studio's solid round buttons
   `docs/manual/vite.config.js`), served in dev and copied by `buildEnd`; the manual loads the
   repo `.env` (`envDir`).
 
-## Page style (match `modifiers/universe/index.md`, `modifiers/chase/index.md`)
+## Page style (match `programming/scenes.md`, `programming/chases.md`)
 
-- `#` page title = the UI name. `##` per widget or feature, `###` per action ("Adding Fixtures",
-  "Deleting Cue").
+- **Task first.** A Programming page answers a job ("make a chase"); the widget reference sits in
+  it under `##` headings with the UI's exact labels. Concepts pages define terms once; the rest
+  link to them.
+- **Grounded.** Check every label, default, range and behaviour in the running app (and the code)
+  before writing it. Behaviour that doesn't work isn't described as working: leave it out of the
+  steps, add a `> **Note:**` only where readers would otherwise get stuck, and list it in the epic
+  backlog and the PR. Known ones (2026-11): Trigger Style **Temporary**, the group dimmer /
+  **Isolate** / **Blackout**, **PWM**, **BOUNCELRT/RTL**, **Quantize** 1/8–1/2, patch bay
+  Shift+click, Ctrl multi-select in a group's first scene.
+- **Units.** Durations in bars, values in DMX 0–255, angles in degrees, addresses counted from 0
+  (as Studio's lists show).
+
+- `#` page title = the task or the UI name. `##` per widget or feature, `###` per action
+  ("Adding Fixtures", "Deleting Cue").
 - Open with 1–2 sentences on what it is and why you'd use it, then show it live:
   `<LivePreview preset="<id>" />`. Only when no preview can show it (a flow across several
   panels, the toolbar's menus): `<Video src="/interface/<name>.webm"/>`.
 - Settings go in a `| Setting | Description |` table. Shortcuts use `<kbd>`, e.g. <kbd>`Ctrl`</kbd>.
 - Use `> **Note:**` for behaviour that surprises users (BPM sync, quantization).
-- Link related pages with absolute paths: `[cues](/modifiers/group/)`.
+- Link related pages with absolute paths: `[cues](/programming/scenes)`. Never link to a stub.
 - Second person, present tense, short sentences, the UI's exact labels in **bold**.
 - Media (recordings only, for what previews can't show): name files
   `<area>_<widget>_<action>.<ext>` in `public/interface/`. If you can't capture media, put

@@ -30,8 +30,9 @@ function fromSiteRoot(url) {
 
 /**
  * Studio's visualizer on the demo show, set up as visualizer.fragment.vue sets it up (patch from
- * the show, follows patch changes, orbit controls), at Guides quality, rendering only while on
- * screen. On unmount the WebGL context is released and the show gets back its stand-in.
+ * the show, follows patch changes, orbit controls), rendering only while on
+ * screen, at High quality (volumetric beams, light on surfaces). On unmount the WebGL context is
+released and the show gets back its stand-in.
  * @displayName VisualizerPreview
  */
 export default {
@@ -42,13 +43,19 @@ export default {
     const preferences = this.$show.visualizerHandle && this.$show.visualizerHandle.showData;
     const visualizer = markRaw(new Visualizer(this.$refs.visualizer, {
       quality: {
-        quality: QUALITY_SETTINGS.GUIDES, scale: 1, guides: GUIDE_SETTINGS.ON, renderScale: 1,
+        quality: QUALITY_SETTINGS.HIGH, scale: 1, guides: GUIDE_SETTINGS.OFF, renderScale: 1,
       },
     }));
     this.visualizer = visualizer;
     this.$show.visualizerHandle = visualizer;
     await visualizer.init();
     if (preferences) visualizer.preferences = preferences;
+    // Start in front of the demo rig (two trusses, about 3 m wide each side), looking at it
+    visualizer.camera.position.set(0, -24, 8);
+    if (visualizer.controls) {
+      visualizer.controls.target.set(0, 0, 3.5);
+      visualizer.controls.update();
+    }
     visualizer.fixtureRenderer.setPatch(this.$show.patchSnapshot);
     this.onPatch = () => visualizer.fixtureRenderer.setPatch(this.$show.patchSnapshot);
     EventBus.on('patch_changed', this.onPatch);

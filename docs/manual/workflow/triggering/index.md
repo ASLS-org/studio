@@ -1,3 +1,3 @@
 # Triggering Cues
 
-Documentation in progress.
+This page moved: see [Playing a show](/programming/playback).

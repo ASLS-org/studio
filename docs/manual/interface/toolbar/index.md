@@ -26,7 +26,7 @@ A previously exported showfile may be restored by using the [Load Showfile](#loa
 
 
 ::: warning 
-While supported, QLC+ showfiles do not contain any information relative to fixture position in 3D space and [fixture groups](/workflow/grouping/) (as designed by ASLS Studio). Moreover, fixture library might differ from one software to another thus resulting in conflicts during import process.
+While supported, QLC+ showfiles do not contain any information relative to fixture position in 3D space and [fixture groups](/programming/groups) (as designed by ASLS Studio). Moreover, fixture library might differ from one software to another thus resulting in conflicts during import process.
 :::
 
 ### Save Showfile Locally
