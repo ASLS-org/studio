@@ -49,6 +49,7 @@ const GroupPool = () => import('@/views/activities/app/fragments/group-pool/grou
 const CuePool = () => import('@/views/activities/app/fragments/modifiers/group/_widgets/group.modifier.widget.cuepool.vue');
 const EffectModifier = () => import('@/views/activities/app/fragments/modifiers/group/group.effect.modifier.fragment.vue');
 const Toolbar = () => import('@/views/activities/app/fragments/toolbar/toolbar.fragment.vue');
+const CuePoolStage = () => import('./CuePoolStage.vue');
 
 /* ── Demo steps ─────────────────────────────────────────────────────── */
 
@@ -304,6 +305,8 @@ const PRESETS = {
   visualizer: {
     title: 'Visualizer',
     width: 639,
+    // The visualizer sizes its canvas from its box: give the box Studio's size
+    componentWidth: 639,
     height: 580,
     component: () => import('./VisualizerPreview.vue'),
     webgl: true,
@@ -465,6 +468,67 @@ const PRESETS = {
       { click: '.uikit_chase_btn' },
       { caption: null },
       { wait: 1200 },
+    ],
+  },
+  /* ── On stage: a cue pool next to the visualizer, a cursor plays cues ── */
+  'scene-stage': {
+    // Two scenes of the moving heads, one after the other: each fades in over its duration
+    title: 'Cue Pool',
+    width: 1016,
+    height: 400,
+    component: CuePoolStage,
+    props: (show) => ({ group: group(show, 0) }),
+    webgl: true,
+    clock: true,
+    demo: [
+      { caption: 'Open white: fades in over 1 bar' },
+      { click: '.grid_item:not(.empty) .grid_item_body', nth: 0 },
+      { wait: 3200 },
+      { caption: 'Deep blue: fades in over 1 bar' },
+      { click: '.grid_item:not(.empty) .grid_item_body', nth: 1 },
+      { wait: 3600 },
+      { caption: null },
+    ],
+  },
+  'effect-stage': {
+    // The moving heads' effects: a circle (pan and tilt), then a hue shift (colour)
+    title: 'Cue Pool',
+    width: 1016,
+    height: 400,
+    component: CuePoolStage,
+    props: (show) => ({ group: group(show, 0) }),
+    webgl: true,
+    clock: true,
+    demo: [
+      { caption: 'Circle: pan and tilt follow sine waves' },
+      { click: '.grid_item:not(.empty) .grid_item_body', nth: 2 },
+      { wait: 6000 },
+      { click: '.grid_item:not(.empty) .grid_item_body', nth: 2 },
+      { caption: 'Hue shift: red, green, blue offset by a third' },
+      { click: '.grid_item:not(.empty) .grid_item_body', nth: 3 },
+      { wait: 6000 },
+      { click: '.grid_item:not(.empty) .grid_item_body', nth: 3 },
+      { caption: null },
+    ],
+  },
+  'pixel-stage': {
+    // The pixel bar's rainbow, spread over its 12 cells
+    title: 'Cue Pool',
+    width: 1016,
+    height: 400,
+    component: CuePoolStage,
+    props: (show) => ({ group: group(show, 1) }),
+    webgl: true,
+    clock: true,
+    demo: [
+      { caption: 'Rainbow, spread over cells' },
+      { click: '.grid_item:not(.empty) .grid_item_body', nth: 2 },
+      { wait: 7000 },
+      { click: '.grid_item:not(.empty) .grid_item_body', nth: 2 },
+      { caption: 'Split: one colour per cell' },
+      { click: '.grid_item:not(.empty) .grid_item_body', nth: 1 },
+      { wait: 3000 },
+      { caption: null },
     ],
   },
   'master-row': {

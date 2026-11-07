@@ -150,6 +150,18 @@ Dev only (excluded from the build). Every preset, in registry order, then an unk
 
 <LivePreview preset="chase-play" />
 
+## scene-stage
+
+<LivePreview preset="scene-stage" />
+
+## effect-stage
+
+<LivePreview preset="effect-stage" />
+
+## pixel-stage
+
+<LivePreview preset="pixel-stage" />
+
 ## master-row
 
 <LivePreview preset="master-row" />
