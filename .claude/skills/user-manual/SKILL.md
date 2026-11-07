@@ -131,6 +131,17 @@ Flows to watch rather than try are **demos**: a cursor plays them on the real co
   never run them). Scripted keys stop at the preview (Studio components listen on `window`);
   demos never take focus on click or type. CSS `:hover` can't be triggered. Check each demo
   reaches its key moment (`/_dev/previews`).
+- **On stage** presets (`scene-stage`, `effect-stage`, `pixel-stage`, `CuePoolStage.vue`): a
+  group's cue pool next to the visualizer, a demo plays cues so readers see what they do to the
+  rig. Use them where a page explains what a cue does, not only which widget edits it.
+- **Illustrations** (global, in `theme/components/`): `<ShowMap />` draws the demo show from its
+  showfile (structure, what owns what); `<SceneFade />` animates a scene's fade (Absolute vs
+  Relative start); `<EffectWave />` animates four PARs on a waveform with Waveform / Phase stop /
+  Direction switches. Diagrams, not pictures of the app: tokens and fonts only, animate only on
+  screen, still for reduced motion.
+- **Demo show rules**: cue and group colours come from Studio's palette (the accent tokens), never
+  a custom colour; fixtures hang from two trusses pointing down (rotation 180° on X); an effect's
+  range suits hung heads (Circle 100–156). The visualizer preview runs at High quality.
 - **Popups** open in an overlay over the preview: `uk-popup` injects `popupHost` (provided by the
   host; Studio itself uses the body). The overlay scales a popup down to fit the frame.
 - **Reset** is enabled by a real reader input in a preview of the page, and disabled again after

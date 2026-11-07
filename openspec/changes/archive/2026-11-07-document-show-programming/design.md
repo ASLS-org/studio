@@ -137,3 +137,20 @@ No new screenshots or recordings.
   dates.
 - **Stubs add pages that the search indexes.** → Keep stubs to one sentence so they rank below
   the real page.
+
+## Revision after review (2026-11-07)
+
+- **Concepts** gets the demo show as a running example: `<ShowMap />` draws it from its showfile,
+  and each term has an "In the demo show" example with a preview.
+- **Scenes and effects** are shown on stage, not just as widgets. Each page gets a cue pool and the
+  visualizer side by side (`scene-stage`, `effect-stage`, `pixel-stage`), with a cursor playing
+  the cues. Each page also gets an animated diagram of what happens: `<SceneFade />` for a fade
+  and its Start, `<EffectWave />` for waveforms and phase spread.
+- **Visualizer preview**: High quality instead of Guides. The preview's box takes Studio's size,
+  which fixes a cropped, off-centre view. The camera is set in front of the rig.
+- **Demo show**:
+  - every fixture hangs from a truss, pointing down;
+  - cue and group colours come from Studio's palette (no Custom);
+  - Circle's range is narrowed to 100–156. The full 0–255 preset threw hung heads to their limits,
+    and Studio applies an effect's start values once when a show loads.
+
