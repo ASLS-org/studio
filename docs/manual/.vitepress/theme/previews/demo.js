@@ -9,6 +9,7 @@
  *   { move: sel }                         glide the cursor to an element
  *   { click: sel, ctrl, shift }           glide, then press and release (with modifier keys)
  *   { dblclick: sel }                     glide, then double click
+ *   { context: sel }                      glide, then right click
  *   { type: sel, text }                   glide, then type the text into the field, key by key
  *   { key: 'Delete' }                     press a key on the last element clicked (never past the
  *                                         preview)
@@ -17,6 +18,8 @@
  * only when focus isn't on something else of the page.
  *   { wait: ms }                          pause
  *   { caption: 'text' }                   show a hint next to the cursor (null clears it)
+ * Any targeted step takes `x`: a point that many pixels from the element's left edge instead of
+ * its centre (for wide elements, such as a timeline row, whose centre is out of view).
  */
 
 const GLIDE_MS = 650;
@@ -99,15 +102,25 @@ export default function playDemo({
     while (!stopped && !visible()) await sleep(250); // eslint-disable-line no-await-in-loop
     return !stopped;
   };
-  // Glides the cursor to an element's centre; returns its client position
-  const glide = async (el) => {
+  // Glides the cursor to an element's centre (or `x` px from its left); returns the client point
+  const glide = async (el, x) => {
     const box = el.getBoundingClientRect();
     const origin = stage.getBoundingClientRect();
-    position.x = box.left + box.width / 2 - origin.left;
-    position.y = box.top + box.height / 2 - origin.top;
+    const at = { x: box.left + (x != null ? x : box.width / 2), y: box.top + box.height / 2 };
+    position.x = at.x - origin.left;
+    position.y = at.y - origin.top;
     place();
     await sleep(GLIDE_MS);
-    return { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+    return at;
+  };
+
+  // Topmost element of the component at a client point (under the demo's input blocker)
+  const under = (at) => {
+    const blocker = stage.querySelector('.live_preview_blocker');
+    if (blocker) blocker.style.pointerEvents = 'none';
+    const hit = document.elementFromPoint(at.x, at.y);
+    if (blocker) blocker.style.pointerEvents = '';
+    return hit && stage.contains(hit) ? hit : null;
   };
 
   const run = async (step) => {
@@ -139,13 +152,26 @@ export default function playDemo({
       cursor.classList.remove('pressing');
       return;
     }
-    const selector = step.move || step.click || step.dblclick || step.type;
-    const el = find(stage, step, selector);
+    const selector = step.move || step.click || step.dblclick || step.context || step.type;
+    let el = find(stage, step, selector);
     if (!el) throw new Error(`demo step target not found: ${selector}${step.has ? ` "${step.has}"` : ''}`);
-    const at = await glide(el);
+    const at = await glide(el, step.x);
+    // At a pinned point, the event goes to whatever is on top there, as a real click does
+    if (step.x != null) el = under(at) || el;
     mouse(el, 'pointerover', at, step);
     mouse(el, 'mouseover', at, step);
     mouse(el, 'mousemove', at, step);
+    if (step.context) {
+      cursor.classList.add('pressing');
+      mouse(el, 'mousedown', at, { ...step, button: 2 });
+      mouse(el, 'mouseup', at, step);
+      el.dispatchEvent(new MouseEvent('contextmenu', {
+        bubbles: true, cancelable: true, view: window, clientX: at.x, clientY: at.y, button: 2,
+      }));
+      await sleep(160);
+      cursor.classList.remove('pressing');
+      lastTarget = el;
+    }
     if (step.click || step.dblclick || step.type) {
       cursor.classList.add('pressing');
       const presses = step.dblclick ? 2 : 1;

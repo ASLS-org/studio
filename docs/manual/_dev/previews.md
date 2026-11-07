@@ -150,6 +150,14 @@ Dev only (excluded from the build). Every preset, in registry order, then an unk
 
 <LivePreview preset="chase-play" />
 
+## master-row
+
+<LivePreview preset="master-row" />
+
+## timeline-add
+
+<LivePreview preset="timeline-add" />
+
 ## toolbar-menus
 
 <LivePreview preset="toolbar-menus" />
