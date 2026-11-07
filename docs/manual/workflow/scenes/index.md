@@ -1,3 +1,3 @@
 # Creating Scenes
 
-Documentation in progress.
+This page moved: see [Scenes](/programming/scenes).

@@ -9,10 +9,10 @@
  * @type {Object<string, Object>}
  */
 const SECTION_STYLE = {
-  Introduction: { color: 'var(--accent-maroon)', icon: 'bulb' },
-  Interface: { color: 'var(--accent-violet)', icon: 'grid' },
-  Modifiers: { color: 'var(--accent-blue)', icon: 'adjust' },
-  Workflow: { color: 'var(--accent-sea-green)', icon: 'line' },
+  'Getting started': { color: 'var(--accent-maroon)', icon: 'bulb' },
+  Concepts: { color: 'var(--accent-violet)', icon: 'help' },
+  'Programming a show': { color: 'var(--accent-blue)', icon: 'adjust' },
+  'Rig & output': { color: 'var(--accent-sea-green)', icon: 'connection' },
 };
 
 /**
@@ -23,21 +23,19 @@ const PAGE_ICONS = {
   '/introduction/': 'bulb',
   '/introduction/overview': 'help',
   '/introduction/installation': 'export',
+  '/getting-started/first-show': 'play',
+  '/getting-started/interface': 'grid',
   '/introduction/license': 'opensource',
+  '/concepts/': 'universe',
+  '/concepts/timing': 'waveform',
+  '/programming/patching': 'patch',
+  '/programming/groups': 'fixture',
+  '/programming/scenes': 'mixer',
+  '/programming/effects': 'wave',
+  '/programming/chases': 'line',
+  '/programming/playback': 'control',
   '/interface/toolbar/': 'control',
-  '/interface/patchbay/': 'patch',
-  '/interface/grouppool/': 'grid',
   '/interface/visualizer/': 'visualizer',
-  '/interface/modifier/': 'adjust',
-  '/modifiers/universe/': 'universe',
-  '/modifiers/group/': 'grid',
-  '/modifiers/chase/': 'line',
-  '/workflow/environment/': 'gear',
-  '/workflow/patching/': 'patch',
-  '/workflow/grouping/': 'fixture',
-  '/workflow/scenes/': 'mixer',
-  '/workflow/effects/': 'wave',
-  '/workflow/triggering/': 'play',
 };
 
 /**
