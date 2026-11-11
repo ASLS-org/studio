@@ -14,15 +14,12 @@ blue.
 
 Create an effect like any cue: double click an empty slot of the group's **Cue Pool** and choose
 **effect** (see [Creating a cue](/programming/scenes#creating-a-cue)). Effects loop by default.
-Selecting an effect shows its widgets in the group view; below is *Ballyhoo*.
-
-<LivePreview preset="effect-modifier" />
+Selecting an effect shows its widgets in the group view: **Modulated Channels**, **Channel
+Fixtures Activity** and the **Effect Tool**, from left to right (the demo below shows all three).
 
 ## Modulated Channels
 
 Lists the channels this effect moves. Click one to edit it in the **Effect Tool**.
-
-<LivePreview preset="effect-channels" />
 
 Press **Add** to add a channel. The **Add Modulated Channel** popup lists the kinds of channels an
 effect can move: unfold one, pick a preset and press **OK**.
@@ -85,16 +82,15 @@ With **Phase start** 0 and **Phase stop** 360, the fixtures are spread over one 
 "wave" running through the rig. With both at 0, every fixture moves together.
 
 With **Spread over** set to **Cells**, the offsets go from cell to cell: on a pixel bar, a hue
-effect runs its colour cycle along the pixels instead of changing the whole bar at once.
-
-<CellsBar />
+effect runs its colour cycle along the pixels instead of changing the whole bar at once
+([Cells](/rig/fixtures#cells) lets you compare both).
 
 > **Note:** An effect moves its channel in every cell of a fixture (each pixel's dimmer, each head's
 > pan).
 
 > **Note:** In this release, the **PWM** waveform keeps the channel at its lowest, and the
 > **BOUNCELRT** and **BOUNCERTL** directions don't spread the fixtures (they all move together).
-> Use the other waveforms and directions.
+> Use the other waveforms and directions ([Known limitations](/reference/limitations#programming)).
 
 ## Timing
 

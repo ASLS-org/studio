@@ -3,9 +3,9 @@
 Patching tells Studio which lights you have and where they listen: each fixture gets a DMX
 **universe**, a first **address** and a **mode**, plus a position on stage for the visualizer. You
 patch, try and adjust fixtures in the **universe view**, which opens at the bottom of the screen
-when you pick a universe in the [patch bay](/getting-started/interface#patch-bay).
-
-<LivePreview preset="universe-modifier" />
+when you pick a universe in the [patch bay](/getting-started/interface#patch-bay). From left to
+right: the universe's settings and **Stream**, its **Fixture Pool**, then the selected fixture's
+settings, position and controls, each explained below.
 
 A new show comes with four universes (**Universe 0** to **Universe 3**). Each holds 512 DMX
 channels.
@@ -35,11 +35,9 @@ hangs 4 m up, 3 m in front of the heads (**Pos Y** −3, **Pos Z** 4, **°Rot X*
 
 ### The fixture list
 
-| Section | What it holds |
-| --- | --- |
-| **Imported (GDTF)** | GDTF fixtures you imported on this device |
-| **Bundled (GDTF)** | Generic GDTF fixtures that ship with Studio: a PAR, a spot, a wash, a pixel bar and a multi-beam bar |
-| Manufacturer folders | The built-in [Open Fixture Library](https://open-fixture-library.org/) fixtures, by manufacturer |
+The list holds the built-in Open Fixture Library, the generic fixtures bundled with Studio, and
+the GDTF fixtures you imported. Where they come from, how to find one and how to import a GDTF
+file: [Fixture Library](/rig/fixtures).
 
 ### Patch settings
 
@@ -61,20 +59,10 @@ A fixture is placed with Z up: a rotation of 180° on X hangs it with its beam p
 
 ### Importing GDTF fixtures
 
-GDTF is the file format manufacturers use to describe their fixtures. For a fixture that isn't in
-the list, get its `.gdtf` file (from the manufacturer or [GDTF Share](https://gdtf-share.com/)),
-then press **Import GDTF…** under the fixture list, or drop the files on the list. Imported
-fixtures appear under **Imported (GDTF)** in every show on this device.
-
-> **Note:** Imported fixtures are kept in this browser's storage (or the desktop app's). Clearing
-> the site data removes them, so keep your `.gdtf` files.
-
-### Opening a show with missing fixtures
-
-A show refers to the fixtures in your library; it doesn't contain GDTF files. When you open a show
-that uses a GDTF fixture this device doesn't have, Studio lists the missing fixtures first:
-import their files and press **Open**, or press **Open anyway** (the missing fixtures keep their
-addresses, groups and scene values but stay dark until you import them and reopen the show).
+For a fixture that isn't in the list, import its `.gdtf` file with **Import GDTF…** under the
+list: see [GDTF fixtures](/rig/fixtures#gdtf-fixtures). A show that uses GDTF fixtures this device
+doesn't have opens with a **Missing fixtures** prompt first: see
+[Opening a show with missing fixtures](/rig/fixtures#opening-a-show-with-missing-fixtures).
 
 ## Selecting and Filtering Fixtures
 
@@ -108,7 +96,7 @@ and the rig on stage loses its right-hand head.
 | --- | --- |
 | **Name** | The universe's name |
 | **ID** | The universe's number |
-| **Output** | The connection this universe is sent through, set with **Config**. See [Toolbar](/interface/toolbar/) for outputs |
+| **Output** | The connection this universe is sent through: see [Outputs](/rig/outputs#_3-send-a-universe) |
 | **Color** | The universe's colour in the patch bay |
 
 ## Fixture Settings and Position
@@ -177,24 +165,9 @@ fixture. For these, the **Cells** widget lists them after **All cells**:
 
 The channels widget then shows the selected cells' channels plus those of the whole fixture (a
 master dimmer, a strobe). Fixtures without cells, such as the demo rig's heads, don't show the
-widget. On a 12-pixel bar, the cells are laid out like this:
-
-<CellsBar />
+widget. [Cells](/rig/fixtures#cells) shows them on a 12-pixel bar.
 
 ## Supported Channel Types
 
-Every channel is sent to your lights. The visualizer draws the ones marked ✅.
-
-| Channel type | Visualizer | Notes |
-| --- | :---: | --- |
-| Intensity (dimmer) | ✅ | |
-| Shutter / strobe, strobe speed and duration | ✅ | |
-| Color intensity | ✅ | Red, green, blue, cyan, magenta, yellow, white, warm and cold white, amber, UV, lime |
-| Color preset, color temperature | ✅ | |
-| Pan, tilt | ✅ | Continuous pan and tilt, and pan/tilt speed: ⬜️ |
-| Wheel slot | ✅ | Colour, gobo and prism wheels |
-| Wheel slot rotation | ✅ | Gobo rotation and gobo index |
-| Beam angle, beam position, zoom, focus, iris, frost | ✅ | |
-| Prism, prism rotation | ✅ | The fixture's facets (GDTF), else three |
-| Rotation, speed, time | ✅ | |
-| Built-in effects, wheel shake and rotation, blades, fog, sound, maintenance | ⬜️ | Sent, not drawn |
+Every channel is sent to your lights; which ones the visualizer draws is listed in
+[Fixture Library](/rig/fixtures#supported-channel-types).

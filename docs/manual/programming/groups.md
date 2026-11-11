@@ -5,10 +5,9 @@ A group is a set of fixtures you program together: it owns the [scenes](/program
 sequence those cues. A group can mix fixtures from different universes, and a fixture can belong
 to several groups.
 
-Groups are listed side by side in the **Group Pool**, in the middle of the screen. Click a group to
-open its **group view** at the bottom of the screen.
-
-<LivePreview preset="group-pool" />
+Groups are listed side by side in the **Group Pool**, in the middle of the screen
+([The interface](/getting-started/interface#group-pool) shows it live). Click a group to open its
+**group view** at the bottom of the screen.
 
 A new show comes with four empty groups.
 
@@ -44,8 +43,7 @@ ends of the truss, which could now play a look of their own while *Rig* plays th
 
 The group view holds the group's settings, its fixtures and its cues. Selecting a cue adds that
 cue's widgets on the right: see [Scenes](/programming/scenes) and [Effects](/programming/effects).
-
-<LivePreview preset="group-modifier" />
+[The interface](/getting-started/interface#modifier-strip) shows the demo rig's group view.
 
 ### Group Settings
 
@@ -60,8 +58,6 @@ cue's widgets on the right: see [Scenes](/programming/scenes) and [Effects](/pro
 
 Lists the group's fixtures. Click one to select it, hold <kbd>Ctrl</kbd> to select several, and
 type in **Search items** to filter the list.
-
-<LivePreview preset="group-fixture-pool" />
 
 To add fixtures, press **Add** and tick them in the popup, as when you created the group. A new
 fixture joins the group's cues with no values: scenes leave it alone until you give it some, and

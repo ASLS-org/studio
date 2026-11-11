@@ -38,9 +38,8 @@ Each cell is a cue: its icon shows its type, its colour comes from the cue.
   too.
 
 The strip on the right of the pool is an overview of every slot: playing cues blink there, so you
-can spot them without scrolling.
-
-<LivePreview preset="group-cuepool" />
+can spot them without scrolling. Playing cues together, and what wins when they set the same
+channel: [Playing a show](/programming/playback#cues), where you can try the demo rig's pool.
 
 ## Cue Settings
 
@@ -58,7 +57,8 @@ These are *Sunset*'s settings: a 1-bar fade, played once, from the current value
 | **Duration** | How long the cue lasts, in bars (see [Timing and playback](/concepts/timing)). For a scene, this is its fade time |
 
 > **Note:** **Trigger Style** has no effect yet: every cue starts and stops on a click, as
-> **Toggle** describes. **Temporary** (playing only while held) isn't available in this release.
+> **Toggle** describes. **Temporary** (playing only while held) isn't available in this release
+> ([Known limitations](/reference/limitations#programming)).
 
 > **Note:** A scene that has played to its end stays on stage: it stops, but its values remain on
 > the fixtures until something else changes them.
@@ -90,7 +90,8 @@ When several fixtures are selected, the channels widget shows every channel any 
 goes to the fixtures that have that channel.
 
 > **Note:** In this release, <kbd>Ctrl</kbd>-selecting several fixtures doesn't work in the group's
-> first cue (the top-left slot): set its fixtures one at a time.
+> first cue (the top-left slot): set its fixtures one at a time
+> ([Known limitations](/reference/limitations#programming)).
 
 Channel faders are labelled by position (**CH1**, **CH2**…) with an icon for their function (the
 half-filled circle is a dimmer, **R**, **G**, **B** and **W** are colours).
@@ -105,9 +106,8 @@ them after **All cells**:
 - Click a cell to set it alone, or hold <kbd>Ctrl</kbd> to pick several.
 
 Channels of the whole fixture (a master dimmer, a strobe) are always shown. The scene keeps each
-cell's value, so one scene can give every pixel its own colour:
-
-<CellsBar />
+cell's value, so one scene can give every pixel its own colour ([Cells](/rig/fixtures#cells) shows
+it on a pixel bar).
 
 ### Color Picker and Pan/Tilt
 

@@ -5,19 +5,13 @@ pulsing effect, and a chase that plays them in time. Open Studio next to this pa
 <ResourceLink to="demo">live demo</ResourceLink> runs in your browser with nothing to install, or
 use the [desktop app](/introduction/installation).
 
-You don't need any lights: the [visualizer](/interface/visualizer/) shows what they would do.
-
-> **About the previews:** they show each step on the manual's demo rig, four moving heads already
-> programmed (see [Show structure](/concepts/)), not on the show you are building. Names and
-> numbers differ; the clicks are the same. Demo previews play by themselves; the others are the
-> real Studio components, so try them.
+You don't need any lights: Studio's [visualizer](/interface/visualizer/) shows what they would do.
+Each step links to the page that explains it in full, with live demos on the manual's demo rig.
 
 ## 1. Start a Blank Show
 
 In the toolbar, open **File** and pick **New Showfile**. Choose the **Blank** template and press
 **Create**. The show has four empty universes and four empty groups.
-
-<LivePreview preset="toolbar-file" />
 
 ## 2. Patch Two PARs
 
@@ -28,10 +22,8 @@ In the toolbar, open **File** and pick **New Showfile**. Choose the **Blank** te
 4. Set **Amount** to `2` and **Offset X** to `3`, so the two PARs stand side by side.
 5. Press **OK**.
 
-<LivePreview preset="patch-add" />
-
-The preview patches one PAR and places it with **Pos Y** and **Pos Z**; with **Amount** `2`, Studio
-patches both at once, one after the other in the universe, each **Offset X** further along.
+With **Amount** `2`, Studio patches both at once, one after the other in the universe, each
+**Offset X** further along.
 
 The two PARs appear in the fixture pool, the patch bay and the visualizer. More in
 [Patching fixtures](/programming/patching).
@@ -41,8 +33,6 @@ The two PARs appear in the fixture pool, the patch bay and the visualizer. More 
 1. In the **Group Pool**, press **New**.
 2. Tick **Check All** to take both PARs, name the group `Front`, and press **OK**.
 3. Click the group's column: the group view opens at the bottom.
-
-<LivePreview preset="group-pool-new" />
 
 The group is what the next steps program: its cues and chases only ever touch its fixtures. More
 in [Groups](/programming/groups).
@@ -59,15 +49,9 @@ in [Groups](/programming/groups).
    **sat** and **val** fields.
 6. Click the second PAR in **Scene Fixtures** and repeat steps 4 and 5.
 
-<LivePreview preset="scene-modifier" />
-
 Click the scene's body in the cue pool: both PARs fade to red over one bar (its **Duration**), then
 the scene stops and the red stays. Only ticked channels are part of the scene: anything you leave
 unticked keeps whatever another cue gave it. More in [Scenes](/programming/scenes).
-
-This is what playing a scene looks like on the demo rig:
-
-<LivePreview preset="scene-stage" />
 
 ## 5. A Pulsing Effect
 
@@ -78,15 +62,9 @@ This is what playing a scene looks like on the demo rig:
 3. Click **Dimmer** in **Modulated Channels**, then in the **Effect Tool** set **Phase stop** to
    `180`: the two PARs now pulse in turn.
 
-<LivePreview preset="effect-modifier" />
-
 Play it from the cue pool to see it, then click it again to stop it. With **Phase stop** at `0`
 both PARs would pulse together; at `180` the second is half a cycle behind the first, so one is
 bright when the other is dark. More in [Effects](/programming/effects).
-
-On the demo rig, adding a channel to a playing effect looks like this:
-
-<LivePreview preset="effect-channel-add" />
 
 ## 6. A Chase
 
@@ -94,8 +72,6 @@ On the demo rig, adding a channel to a playing effect looks like this:
 2. Set its **Duration** to `2` bars.
 3. In the timeline, double click the `Red` lane at its start (**1.0** on the ruler), then the
    `Pulse` lane at **2.0**. Each item lasts its cue's duration: one bar.
-
-<LivePreview preset="timeline-add" />
 
 Lanes are the group's cues, in cue pool order. An item plays its cue from its left edge for its
 length; a scene item fades in over its cue's duration and keeps its look until the next item
@@ -107,10 +83,7 @@ In the group pool, click the chase's play button. It starts on the next bar: one
 bar of pulse, again and again. Change the **BPM** in the toolbar, or tap it with
 **Tap Tempo**: the chase follows.
 
-<LivePreview preset="chase-play" />
-
-The preview plays the demo rig's chase *Story* to its end: 8 bars, a cue every 2 bars. Click the
-play button again to stop. More in [Playing a show](/programming/playback).
+Click the play button again to stop. More in [Playing a show](/programming/playback).
 
 ## 8. Save It
 
