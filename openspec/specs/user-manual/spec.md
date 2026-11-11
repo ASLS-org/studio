@@ -273,11 +273,34 @@ preview SHALL NOT affect the rest of the page.
 
 #### Scenario: No WebGL
 - **WHEN** a reader without WebGL opens the visualizer page
-- **THEN** the visualizer preview plays its video, and the page's other content works
+- **THEN** the visualizer preview says that it needs WebGL, and the page's other content works
 
 #### Scenario: Loading
 - **WHEN** a preview is still loading
 - **THEN** its frame shows the component's title and an empty body, with no picture of the app
+
+### Requirement: One preview runs at a time
+A page SHALL run at most one live preview at a time: the one most in view, or the one the reader
+clicked. Every other preview SHALL release what it holds (its components, its 3D view) and look
+paused: dimmed, titled, with a label saying how to run it.
+
+#### Scenario: Scrolling between previews
+- **WHEN** a reader scrolls from one preview to the next
+- **THEN** the first pauses and looks paused, and the second starts
+
+#### Scenario: Clicking a paused preview
+- **WHEN** a reader clicks a paused preview that is on screen
+- **THEN** it runs, and the one that was running pauses
+
+### Requirement: Demos show their outcome
+A demo SHALL play its flow to the end and show the result where the reader can see it: a demo
+that changes the rig SHALL sit next to the visualizer. Its captions SHALL say what happens and
+why. Each loop SHALL start again from the demo show.
+
+#### Scenario: A deletion demo
+- **WHEN** the fixture pool's delete demo plays
+- **THEN** the fixture is selected, the confirmation is accepted, and the fixture leaves the rig
+  in the visualizer
 
 ### Requirement: Unknown presets are reported
 A page that names a preset that doesn't exist SHALL show a visible error in place of the

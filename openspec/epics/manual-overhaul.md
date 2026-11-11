@@ -106,6 +106,16 @@ same new capability `user-manual`.
   - The patch bay's **New** button does nothing (`displayPatchPopup() {}`).
   - `CuePool.genCueId()` reduces over `this.chases` and throws when a cue is added without an
     id (the UI always passes one).
+  - (2026-11-11) The patch bay's list asks to delete (popup, OK) but the patch bay fragment has no
+    `@delete` handler: deleting from the patch bay does nothing. The universe view's fixture pool
+    deletes.
+  - (2026-11-11) The visualizer's scene is a module singleton (`SceneManager`) and `Controls` keeps
+    the last camera: a second `Visualizer` adds its floor and lights to the first's, and its
+    constructor's `autoFocus = true` starts a focus flight on the old camera that lands on the new
+    one (at z = 0, looking at the origin). Studio mounts one visualizer, so only the manual's
+    previews hit it (handled there); a `Visualizer.dispose()` would fix it at the source.
+  - (2026-11-11) With auto-focus on, deselecting doesn't fly the camera back out
+    (`setFocus(false)` is commented out in `Controls.handleKeydown`).
 
 - CI drift check (fail a PR that changes user-facing code without a manual change), generated
   reference pages, and a scheduled AI routine that proposes manual updates. All three were

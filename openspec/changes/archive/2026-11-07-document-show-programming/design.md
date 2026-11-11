@@ -154,3 +154,26 @@ No new screenshots or recordings.
   - Circle's range is narrowed to 100–156. The full 0–255 preset threw hung heads to their limits,
     and Studio applies an effect's start values once when a show loads.
 
+
+## Second revision after review (2026-11-11)
+
+- **Demo show = the home page's rig.** Four MAC Aura hung 6 m up, one group *Rig*, cues *Warm
+  wash*, *Rainbow*, *Ballyhoo*, *Sunset*, chase *Story* (8 bars). Its scenes start Relative, so
+  they cross-fade. The pixel bar left with the old show, so `<CellsBar />` explains cells.
+- **One preview at a time.** `LivePreview` runs only the preview most in view (or the one
+  clicked); the others are unmounted and show a dimmed, labelled pause. Memory and WebGL contexts
+  stay bounded on long pages.
+- **Demos run to the end, on stage.** Every demo that changes the rig sits next to the
+  visualizer (`StageWrap`) and ends on the visible result. Captions explain what happens and why,
+  in the frame's bar. Each loop reloads the show. Presets gain `start`, `onRoute` and handler
+  props, for what a parent panel would do.
+- **Visualizer previews:**
+  - they take what they added out of Studio's shared scene on unmount (no duplicated rigs);
+  - they frame the whole stage for their box and turn auto-focus off;
+  - the WebGL probe runs once per page.
+- **No recordings.** The visualizer page's three videos and the preview's fallback video are gone.
+  The page is rewritten around the previews.
+- **Live demo link.** `MANUAL_URL_DEMO` is set (demo.studio.asls.timekadel.com), so the nav, the
+  toolbar and the hero show it. Pages link it where they invite readers to try something.
+- **Patch bay delete demo dropped.** Deleting from the patch bay does nothing in Studio (epic
+  backlog), so the manual deletes from the universe view's fixture pool.
