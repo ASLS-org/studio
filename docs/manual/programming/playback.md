@@ -22,7 +22,9 @@ shows its progress. A **One Shot** cue stops by itself at the end of its **Durat
 then stays on stage. A **Loop** cue runs until you stop it.
 
 Several cues of a group can play together; when they set the same channel, the last one to write it
-wins.
+wins. In the preview, play *Warm wash*, then *Rainbow*: the heads keep Warm wash's aim and zoom,
+and Rainbow takes over their colour. Play *Ballyhoo* too and it takes the aim. Click each again to
+stop it.
 
 <LivePreview preset="group-cuepool" />
 
@@ -36,12 +38,18 @@ chase. The chase shows its progress while it plays.
 
 To stop every chase of a group, click the play button of an empty slot in that group's column.
 
+The preview plays *Story* to its end: 16 s at 120 BPM, a new cue every 2 bars, then stops it.
+
 ## Master Rows
 
 The **Master** column on the right of the group pool plays a whole row: its play button starts the
 chase on that row in every group at once, and a second click stops them. Put the chases that belong
 together on the same row (a verse look in row 1 of every group, a chorus in row 2) to change the
 whole rig with one click.
+
+With one group, a master row does what the group's own play button does; it pays off with
+several groups. Say *Heads* and *PARs* each have a verse chase in row 0 and a chorus in row 1:
+row 0 of the master plays both verses together, row 1 both choruses, on the same bar.
 
 <LivePreview preset="master-row" />
 
@@ -55,3 +63,15 @@ Under each group's chases:
 > **Note:** In this release, the group **dimmer** knob, **Isolate** and **Blackout** don't change
 > what the group outputs yet, and the master column's knob and buttons do nothing. Stop the group's
 > cues and chases to darken it.
+
+## Running a Show
+
+A simple way to run a night:
+
+1. Program one group per kind of light, and on each, one chase per song part (intro, verse,
+   chorus…), on the same rows across groups.
+2. Set the **BPM** from the music with **Tap Tempo** before the first song, and keep each chase's
+   **Quantize** on **1/1**.
+3. Start each part from its master row a little before it begins: it lands on the next bar.
+4. Keep a scene for the stops (a blackout, a warm wash for speeches) in each group's cue pool, to
+   click by hand between songs.

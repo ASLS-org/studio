@@ -19,6 +19,15 @@ duration, so its speed follows the tempo too.
 | An effect with **Duration** 2 and **Freq** 1 | one cycle every 4 s |
 | A chase with **Duration** 4 | 8 s per pass |
 
+**In the demo show** (120 BPM): *Warm wash* and *Sunset* fade in over 1 bar, 2 s. *Rainbow* runs
+over 2 bars, one hue cycle every 4 s. *Ballyhoo* has **Freq** 2 over 2 bars: two circles in 4 s,
+twice as fast. The chase *Story* lasts 8 bars, 16 s. At 60 BPM, every one of those takes twice as
+long, and the cues still change on the same beats.
+
+Watch *Story* from start to end: each cue takes over on a bar, 2 bars after the previous one.
+
+<LivePreview preset="chase-play" />
+
 ## Setting the Tempo
 
 Type the **BPM** in the toolbar, or click **Tap Tempo** on the beat a few times: Studio measures the
@@ -37,7 +46,8 @@ next bar, so chases you start a little early or late still land together on the 
 
 Click the play state in the toolbar, or press <kbd>Space</kbd>, to pause or resume. While paused,
 cues and chases hold where they are. Output keeps running: your lights keep their current values,
-and a fader you move is sent right away.
+and a fader you move is sent right away. Pausing is how you freeze a moving look to check it, or
+hold the rig during a speech, without losing your place in a chase.
 
 ## How Cues End
 
@@ -48,6 +58,11 @@ and a fader you move is sent right away.
 
 A scene's **Start** sets where its fade begins: **Absolute** from 0, **Relative** from the
 channels' current values, so it blends from whatever the previous cue left.
+
+<SceneFade />
+
+Use **Absolute** for a look that should always build the same way (a blackout lifting into a
+scene); **Relative** for cross-fades between looks, as when *Sunset* takes over from *Warm wash*.
 
 ## Triggering
 

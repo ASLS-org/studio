@@ -1,11 +1,16 @@
 # Your First Show
 
 In about ten minutes, you'll build a small show from scratch: two PARs, a group, a red look, a
-pulsing effect, and a chase that plays them in time. Open Studio ([installed](/introduction/installation)
-or in your browser) next to this page. The previews below run on a demo rig, so yours will look a
-little different.
+pulsing effect, and a chase that plays them in time. Open Studio next to this page: the
+<ResourceLink to="demo">live demo</ResourceLink> runs in your browser with nothing to install, or
+use the [desktop app](/introduction/installation).
 
 You don't need any lights: the [visualizer](/interface/visualizer/) shows what they would do.
+
+> **About the previews:** they show each step on the manual's demo rig, four moving heads already
+> programmed (see [Show structure](/concepts/)), not on the show you are building. Names and
+> numbers differ; the clicks are the same. Demo previews play by themselves; the others are the
+> real Studio components, so try them.
 
 ## 1. Start a Blank Show
 
@@ -25,6 +30,9 @@ In the toolbar, open **File** and pick **New Showfile**. Choose the **Blank** te
 
 <LivePreview preset="patch-add" />
 
+The preview patches one PAR and places it with **Pos Y** and **Pos Z**; with **Amount** `2`, Studio
+patches both at once, one after the other in the universe, each **Offset X** further along.
+
 The two PARs appear in the fixture pool, the patch bay and the visualizer. More in
 [Patching fixtures](/programming/patching).
 
@@ -36,7 +44,8 @@ The two PARs appear in the fixture pool, the patch bay and the visualizer. More 
 
 <LivePreview preset="group-pool-new" />
 
-More in [Groups](/programming/groups).
+The group is what the next steps program: its cues and chases only ever touch its fixtures. More
+in [Groups](/programming/groups).
 
 ## 4. A Red Scene
 
@@ -53,7 +62,12 @@ More in [Groups](/programming/groups).
 <LivePreview preset="scene-modifier" />
 
 Click the scene's body in the cue pool: both PARs fade to red over one bar (its **Duration**), then
-the scene stops and the red stays. More in [Scenes](/programming/scenes).
+the scene stops and the red stays. Only ticked channels are part of the scene: anything you leave
+unticked keeps whatever another cue gave it. More in [Scenes](/programming/scenes).
+
+This is what playing a scene looks like on the demo rig:
+
+<LivePreview preset="scene-stage" />
 
 ## 5. A Pulsing Effect
 
@@ -66,8 +80,13 @@ the scene stops and the red stays. More in [Scenes](/programming/scenes).
 
 <LivePreview preset="effect-modifier" />
 
-Play it from the cue pool to see it, then click it again to stop it. More in
-[Effects](/programming/effects).
+Play it from the cue pool to see it, then click it again to stop it. With **Phase stop** at `0`
+both PARs would pulse together; at `180` the second is half a cycle behind the first, so one is
+bright when the other is dark. More in [Effects](/programming/effects).
+
+On the demo rig, adding a channel to a playing effect looks like this:
+
+<LivePreview preset="effect-channel-add" />
 
 ## 6. A Chase
 
@@ -78,7 +97,9 @@ Play it from the cue pool to see it, then click it again to stop it. More in
 
 <LivePreview preset="timeline-add" />
 
-More in [Chases](/programming/chases).
+Lanes are the group's cues, in cue pool order. An item plays its cue from its left edge for its
+length; a scene item fades in over its cue's duration and keeps its look until the next item
+changes it. More in [Chases](/programming/chases).
 
 ## 7. Play It
 
@@ -88,7 +109,8 @@ bar of pulse, again and again. Change the **BPM** in the toolbar, or tap it with
 
 <LivePreview preset="chase-play" />
 
-Click the play button again to stop. More in [Playing a show](/programming/playback).
+The preview plays the demo rig's chase *Story* to its end: 8 bars, a cue every 2 bars. Click the
+play button again to stop. More in [Playing a show](/programming/playback).
 
 ## 8. Save It
 

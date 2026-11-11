@@ -10,6 +10,14 @@ when you pick a universe in the [patch bay](/getting-started/interface#patch-bay
 A new show comes with four universes (**Universe 0** to **Universe 3**). Each holds 512 DMX
 channels.
 
+Before you start, have your rig's paperwork at hand: for each light, its model, the DMX mode set
+on its menu, its start address and the universe (the cable or node) it hangs on. Patching is
+copying that into Studio. If Studio and the lights disagree on a mode or an address, the lights
+react to the wrong channels: a dimmer fader moves the pan, a colour comes out wrong.
+
+**In the demo show:** universe *Stage* holds four *MAC Aura* in *Standard* mode (14 channels) at
+addresses 0, 14, 28 and 42, so 56 addresses in use and 456 free.
+
 ## Patching a Fixture
 
 1. In the patch bay, unfold the universe you want to patch into.
@@ -19,6 +27,9 @@ channels.
 5. Check the **Address** (Studio proposes the first free one) and, to patch several identical
    fixtures one after another, the **Amount**.
 6. Press **OK**. The fixtures appear in the fixture pool, in the patch bay and in the visualizer.
+
+The preview adds a *Generic PAR RGBW* to the demo rig: it takes the first free address, 56, and
+hangs 4 m up, 3 m in front of the heads (**Pos Y** −3, **Pos Z** 4, **°Rot X** 180).
 
 <LivePreview preset="patch-add" />
 
@@ -68,17 +79,24 @@ addresses, groups and scene values but stay dark until you import them and reope
 ## Selecting and Filtering Fixtures
 
 Click a fixture in the **Fixture Pool** (or the patch bay) to select it: the universe view shows its
-settings and controls. Hold <kbd>Ctrl</kbd> and click to select several. Type in **Search items**
-to show only the fixtures whose name matches.
+settings and controls, and the visualizer outlines it, so you can tell which light on stage is
+which. Hold <kbd>Ctrl</kbd> and click to select several. Type in **Search items** to show only the
+fixtures whose name matches.
 
 <LivePreview preset="patch-bay-select" />
+
+Filtering matches any part of the name: `Aura 3` finds *MAC Aura 3*, `Aura` all four. Name your
+fixtures by position (*Front PAR L*, *Back wash 2*) and the filter becomes the fastest way around a
+big rig.
 
 <LivePreview preset="patch-bay-filter" />
 
 ## Deleting Fixtures
 
-Select the fixtures, then press <kbd>Delete</kbd> or <kbd>Backspace</kbd> and confirm. A deleted
-fixture is also removed from every group, scene and effect that used it.
+In the universe view's **Fixture Pool**, select the fixtures, then press <kbd>Delete</kbd> or
+<kbd>Backspace</kbd> and confirm. A deleted fixture is also removed from every group, scene and
+effect that used it, and its addresses become free. In the preview, *MAC Aura 4* leaves the show,
+and the rig on stage loses its right-hand head.
 
 <LivePreview preset="fixture-pool-delete" />
 
@@ -109,12 +127,21 @@ The **Position Tool** places the fixture on stage for the visualizer: **Position
 (to the centimetre) and **Rotation X/Y/Z** in degrees. You can also drag fixtures in the
 [visualizer](/interface/visualizer/).
 
+Stage axes: **X** runs left to right as the audience sees it, **Y** from the audience (negative)
+to the back of the stage (positive), **Z** up from the floor. The demo heads sit at Y 0, Z 6: on a
+truss 6 m up, across the middle of the stage. Change *MAC Aura 1*'s **Position Z** below and watch
+it move.
+
 <LivePreview preset="fixture-position" />
 
 ## Trying a Fixture
 
 The universe view controls the selected fixture directly, so you can check it responds: these
 values go out live but are **not saved**. To keep a look, make a [scene](/programming/scenes).
+
+This is the first thing to do after patching real lights: bring each one's dimmer up, move its
+pan and tilt, and check the right light answers the right way. In the previews below, the
+controls drive *MAC Aura 2* on the demo rig.
 
 ### Channels
 
@@ -149,9 +176,10 @@ fixture. For these, the **Cells** widget lists them after **All cells**:
 - Click a cell to control it alone, or hold <kbd>Ctrl</kbd> to pick several.
 
 The channels widget then shows the selected cells' channels plus those of the whole fixture (a
-master dimmer, a strobe). Fixtures without cells don't show the widget.
+master dimmer, a strobe). Fixtures without cells, such as the demo rig's heads, don't show the
+widget. On a 12-pixel bar, the cells are laid out like this:
 
-<LivePreview preset="fixture-cells" />
+<CellsBar />
 
 ## Supported Channel Types
 

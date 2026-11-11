@@ -4,8 +4,10 @@ A scene is a look: values for some of a group's channels (a colour, a position, 
 reached with a fade when you play it. Scenes and [effects](/programming/effects) are the group's
 **cues**, kept in its **Cue Pool**.
 
-Here the demo show's moving heads play two scenes in turn: *Open white*, then *Deep blue*. Each
-fades from where the lights are to the scene's values over its duration (one bar), then holds.
+Here the demo rig plays its two scenes in turn: *Warm wash*, amber pools in front of each head,
+then *Sunset*, deep red to gold with the beams fanned wide, then *Warm wash* again. Each fades
+from where the lights are to the scene's values over its duration (one bar, 2 s), then holds.
+Watch the colour, the beam width (zoom) and the aim all move together: a scene can set any channel.
 
 <LivePreview preset="scene-stage" />
 
@@ -15,7 +17,13 @@ fades from where the lights are to the scene's values over its duration (one bar
 2. In the **Cue Pool**, double click an empty slot. The **Add Cue** popup opens.
 3. Choose the **Cue type** (**scene** or **effect**), a **Color** and a **Name**, and press **OK**.
 
-A cue's type can't be changed later; its name and colour can, in **Cue Settings**.
+A cue's type can't be changed later; its name and colour can, in **Cue Settings**. Pick colours
+that say what a cue does (warm looks in gold, effects in violet…): chases show items in their
+cue's colour, so a well-coloured pool makes a timeline readable at a glance.
+
+The preview adds a scene *Blackout* to the demo rig's pool while *Warm wash* plays, then plays it:
+the rig doesn't change, because a new scene has no active channels yet. The next sections give it
+values.
 
 <LivePreview preset="cuepool-add" />
 
@@ -35,6 +43,8 @@ can spot them without scrolling.
 <LivePreview preset="group-cuepool" />
 
 ## Cue Settings
+
+These are *Sunset*'s settings: a 1-bar fade, played once, from the current values.
 
 <LivePreview preset="cue-settings" />
 
@@ -63,7 +73,9 @@ following its **Fade in** curve. **Start** picks the start value:
 ## Setting a Scene's Values
 
 When a scene is selected, the group view shows the scene's widgets. Values you set here are the
-scene's **end values**: where the fixtures arrive when the scene has faded in.
+scene's **end values**: where the fixtures arrive when the scene has faded in. Below is *Sunset*:
+click a head in **Scene Fixtures** to see its values (each has its own colour, from deep red on
+*MAC Aura 1* to gold on *MAC Aura 4*).
 
 <LivePreview preset="scene-modifier" />
 
@@ -93,14 +105,24 @@ them after **All cells**:
 - Click a cell to set it alone, or hold <kbd>Ctrl</kbd> to pick several.
 
 Channels of the whole fixture (a master dimmer, a strobe) are always shown. The scene keeps each
-cell's value, so one scene can give every pixel its own colour, as this bar's **Split** scene does.
+cell's value, so one scene can give every pixel its own colour:
 
-<LivePreview preset="scene-modifier-bar" />
+<CellsBar />
 
 ### Color Picker and Pan/Tilt
 
 They work as in the universe view (see [Trying a fixture](/programming/patching#trying-a-fixture)),
 on the scene's selected fixtures and cells.
+
+### Tips
+
+- **Set only what the look needs.** A colour scene with only colour channels active can play over
+  a position scene: each keeps the other's channels. *Warm wash* and *Sunset* set everything
+  (colour, dimmer, zoom, aim), so each replaces the other entirely.
+- **Program with the scene playing.** Play the scene, then move its faders: the lights follow, so
+  you see the look as you build it.
+- **Check it from black.** A scene with **Start** **Relative** looks different depending on what
+  played before; play it after a blackout once to see its own values.
 
 ## Fade In
 

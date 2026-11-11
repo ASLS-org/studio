@@ -29,6 +29,15 @@ A typical show comes together in this order:
 5. **Play**: set the tempo, trigger cues, chases and master rows.
    [Playing a show](/programming/playback)
 
+This is where those steps lead, on the manual's demo rig: four moving heads patched in one
+universe, one group, four cues, and a chase *Story* that plays them over 8 bars. Every page of the
+manual uses this rig in its examples ([Show structure](/concepts/) walks through it).
+
+<LivePreview preset="chase-play" />
+
+To try it with your own hands, open the <ResourceLink to="demo">live demo</ResourceLink>: Studio
+in your browser, with a demo show loaded, nothing to install.
+
 ## Time is counted in bars
 
 Studio has one clock for the whole show, set in **BPM** in the toolbar (or tapped in with

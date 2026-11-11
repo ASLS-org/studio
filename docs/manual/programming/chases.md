@@ -4,12 +4,21 @@ A chase plays a group's cues on a timeline, in time with the show's tempo: a sce
 bar, an effect over the next two, another scene at the end. Each group has its own chases, in its
 column of the **Group Pool**; a group plays one chase at a time.
 
+Chases are how a show runs by itself: instead of clicking cues on the beat, you lay them out once,
+and the chase plays them in time, at whatever tempo the music is.
+
+**In the demo show:** *Rig*'s chase *Story* lasts 8 bars and loops. Each of the four cues has an
+item 2 bars long, one after the other: *Warm wash*, *Rainbow*, *Ballyhoo*, *Sunset*. Played, it
+tells the same story as the home page:
+
+<LivePreview preset="chase-play" />
+
 ## Creating a Chase
 
 Double click an empty chase slot in a group's column of the group pool. The new chase opens in the
 **chase view** at the bottom of the screen, with a lane for each of the group's cues.
 
-Click a chase's name in the group pool to open it later.
+Click a chase's name in the group pool to open it later. Below is *Story* in the chase view.
 
 <LivePreview preset="chase-modifier" />
 
@@ -45,7 +54,19 @@ plays that cue from where it starts, for as long as it lasts.
 
 <LivePreview preset="timeline-add" />
 
-Items on different lanes can overlap: their cues then play together.
+Items on different lanes can overlap: their cues then play together. Overlaps are how you layer:
+put *Rainbow* over the second half of *Warm wash* and the heads keep their warm aim while their
+colour starts cycling, because *Rainbow* only moves colour channels.
+
+### When an item ends
+
+| Cue | At the item's end |
+| --- | --- |
+| Scene | Its look stays until another item changes the same channels |
+| Effect | It stops; its channels keep the value they had at that moment |
+
+So a chase that ends on an effect leaves the lights wherever the effect was. End on a scene (as
+*Story* does with *Sunset*) for a clean, known look.
 
 ## Deleting a Chase
 
