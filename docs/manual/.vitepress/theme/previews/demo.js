@@ -22,6 +22,7 @@
  * only when focus isn't on something else of the page.
  *   { wait: ms }                          pause
  *   { caption: 'text' }                   caption under the stage (null clears it)
+ *   { click: '.x', anywhere: true }       target outside the preview (a teleported option list)
  * Any targeted step takes `x`: a point that many pixels from the element's left edge instead of
  * its centre (for wide elements, such as a timeline row, whose centre is out of view).
  */
@@ -39,7 +40,9 @@ const sleep = (ms) => new Promise((resolve) => { setTimeout(resolve, ms); });
  * @returns {?HTMLElement} element
  */
 function find(stage, step, selector) {
-  let list = [...stage.querySelectorAll(selector)].filter((el) => el.getClientRects().length);
+  // `anywhere`: elements Studio teleports to the page's body (a select's option list)
+  const scope = step.anywhere ? document : stage;
+  let list = [...scope.querySelectorAll(selector)].filter((el) => el.getClientRects().length);
   if (step.has) {
     list = list.filter((el) => el.textContent.includes(step.has));
     // Rows nest (a wrapper and the row itself match): the innermost is the one that reacts

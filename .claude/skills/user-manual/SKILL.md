@@ -33,14 +33,21 @@ Pure refactors, perf work and invisible fixes need no manual update. Say so in t
 ```
 docs/manual/
   index.md                       home page (theme/hero/HomeStory.vue, no prose here)
-  introduction/                  about (product presentation), overview ("How Studio works"),
-                                 installation, license
-  getting-started/               first-show (tutorial, blank show → playing chase), interface (tour)
+  introduction/                  about (product presentation), overview ("How Studio works": a
+                                 short narrative linking each topic), installation (browser or
+                                 desktop app: downloads, first launch, built-in gateway), license
+  getting-started/               first-show (tutorial steps, no previews: each step links the page
+                                 with the demo), interface (the map: regions, toolbar, one panel)
   concepts/                      index (show structure: what owns what), timing (BPM, bars,
                                  quantize, playback)
   programming/<task>.md          one page per task, in build order: patching, groups, scenes,
                                  effects, chases, playback
-  interface/toolbar, visualizer  "Rig & output" until unit 4 rewrites them
+  rig/<topic>.md                 Rig & output: fixtures (library, GDTF, missing fixtures, 3D,
+                                 cells, channel types), outputs (gateway, connections, streams,
+                                 what's verified), showfiles
+  interface/visualizer           Rig & output too (kept at its old URL)
+  interface/toolbar              stub → getting-started/interface#toolbar
+  reference/<page>.md            shortcuts, glossary, troubleshooting, limitations
   interface/{patchbay,grouppool,modifier}, modifiers/*, workflow/*
                                  one-line "This page moved" stubs (old URLs keep working; not in
                                  the sidebar; remove in a later release)
@@ -51,8 +58,32 @@ docs/manual/
 ```
 
 Sidebar sections, in order: **Getting started**, **Concepts**, **Programming a show**, **Rig &
-output** (accent and icon per section and page in `theme/shell/nav.js`). Unit 4 of epic
-`manual-overhaul` (`openspec/epics/manual-overhaul.md`) adds the rig, output and reference pages.
+output**, **Reference** (accent and icon per section and page in `theme/shell/nav.js`).
+
+**One home per topic.** Each topic is explained once, on its home page, with its preview, demo or
+illustration; other pages say it in a sentence and link there. Every preset and illustration
+appears on exactly one page (check: count `<LivePreview preset>` and illustration tags across the
+pages). Don't add a whole-panel preview to a page that already shows its widgets one by one (the
+group view on The Interface is the one panel example). Concepts define and link; the tutorial
+gives steps and links; Reference pages look things up.
+
+**Reference pages are kept true:**
+- `reference/shortcuts` lists only keys checked in the app; a change to a key binding or menu
+  shortcut updates it.
+- `reference/limitations` holds every Studio behaviour the manual doesn't present as working,
+  with its workaround. Feature pages describe what works and may link there; a fix removes the
+  row, a new bug found while documenting adds one.
+- `reference/glossary` gets a row for any new term a page relies on.
+- `reference/troubleshooting` is symptom → cause → fix.
+
+**Output docs:**
+- Describe the gateway in user terms.
+- Mark a protocol as working only after streaming it end to end (gateway + a receiver, e.g. a
+  UDP listener for Art-Net on 6454).
+- Update **What's verified** on `rig/outputs` when the gateway (`WSC_VERSION`) changes.
+- Output demos never press **connect** or **Start streaming**.
+- The preview host drops demo outputs before reloading the show (`OutputPool.clearAll` throws
+  once an output exists).
 
 ### Theme: the manual is built from Studio's interface
 
@@ -121,21 +152,24 @@ Flows to watch rather than try are **demos**: a cursor plays them on the real co
   the component differs from the stage: a row-filling widget, a demo needing room for its
   popup), `fit`, `clock` (runs Studio's clock while active), `route` + `panel` (panels that read
   the route), `warmRoute` (group and chase panels: their route watchers aren't immediate, so the
-  router starts on a sibling route), `stage` + `viewWidth` (next to the visualizer), `start(show)`
+  router starts on a sibling route), `stage` (drives the rig: the floating visualizer comes next to it), `start(show)`
   (e.g. a cue already playing), `onRoute(show, to)` (stands in for a panel the component would
   open: the patch bay outlines its fixture), `props.onX` (handlers for events the component's
-  parent panel would handle: the fixture pool only asks to delete), `demo`, `webgl`. No video
+  parent panel would handle: the fixture pool only asks to delete), `popupInBox` (a stage
+  preset whose component is a popup: it opens in the component's own box, via `StageWrap`'s own
+  `popupHost`), `demo`, `webgl`. No video
   fallbacks. To add one: add the entry, regenerate `_dev/previews.md`, check it mounts. Never
   offer anything interactive that saves or connects (connections widget/popup); the toolbar only
   as a demo.
 - **One preview runs at a time** (`LivePreview.vue` coordinator): the one most in view (at least
   half visible, nearest the centre, the running one kept unless another is clearly better; a
   clicked one is pinned). The others are unmounted (WebGL released) and show their title, dimmed,
-  with "paused · scroll here or click". Never mount a second visualizer next to it.
+  with "paused · scroll here or click". Previews never mount a visualizer of their own.
 - **Demos** (`theme/previews/demo.js`, preset `demo: [steps]`): `move`, `click` (`ctrl`,
   `shift`), `dblclick`, `context`, `type` (`text`), `field` (label → input, replaced, Enter),
   `key` (`global` for window listeners), `wait`, `caption` (a sentence under the stage, in the
   frame's bar); targets are selectors narrowed by `has` (text), `nth` and `x` (a pinned point),
+  `anywhere` (look in the whole page: Studio teleports a select's option list to the body),
   innermost match wins. Real DOM events on the real component; a press focuses what it pressed,
   as a browser does (lists select, style and take keys only when focused), unless the reader is
   typing elsewhere; the reader's input is blocked. **A demo runs its flow to the end and shows
@@ -143,10 +177,18 @@ Flows to watch rather than try are **demos**: a cursor plays them on the real co
   floor); captions say what happens and why. Each loop reloads the demo show and remounts.
   Scripted keys stop at the preview (Studio components listen on `window`). CSS `:hover` can't
   be triggered. Check each demo reaches its end state (`/_dev/previews`), not only that it starts.
-- **On stage** (`stage: true`, `StageWrap.vue`): the component at its Studio size next to the
-  visualizer. Use it for every preview or demo that changes the rig (faders, cues, chases,
-  patching, deleting, effects), so readers see what it does and why. The component box clips
-  (panels wider than the box show their first columns).
+- **On stage** (`stage: true`, `StageWrap.vue`): the component at its Studio size; the stage is
+  the component's size (a demo with popups gets room for them). Use it for every preview or demo
+  that changes the rig (faders, cues, chases, patching, deleting, effects), so the visualizer card
+  comes next to it. The component box clips (panels wider than the box show their first columns).
+- **Floating visualizer** (`theme/components/FloatingVisualizer.vue`, mounted by the layout on
+  every page but home; state in `previews/stage.js`, written by `LivePreview`): one visualizer
+  per page, shown when the page has stage previews. Docked small bottom right; while a stage
+  preview runs, attached beside it (right margin first, else left, else above/below), following it
+  on scroll; draggable by its title (then free until **↺**), resizable from its corner (limits in
+  `SIZES`), collapsible to a title pill with "Show the stage" (3D view unmounted); a bottom sheet
+  under 768 px. Collapsed and sizes are per-viewer conveniences in `localStorage`. It mounts
+  `VisualizerPreview` through `host.mountVisualizer` after `host.loadShow(pathname)`.
 - **Illustrations** (global, in `theme/components/`): `<ShowMap />` draws the demo show from its
   showfile (structure, what owns what); `<SceneFade />` animates a scene's fade (Absolute vs
   Relative start, Warm wash → Sunset); `<EffectWave />` animates the four heads on a waveform with

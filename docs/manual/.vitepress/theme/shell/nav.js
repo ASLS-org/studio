@@ -13,6 +13,7 @@ const SECTION_STYLE = {
   Concepts: { color: 'var(--accent-violet)', icon: 'help' },
   'Programming a show': { color: 'var(--accent-blue)', icon: 'adjust' },
   'Rig & output': { color: 'var(--accent-sea-green)', icon: 'connection' },
+  Reference: { color: 'var(--accent-gold)', icon: 'library' },
 };
 
 /**
@@ -22,7 +23,7 @@ const SECTION_STYLE = {
 const PAGE_ICONS = {
   '/introduction/': 'bulb',
   '/introduction/overview': 'help',
-  '/introduction/installation': 'export',
+  '/introduction/installation': 'newfile',
   '/getting-started/first-show': 'play',
   '/getting-started/interface': 'grid',
   '/introduction/license': 'opensource',
@@ -34,8 +35,14 @@ const PAGE_ICONS = {
   '/programming/effects': 'wave',
   '/programming/chases': 'line',
   '/programming/playback': 'control',
-  '/interface/toolbar/': 'control',
+  '/rig/fixtures': 'movinghead',
+  '/rig/outputs': 'connections',
   '/interface/visualizer/': 'visualizer',
+  '/rig/showfiles': 'save',
+  '/reference/shortcuts': 'key',
+  '/reference/glossary': 'library',
+  '/reference/troubleshooting': 'wrench',
+  '/reference/limitations': 'maintenance',
 };
 
 /**

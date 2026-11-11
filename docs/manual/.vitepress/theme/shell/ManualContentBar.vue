@@ -124,6 +124,7 @@ export default {
   align-items: center;
   gap: 8px;
   min-width: 0;
+  overflow: hidden;
   white-space: nowrap;
 }
 
@@ -136,6 +137,8 @@ export default {
 }
 
 .content_bar_section {
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-family: Roboto-Bold, sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -245,6 +248,13 @@ export default {
 
   .content_bar_segment {
     padding: 0 7px;
+  }
+}
+
+/* A narrower window: the theme switch keeps its buttons, the crumbs their room */
+@media (max-width: 1439px) {
+  .content_bar_label {
+    display: none;
   }
 }
 </style>

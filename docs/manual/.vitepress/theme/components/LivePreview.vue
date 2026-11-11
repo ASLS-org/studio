@@ -136,6 +136,7 @@
 
 <script>
 import PRESETS from '../previews/presets';
+import stageState from '../previews/stage';
 
 /** Window events: the reader changed something in a preview / the show is back as loaded */
 const DIRTY_EVENT = 'asls-preview-dirty';
@@ -368,6 +369,11 @@ export default {
   mounted() {
     this.id = Symbol(this.preset);
     this.page = window.location.pathname;
+    // Stage previews bring the page's floating visualizer card
+    if (this.definition && this.definition.stage) {
+      stageState.count += 1;
+      this.countsStage = true;
+    }
     if (!this.definition) {
       this.state = 'unknown';
       this.message = import.meta.env.DEV
@@ -410,6 +416,7 @@ export default {
     }
     if (this.sizeObserver) this.sizeObserver.disconnect();
     registry.delete(this);
+    if (this.countsStage) stageState.count -= 1;
     if (page.active === this) page.active = null;
     if (page.pinned === this) page.pinned = null;
     if (!registry.size) {
@@ -468,6 +475,10 @@ export default {
      */
     deactivate() {
       this.activation = null;
+      if (stageState.frame === this.$el) {
+        stageState.frame = null;
+        stageState.demo = false;
+      }
       this.stopDemo();
       this.unmountApp();
       if (this.state === 'ready' || this.state === 'loading') this.state = 'paused';
@@ -489,6 +500,12 @@ export default {
       await this.$nextTick();
       this.measure();
       this.watchPopups();
+      // The floating visualizer comes next to a running stage preview
+      if (this.definition.stage) {
+        stageState.frame = this.$el;
+        stageState.title = this.definition.title || '';
+        stageState.demo = this.isDemo;
+      }
     },
     /**
      * Studio's popups are sized for a desktop window: when one opens, the popup layer scales it

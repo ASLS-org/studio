@@ -18,8 +18,10 @@
  * - height: stage height (px). width: stage width (px; default: the component's own width)
  * - componentWidth / componentHeight: the component's box when it differs from the stage (a
  *   widget that fills its row in Studio; a demo whose popup needs more room than the widget)
- * - stage: the component next to the visualizer (StageWrap.vue), so readers see what it does to
- *   the rig; viewWidth sets the visualizer's width (default 480)
+ * - stage: the component drives the rig: while it runs, the page's floating visualizer card comes
+ *   next to it (FloatingVisualizer.vue), so readers see what it does; the stage is the component's
+ *   size (a demo with popups gets room for them); popupInBox: its popups open in its own box (a
+ *   component that is a popup, e.g. the visualizer settings, next to the card)
  * - fit: 'scale' (default: whole, scaled down to fit) or 'scroll' (panels wider than the page)
  * - route: initial path of the preview's router; with `panel`, the router view is the preview
  *   (Studio panels that read the route)
@@ -45,17 +47,6 @@ const universe = (show) => show.universePool.getFromId(0);
 
 /** Height of Studio's modifier strip, where every widget sits */
 const STRIP = 239;
-/** Stage height when a strip widget sits next to the visualizer */
-const STAGE = 320;
-/** Visualizer width next to a component */
-const VIEW = 480;
-/**
- * Stage width of a component with the visualizer beside it
- * @param {Number} width component width
- * @param {Number} [view=VIEW] visualizer width
- * @returns {Number} stage width
- */
-const beside = (width, view = VIEW) => width + 16 + view;
 
 const FixtureControl = () => import('./FixtureControl.vue');
 const FixturePool = () => import('@/views/activities/app/fragments/modifiers/_widgets/modifier.widget.fixture.pool.vue');
@@ -66,6 +57,8 @@ const EffectModifier = () => import('@/views/activities/app/fragments/modifiers/
 const Timeline = () => import('@/views/activities/app/fragments/modifiers/chase/_widgets/chase.modifier.widget.timeline.vue');
 const UniverseModifier = () => import('@/views/activities/app/fragments/modifiers/universe/universe.modifier.fragment.vue');
 const Toolbar = () => import('@/views/activities/app/fragments/toolbar/toolbar.fragment.vue');
+const OutputsPopup = () => import('@/views/activities/app/fragments/toolbar/_popups/popup.connections.vue');
+const VisualizerSettings = () => import('@/views/activities/app/fragments/toolbar/_popups/popup.visualizer.vue');
 
 /* ── Demo steps ─────────────────────────────────────────────────────── */
 
@@ -118,14 +111,6 @@ const FILE_MENU = [
   pointEntry('Export Showfile'),
   { wait: 900 },
 ];
-const PREFERENCES_MENU = [
-  { caption: 'Preferences' },
-  openMenu('Preferences'),
-  { caption: null },
-  pointEntry('Visualizer'),
-  pointEntry('Outputs'),
-  { wait: 900 },
-];
 /** The toolbar: a desktop-wide bar, shown at a typical width with room for its menus */
 const TOOLBAR = {
   title: 'Toolbar',
@@ -146,8 +131,8 @@ const PRESETS = {
   /* ── Trying a fixture (universe view), with the rig beside ── */
   'fixture-channels': {
     title: 'Channels',
-    width: beside(742),
-    height: STAGE,
+    width: 742,
+    height: STRIP,
     componentWidth: 742,
     componentHeight: STRIP,
     stage: true,
@@ -157,8 +142,8 @@ const PRESETS = {
   },
   'fixture-color': {
     title: 'Color Picker',
-    width: beside(560),
-    height: STAGE,
+    width: 560,
+    height: STRIP,
     componentWidth: 560,
     componentHeight: STRIP,
     stage: true,
@@ -168,28 +153,14 @@ const PRESETS = {
   },
   'fixture-pantilt': {
     title: 'Pan/Tilt',
-    width: beside(350),
-    height: STAGE,
+    width: 350,
+    height: STRIP,
     componentWidth: 350,
     componentHeight: STRIP,
     stage: true,
     component: FixtureControl,
     props: (show) => ({ fixture: fixture(show, 1), widget: 'pantilt' }),
     clock: true,
-  },
-  'fixture-pool': {
-    title: 'Fixture Pool',
-    width: 250,
-    height: STRIP,
-    component: FixturePool,
-    props: (show) => ({ pool: universe(show).fixturePool, onDelete: unpatch(show) }),
-  },
-  'group-fixture-pool': {
-    title: 'Fixture Pool',
-    width: 250,
-    height: STRIP,
-    component: FixturePool,
-    props: (show) => ({ pool: group(show).fixturePool, onDelete: ungroup(show) }),
   },
   'fixture-settings': {
     title: 'Fixture Settings',
@@ -200,8 +171,8 @@ const PRESETS = {
   },
   'fixture-position': {
     title: 'Position Tool',
-    width: beside(170),
-    height: STAGE,
+    width: 170,
+    height: STRIP,
     componentWidth: 170,
     componentHeight: STRIP,
     stage: true,
@@ -226,8 +197,8 @@ const PRESETS = {
   },
   'group-cuepool': {
     title: 'Cue Pool',
-    width: beside(440),
-    height: STAGE,
+    width: 440,
+    height: STRIP,
     componentWidth: 440,
     componentHeight: STRIP,
     stage: true,
@@ -242,27 +213,12 @@ const PRESETS = {
     component: () => import('@/views/activities/app/fragments/modifiers/group/_widgets/group.modifier.widget.cue.settings.vue'),
     props: (show) => ({ cue: cue(show, 3) }),
   },
-  'scene-fixtures': {
-    title: 'Scene Fixtures',
-    width: 250,
-    height: STRIP,
-    component: () => import('@/views/activities/app/fragments/modifiers/group/_widgets/group.scene.modifier.widget.fixtures.vue'),
-    props: (show) => ({ scene: cue(show, 3) }),
-  },
   'scene-curve': {
     title: 'Fade in',
     width: 341,
     height: STRIP,
     component: () => import('@/views/activities/app/fragments/modifiers/group/_widgets/group.scene.modifier.widget.curve.vue'),
     props: (show) => ({ fade: cue(show, 3).fadeIn }),
-  },
-  'effect-channels': {
-    title: 'Modulated Channels',
-    width: 300,
-    height: STRIP,
-    component: () => import('@/views/activities/app/fragments/modifiers/group/_widgets/group.effect.modifier.widget.channels.vue'),
-    props: (show) => ({ effect: cue(show, 2) }),
-    clock: true,
   },
   'effect-wave': {
     title: 'Effect Tool',
@@ -272,25 +228,13 @@ const PRESETS = {
     props: (show) => ({ channel: cue(show, 2).channels[0] }),
     clock: true,
   },
-  'chase-timeline': {
-    // Fills the rest of the strip in Studio: shown at a typical width
-    title: 'Timeline',
-    width: 760,
-    componentWidth: 760,
-    height: STRIP,
-    component: Timeline,
-    props: (show) => ({ pool: chase(show) }),
-    route: '/group/0/chase/0',
-    clock: true,
-  },
   /* ── Panels ── */
   'patch-bay': {
     title: 'Patch Bay',
-    width: beside(200, 520),
+    width: 200,
     height: 620,
     componentWidth: 200,
     componentHeight: 620,
-    viewWidth: 520,
     stage: true,
     component: PatchBay,
     onRoute: outlineFixture,
@@ -298,22 +242,12 @@ const PRESETS = {
   },
   'group-pool': {
     title: 'Group Pool',
-    width: beside(601, 520),
+    width: 601,
     height: 620,
     componentWidth: 601,
     componentHeight: 620,
-    viewWidth: 520,
     stage: true,
     component: GroupPool,
-    clock: true,
-  },
-  'universe-modifier': {
-    title: 'Universe',
-    height: STRIP,
-    fit: 'scroll',
-    component: UniverseModifier,
-    route: '/universe/0',
-    panel: true,
     clock: true,
   },
   'group-modifier': {
@@ -334,14 +268,6 @@ const PRESETS = {
     props: (show) => ({ scene: cue(show, 3) }),
     clock: true,
   },
-  'effect-modifier': {
-    title: 'Effect',
-    height: STRIP,
-    fit: 'scroll',
-    component: EffectModifier,
-    props: (show) => ({ effect: cue(show, 2) }),
-    clock: true,
-  },
   'chase-modifier': {
     title: 'Chase',
     width: 1440,
@@ -355,24 +281,13 @@ const PRESETS = {
     clock: true,
   },
   /* ── Visualizer ── */
-  visualizer: {
-    title: 'Visualizer',
-    width: 639,
-    // The visualizer sizes its canvas from its box: give the box Studio's size
-    componentWidth: 639,
-    height: 580,
-    component: () => import('./VisualizerPreview.vue'),
-    webgl: true,
-    clock: true,
-  },
   'visualizer-modes': {
     // Select a fixture in the patch bay: the visualizer shows its transform controls; T, R, H
     title: 'Patch Bay',
-    width: beside(200, 600),
+    width: 200,
     height: 520,
     componentWidth: 200,
     componentHeight: 520,
-    viewWidth: 600,
     stage: true,
     component: PatchBay,
     onRoute: outlineFixture,
@@ -397,11 +312,10 @@ const PRESETS = {
   'scene-stage': {
     // The rig's two scenes, one after the other: each fades in over its duration
     title: 'Cue Pool',
-    width: beside(440, 560),
-    height: 400,
+    width: 440,
+    height: STRIP,
     componentWidth: 440,
     componentHeight: STRIP,
-    viewWidth: 560,
     stage: true,
     component: CuePool,
     props: (show) => ({ group: group(show) }),
@@ -422,11 +336,10 @@ const PRESETS = {
   'effect-stage': {
     // The rig's effects: a hue chase across the heads, then crossing circles in blue
     title: 'Cue Pool',
-    width: beside(440, 560),
-    height: 400,
+    width: 440,
+    height: STRIP,
     componentWidth: 440,
     componentHeight: STRIP,
-    viewWidth: 560,
     stage: true,
     component: CuePool,
     props: (show) => ({ group: group(show) }),
@@ -447,11 +360,10 @@ const PRESETS = {
   /* ── Demos: a cursor plays the flow on the real component, to the end ── */
   'patch-bay-select': {
     title: 'Patch Bay',
-    width: beside(200, 520),
+    width: 200,
     height: 520,
     componentWidth: 200,
     componentHeight: 520,
-    viewWidth: 520,
     stage: true,
     component: PatchBay,
     onRoute: outlineFixture,
@@ -480,7 +392,7 @@ const PRESETS = {
   },
   'fixture-pool-delete': {
     title: 'Fixture Pool',
-    width: beside(250),
+    width: 480,
     height: 420,
     componentWidth: 250,
     componentHeight: STRIP,
@@ -522,7 +434,7 @@ const PRESETS = {
     // The universe view's fixture pool Add opens the patch popup (the patch bay's New doesn't
     // yet). A PAR is patched, hung at the front, and appears in the rig
     title: 'Universe',
-    width: beside(345),
+    width: 480,
     height: 620,
     componentWidth: 345,
     componentHeight: STRIP,
@@ -557,11 +469,10 @@ const PRESETS = {
   'cuepool-add': {
     // A new cue starts empty: played over Warm wash, it changes nothing until it is given values
     title: 'Cue Pool',
-    width: beside(440, 520),
+    width: 480,
     height: 420,
     componentWidth: 440,
     componentHeight: STRIP,
-    viewWidth: 520,
     stage: true,
     component: CuePool,
     props: (show) => ({ group: group(show) }),
@@ -591,11 +502,10 @@ const PRESETS = {
   'effect-channel-add': {
     // Rainbow plays (colour only); the Eight preset adds pan and tilt: the beams start drawing
     title: 'Effect',
-    width: beside(760, 480),
+    width: 760,
     height: 520,
     componentWidth: 760,
     componentHeight: STRIP,
-    viewWidth: 480,
     stage: true,
     component: EffectModifier,
     props: (show) => ({ effect: cue(show, 1) }),
@@ -631,11 +541,10 @@ const PRESETS = {
   'group-pool-new': {
     // A group for the two outer heads, then its fixtures shown on stage
     title: 'Group Pool',
-    width: beside(601, 520),
+    width: 601,
     height: 620,
     componentWidth: 601,
     componentHeight: 620,
-    viewWidth: 520,
     stage: true,
     component: GroupPool,
     clock: true,
@@ -660,11 +569,10 @@ const PRESETS = {
   'chase-play': {
     // The Story chase from start to end: 8 bars, 16 s at 120 BPM
     title: 'Group Pool',
-    width: beside(601, 520),
+    width: 601,
     height: 620,
     componentWidth: 601,
     componentHeight: 620,
-    viewWidth: 520,
     stage: true,
     component: GroupPool,
     clock: true,
@@ -681,11 +589,10 @@ const PRESETS = {
   },
   'master-row': {
     title: 'Group Pool',
-    width: beside(601, 520),
+    width: 601,
     height: 620,
     componentWidth: 601,
     componentHeight: 620,
-    viewWidth: 520,
     stage: true,
     component: GroupPool,
     clock: true,
@@ -741,8 +648,81 @@ const PRESETS = {
       { wait: 1200 },
     ],
   },
+  'visualizer-settings': {
+    // Preferences → Visualizer beside the stage: haze, brightness, exposure and quality act on
+    // the rig as they change (quality settings are this browser's; they never reach Studio)
+    title: 'Visualizer settings',
+    width: 424,
+    height: 520,
+    componentWidth: 424,
+    componentHeight: 520,
+    stage: true,
+    popupInBox: true,
+    component: VisualizerSettings,
+    props: () => ({ modelValue: true }),
+    start: (show) => cue(show, 3).cue(true),
+    clock: true,
+  },
+  /* ── Outputs: demos only, they never connect or stream ── */
+  'outputs-popup': {
+    // Preferences → Outputs: a connection to the gateway is added and pointed at; never connected
+    title: 'Input/Outputs',
+    width: 760,
+    height: 500,
+    componentWidth: 760,
+    componentHeight: 500,
+    component: OutputsPopup,
+    props: () => ({ modelValue: true }),
+    demo: [
+      { caption: 'Preferences → Outputs (Ctrl+Shift+O): your connections to a gateway' },
+      { wait: 1200 },
+      { caption: 'Add a connection' },
+      popupButton('add new connection'),
+      { wait: 1000 },
+      { caption: 'Label: its name. IP and Port: where the gateway runs (127.0.0.1, 4515 on this computer)' },
+      { move: '.popup .label', has: 'IP' },
+      { wait: 2600 },
+      { caption: 'Connect: Studio links to the gateway; the list shows Connected, the log what happens' },
+      { move: '.popup .uikit_button', has: 'connect', nth: 1 },
+      { wait: 3200 },
+      { caption: null },
+    ],
+  },
+  'universe-stream': {
+    // A universe sent through a connection: Output, then the Stream widget's protocol and
+    // address; Start streaming is pointed at, never clicked
+    title: 'Universe',
+    width: 560,
+    height: STRIP,
+    componentWidth: 560,
+    componentHeight: STRIP,
+    component: UniverseModifier,
+    route: '/universe/0',
+    panel: true,
+    start: (show) => {
+      if (!show.outputPool.outputs.length) {
+        show.outputPool.addRaw({ name: 'Gateway', remote: '127.0.0.1', port: 4515 });
+      }
+    },
+    demo: [
+      { caption: 'Output: the connection this universe goes through' },
+      { click: '.uikit_select_textbox_wrapper', nth: 0 },
+      { click: '.uikit_select_option', has: 'Gateway', anywhere: true },
+      { wait: 900 },
+      { caption: 'Stream: how the gateway sends it. Protocol: Art-Net' },
+      { click: '.universe_connection_settings_wrapper .uikit_select_textbox_wrapper' },
+      { click: '.uikit_select_option', has: 'ARTNET', anywhere: true },
+      { wait: 900 },
+      { caption: 'Host and Port: where your Art-Net node listens (6454 is the Art-Net port)' },
+      { field: 'Host', text: '2.0.0.10', within: '.universe_connection_settings_wrapper' },
+      { wait: 1400 },
+      { caption: 'Start streaming: the universe goes out, every frame' },
+      { move: '.universe_connection_settings_wrapper .uikit_button', has: 'Start streaming' },
+      { wait: 3000 },
+      { caption: null },
+    ],
+  },
   'toolbar-file': { ...TOOLBAR, demo: FILE_MENU },
-  'toolbar-preferences': { ...TOOLBAR, demo: PREFERENCES_MENU },
 };
 
 export default PRESETS;

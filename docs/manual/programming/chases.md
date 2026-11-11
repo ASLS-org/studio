@@ -9,9 +9,7 @@ and the chase plays them in time, at whatever tempo the music is.
 
 **In the demo show:** *Rig*'s chase *Story* lasts 8 bars and loops. Each of the four cues has an
 item 2 bars long, one after the other: *Warm wash*, *Rainbow*, *Ballyhoo*, *Sunset*. Played, it
-tells the same story as the home page:
-
-<LivePreview preset="chase-play" />
+tells the same story as the home page: watch it in [Playing a show](/programming/playback#chases).
 
 ## Creating a Chase
 
@@ -36,14 +34,13 @@ Durations are in bars, so a chase stays in time when the tempo changes: at 120 B
 lasts 8 seconds; at 60 BPM, 16 seconds.
 
 > **Note:** In this release, **1/8**, **1/4** and **1/2** wait 1, 2 and 3 beats rather than the
-> fraction of a bar their name says. Use **1/1** or **None**.
+> fraction of a bar their name says. Use **1/1** or **None**
+> ([Known limitations](/reference/limitations#programming)).
 
 ## The Timeline
 
 Each lane is one of the group's cues; the ruler counts bars and beats. A **cue item** on a lane
 plays that cue from where it starts, for as long as it lasts.
-
-<LivePreview preset="chase-timeline" />
 
 - **Add** a cue item: double click its lane where it should start. It gets the cue's duration, or
   less if another item follows.

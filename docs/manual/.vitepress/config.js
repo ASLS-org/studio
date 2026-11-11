@@ -186,11 +186,33 @@ export default {
         text: 'Rig & output',
         collapsible: true,
         items: [{
-          text: 'Toolbar',
-          link: '/interface/toolbar/',
+          text: 'Fixture Library',
+          link: '/rig/fixtures',
         }, {
           text: 'Visualizer',
           link: '/interface/visualizer/',
+        }, {
+          text: 'Outputs',
+          link: '/rig/outputs',
+        }, {
+          text: 'Showfiles',
+          link: '/rig/showfiles',
+        }],
+      }, {
+        text: 'Reference',
+        collapsible: true,
+        items: [{
+          text: 'Shortcuts',
+          link: '/reference/shortcuts',
+        }, {
+          text: 'Glossary',
+          link: '/reference/glossary',
+        }, {
+          text: 'Troubleshooting',
+          link: '/reference/troubleshooting',
+        }, {
+          text: 'Known Limitations',
+          link: '/reference/limitations',
         }],
       }],
     },

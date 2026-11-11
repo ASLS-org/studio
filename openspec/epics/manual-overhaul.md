@@ -75,7 +75,7 @@ clips that nobody re-records.
 | 1 | `restyle-manual-site`: Studio look (tokens, fonts, dark default + light), hero and product presentation, URL config, a working docs build and deploy | none | archived (branch `docs/restyle-manual-site`) |
 | 2 | `add-manual-live-previews`: `<LivePreview>` harness, manual dummy showfile, presets per widget, video fallback; the home page already runs Studio's real widgets live (unit 1), so this unit covers the manual pages (no screenshots anywhere) | 1 | archived (branch `docs/add-manual-live-previews`) |
 | 3 | `document-show-programming`: concepts + patch → group → scene → effect → chase → master/live, with live previews | 2 | archived (branch `docs/document-show-programming`) |
-| 4 | `document-rig-and-output`: fixture library/OFL/GDTF, outputs and gateway, visualizer, showfiles, desktop app, shortcuts, glossary, troubleshooting | 2 (can run beside 3) | proposed |
+| 4 | `document-rig-and-output`: fixture library/OFL/GDTF, outputs and gateway, visualizer, showfiles, desktop app, shortcuts, glossary, troubleshooting | 2 (can run beside 3) | archived (branch `docs/document-rig-and-output`) |
 | 5 | `gate-manual-upkeep`: OpenSpec rules, archive check, PR template, `user-manual` skill + coverage map | 3, 4 | proposed |
 
 Status values: proposed, refining, applying, archived, deferred.
@@ -116,6 +116,13 @@ same new capability `user-manual`.
     previews hit it (handled there); a `Visualizer.dispose()` would fix it at the source.
   - (2026-11-11) With auto-focus on, deselecting doesn't fly the camera back out
     (`setFocus(false)` is commented out in `Controls.handleKeydown`).
+  - (2026-11-11, unit 4) The universe settings' **Config** button has no handler. Connections
+    (outputs) and universe streams aren't restored after a reload (worse than the WSC known issue
+    6, which only names streams). The bundled gateway (WSC 2.2.0-rc.6) forwards Art-Net; sACN
+    gets "Unsupported protocol: 0x3". The visualizer's `popout()` (second-screen window) is never
+    called, and with the memory-history router `/visualizer` would open the app anyway. About →
+    Manual opens a hard-coded URL. Menu shortcuts match Ctrl only (not Cmd on macOS). Open Fixture
+    Library entries are listed by file key (`mac-aura.json`).
 
 - CI drift check (fail a PR that changes user-facing code without a manual change), generated
   reference pages, and a scheduled AI routine that proposes manual updates. All three were

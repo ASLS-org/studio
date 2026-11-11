@@ -13,11 +13,15 @@ Everything runs on one clock, shown in the toolbar:
 | Play state (**playing**, **paused**) | Click it, or press <kbd>Space</kbd>, to pause or resume the show. Paused, cues and chases freeze where they are; your lights keep their current values |
 | **Tap Tempo** | Click it on the beat a few times to set the BPM from your taps |
 
-See [Timing and playback](/concepts/timing) for how bars, BPM and quantize fit together.
+Pausing is how you freeze a moving look to check it, or hold the rig during a speech, without
+losing your place in a chase: output keeps running, your lights keep their current values, and a
+fader you move is sent right away. How bars, BPM and quantize fit together:
+[Timing and playback](/concepts/timing).
 
 ## Cues
 
-In a group's **Cue Pool**, click a cue's body to start it, and again to stop it. A playing cue
+In a group's **Cue Pool** ([Scenes](/programming/scenes#the-cue-pool) describes it), click a
+cue's body to start it, and again to stop it. A playing cue
 shows its progress. A **One Shot** cue stops by itself at the end of its **Duration**; a scene's look
 then stays on stage. A **Loop** cue runs until you stop it.
 
@@ -62,7 +66,7 @@ Under each group's chases:
 
 > **Note:** In this release, the group **dimmer** knob, **Isolate** and **Blackout** don't change
 > what the group outputs yet, and the master column's knob and buttons do nothing. Stop the group's
-> cues and chases to darken it.
+> cues and chases to darken it ([Known limitations](/reference/limitations#programming)).
 
 ## Running a Show
 

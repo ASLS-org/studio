@@ -18,8 +18,9 @@ play **cues** at given times, cues write values into the **channels** of a **gro
 **fixtures**, and every fixture's channels sit in a **universe** that is sent to your lights.
 
 Every example on this page comes from the manual's demo show, the same rig as on the
-[home page](/): four moving heads hung over a stage. All live previews run on it, and each preview
-starts from it again when you reset it. Here it is in full:
+[home page](/): four moving heads hung over a stage. Every live preview in the manual runs on it.
+This page defines each part and links to the page where you see it work. Here is the demo show
+in full:
 
 <ShowMap />
 
@@ -45,10 +46,9 @@ your rig grows.
 Universes are how the rig is wired, not how it is programmed: a group can hold fixtures of several
 universes, and a cue doesn't care which universe a fixture is in.
 
-**In the demo show:** one universe, *Stage*, holds the four heads. Unfold it in the patch bay to
-see them with their addresses, then click one: the visualizer outlines it on the rig.
-
-<LivePreview preset="patch-bay" />
+**In the demo show:** one universe, *Stage*, holds the four heads; the patch bay lists them with
+their addresses ([The interface](/getting-started/interface#patch-bay)).
+→ [Patching fixtures](/programming/patching)
 
 ## Fixture
 
@@ -64,6 +64,7 @@ real rig.
 each (shutter, dimmer, zoom, pan, tilt, red, green, blue, white…). *MAC Aura 1* takes addresses 0
 to 13, so *MAC Aura 2* starts at 14, *MAC Aura 3* at 28 and *MAC Aura 4* at 42. They hang 6 m up,
 3 m apart (x = −4.5, −1.5, 1.5 and 4.5 m), turned 180° so they point down.
+→ [Patching fixtures](/programming/patching), [Fixture Library](/rig/fixtures)
 
 ### Cells
 
@@ -73,9 +74,7 @@ every cell its own values, and effects can be spread over cells, so they travel 
 pixel instead of moving the whole fixture at once. Channels that act on the whole fixture (a
 master dimmer, a strobe) belong to no cell.
 
-The demo rig's heads have one cell each. A pixel bar shows what cells change:
-
-<CellsBar />
+The demo rig's heads have one cell each. → [Cells](/rig/fixtures#cells), with a pixel bar to try
 
 ## Group
 
@@ -86,9 +85,7 @@ same lights, as long as their fixtures differ.
 
 Each column of the group pool is one group, with its chases and its play buttons.
 
-**In the demo show:** one group, *Rig*, holds the four heads.
-
-<LivePreview preset="group-pool" />
+**In the demo show:** one group, *Rig*, holds the four heads. → [Groups](/programming/groups)
 
 ## Cue
 
@@ -113,14 +110,7 @@ BPM and every fade and every effect runs twice as fast.
 - *Ballyhoo* (effect): pan and tilt draw crossing circles, in blue.
 - *Sunset* (scene): deep red to gold across the rig, beams fanned wide.
 
-Play the two scenes: each fades in over its 1-bar duration, and the second takes over from the
-first.
-
-<LivePreview preset="scene-stage" />
-
-Then the two effects: they keep moving until you stop them.
-
-<LivePreview preset="effect-stage" />
+Watch them play: → [Scenes](/programming/scenes), [Effects](/programming/effects)
 
 ## Chase
 
@@ -131,8 +121,7 @@ start. A group plays one chase at a time.
 
 **In the demo show:** *Rig*'s chase *Story* lasts 8 bars (16 s): *Warm wash* in bars 1–2, *Rainbow*
 in bars 3–4, *Ballyhoo* in bars 5–6, *Sunset* in bars 7–8. Each cue has its own lane.
-
-<LivePreview preset="chase-timeline" />
+→ [Chases](/programming/chases)
 
 ## Master
 
@@ -142,9 +131,7 @@ the lights on the left play their part, the lights on the right theirs, started 
 
 **In the demo show:** row 0 holds *Story*, the only chase. One click on the master's row 0 plays it,
 as the group's own play button would; with more groups, the same click would start each group's
-chase 0 together.
-
-<LivePreview preset="master-row" />
+chase 0 together. → [Playing a show](/programming/playback#master-rows)
 
 ## What owns what
 

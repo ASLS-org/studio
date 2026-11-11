@@ -7,10 +7,15 @@ go to your lights: every fader, scene, effect and chase shows there as it plays.
 - **check what you patched**: each fixture where it hangs, pointing the right way;
 - **see what a cue does** before you play it on stage, and show it to others (record a clip).
 
-Here is the manual's demo rig, four moving heads 6 m up, playing *Warm wash* and *Sunset*. Every
-preview of this manual that sits next to a 3D view uses the same visualizer.
+In this manual, the visualizer is the floating card at the bottom right of the page: Studio's real
+visualizer, on the demo rig (four moving heads 6 m up). While a preview that drives the rig runs, it
+comes next to it, so you see what each fader, cue and chase does.
 
-<LivePreview preset="scene-stage" />
+| To | Do |
+| --- | --- |
+| Move the card | Drag its title; **↺** puts it back in its place |
+| Resize it | Drag its corner |
+| Put it away | **–** reduces it to its title; click the title to bring it back |
 
 ## Moving Around
 
@@ -20,10 +25,8 @@ preview of this manual that sits next to a 3D view uses the same visualizer.
 | Move the view (pan) | Drag with the right mouse button: the point you orbit around moves too |
 | Zoom | Scroll |
 
-Try it on the demo rig: drag, scroll, then look at the beams from the side to see how far they
-fan out.
-
-<LivePreview preset="visualizer" />
+Try it on the card: drag, scroll, then look at the beams from the side to see how far they fan
+out.
 
 In Studio's visualizer header:
 
@@ -33,6 +36,9 @@ In Studio's visualizer header:
 | **auto-rotate** | Turns the camera slowly around the stage, for a showcase |
 | **record** | Records the view as a video (WebM), downloaded when you click it again; the timer shows the length |
 | **Hide** | Folds the visualizer to give the group pool the room; click its icon to bring it back |
+
+> **Note:** The visualizer lives in Studio's window: a separate visualizer window for a second
+> screen isn't available yet ([Known limitations](/reference/limitations#visualizer)).
 
 ## Placing Fixtures
 
@@ -108,8 +114,15 @@ and at **medium** and **high** quality bright beams and lenses get a soft bloom.
 
 ## Settings
 
-Open them from **Preferences** in the [toolbar](/interface/toolbar/#preferences-menu). Changes show
-at once, so set them with a look playing.
+Open **Preferences → Visualizer** in the [toolbar](/getting-started/interface#toolbar)
+(<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd>). The **Visualizer settings** popup has three
+sections: **Quality**, **Haze** and **Lighting**. Changes show at once, so set them with a look
+playing; **OK** keeps them, **Cancel** puts back what you had.
+
+Try them below: *Sunset* plays on the demo rig. Drop the haze **Density** to 0 and the beams
+vanish from the air while the floor stays lit; raise **Exposure** and the light gets brighter.
+
+<LivePreview preset="visualizer-settings" />
 
 ### Quality
 
@@ -148,15 +161,6 @@ dimmer.
 > **Note:** Nothing is redrawn while nothing changes, so an idle visualizer costs almost nothing.
 > Strobes and rotating gobos keep it drawing.
 
-### Illumination
-
-| Setting | Description |
-| --- | --- |
-| Global Brightness | Brightness of the stage where no beam lights it. |
-| Exposure | Brightness of the beams and the light they cast, in %, saved with the show. **100** is physically accurate: wide beams look dimmer than narrow ones, as on a real stage. Raise it for a more readable view, lower it for a darker room. |
-
-> **Note:** High global brightness makes the beams' light harder to see against the stage.
-
 ### Haze
 
 Haze is what makes beams visible in the air: one even haze across the stage, saved with the show.
@@ -166,6 +170,15 @@ Haze is what makes beams visible in the air: one even haze across the stage, sav
 | Density | How bright beams look in the air, 0 to 100. **0** hides beams in the air; light on the floor stays. |
 
 > **Note:** Shows saved before haze existed open with a density of 50.
+
+### Lighting
+
+| Setting | Description |
+| --- | --- |
+| Global Brightness | Brightness of the stage where no beam lights it. |
+| Exposure | Brightness of the beams and the light they cast, in %, saved with the show. **100** is physically accurate: wide beams look dimmer than narrow ones, as on a real stage. Raise it for a more readable view, lower it for a darker room. |
+
+> **Note:** High global brightness makes the beams' light harder to see against the stage.
 
 ## Performance Tips
 

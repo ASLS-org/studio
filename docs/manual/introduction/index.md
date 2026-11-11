@@ -31,8 +31,8 @@ for the web and desktop options, then come back here for a tour.
 | Sequence a song | **Chases**: cues on a timeline measured in bars, quantized and synced to the BPM | [Chases](/programming/chases) |
 | Play it live | Trigger cues and chase rows, set or tap the tempo, pause and resume | [Playing a show](/programming/playback) |
 | See it without the rig | A real-time 3D visualizer with beams, colours, gobos and movement | [Visualizer](/interface/visualizer/) |
-| Drive real lights | Output to Art-Net, sACN or USB DMX interfaces through the WSC gateway | [How Studio works](/introduction/overview#from-studio-to-your-lights) |
-| Keep your work | Showfiles in plain JSON, saved in the browser and exportable | [How Studio works](/introduction/overview#saving-your-show) |
+| Drive real lights | Output over Art-Net through the gateway (built into the desktop app); more protocols to come | [Outputs](/rig/outputs) |
+| Keep your work | Showfiles in plain JSON, saved in the browser and exportable | [Showfiles](/rig/showfiles) |
 
 ## Where to start
 
