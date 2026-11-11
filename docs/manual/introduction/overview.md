@@ -19,15 +19,24 @@ Everything you build lives in one **show**:
 A typical show comes together in this order:
 
 1. **Patch** your fixtures into a universe and give each one a position on stage.
-   [Patching fixtures](/workflow/patching/)
+   [Patching fixtures](/programming/patching)
 2. **Group** the fixtures you want to control together.
-   [Setting up groups](/workflow/grouping/)
+   [Groups](/programming/groups)
 3. **Program** cues for each group: scenes for looks, effects for movement.
-   [Creating scenes](/workflow/scenes/), [Creating effects](/workflow/effects/)
+   [Scenes](/programming/scenes), [Effects](/programming/effects)
 4. **Sequence** cues into chases if you want them to follow the music.
-   [Chase modifier](/modifiers/chase/)
+   [Chases](/programming/chases)
 5. **Play**: set the tempo, trigger cues, chases and master rows.
-   [Triggering cues](/workflow/triggering/)
+   [Playing a show](/programming/playback)
+
+This is where those steps lead, on the manual's demo rig: four moving heads patched in one
+universe, one group, four cues, and a chase *Story* that plays them over 8 bars. Every page of the
+manual uses this rig in its examples ([Show structure](/concepts/) walks through it).
+
+<LivePreview preset="chase-play" />
+
+To try it with your own hands, open the <ResourceLink to="demo">live demo</ResourceLink>: Studio
+in your browser, with a demo show loaded, nothing to install.
 
 ## Time is counted in bars
 
@@ -42,10 +51,10 @@ Studio's window has five regions:
 | Region | Use it to |
 |---|---|
 | [Toolbar](/interface/toolbar/) | Open and save showfiles, set preferences, control the tempo and playback |
-| [Patch Bay](/interface/patchbay/) | Browse universes and the fixtures patched in them |
-| [Group Pool](/interface/grouppool/) | See every group with its chases, and fire them |
+| [Patch Bay](/getting-started/interface#patch-bay) | Browse universes and the fixtures patched in them |
+| [Group Pool](/getting-started/interface#group-pool) | See every group with its chases, and fire them |
 | [Visualizer](/interface/visualizer/) | Watch the rig in 3D |
-| [Modifier](/interface/modifier/) | Edit whatever you selected: a universe, a group and its cues, or a chase |
+| [Modifier](/getting-started/interface#modifier-strip) | Edit whatever you selected: a universe, a group and its cues, or a chase |
 
 ## From Studio to your lights
 

@@ -74,10 +74,15 @@ moving heads drawn as beam guides. Each following chapter SHALL explain one part
 the real Studio widget for it, displayed in the 3D scene and fed by the show playing on the stage.
 The story SHALL end on a final hero with the calls to action.
 
-#### Scenario: Scroll drives the show
-- **WHEN** the visitor scrolls through a chapter
-- **THEN** that chapter's show plays forward at a steady pace in step with the scroll, plays
-  backwards when scrolling up, and holds still when scrolling stops
+#### Scenario: Scrolling plays the story
+- **WHEN** the visitor scrolls, swipes or holds a key inside the story
+- **THEN** the story plays forward (or backward when scrolling up) at a steady pace for as long
+  as the input lasts, easing in when it starts and out when it stops, with no jump in speed
+
+#### Scenario: Momentum and fast scrolling
+- **WHEN** the visitor flicks a trackpad or scrolls frantically
+- **THEN** the story plays no faster than its pace, and the flick's momentum doesn't keep it
+  playing
 
 #### Scenario: Cues fade like Studio's
 - **WHEN** the show moves from one cue to the next
@@ -109,6 +114,11 @@ or WebGL is unavailable.
 - **WHEN** the visitor scrolls past the hero or switches tabs
 - **THEN** the hero stops drawing frames until it is visible again
 
+#### Scenario: Leaving the home page
+- **WHEN** the visitor goes from the home page to a manual page
+- **THEN** the hero's 3D view is released, and the manual's visualizer previews show only their
+  own rig
+
 #### Scenario: Reduced motion
 - **WHEN** the visitor's system asks for reduced motion
 - **THEN** the hero shows a still frame of the rig and the text, with no camera or beam movement
@@ -127,9 +137,9 @@ the introduction. Product visuals SHALL be live: the 3D hero, or real Studio com
 - **THEN** no image of the app's interface is shown, and every product visual is rendered live
 
 ### Requirement: Home page leads to the right resources
-The final hero SHALL offer three actions: try the live demo, download the desktop app, and read
-the manual. The toolbar SHALL link the source repository, the live demo and the download on
-every page.
+The first and the final hero SHALL offer three actions: try the live demo, download the desktop
+app, and read the manual. The toolbar SHALL link the manual, the source repository, the live demo
+and the download on every page.
 
 #### Scenario: Calls to action
 - **WHEN** a visitor clicks **Try the live demo**, **Download** or **Read the manual**
@@ -273,11 +283,34 @@ preview SHALL NOT affect the rest of the page.
 
 #### Scenario: No WebGL
 - **WHEN** a reader without WebGL opens the visualizer page
-- **THEN** the visualizer preview plays its video, and the page's other content works
+- **THEN** the visualizer preview says that it needs WebGL, and the page's other content works
 
 #### Scenario: Loading
 - **WHEN** a preview is still loading
 - **THEN** its frame shows the component's title and an empty body, with no picture of the app
+
+### Requirement: One preview runs at a time
+A page SHALL run at most one live preview at a time: the one most in view, or the one the reader
+clicked. Every other preview SHALL release what it holds (its components, its 3D view) and look
+paused: dimmed, titled, with a label saying how to run it.
+
+#### Scenario: Scrolling between previews
+- **WHEN** a reader scrolls from one preview to the next
+- **THEN** the first pauses and looks paused, and the second starts
+
+#### Scenario: Clicking a paused preview
+- **WHEN** a reader clicks a paused preview that is on screen
+- **THEN** it runs, and the one that was running pauses
+
+### Requirement: Demos show their outcome
+A demo SHALL play its flow to the end and show the result where the reader can see it: a demo
+that changes the rig SHALL sit next to the visualizer. Its captions SHALL say what happens and
+why. Each loop SHALL start again from the demo show.
+
+#### Scenario: A deletion demo
+- **WHEN** the fixture pool's delete demo plays
+- **THEN** the fixture is selected, the confirmation is accepted, and the fixture leaves the rig
+  in the visualizer
 
 ### Requirement: Unknown presets are reported
 A page that names a preset that doesn't exist SHALL show a visible error in place of the
@@ -287,3 +320,56 @@ name.
 #### Scenario: Typo in a preset name
 - **WHEN** an author writes a preset name that isn't in the preset list and builds the manual
 - **THEN** the build output names the page and the unknown preset
+
+### Requirement: Manual follows the reader's path
+The manual's navigation SHALL be organised as **Getting started**, **Concepts**, **Programming a
+show** and **Rig & output**. Programming pages SHALL each cover one task (patching, groups,
+scenes, effects, chases, playing a show), in the order a show is built.
+
+#### Scenario: New reader
+- **WHEN** a reader opens the manual's navigation
+- **THEN** they see Getting started first, then Concepts, then Programming a show with its pages
+  in the order a show is built, then Rig & output
+
+### Requirement: Show programming is documented end to end
+Every control of the patch bay, the group pool and the universe, group, scene, effect and chase
+views SHALL be explained on a manual page under its exact label, with what it does and, for
+values, their unit and range (bars, BPM, DMX 0–255, degrees). Each Programming page SHALL show
+the controls it explains live, as previews or demos.
+
+#### Scenario: Looking up a control
+- **WHEN** a reader searches the manual for a control's label (for example **Trigger Style** or
+  **Spread over**)
+- **THEN** the search finds the page and section that explain it, with its options and their
+  effect
+
+#### Scenario: Values with units
+- **WHEN** a reader reads how to set a chase's or cue's duration
+- **THEN** the page says it is counted in bars and how the BPM sets a bar's length
+
+### Requirement: First show tutorial
+The manual SHALL include a tutorial that takes a reader from a blank show to a playing chase:
+patch fixtures, make a group, a scene and an effect, build a chase and play it. Each step SHALL
+give the exact actions and show the expected result live.
+
+#### Scenario: Following the tutorial
+- **WHEN** a reader follows *Your first show* step by step in Studio
+- **THEN** they end with their own chase playing on their fixtures, and each step matched what
+  the page showed
+
+### Requirement: Moved pages keep their addresses
+A page whose content moved SHALL keep its address with a short note linking to the new page, so
+links from outside the manual keep working.
+
+#### Scenario: Old link
+- **WHEN** a reader opens an old address such as `/modifiers/group/`
+- **THEN** the page says where the content moved and links to it
+
+### Requirement: Documentation matches the app
+Manual pages SHALL describe the behaviour of the current release only. Behaviour that doesn't
+work in the app SHALL NOT be described as working.
+
+#### Scenario: Broken feature
+- **WHEN** a control doesn't do what its label suggests in the current release
+- **THEN** the manual doesn't tell readers to use it for that, and a note explains it where
+  readers would otherwise get stuck

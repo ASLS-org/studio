@@ -32,22 +32,27 @@ Pure refactors, perf work and invisible fixes need no manual update. Say so in t
 
 ```
 docs/manual/
-  index.md                       home page, composed of theme/components/home/* (no prose here)
+  index.md                       home page (theme/hero/HomeStory.vue, no prose here)
   introduction/                  about (product presentation), overview ("How Studio works"),
                                  installation, license
-  interface/<area>/index.md      one page per screen region: toolbar, patchbay, grouppool, visualizer, modifier
-  modifiers/<area>/index.md      one page per modifier: universe, group, chase
-  workflow/<task>/index.md       task guides: environment, patching, grouping, scenes, effects, triggering
-  public/interface/*.png|webm    remaining screenshots and recordings (flows a preview can't show)
+  getting-started/               first-show (tutorial, blank show → playing chase), interface (tour)
+  concepts/                      index (show structure: what owns what), timing (BPM, bars,
+                                 quantize, playback)
+  programming/<task>.md          one page per task, in build order: patching, groups, scenes,
+                                 effects, chases, playback
+  interface/toolbar, visualizer  "Rig & output" until unit 4 rewrites them
+  interface/{patchbay,grouppool,modifier}, modifiers/*, workflow/*
+                                 one-line "This page moved" stubs (old URLs keep working; not in
+                                 the sidebar; remove in a later release)
   public/presets/manual.showfile.json   the live previews' demo show
   _dev/*.md                      dev-only check pages (previews, behaviour, visualizer), never built
-  .vitepress/config.js           nav, sidebar (add every new page here), resource links
-  .vitepress/theme/              look, global components, home sections
+  .vitepress/config.js           sidebar (add every new page here), resource links
+  .vitepress/theme/              Studio shell, live previews, home story
 ```
 
-Gaps known on 2026-11-05: all `workflow/*` pages are "Documentation in progress", and there is
-no page for **outputs/connections (WSC)** or the **desktop app**. Epic `manual-overhaul`
-(`openspec/epics/manual-overhaul.md`) plans to fill them and restructure the sidebar.
+Sidebar sections, in order: **Getting started**, **Concepts**, **Programming a show**, **Rig &
+output** (accent and icon per section and page in `theme/shell/nav.js`). Unit 4 of epic
+`manual-overhaul` (`openspec/epics/manual-overhaul.md`) adds the rig, output and reference pages.
 
 ### Theme: the manual is built from Studio's interface
 
@@ -93,9 +98,11 @@ mode) on the `--primary-light` page; headings follow a 36/24/18/15/12/11px scale
   inherited font size to 16px: keep both when adding prose rules, or Studio components inside a
   page pick up the manual's headings and paragraphs.
 - **No screenshots of the app as product imagery.** Product visuals are live: the 3D hero and
-  real Studio components. A recording stays only where a preview can't show the point.
-- **Global components** (`theme/index.js`): every `uk-*`, `<Video src>`, `<StudioFrame>`,
-  `<LivePreview preset>`, `<ResourceLink to>`, `<HomeStory>`.
+  real Studio components and demos. No recordings either: a flow is shown as a demo, a concept
+  as an illustration (`theme/components/`).
+- **Global components** (`theme/index.js`): every `uk-*`, `<Video src>` (unused, kept for a
+  future need), `<StudioFrame>`, `<LivePreview preset>`, `<ResourceLink to>`, `<HomeStory>`,
+  `<ShowMap>`, `<SceneFade>`, `<EffectWave>`, `<CellsBar>`.
 
 ### Live previews
 
@@ -112,19 +119,44 @@ Flows to watch rather than try are **demos**: a cursor plays them on the real co
   `props(show)` (objects picked by id from the demo show; the ids are listed at the top of the
   file), `width`/`height` (the stage, Studio's size), `componentWidth`/`componentHeight` (when
   the component differs from the stage: a row-filling widget, a demo needing room for its
-  popup), `fit`, `clock` (runs Studio's clock while visible), `route` + `panel` (panels that read
+  popup), `fit`, `clock` (runs Studio's clock while active), `route` + `panel` (panels that read
   the route), `warmRoute` (group and chase panels: their route watchers aren't immediate, so the
-  router starts on a sibling route), `demo`, `webgl`, `video` (fallback). To add one: add the
-  entry, add it to `_dev/previews.md`, check it mounts. Never offer anything interactive that
-  saves or connects (connections widget/popup); the toolbar only as a demo.
+  router starts on a sibling route), `stage` + `viewWidth` (next to the visualizer), `start(show)`
+  (e.g. a cue already playing), `onRoute(show, to)` (stands in for a panel the component would
+  open: the patch bay outlines its fixture), `props.onX` (handlers for events the component's
+  parent panel would handle: the fixture pool only asks to delete), `demo`, `webgl`. No video
+  fallbacks. To add one: add the entry, regenerate `_dev/previews.md`, check it mounts. Never
+  offer anything interactive that saves or connects (connections widget/popup); the toolbar only
+  as a demo.
+- **One preview runs at a time** (`LivePreview.vue` coordinator): the one most in view (at least
+  half visible, nearest the centre, the running one kept unless another is clearly better; a
+  clicked one is pinned). The others are unmounted (WebGL released) and show their title, dimmed,
+  with "paused · scroll here or click". Never mount a second visualizer next to it.
 - **Demos** (`theme/previews/demo.js`, preset `demo: [steps]`): `move`, `click` (`ctrl`,
-  `shift`), `dblclick`, `type` (`text`), `key`, `wait`, `caption` (a hint by the cursor); targets
-  are selectors narrowed by `has` (text) and `nth`, innermost match wins. Real DOM events on the
-  real component; the reader's input is blocked; each loop remounts it. A demo closes what it
-  opens and never changes the show for good (close delete popups, point at toolbar entries,
-  never run them). Scripted keys stop at the preview (Studio components listen on `window`);
-  demos never take focus on click or type. CSS `:hover` can't be triggered. Check each demo
-  reaches its key moment (`/_dev/previews`).
+  `shift`), `dblclick`, `context`, `type` (`text`), `field` (label → input, replaced, Enter),
+  `key` (`global` for window listeners), `wait`, `caption` (a sentence under the stage, in the
+  frame's bar); targets are selectors narrowed by `has` (text), `nth` and `x` (a pinned point),
+  innermost match wins. Real DOM events on the real component; a press focuses what it pressed,
+  as a browser does (lists select, style and take keys only when focused), unless the reader is
+  typing elsewhere; the reader's input is blocked. **A demo runs its flow to the end and shows
+  the result** (the fixture gone from the rig, the new cue played, the effect drawing on the
+  floor); captions say what happens and why. Each loop reloads the demo show and remounts.
+  Scripted keys stop at the preview (Studio components listen on `window`). CSS `:hover` can't
+  be triggered. Check each demo reaches its end state (`/_dev/previews`), not only that it starts.
+- **On stage** (`stage: true`, `StageWrap.vue`): the component at its Studio size next to the
+  visualizer. Use it for every preview or demo that changes the rig (faders, cues, chases,
+  patching, deleting, effects), so readers see what it does and why. The component box clips
+  (panels wider than the box show their first columns).
+- **Illustrations** (global, in `theme/components/`): `<ShowMap />` draws the demo show from its
+  showfile (structure, what owns what); `<SceneFade />` animates a scene's fade (Absolute vs
+  Relative start, Warm wash → Sunset); `<EffectWave />` animates the four heads on a waveform with
+  Waveform / Phase stop / Direction switches; `<CellsBar />` a 12-cell pixel bar (scene per cell,
+  effect over cells vs over fixtures), since the demo rig has no cells. Diagrams, not pictures of
+  the app: tokens and fonts only, animate only on screen, still for reduced motion.
+- **Demo show rules**: the demo show is the home page's rig (see below), so the manual and the
+  hero tell one story. Cue and group colours come from Studio's palette (the accent tokens), never
+  a custom colour; heads hang pointing down (rotation 180° on X); an effect's pan/tilt range suits
+  hung heads (Ballyhoo pan 92–164, tilt 104–152); scenes start **Relative** (cross-fades).
 - **Popups** open in an overlay over the preview: `uk-popup` injects `popupHost` (provided by the
   host; Studio itself uses the body). The overlay scales a popup down to fit the frame.
 - **Reset** is enabled by a real reader input in a preview of the page, and disabled again after
@@ -138,18 +170,24 @@ Flows to watch rather than try are **demos**: a cursor plays them on the real co
   preview on the page, reloads the show, mounts them again.
 - **`FixtureControl.vue`** binds the channels, colour, pan/tilt and cells widgets to a fixture,
   copying `universe.modifier.fragment.vue`'s wiring (those widgets only emit events). Keep it in
-  step with that fragment. **`VisualizerPreview.vue`** runs the visualizer at Guides quality,
-  renders only on screen, resolves relative asset URLs from the site root and releases its
-  WebGL context on unmount.
-- **Fallback**: no Workers, no WebGL (`webgl` presets), or an error → the preset's `video`, else
-  a short message. Never a picture of the app, including while loading (title + empty widget).
+  step with that fragment. **`VisualizerPreview.vue`** runs the visualizer at High quality,
+  renders only on screen, frames the whole stage for the box's aspect (until the reader moves the
+  camera), turns auto-focus off (and cancels the focus flight a new `Visualizer` starts), resolves
+  relative asset URLs from the site root, and on unmount disposes its fixtures, takes what it
+  added out of Studio's shared scene (`SceneManager` is one scene per page: without that, every
+  later visualizer draws the earlier ones too) and releases its WebGL context. WebGL support is
+  probed once per page, and the probe's context released (browsers keep 16).
+- **Fallback**: no Workers, no WebGL (`webgl`/`stage` presets), or an error → a short message.
+  Never a picture or a recording of the app, including while loading (title + empty widget).
 - **Unknown ids**: an error box in dev; `docs:manual:build` prints `[manual] <page>: unknown live
   preview "<id>"`.
-- **Demo show**: one universe "Stage"; two MAC Auras, a ColorBand Pix (12 cells), two PARs;
-  groups Moving heads / Pixel bar / PARs, each with scenes, an effect and a chase. Rebuild it in
-  Studio (and export) rather than editing the JSON by hand: scene channel `type` keys come from
-  the fixture adapter. Every fixture profile it uses, plus `fixtures/fixture_list.json`, must be
-  in `APP_STATIC_FILES`.
+- **Demo show** = the home page's rig (`hero/story.js`): universe 0 "Stage"; four MAC Aura
+  (Standard, 14 ch) at x −4.5, −1.5, 1.5, 4.5 m, 6 m up; group "Rig" with cues Warm wash (scene),
+  Rainbow (effect), Ballyhoo (effect), Sunset (scene) and the 8-bar chase "Story" (2 bars each).
+  Rebuild it in Studio (and export) rather than editing the JSON by hand: scene channel `type`
+  keys come from the fixture adapter. Every fixture profile it or a demo uses (the patch demo's
+  `gdtf/generic-par-rgbw.gdtf`), plus `fixtures/fixture_list.json`, must be in
+  `APP_STATIC_FILES`.
 - **Check**: `npx vitepress dev docs/manual` then `/_dev/previews` (every preset),
   `/_dev/behaviour` (lazy load, sync, Reset, clock), `/_dev/visualizer`.
 
@@ -176,41 +214,45 @@ outlined pills, no coloured shadows: plain type and Studio's solid round buttons
   domain-warped noise in `--primary-dark`) recedes like ink, centre first, and the camera dollies
   in from its `reveal` framing. The scene isn't rendered before the reveal starts. Then: The stage
   → Patch → Control → Program → Sequence → Output, with numbered copy (01 / 06) alternating left
-  and right on a frosted, darkened pool feathered with a radial mask (no box). **The scroll is the
-  show's clock**: each chapter has its own scroll length (`LENGTHS` in vh, reveal first). Its
-  first `SHOW_SHARE` (82%) plays its show (`SHOW_SECONDS`, story.js); the rest is a
-  scroll-driven transition where the camera travels to the next chapter's framing and copy and
-  panels hand over (out in the first half, in during the second). Everything is a function of
-  the story position, so it is anchored and reversible. The position **walks towards the scroll at a constant pace**
-  (`advance`: shows at 2× real time, transitions ~0.7 s, the reveal ~1.2 s), whatever the
-  scroll's velocity, so trackpad flicks don't speed anything up. During a wheel/touch gesture the
-  page is held within a quarter chapter of the story (`holdScroll`), so momentum can't pile up
-  scroll to chase; without a gesture (scrollbar, End key) a gap over 1.5 chapters glides, as do
-  the rail and Back to top. Cue changes follow Studio: a scene fades
+  and right on a frosted, darkened pool feathered with a radial mask (no box). **Scrolling plays the story like a
+  player** (`advance`): inside the story the wheel, swipes and keys don't scroll the page
+  (non-passive listeners, `preventDefault`); they play the story forward (down) or back (up) at
+  `PLAY_SPEED` (1.6x) the real-time pace of the part it is in (`rateAt`: a chapter's show at its
+  `SHOW_SECONDS`, a camera move 0.7 s, the reveal 1.2 s, the last show across its whole chapter).
+  The speed eases in over `RAMP.in` (0.45 s) when input starts and out over `RAMP.out` (0.7 s)
+  when it stops, along a smoothstep, and passes through zero to reverse; the pace itself eases
+  across boundaries (0.3 s), so the speed never jumps. An input keeps playing for `HOLD` ms after
+  its last event (wheel 260, touch 140, key 500; key repeat keeps it going, a tap plays a moment).
+  Momentum (three weakening wheel events in a row) ends the gesture's input, flat tail included;
+  a pause or a much stronger event starts a new one. Autoplay is the same player at 1x with the
+  input held forward. The page's scroll catches up once, when playback stops (`settle`), so the
+  scrollbar and back/forward stay true; a scroll the story didn't make (scrollbar, a link, the
+  page under it) is followed with a glide. The rail, Next, the scroll cue and Replay `seek`
+  (cubic ease-in-out, 0.9 s + 0.3 s per chapter, at most 2.2 s). Past the final hero or above
+  the top the page scrolls as usual. `LENGTHS` only maps the page's scroll to a position.
+  Scroll-tick scrubbing (even throttled) and a one-chapter-per-gesture stepper were both tried
+  on 2026-11-11 and felt worse; Autoplay looked smoothest, hence the player. Cue changes follow Studio: a scene fades
   in as a relative scene does, from the previous cue's last values (the cue pool's first scene: the
   control chapter's last frame) to its own, with a cubic ease-in-out across its whole duration
   (`playCueFaded`); an effect starts at once with a short `CUE_FADE`
   crossfade (0.6 s of show time; `blendFrames` blends pan/tilt as 16-bit), and a chapter's end state blends into the next
-  chapter's opening state during the transition, so the boundary is continuous. A bold scroll
-  cue sits bottom centre ("Scroll to discover" on the hero, "Scroll" after, chevron, click = next
-  chapter), shown only when scrolling is idle (900 ms) and the story has caught up; Back to top
-  is hidden on the final hero. A thin progress bar in the chapter's colour above the
-  chapter number fills as its show plays (`stepProgress`). Clamp the frame step to ≥ 0 (rAF
-  timestamps can precede the loop's start). **Autoplay** and **Next** sit under each
-  description. Next skips to the next chapter (`next`: `jumpTo` makes the story glide until it arrives; autoplay, if on, carries on
-  from there). Autoplay is one global toggle
-  (`toggleAutoplay`): it scrolls through the shows at real time, each chapter straight after the
-  previous one, up to the final hero, then turns off (any wheel, touch or key also stops it). The
-  last scene (Output, 110vh, no CTAs) is all show: it scrubs across its whole chapter, and from
-  `OUTRO_FROM` (55%) the final hero takes over while that show still runs, complete when it
-  ends; the final hero's own chapter (40vh) is just the landing. As the **final hero**
-  (`outro`) takes over, Output's copy fades, the liquid cover flows back over the stage and a
-  second hero
+  chapter's opening state during the transition, so the boundary is continuous. The first
+  chapter (The stage) moves as soon as it is scrolled: white beams sweep in a wave and pulse on
+  the beat. A bold scroll cue sits bottom centre ("Scroll to discover" on the hero, "Scroll"
+  after, chevron, click = next chapter), shown while the story isn't playing; Back to top is hidden on the final hero. A thin progress bar in the chapter's
+  colour above the chapter number fills as its show plays (`stepProgress`). Clamp the frame step
+  to ≥ 0 (rAF timestamps can precede the loop's start). **Autoplay** and **Next** sit under each
+  description. Autoplay is one global toggle (`toggleAutoplay`): it plays the shows at real time,
+  easing in and out, up to the final hero, then turns off (any wheel, touch or key also stops it). The
+  last scene (Output, no CTAs) is all show: from `OUTRO_FROM` (55%) the final hero takes over
+  while that show still runs. As the **final hero** (`outro`) takes over, Output's copy fades,
+  the liquid cover flows back over the stage and a second hero
   ("Your next show starts here.", Download / Try the live demo / Read the manual, with
   **Replay** → top stacked under them as a text button) sharpens in, the first hero's
   transition in reverse; the rail and scroll cue fade out. Every scene shows its progress bar.
   Scenes never fade from dark: they fade from the rig's current values. No app footer on the
-  home page. No scroll snapping (it fights the scrub).
+  home page. The toolbar has a **Manual** cell (→ `/introduction/`) before GitHub, the live demo
+  and Download.
 - The chase timeline measures its width once, directly (`handleWindowResize`), when its
   chapter is first reached: before that the 3D layer hasn't attached its panel.
 - **Performance** (profiled 2026-11-06, headless Chrome on Metal with `--disable-frame-rate-limit
@@ -219,6 +261,19 @@ outlined pills, no coloured shadows: plain type and Studio's solid round buttons
   stalls); call the widget's own handler once. Bump `$liveTicker` only while a live widget (cue
   pool, timeline) is on screen. Pixel ratio is the biggest remaining cost (DPR 2 ≈ 7 ms median
   per scrolling frame on an M2, DPR 1 ≈ 4 ms).
+  Per frame (re-measured 2026-11-11; `scratchpad`-style checks: CDP `Performance.getMetrics`
+  for layouts, and timing `stage.render` itself, since script share means nothing with the frame
+  rate uncapped): no layout while scrolling or at rest, ≈ 1 ms of JS per frame. Never measure the
+  page in the input or scroll path (`storyTop` is measured on mount, when ready and on resize;
+  handlers only read `scrollY`; nothing scrolls while playing) nor after the CSS3D render (`cssWidth`/`cssHeight` kept from
+  `resize`); panels of chapters out of reach are `visible = false` (display: none); CSS
+  animations use `transform`/`opacity` only and pause while hidden (`--hint-run`). The render
+  loop stops itself once settled on the first hero or under the final one.
+- **Lifetime**: the stage lives only while the home page is mounted. On unmount it is disposed
+  (`stage.dispose()`: fixtures out, what its visualizer added to Studio's shared `SceneManager`
+  taken out, WebGL context and CSS3D layer released; `reveal.dispose()` too). A cached stage kept
+  its context and rig alive on every manual page, and its rig showed up in the previews'
+  visualizers.
 - **Pointer tilt**: the stage's camera swings a little around the point it looks at, towards
   the pointer (`stage.setPointer`). The widget panels and their blur are rendered from an
   untilted copy of the camera (`cssCamera`), so they stay still; the 2D copy doesn't move.
@@ -252,21 +307,33 @@ outlined pills, no coloured shadows: plain type and Studio's solid round buttons
   `docs/manual/vite.config.js`), served in dev and copied by `buildEnd`; the manual loads the
   repo `.env` (`envDir`).
 
-## Page style (match `modifiers/universe/index.md`, `modifiers/chase/index.md`)
+## Page style (match `programming/scenes.md`, `programming/chases.md`)
 
-- `#` page title = the UI name. `##` per widget or feature, `###` per action ("Adding Fixtures",
-  "Deleting Cue").
+- **Task first.** A Programming page answers a job ("make a chase"); the widget reference sits in
+  it under `##` headings with the UI's exact labels. Concepts pages define terms once; the rest
+  link to them.
+- **Grounded.** Check every label, default, range and behaviour in the running app (and the code)
+  before writing it. Behaviour that doesn't work isn't described as working: leave it out of the
+  steps, add a `> **Note:**` only where readers would otherwise get stuck, and list it in the epic
+  backlog and the PR. Known ones (2026-11): Trigger Style **Temporary**, the group dimmer /
+  **Isolate** / **Blackout**, **PWM**, **BOUNCELRT/RTL**, **Quantize** 1/8–1/2, patch bay
+  Shift+click, Ctrl multi-select in a group's first scene.
+- **Units.** Durations in bars, values in DMX 0–255, angles in degrees, addresses counted from 0
+  (as Studio's lists show).
+
+- `#` page title = the task or the UI name. `##` per widget or feature, `###` per action
+  ("Adding Fixtures", "Deleting Cue").
 - Open with 1–2 sentences on what it is and why you'd use it, then show it live:
-  `<LivePreview preset="<id>" />`. Only when no preview can show it (a flow across several
-  panels, the toolbar's menus): `<Video src="/interface/<name>.webm"/>`.
+  `<LivePreview preset="<id>" />`. A flow is a demo preset; a concept an illustration.
+- Every feature gets context, not only its controls: what it is for, a worked example on the demo
+  rig (**In the demo show:** …, with its real names and numbers), and tips or pitfalls. Say what a
+  preview shows before it (which cue, which fixture, what to watch for).
 - Settings go in a `| Setting | Description |` table. Shortcuts use `<kbd>`, e.g. <kbd>`Ctrl`</kbd>.
 - Use `> **Note:**` for behaviour that surprises users (BPM sync, quantization).
-- Link related pages with absolute paths: `[cues](/modifiers/group/)`.
+- Link related pages with absolute paths: `[cues](/programming/scenes)`. Never link to a stub.
 - Second person, present tense, short sentences, the UI's exact labels in **bold**.
-- Media (recordings only, for what previews can't show): name files
-  `<area>_<widget>_<action>.<ext>` in `public/interface/`. If you can't capture media, put
-  `<!-- TODO media: <what to record> -->` in its place and list it in the PR. Delete media no
-  page references any more.
+- Link the <ResourceLink to="demo">live demo</ResourceLink> where readers are invited to try
+  something in Studio (it hides itself while `MANUAL_URL_DEMO` is unset).
 
 ## Steps
 

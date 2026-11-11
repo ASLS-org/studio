@@ -37,6 +37,13 @@
       />
       <a
         class="toolbar_cell"
+        :href="withBase('/introduction/')"
+      >
+        <uk-icon name="library" />
+        <h3>Manual</h3>
+      </a>
+      <a
+        class="toolbar_cell"
         :href="$links.repository"
         target="_blank"
         rel="noreferrer"

@@ -15,7 +15,7 @@ export const BAR = BEAT * 4;
  * @type {Object<string, Number>}
  */
 export const SHOW_SECONDS = {
-  intro: 8,
+  intro: 6,
   channels: 10.4,
   control: 14,
   cues: 16,
@@ -345,11 +345,16 @@ const CHANNEL_LOOP = 10.4;
 export function program(chapter, t, frame, state) {
   switch (chapter) {
     case 'intro': {
+      // The rig wakes up: open white beams sweep across the stage in a wave, one head a little
+      // behind the next, the zoom breathing and each head pulsing on the beat
       const fade = smooth(state.fade);
       for (let i = 0; i < 4; i++) {
-        prime(frame, i, fade * (0.75 + 0.25 * Math.sin(t * 0.8 + i * 1.3)), 120);
+        const phase = t * 1.5 - i * 0.7;
+        const beat = Math.max(0, Math.cos(((t / BEAT) - i * 0.25) * Math.PI * 2));
+        prime(frame, i, fade * (0.62 + 0.38 * beat), Math.round(150 + 70 * Math.sin(t * 1.1 + i)));
         writeColor(frame, i * CHANNELS, 0, 0, 0, 255);
-        aim(frame, i, FIXTURES[i].position.x * 0.6 + Math.sin(t * 0.4 + i) * 0.8, -1.5);
+        const x = FIXTURES[i].position.x * 0.5 + Math.sin(phase) * 3;
+        aim(frame, i, x, -1.2 + Math.cos(phase * 0.8) * 1.6);
       }
       break;
     }

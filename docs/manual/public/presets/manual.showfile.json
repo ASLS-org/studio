@@ -14,12 +14,12 @@
    "mode": "Standard",
    "source": "ofl",
    "position": {
-    "x": -7.5,
+    "x": -4.5,
     "y": 0,
-    "z": 11.5
+    "z": 6
    },
    "rotation": {
-    "x": 179,
+    "x": 180,
     "y": 0,
     "z": 0
    }
@@ -36,79 +36,57 @@
    "mode": "Standard",
    "source": "ofl",
    "position": {
-    "x": 7.5,
+    "x": -1.5,
     "y": 0,
-    "z": 11.5
+    "z": 6
    },
    "rotation": {
-    "x": 179,
+    "x": 180,
     "y": 0,
     "z": 0
    }
   },
   {
    "id": 2,
-   "model": "colorband-pix",
-   "category": "Pixel Bar",
-   "manufacturer": "chauvet-dj",
-   "name": "ColorBand Pix",
+   "model": "mac-aura",
+   "category": "Moving Head",
+   "manufacturer": "martin",
+   "name": "MAC Aura 3",
    "universe": 0,
    "chStart": 28,
-   "channelCount": 36,
-   "mode": "36-channel",
+   "channelCount": 14,
+   "mode": "Standard",
    "source": "ofl",
    "position": {
-    "x": 0,
-    "y": 6,
-    "z": 0.3
+    "x": 1.5,
+    "y": 0,
+    "z": 6
    },
    "rotation": {
-    "x": 0,
+    "x": 180,
     "y": 0,
     "z": 0
    }
   },
   {
    "id": 3,
-   "model": "led-par-56-tcl",
-   "category": "Color Changer",
-   "manufacturer": "eurolite",
-   "name": "PAR 1",
+   "model": "mac-aura",
+   "category": "Moving Head",
+   "manufacturer": "martin",
+   "name": "MAC Aura 4",
    "universe": 0,
-   "chStart": 64,
-   "channelCount": 5,
-   "mode": "5-channel",
+   "chStart": 42,
+   "channelCount": 14,
+   "mode": "Standard",
    "source": "ofl",
    "position": {
-    "x": -12,
-    "y": 6,
-    "z": 0.3
+    "x": 4.5,
+    "y": 0,
+    "z": 6
    },
    "rotation": {
-    "x": 0,
-    "y": 14.999999999999998,
-    "z": 0
-   }
-  },
-  {
-   "id": 4,
-   "model": "led-par-56-tcl",
-   "category": "Color Changer",
-   "manufacturer": "eurolite",
-   "name": "PAR 2",
-   "universe": 0,
-   "chStart": 69,
-   "channelCount": 5,
-   "mode": "5-channel",
-   "source": "ofl",
-   "position": {
-    "x": 12,
-    "y": 6,
-    "z": 0.3
-   },
-   "rotation": {
-    "x": 0,
-    "y": -14.999999999999998,
+    "x": 180,
+    "y": 0,
     "z": 0
    }
   }
@@ -131,12 +109,12 @@
      "mode": "Standard",
      "source": "ofl",
      "position": {
-      "x": -7.5,
+      "x": -4.5,
       "y": 0,
-      "z": 11.5
+      "z": 6
      },
      "rotation": {
-      "x": 179,
+      "x": 180,
       "y": 0,
       "z": 0
      }
@@ -153,79 +131,57 @@
      "mode": "Standard",
      "source": "ofl",
      "position": {
-      "x": 7.5,
+      "x": -1.5,
       "y": 0,
-      "z": 11.5
+      "z": 6
      },
      "rotation": {
-      "x": 179,
+      "x": 180,
       "y": 0,
       "z": 0
      }
     },
     {
      "id": 2,
-     "model": "colorband-pix",
-     "category": "Pixel Bar",
-     "manufacturer": "chauvet-dj",
-     "name": "ColorBand Pix",
+     "model": "mac-aura",
+     "category": "Moving Head",
+     "manufacturer": "martin",
+     "name": "MAC Aura 3",
      "universe": 0,
      "chStart": 28,
-     "channelCount": 36,
-     "mode": "36-channel",
+     "channelCount": 14,
+     "mode": "Standard",
      "source": "ofl",
      "position": {
-      "x": 0,
-      "y": 6,
-      "z": 0.3
+      "x": 1.5,
+      "y": 0,
+      "z": 6
      },
      "rotation": {
-      "x": 0,
+      "x": 180,
       "y": 0,
       "z": 0
      }
     },
     {
      "id": 3,
-     "model": "led-par-56-tcl",
-     "category": "Color Changer",
-     "manufacturer": "eurolite",
-     "name": "PAR 1",
+     "model": "mac-aura",
+     "category": "Moving Head",
+     "manufacturer": "martin",
+     "name": "MAC Aura 4",
      "universe": 0,
-     "chStart": 64,
-     "channelCount": 5,
-     "mode": "5-channel",
+     "chStart": 42,
+     "channelCount": 14,
+     "mode": "Standard",
      "source": "ofl",
      "position": {
-      "x": -12,
-      "y": 6,
-      "z": 0.3
+      "x": 4.5,
+      "y": 0,
+      "z": 6
      },
      "rotation": {
-      "x": 0,
-      "y": 14.999999999999998,
-      "z": 0
-     }
-    },
-    {
-     "id": 4,
-     "model": "led-par-56-tcl",
-     "category": "Color Changer",
-     "manufacturer": "eurolite",
-     "name": "PAR 2",
-     "universe": 0,
-     "chStart": 69,
-     "channelCount": 5,
-     "mode": "5-channel",
-     "source": "ofl",
-     "position": {
-      "x": 12,
-      "y": 6,
-      "z": 0.3
-     },
-     "rotation": {
-      "x": 0,
-      "y": -14.999999999999998,
+      "x": 180,
+      "y": 0,
       "z": 0
      }
     }
@@ -235,28 +191,36 @@
  "groups": [
   {
    "id": 0,
-   "name": "Moving heads",
+   "name": "Rig",
    "fixtures": [
     {
      "id": 0
     },
     {
      "id": 1
+    },
+    {
+     "id": 2
+    },
+    {
+     "id": 3
     }
    ],
    "cues": [
     {
      "id": 0,
-     "name": "Open white",
-     "color": "#E0E0E0",
+     "name": "Warm wash",
+     "color": "#E2C753",
      "duration": 1,
      "triggerStyle": 0,
      "loopStyle": 0,
-     "relative": 0,
+     "relative": 1,
      "type": 0,
      "fixtures": [
       0,
-      1
+      1,
+      2,
+      3
      ],
      "fixtureValues": [
       {
@@ -275,7 +239,7 @@
         {
          "id": 2,
          "type": "Dimmer",
-         "value": 255,
+         "value": 230,
          "active": true,
          "color": null,
          "qaIndex": 0
@@ -283,15 +247,15 @@
         {
          "id": 3,
          "type": "Zoom",
-         "value": 0,
-         "active": false,
+         "value": 60,
+         "active": true,
          "color": null,
          "qaIndex": 0
         },
         {
          "id": 4,
          "type": "Pan",
-         "value": 128,
+         "value": 198,
          "active": true,
          "color": null,
          "qaIndex": 0
@@ -299,7 +263,7 @@
         {
          "id": 5,
          "type": "PanFine",
-         "value": 0,
+         "value": 167,
          "active": true,
          "color": null,
          "qaIndex": 0
@@ -307,7 +271,7 @@
         {
          "id": 6,
          "type": "Tilt",
-         "value": 100,
+         "value": 145,
          "active": true,
          "color": null,
          "qaIndex": 0
@@ -315,7 +279,7 @@
         {
          "id": 7,
          "type": "TiltFine",
-         "value": 0,
+         "value": 239,
          "active": true,
          "color": null,
          "qaIndex": 0
@@ -339,7 +303,7 @@
         {
          "id": 10,
          "type": "Color",
-         "value": 0,
+         "value": 225,
          "active": true,
          "color": "Red",
          "qaIndex": 0
@@ -347,7 +311,7 @@
         {
          "id": 11,
          "type": "Color",
-         "value": 0,
+         "value": 110,
          "active": true,
          "color": "Green",
          "qaIndex": 1
@@ -363,7 +327,7 @@
         {
          "id": 13,
          "type": "Color",
-         "value": 255,
+         "value": 30,
          "active": true,
          "color": "White",
          "qaIndex": 3
@@ -394,7 +358,7 @@
         {
          "id": 2,
          "type": "Dimmer",
-         "value": 255,
+         "value": 230,
          "active": true,
          "color": null,
          "qaIndex": 0
@@ -402,15 +366,15 @@
         {
          "id": 3,
          "type": "Zoom",
-         "value": 0,
-         "active": false,
+         "value": 60,
+         "active": true,
          "color": null,
          "qaIndex": 0
         },
         {
          "id": 4,
          "type": "Pan",
-         "value": 128,
+         "value": 207,
          "active": true,
          "color": null,
          "qaIndex": 0
@@ -418,7 +382,7 @@
         {
          "id": 5,
          "type": "PanFine",
-         "value": 0,
+         "value": 248,
          "active": true,
          "color": null,
          "qaIndex": 0
@@ -426,7 +390,7 @@
         {
          "id": 6,
          "type": "Tilt",
-         "value": 100,
+         "value": 143,
          "active": true,
          "color": null,
          "qaIndex": 0
@@ -434,7 +398,7 @@
         {
          "id": 7,
          "type": "TiltFine",
-         "value": 0,
+         "value": 200,
          "active": true,
          "color": null,
          "qaIndex": 0
@@ -458,7 +422,7 @@
         {
          "id": 10,
          "type": "Color",
-         "value": 0,
+         "value": 225,
          "active": true,
          "color": "Red",
          "qaIndex": 0
@@ -466,7 +430,7 @@
         {
          "id": 11,
          "type": "Color",
-         "value": 0,
+         "value": 110,
          "active": true,
          "color": "Green",
          "qaIndex": 1
@@ -482,7 +446,245 @@
         {
          "id": 13,
          "type": "Color",
-         "value": 255,
+         "value": 30,
+         "active": true,
+         "color": "White",
+         "qaIndex": 3
+        },
+        {
+         "id": 14,
+         "type": "Beam CTC",
+         "value": 0,
+         "active": false,
+         "color": null,
+         "qaIndex": 0
+        }
+       ]
+      },
+      {
+       "fixture": {
+        "id": 2
+       },
+       "channelValues": [
+        {
+         "id": 1,
+         "type": "Shutter",
+         "value": 22,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 2,
+         "type": "Dimmer",
+         "value": 230,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 3,
+         "type": "Zoom",
+         "value": 60,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 4,
+         "type": "Pan",
+         "value": 48,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 5,
+         "type": "PanFine",
+         "value": 7,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 6,
+         "type": "Tilt",
+         "value": 143,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 7,
+         "type": "TiltFine",
+         "value": 200,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 8,
+         "type": "Maintenance",
+         "value": 0,
+         "active": false,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 9,
+         "type": "Effect",
+         "value": 0,
+         "active": false,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 10,
+         "type": "Color",
+         "value": 225,
+         "active": true,
+         "color": "Red",
+         "qaIndex": 0
+        },
+        {
+         "id": 11,
+         "type": "Color",
+         "value": 110,
+         "active": true,
+         "color": "Green",
+         "qaIndex": 1
+        },
+        {
+         "id": 12,
+         "type": "Color",
+         "value": 0,
+         "active": true,
+         "color": "Blue",
+         "qaIndex": 2
+        },
+        {
+         "id": 13,
+         "type": "Color",
+         "value": 30,
+         "active": true,
+         "color": "White",
+         "qaIndex": 3
+        },
+        {
+         "id": 14,
+         "type": "Beam CTC",
+         "value": 0,
+         "active": false,
+         "color": null,
+         "qaIndex": 0
+        }
+       ]
+      },
+      {
+       "fixture": {
+        "id": 3
+       },
+       "channelValues": [
+        {
+         "id": 1,
+         "type": "Shutter",
+         "value": 22,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 2,
+         "type": "Dimmer",
+         "value": 230,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 3,
+         "type": "Zoom",
+         "value": 60,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 4,
+         "type": "Pan",
+         "value": 57,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 5,
+         "type": "PanFine",
+         "value": 88,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 6,
+         "type": "Tilt",
+         "value": 145,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 7,
+         "type": "TiltFine",
+         "value": 239,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 8,
+         "type": "Maintenance",
+         "value": 0,
+         "active": false,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 9,
+         "type": "Effect",
+         "value": 0,
+         "active": false,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 10,
+         "type": "Color",
+         "value": 225,
+         "active": true,
+         "color": "Red",
+         "qaIndex": 0
+        },
+        {
+         "id": 11,
+         "type": "Color",
+         "value": 110,
+         "active": true,
+         "color": "Green",
+         "qaIndex": 1
+        },
+        {
+         "id": 12,
+         "type": "Color",
+         "value": 0,
+         "active": true,
+         "color": "Blue",
+         "qaIndex": 2
+        },
+        {
+         "id": 13,
+         "type": "Color",
+         "value": 30,
          "active": true,
          "color": "White",
          "qaIndex": 3
@@ -527,288 +729,8 @@
     },
     {
      "id": 1,
-     "name": "Deep blue",
-     "color": "#5A71D3",
-     "duration": 1,
-     "triggerStyle": 0,
-     "loopStyle": 0,
-     "relative": 0,
-     "type": 0,
-     "fixtures": [
-      0,
-      1
-     ],
-     "fixtureValues": [
-      {
-       "fixture": {
-        "id": 0
-       },
-       "channelValues": [
-        {
-         "id": 1,
-         "type": "Shutter",
-         "value": 22,
-         "active": true,
-         "color": null,
-         "qaIndex": 0
-        },
-        {
-         "id": 2,
-         "type": "Dimmer",
-         "value": 255,
-         "active": true,
-         "color": null,
-         "qaIndex": 0
-        },
-        {
-         "id": 3,
-         "type": "Zoom",
-         "value": 0,
-         "active": false,
-         "color": null,
-         "qaIndex": 0
-        },
-        {
-         "id": 4,
-         "type": "Pan",
-         "value": 106,
-         "active": true,
-         "color": null,
-         "qaIndex": 0
-        },
-        {
-         "id": 5,
-         "type": "PanFine",
-         "value": 0,
-         "active": true,
-         "color": null,
-         "qaIndex": 0
-        },
-        {
-         "id": 6,
-         "type": "Tilt",
-         "value": 70,
-         "active": true,
-         "color": null,
-         "qaIndex": 0
-        },
-        {
-         "id": 7,
-         "type": "TiltFine",
-         "value": 0,
-         "active": true,
-         "color": null,
-         "qaIndex": 0
-        },
-        {
-         "id": 8,
-         "type": "Maintenance",
-         "value": 0,
-         "active": false,
-         "color": null,
-         "qaIndex": 0
-        },
-        {
-         "id": 9,
-         "type": "Effect",
-         "value": 0,
-         "active": false,
-         "color": null,
-         "qaIndex": 0
-        },
-        {
-         "id": 10,
-         "type": "Color",
-         "value": 0,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 11,
-         "type": "Color",
-         "value": 20,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 1
-        },
-        {
-         "id": 12,
-         "type": "Color",
-         "value": 235,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 2
-        },
-        {
-         "id": 13,
-         "type": "Color",
-         "value": 20,
-         "active": true,
-         "color": "White",
-         "qaIndex": 3
-        },
-        {
-         "id": 14,
-         "type": "Beam CTC",
-         "value": 0,
-         "active": false,
-         "color": null,
-         "qaIndex": 0
-        }
-       ]
-      },
-      {
-       "fixture": {
-        "id": 1
-       },
-       "channelValues": [
-        {
-         "id": 1,
-         "type": "Shutter",
-         "value": 22,
-         "active": true,
-         "color": null,
-         "qaIndex": 0
-        },
-        {
-         "id": 2,
-         "type": "Dimmer",
-         "value": 255,
-         "active": true,
-         "color": null,
-         "qaIndex": 0
-        },
-        {
-         "id": 3,
-         "type": "Zoom",
-         "value": 0,
-         "active": false,
-         "color": null,
-         "qaIndex": 0
-        },
-        {
-         "id": 4,
-         "type": "Pan",
-         "value": 150,
-         "active": true,
-         "color": null,
-         "qaIndex": 0
-        },
-        {
-         "id": 5,
-         "type": "PanFine",
-         "value": 0,
-         "active": true,
-         "color": null,
-         "qaIndex": 0
-        },
-        {
-         "id": 6,
-         "type": "Tilt",
-         "value": 70,
-         "active": true,
-         "color": null,
-         "qaIndex": 0
-        },
-        {
-         "id": 7,
-         "type": "TiltFine",
-         "value": 0,
-         "active": true,
-         "color": null,
-         "qaIndex": 0
-        },
-        {
-         "id": 8,
-         "type": "Maintenance",
-         "value": 0,
-         "active": false,
-         "color": null,
-         "qaIndex": 0
-        },
-        {
-         "id": 9,
-         "type": "Effect",
-         "value": 0,
-         "active": false,
-         "color": null,
-         "qaIndex": 0
-        },
-        {
-         "id": 10,
-         "type": "Color",
-         "value": 0,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 11,
-         "type": "Color",
-         "value": 20,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 1
-        },
-        {
-         "id": 12,
-         "type": "Color",
-         "value": 235,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 2
-        },
-        {
-         "id": 13,
-         "type": "Color",
-         "value": 20,
-         "active": true,
-         "color": "White",
-         "qaIndex": 3
-        },
-        {
-         "id": 14,
-         "type": "Beam CTC",
-         "value": 0,
-         "active": false,
-         "color": null,
-         "qaIndex": 0
-        }
-       ]
-      }
-     ],
-     "fadeIn": {
-      "type": 0,
-      "controlPoints": [
-       {
-        "x": 0.25,
-        "y": 0.25
-       },
-       {
-        "x": 0.75,
-        "y": 0.75
-       }
-      ]
-     },
-     "fadeOut": {
-      "type": 0,
-      "controlPoints": [
-       {
-        "x": 0.25,
-        "y": 0.25
-       },
-       {
-        "x": 0.75,
-        "y": 0.75
-       }
-      ]
-     }
-    },
-    {
-     "id": 2,
-     "name": "Circle",
-     "color": "#3FB6A8",
+     "name": "Rainbow",
+     "color": "#A45BC9",
      "duration": 2,
      "triggerStyle": 0,
      "loopStyle": 1,
@@ -816,7 +738,163 @@
      "type": 1,
      "fixtures": [
       0,
-      1
+      1,
+      2,
+      3
+     ],
+     "channels": [
+      {
+       "type": "Red",
+       "fixtures": [
+        {
+         "id": 0,
+         "active": true,
+         "phase": 0
+        },
+        {
+         "id": 1,
+         "active": true,
+         "phase": 1.5707963267948966
+        },
+        {
+         "id": 2,
+         "active": true,
+         "phase": 3.141592653589793
+        },
+        {
+         "id": 3,
+         "active": true,
+         "phase": 4.71238898038469
+        }
+       ],
+       "direction": 0,
+       "waveform": 0,
+       "max": 255,
+       "min": 0,
+       "frequency": 1,
+       "phase": 60,
+       "fixturePhaseStart": 0,
+       "fixturePhaseStop": 360,
+       "cellPhase": false
+      },
+      {
+       "type": "Green",
+       "fixtures": [
+        {
+         "id": 0,
+         "active": true,
+         "phase": 0
+        },
+        {
+         "id": 1,
+         "active": true,
+         "phase": 1.5707963267948966
+        },
+        {
+         "id": 2,
+         "active": true,
+         "phase": 3.141592653589793
+        },
+        {
+         "id": 3,
+         "active": true,
+         "phase": 4.71238898038469
+        }
+       ],
+       "direction": 0,
+       "waveform": 0,
+       "max": 255,
+       "min": 0,
+       "frequency": 1,
+       "phase": 180,
+       "fixturePhaseStart": 0,
+       "fixturePhaseStop": 360,
+       "cellPhase": false
+      },
+      {
+       "type": "Blue",
+       "fixtures": [
+        {
+         "id": 0,
+         "active": true,
+         "phase": 0
+        },
+        {
+         "id": 1,
+         "active": true,
+         "phase": 1.5707963267948966
+        },
+        {
+         "id": 2,
+         "active": true,
+         "phase": 3.141592653589793
+        },
+        {
+         "id": 3,
+         "active": true,
+         "phase": 4.71238898038469
+        }
+       ],
+       "direction": 0,
+       "waveform": 0,
+       "max": 255,
+       "min": 0,
+       "frequency": 1,
+       "phase": 300,
+       "fixturePhaseStart": 0,
+       "fixturePhaseStop": 360,
+       "cellPhase": false
+      },
+      {
+       "type": "Dimmer",
+       "fixtures": [
+        {
+         "id": 0,
+         "active": true,
+         "phase": 0
+        },
+        {
+         "id": 1,
+         "active": true,
+         "phase": 1.5707963267948966
+        },
+        {
+         "id": 2,
+         "active": true,
+         "phase": 3.141592653589793
+        },
+        {
+         "id": 3,
+         "active": true,
+         "phase": 4.71238898038469
+        }
+       ],
+       "direction": 0,
+       "waveform": 0,
+       "max": 255,
+       "min": 255,
+       "frequency": 1,
+       "phase": 0,
+       "fixturePhaseStart": 0,
+       "fixturePhaseStop": 360,
+       "cellPhase": false
+      }
+     ]
+    },
+    {
+     "id": 2,
+     "name": "Ballyhoo",
+     "color": "#5A71D3",
+     "duration": 2,
+     "triggerStyle": 0,
+     "loopStyle": 1,
+     "relative": 0,
+     "type": 1,
+     "fixtures": [
+      0,
+      1,
+      2,
+      3
      ],
      "channels": [
       {
@@ -830,14 +908,24 @@
         {
          "id": 1,
          "active": true,
+         "phase": 1.5707963267948966
+        },
+        {
+         "id": 2,
+         "active": true,
          "phase": 3.141592653589793
+        },
+        {
+         "id": 3,
+         "active": true,
+         "phase": 4.71238898038469
         }
        ],
        "direction": 0,
        "waveform": 0,
-       "max": 255,
-       "min": 0,
-       "frequency": 1,
+       "max": 164,
+       "min": 92,
+       "frequency": 2,
        "phase": 0,
        "fixturePhaseStart": 0,
        "fixturePhaseStop": 360,
@@ -854,35 +942,29 @@
         {
          "id": 1,
          "active": true,
+         "phase": 1.5707963267948966
+        },
+        {
+         "id": 2,
+         "active": true,
          "phase": 3.141592653589793
+        },
+        {
+         "id": 3,
+         "active": true,
+         "phase": 4.71238898038469
         }
        ],
        "direction": 0,
        "waveform": 0,
-       "max": 255,
-       "min": 0,
-       "frequency": 1,
+       "max": 152,
+       "min": 104,
+       "frequency": 2,
        "phase": 90,
        "fixturePhaseStart": 0,
        "fixturePhaseStop": 360,
        "cellPhase": false
-      }
-     ]
-    },
-    {
-     "id": 3,
-     "name": "Hue shift",
-     "color": "#A45BC9",
-     "duration": 2,
-     "triggerStyle": 0,
-     "loopStyle": 1,
-     "relative": 0,
-     "type": 1,
-     "fixtures": [
-      0,
-      1
-     ],
-     "channels": [
+      },
       {
        "type": "Red",
        "fixtures": [
@@ -894,13 +976,23 @@
         {
          "id": 1,
          "active": true,
+         "phase": 1.5707963267948966
+        },
+        {
+         "id": 2,
+         "active": true,
          "phase": 3.141592653589793
+        },
+        {
+         "id": 3,
+         "active": true,
+         "phase": 4.71238898038469
         }
        ],
        "direction": 0,
        "waveform": 0,
-       "max": 255,
-       "min": 0,
+       "max": 40,
+       "min": 40,
        "frequency": 1,
        "phase": 60,
        "fixturePhaseStart": 0,
@@ -918,15 +1010,25 @@
         {
          "id": 1,
          "active": true,
+         "phase": 1.5707963267948966
+        },
+        {
+         "id": 2,
+         "active": true,
          "phase": 3.141592653589793
+        },
+        {
+         "id": 3,
+         "active": true,
+         "phase": 4.71238898038469
         }
        ],
        "direction": 0,
        "waveform": 0,
-       "max": 255,
-       "min": 0,
+       "max": 110,
+       "min": 110,
        "frequency": 1,
-       "phase": 180,
+       "phase": 60,
        "fixturePhaseStart": 0,
        "fixturePhaseStop": 360,
        "cellPhase": false
@@ -942,28 +1044,592 @@
         {
          "id": 1,
          "active": true,
+         "phase": 1.5707963267948966
+        },
+        {
+         "id": 2,
+         "active": true,
          "phase": 3.141592653589793
+        },
+        {
+         "id": 3,
+         "active": true,
+         "phase": 4.71238898038469
         }
        ],
        "direction": 0,
        "waveform": 0,
        "max": 255,
-       "min": 0,
+       "min": 255,
        "frequency": 1,
-       "phase": 300,
+       "phase": 60,
+       "fixturePhaseStart": 0,
+       "fixturePhaseStop": 360,
+       "cellPhase": false
+      },
+      {
+       "type": "Dimmer",
+       "fixtures": [
+        {
+         "id": 0,
+         "active": true,
+         "phase": 0
+        },
+        {
+         "id": 1,
+         "active": true,
+         "phase": 1.5707963267948966
+        },
+        {
+         "id": 2,
+         "active": true,
+         "phase": 3.141592653589793
+        },
+        {
+         "id": 3,
+         "active": true,
+         "phase": 4.71238898038469
+        }
+       ],
+       "direction": 0,
+       "waveform": 0,
+       "max": 255,
+       "min": 255,
+       "frequency": 1,
+       "phase": 0,
        "fixturePhaseStart": 0,
        "fixturePhaseStop": 360,
        "cellPhase": false
       }
      ]
+    },
+    {
+     "id": 3,
+     "name": "Sunset",
+     "color": "#E76D58",
+     "duration": 1,
+     "triggerStyle": 0,
+     "loopStyle": 0,
+     "relative": 1,
+     "type": 0,
+     "fixtures": [
+      0,
+      1,
+      2,
+      3
+     ],
+     "fixtureValues": [
+      {
+       "fixture": {
+        "id": 0
+       },
+       "channelValues": [
+        {
+         "id": 1,
+         "type": "Shutter",
+         "value": 22,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 2,
+         "type": "Dimmer",
+         "value": 255,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 3,
+         "type": "Zoom",
+         "value": 150,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 4,
+         "type": "Pan",
+         "value": 177,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 5,
+         "type": "PanFine",
+         "value": 26,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 6,
+         "type": "Tilt",
+         "value": 194,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 7,
+         "type": "TiltFine",
+         "value": 221,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 8,
+         "type": "Maintenance",
+         "value": 0,
+         "active": false,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 9,
+         "type": "Effect",
+         "value": 0,
+         "active": false,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 10,
+         "type": "Color",
+         "value": 245,
+         "active": true,
+         "color": "Red",
+         "qaIndex": 0
+        },
+        {
+         "id": 11,
+         "type": "Color",
+         "value": 10,
+         "active": true,
+         "color": "Green",
+         "qaIndex": 1
+        },
+        {
+         "id": 12,
+         "type": "Color",
+         "value": 0,
+         "active": true,
+         "color": "Blue",
+         "qaIndex": 2
+        },
+        {
+         "id": 13,
+         "type": "Color",
+         "value": 10,
+         "active": true,
+         "color": "White",
+         "qaIndex": 3
+        },
+        {
+         "id": 14,
+         "type": "Beam CTC",
+         "value": 0,
+         "active": false,
+         "color": null,
+         "qaIndex": 0
+        }
+       ]
+      },
+      {
+       "fixture": {
+        "id": 1
+       },
+       "channelValues": [
+        {
+         "id": 1,
+         "type": "Shutter",
+         "value": 22,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 2,
+         "type": "Dimmer",
+         "value": 255,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 3,
+         "type": "Zoom",
+         "value": 150,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 4,
+         "type": "Pan",
+         "value": 174,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 5,
+         "type": "PanFine",
+         "value": 147,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 6,
+         "type": "Tilt",
+         "value": 161,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 7,
+         "type": "TiltFine",
+         "value": 70,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 8,
+         "type": "Maintenance",
+         "value": 0,
+         "active": false,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 9,
+         "type": "Effect",
+         "value": 0,
+         "active": false,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 10,
+         "type": "Color",
+         "value": 255,
+         "active": true,
+         "color": "Red",
+         "qaIndex": 0
+        },
+        {
+         "id": 11,
+         "type": "Color",
+         "value": 70,
+         "active": true,
+         "color": "Green",
+         "qaIndex": 1
+        },
+        {
+         "id": 12,
+         "type": "Color",
+         "value": 0,
+         "active": true,
+         "color": "Blue",
+         "qaIndex": 2
+        },
+        {
+         "id": 13,
+         "type": "Color",
+         "value": 0,
+         "active": true,
+         "color": "White",
+         "qaIndex": 3
+        },
+        {
+         "id": 14,
+         "type": "Beam CTC",
+         "value": 0,
+         "active": false,
+         "color": null,
+         "qaIndex": 0
+        }
+       ]
+      },
+      {
+       "fixture": {
+        "id": 2
+       },
+       "channelValues": [
+        {
+         "id": 1,
+         "type": "Shutter",
+         "value": 22,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 2,
+         "type": "Dimmer",
+         "value": 255,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 3,
+         "type": "Zoom",
+         "value": 150,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 4,
+         "type": "Pan",
+         "value": 68,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 5,
+         "type": "PanFine",
+         "value": 77,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 6,
+         "type": "Tilt",
+         "value": 167,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 7,
+         "type": "TiltFine",
+         "value": 9,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 8,
+         "type": "Maintenance",
+         "value": 0,
+         "active": false,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 9,
+         "type": "Effect",
+         "value": 0,
+         "active": false,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 10,
+         "type": "Color",
+         "value": 245,
+         "active": true,
+         "color": "Red",
+         "qaIndex": 0
+        },
+        {
+         "id": 11,
+         "type": "Color",
+         "value": 120,
+         "active": true,
+         "color": "Green",
+         "qaIndex": 1
+        },
+        {
+         "id": 12,
+         "type": "Color",
+         "value": 0,
+         "active": true,
+         "color": "Blue",
+         "qaIndex": 2
+        },
+        {
+         "id": 13,
+         "type": "Color",
+         "value": 10,
+         "active": true,
+         "color": "White",
+         "qaIndex": 3
+        },
+        {
+         "id": 14,
+         "type": "Beam CTC",
+         "value": 0,
+         "active": false,
+         "color": null,
+         "qaIndex": 0
+        }
+       ]
+      },
+      {
+       "fixture": {
+        "id": 3
+       },
+       "channelValues": [
+        {
+         "id": 1,
+         "type": "Shutter",
+         "value": 22,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 2,
+         "type": "Dimmer",
+         "value": 255,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 3,
+         "type": "Zoom",
+         "value": 150,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 4,
+         "type": "Pan",
+         "value": 84,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 5,
+         "type": "PanFine",
+         "value": 5,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 6,
+         "type": "Tilt",
+         "value": 194,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 7,
+         "type": "TiltFine",
+         "value": 32,
+         "active": true,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 8,
+         "type": "Maintenance",
+         "value": 0,
+         "active": false,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 9,
+         "type": "Effect",
+         "value": 0,
+         "active": false,
+         "color": null,
+         "qaIndex": 0
+        },
+        {
+         "id": 10,
+         "type": "Color",
+         "value": 215,
+         "active": true,
+         "color": "Red",
+         "qaIndex": 0
+        },
+        {
+         "id": 11,
+         "type": "Color",
+         "value": 150,
+         "active": true,
+         "color": "Green",
+         "qaIndex": 1
+        },
+        {
+         "id": 12,
+         "type": "Color",
+         "value": 0,
+         "active": true,
+         "color": "Blue",
+         "qaIndex": 2
+        },
+        {
+         "id": 13,
+         "type": "Color",
+         "value": 40,
+         "active": true,
+         "color": "White",
+         "qaIndex": 3
+        },
+        {
+         "id": 14,
+         "type": "Beam CTC",
+         "value": 0,
+         "active": false,
+         "color": null,
+         "qaIndex": 0
+        }
+       ]
+      }
+     ],
+     "fadeIn": {
+      "type": 0,
+      "controlPoints": [
+       {
+        "x": 0.25,
+        "y": 0.25
+       },
+       {
+        "x": 0.75,
+        "y": 0.75
+       }
+      ]
+     },
+     "fadeOut": {
+      "type": 0,
+      "controlPoints": [
+       {
+        "x": 0.25,
+        "y": 0.25
+       },
+       {
+        "x": 0.75,
+        "y": 0.75
+       }
+      ]
+     }
     }
    ],
    "chases": [
     {
      "id": 0,
-     "name": "Looks",
+     "name": "Story",
      "color": "#5A71D3",
-     "duration": 4,
+     "duration": 8,
      "trigger": 0,
      "cues": [
       {
@@ -971,10 +1637,10 @@
        "items": [
         {
          "id": 0,
-         "name": "Open white",
-         "color": "#E0E0E0",
+         "name": "Warm wash",
+         "color": "#E2C753",
          "tickStart": 0,
-         "tickDuration": 64
+         "tickDuration": 128
         }
        ]
       },
@@ -983,10 +1649,10 @@
        "items": [
         {
          "id": 0,
-         "name": "Deep blue",
-         "color": "#5A71D3",
-         "tickStart": 64,
-         "tickDuration": 64
+         "name": "Rainbow",
+         "color": "#A45BC9",
+         "tickStart": 128,
+         "tickDuration": 128
         }
        ]
       },
@@ -995,10 +1661,10 @@
        "items": [
         {
          "id": 0,
-         "name": "Circle",
-         "color": "#3FB6A8",
-         "tickStart": 128,
-         "tickDuration": 64
+         "name": "Ballyhoo",
+         "color": "#5A71D3",
+         "tickStart": 256,
+         "tickDuration": 128
         }
        ]
       },
@@ -1007,10 +1673,10 @@
        "items": [
         {
          "id": 0,
-         "name": "Hue shift",
-         "color": "#A45BC9",
-         "tickStart": 192,
-         "tickDuration": 64
+         "name": "Sunset",
+         "color": "#E76D58",
+         "tickStart": 384,
+         "tickDuration": 128
         }
        ]
       }
@@ -1020,1189 +1686,6 @@
    "solo": false,
    "disabled": false,
    "color": "#5A71D3",
-   "master": 255
-  },
-  {
-   "id": 1,
-   "name": "Pixel bar",
-   "fixtures": [
-    {
-     "id": 2
-    }
-   ],
-   "cues": [
-    {
-     "id": 0,
-     "name": "Amber",
-     "color": "#D9A441",
-     "duration": 1,
-     "triggerStyle": 0,
-     "loopStyle": 0,
-     "relative": 0,
-     "type": 0,
-     "fixtures": [
-      2
-     ],
-     "fixtureValues": [
-      {
-       "fixture": {
-        "id": 2
-       },
-       "channelValues": [
-        {
-         "id": 1,
-         "type": "Red 1",
-         "value": 255,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 2,
-         "type": "Green 1",
-         "value": 140,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 0
-        },
-        {
-         "id": 3,
-         "type": "Blue 1",
-         "value": 20,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 0
-        },
-        {
-         "id": 4,
-         "type": "Red 2",
-         "value": 255,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 5,
-         "type": "Green 2",
-         "value": 140,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 0
-        },
-        {
-         "id": 6,
-         "type": "Blue 2",
-         "value": 20,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 0
-        },
-        {
-         "id": 7,
-         "type": "Red 3",
-         "value": 255,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 8,
-         "type": "Green 3",
-         "value": 140,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 0
-        },
-        {
-         "id": 9,
-         "type": "Blue 3",
-         "value": 20,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 0
-        },
-        {
-         "id": 10,
-         "type": "Red 4",
-         "value": 255,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 11,
-         "type": "Green 4",
-         "value": 140,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 0
-        },
-        {
-         "id": 12,
-         "type": "Blue 4",
-         "value": 20,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 0
-        },
-        {
-         "id": 13,
-         "type": "Red 5",
-         "value": 255,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 14,
-         "type": "Green 5",
-         "value": 140,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 0
-        },
-        {
-         "id": 15,
-         "type": "Blue 5",
-         "value": 20,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 0
-        },
-        {
-         "id": 16,
-         "type": "Red 6",
-         "value": 255,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 17,
-         "type": "Green 6",
-         "value": 140,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 0
-        },
-        {
-         "id": 18,
-         "type": "Blue 6",
-         "value": 20,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 0
-        },
-        {
-         "id": 19,
-         "type": "Red 7",
-         "value": 255,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 20,
-         "type": "Green 7",
-         "value": 140,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 0
-        },
-        {
-         "id": 21,
-         "type": "Blue 7",
-         "value": 20,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 0
-        },
-        {
-         "id": 22,
-         "type": "Red 8",
-         "value": 255,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 23,
-         "type": "Green 8",
-         "value": 140,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 0
-        },
-        {
-         "id": 24,
-         "type": "Blue 8",
-         "value": 20,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 0
-        },
-        {
-         "id": 25,
-         "type": "Red 9",
-         "value": 255,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 26,
-         "type": "Green 9",
-         "value": 140,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 0
-        },
-        {
-         "id": 27,
-         "type": "Blue 9",
-         "value": 20,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 0
-        },
-        {
-         "id": 28,
-         "type": "Red 10",
-         "value": 255,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 29,
-         "type": "Green 10",
-         "value": 140,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 0
-        },
-        {
-         "id": 30,
-         "type": "Blue 10",
-         "value": 20,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 0
-        },
-        {
-         "id": 31,
-         "type": "Red 11",
-         "value": 255,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 32,
-         "type": "Green 11",
-         "value": 140,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 0
-        },
-        {
-         "id": 33,
-         "type": "Blue 11",
-         "value": 20,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 0
-        },
-        {
-         "id": 34,
-         "type": "Red 12",
-         "value": 255,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 35,
-         "type": "Green 12",
-         "value": 140,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 0
-        },
-        {
-         "id": 36,
-         "type": "Blue 12",
-         "value": 20,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 0
-        }
-       ]
-      }
-     ],
-     "fadeIn": {
-      "type": 0,
-      "controlPoints": [
-       {
-        "x": 0.25,
-        "y": 0.25
-       },
-       {
-        "x": 0.75,
-        "y": 0.75
-       }
-      ]
-     },
-     "fadeOut": {
-      "type": 0,
-      "controlPoints": [
-       {
-        "x": 0.25,
-        "y": 0.25
-       },
-       {
-        "x": 0.75,
-        "y": 0.75
-       }
-      ]
-     }
-    },
-    {
-     "id": 1,
-     "name": "Split",
-     "color": "#D9416B",
-     "duration": 1,
-     "triggerStyle": 0,
-     "loopStyle": 0,
-     "relative": 0,
-     "type": 0,
-     "fixtures": [
-      2
-     ],
-     "fixtureValues": [
-      {
-       "fixture": {
-        "id": 2
-       },
-       "channelValues": [
-        {
-         "id": 1,
-         "type": "Red 1",
-         "value": 255,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 2,
-         "type": "Green 1",
-         "value": 30,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 0
-        },
-        {
-         "id": 3,
-         "type": "Blue 1",
-         "value": 60,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 0
-        },
-        {
-         "id": 4,
-         "type": "Red 2",
-         "value": 30,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 5,
-         "type": "Green 2",
-         "value": 60,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 0
-        },
-        {
-         "id": 6,
-         "type": "Blue 2",
-         "value": 255,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 0
-        },
-        {
-         "id": 7,
-         "type": "Red 3",
-         "value": 255,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 8,
-         "type": "Green 3",
-         "value": 30,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 0
-        },
-        {
-         "id": 9,
-         "type": "Blue 3",
-         "value": 60,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 0
-        },
-        {
-         "id": 10,
-         "type": "Red 4",
-         "value": 30,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 11,
-         "type": "Green 4",
-         "value": 60,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 0
-        },
-        {
-         "id": 12,
-         "type": "Blue 4",
-         "value": 255,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 0
-        },
-        {
-         "id": 13,
-         "type": "Red 5",
-         "value": 255,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 14,
-         "type": "Green 5",
-         "value": 30,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 0
-        },
-        {
-         "id": 15,
-         "type": "Blue 5",
-         "value": 60,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 0
-        },
-        {
-         "id": 16,
-         "type": "Red 6",
-         "value": 30,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 17,
-         "type": "Green 6",
-         "value": 60,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 0
-        },
-        {
-         "id": 18,
-         "type": "Blue 6",
-         "value": 255,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 0
-        },
-        {
-         "id": 19,
-         "type": "Red 7",
-         "value": 255,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 20,
-         "type": "Green 7",
-         "value": 30,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 0
-        },
-        {
-         "id": 21,
-         "type": "Blue 7",
-         "value": 60,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 0
-        },
-        {
-         "id": 22,
-         "type": "Red 8",
-         "value": 30,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 23,
-         "type": "Green 8",
-         "value": 60,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 0
-        },
-        {
-         "id": 24,
-         "type": "Blue 8",
-         "value": 255,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 0
-        },
-        {
-         "id": 25,
-         "type": "Red 9",
-         "value": 255,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 26,
-         "type": "Green 9",
-         "value": 30,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 0
-        },
-        {
-         "id": 27,
-         "type": "Blue 9",
-         "value": 60,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 0
-        },
-        {
-         "id": 28,
-         "type": "Red 10",
-         "value": 30,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 29,
-         "type": "Green 10",
-         "value": 60,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 0
-        },
-        {
-         "id": 30,
-         "type": "Blue 10",
-         "value": 255,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 0
-        },
-        {
-         "id": 31,
-         "type": "Red 11",
-         "value": 255,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 32,
-         "type": "Green 11",
-         "value": 30,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 0
-        },
-        {
-         "id": 33,
-         "type": "Blue 11",
-         "value": 60,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 0
-        },
-        {
-         "id": 34,
-         "type": "Red 12",
-         "value": 30,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 35,
-         "type": "Green 12",
-         "value": 60,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 0
-        },
-        {
-         "id": 36,
-         "type": "Blue 12",
-         "value": 255,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 0
-        }
-       ]
-      }
-     ],
-     "fadeIn": {
-      "type": 0,
-      "controlPoints": [
-       {
-        "x": 0.25,
-        "y": 0.25
-       },
-       {
-        "x": 0.75,
-        "y": 0.75
-       }
-      ]
-     },
-     "fadeOut": {
-      "type": 0,
-      "controlPoints": [
-       {
-        "x": 0.25,
-        "y": 0.25
-       },
-       {
-        "x": 0.75,
-        "y": 0.75
-       }
-      ]
-     }
-    },
-    {
-     "id": 2,
-     "name": "Rainbow",
-     "color": "#8F5BC9",
-     "duration": 2,
-     "triggerStyle": 0,
-     "loopStyle": 1,
-     "relative": 0,
-     "type": 1,
-     "fixtures": [
-      2
-     ],
-     "channels": [
-      {
-       "type": "Red",
-       "fixtures": [
-        {
-         "id": 2,
-         "active": true,
-         "phase": 0
-        }
-       ],
-       "direction": 0,
-       "waveform": 0,
-       "max": 255,
-       "min": 0,
-       "frequency": 1,
-       "phase": 60,
-       "fixturePhaseStart": 0,
-       "fixturePhaseStop": 360,
-       "cellPhase": true
-      },
-      {
-       "type": "Green",
-       "fixtures": [
-        {
-         "id": 2,
-         "active": true,
-         "phase": 0
-        }
-       ],
-       "direction": 0,
-       "waveform": 0,
-       "max": 255,
-       "min": 0,
-       "frequency": 1,
-       "phase": 180,
-       "fixturePhaseStart": 0,
-       "fixturePhaseStop": 360,
-       "cellPhase": true
-      },
-      {
-       "type": "Blue",
-       "fixtures": [
-        {
-         "id": 2,
-         "active": true,
-         "phase": 0
-        }
-       ],
-       "direction": 0,
-       "waveform": 0,
-       "max": 255,
-       "min": 0,
-       "frequency": 1,
-       "phase": 300,
-       "fixturePhaseStart": 0,
-       "fixturePhaseStop": 360,
-       "cellPhase": true
-      }
-     ]
-    }
-   ],
-   "chases": [
-    {
-     "id": 0,
-     "name": "Bar loop",
-     "color": "#A45BC9",
-     "duration": 3,
-     "trigger": 0,
-     "cues": [
-      {
-       "cue": 0,
-       "items": [
-        {
-         "id": 0,
-         "name": "Amber",
-         "color": "#D9A441",
-         "tickStart": 0,
-         "tickDuration": 64
-        }
-       ]
-      },
-      {
-       "cue": 1,
-       "items": [
-        {
-         "id": 0,
-         "name": "Split",
-         "color": "#D9416B",
-         "tickStart": 64,
-         "tickDuration": 64
-        }
-       ]
-      },
-      {
-       "cue": 2,
-       "items": [
-        {
-         "id": 0,
-         "name": "Rainbow",
-         "color": "#8F5BC9",
-         "tickStart": 128,
-         "tickDuration": 64
-        }
-       ]
-      }
-     ]
-    }
-   ],
-   "solo": false,
-   "disabled": false,
-   "color": "#A45BC9",
-   "master": 255
-  },
-  {
-   "id": 2,
-   "name": "PARs",
-   "fixtures": [
-    {
-     "id": 3
-    },
-    {
-     "id": 4
-    }
-   ],
-   "cues": [
-    {
-     "id": 0,
-     "name": "Red",
-     "color": "#D9416B",
-     "duration": 1,
-     "triggerStyle": 0,
-     "loopStyle": 0,
-     "relative": 0,
-     "type": 0,
-     "fixtures": [
-      3,
-      4
-     ],
-     "fixtureValues": [
-      {
-       "fixture": {
-        "id": 3
-       },
-       "channelValues": [
-        {
-         "id": 1,
-         "type": "Color",
-         "value": 255,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 2,
-         "type": "Color",
-         "value": 20,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 1
-        },
-        {
-         "id": 3,
-         "type": "Color",
-         "value": 10,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 2
-        },
-        {
-         "id": 4,
-         "type": "Dimmer",
-         "value": 255,
-         "active": true,
-         "color": null,
-         "qaIndex": 0
-        },
-        {
-         "id": 5,
-         "type": "Shutter",
-         "value": 22,
-         "active": true,
-         "color": null,
-         "qaIndex": 0
-        }
-       ]
-      },
-      {
-       "fixture": {
-        "id": 4
-       },
-       "channelValues": [
-        {
-         "id": 1,
-         "type": "Color",
-         "value": 255,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 2,
-         "type": "Color",
-         "value": 20,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 1
-        },
-        {
-         "id": 3,
-         "type": "Color",
-         "value": 10,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 2
-        },
-        {
-         "id": 4,
-         "type": "Dimmer",
-         "value": 255,
-         "active": true,
-         "color": null,
-         "qaIndex": 0
-        },
-        {
-         "id": 5,
-         "type": "Shutter",
-         "value": 22,
-         "active": true,
-         "color": null,
-         "qaIndex": 0
-        }
-       ]
-      }
-     ],
-     "fadeIn": {
-      "type": 0,
-      "controlPoints": [
-       {
-        "x": 0.25,
-        "y": 0.25
-       },
-       {
-        "x": 0.75,
-        "y": 0.75
-       }
-      ]
-     },
-     "fadeOut": {
-      "type": 0,
-      "controlPoints": [
-       {
-        "x": 0.25,
-        "y": 0.25
-       },
-       {
-        "x": 0.75,
-        "y": 0.75
-       }
-      ]
-     }
-    },
-    {
-     "id": 1,
-     "name": "Teal",
-     "color": "#3FB6A8",
-     "duration": 1,
-     "triggerStyle": 0,
-     "loopStyle": 0,
-     "relative": 0,
-     "type": 0,
-     "fixtures": [
-      3,
-      4
-     ],
-     "fixtureValues": [
-      {
-       "fixture": {
-        "id": 3
-       },
-       "channelValues": [
-        {
-         "id": 1,
-         "type": "Color",
-         "value": 0,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 2,
-         "type": "Color",
-         "value": 200,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 1
-        },
-        {
-         "id": 3,
-         "type": "Color",
-         "value": 180,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 2
-        },
-        {
-         "id": 4,
-         "type": "Dimmer",
-         "value": 255,
-         "active": true,
-         "color": null,
-         "qaIndex": 0
-        },
-        {
-         "id": 5,
-         "type": "Shutter",
-         "value": 22,
-         "active": true,
-         "color": null,
-         "qaIndex": 0
-        }
-       ]
-      },
-      {
-       "fixture": {
-        "id": 4
-       },
-       "channelValues": [
-        {
-         "id": 1,
-         "type": "Color",
-         "value": 0,
-         "active": true,
-         "color": "Red",
-         "qaIndex": 0
-        },
-        {
-         "id": 2,
-         "type": "Color",
-         "value": 200,
-         "active": true,
-         "color": "Green",
-         "qaIndex": 1
-        },
-        {
-         "id": 3,
-         "type": "Color",
-         "value": 180,
-         "active": true,
-         "color": "Blue",
-         "qaIndex": 2
-        },
-        {
-         "id": 4,
-         "type": "Dimmer",
-         "value": 255,
-         "active": true,
-         "color": null,
-         "qaIndex": 0
-        },
-        {
-         "id": 5,
-         "type": "Shutter",
-         "value": 22,
-         "active": true,
-         "color": null,
-         "qaIndex": 0
-        }
-       ]
-      }
-     ],
-     "fadeIn": {
-      "type": 0,
-      "controlPoints": [
-       {
-        "x": 0.25,
-        "y": 0.25
-       },
-       {
-        "x": 0.75,
-        "y": 0.75
-       }
-      ]
-     },
-     "fadeOut": {
-      "type": 0,
-      "controlPoints": [
-       {
-        "x": 0.25,
-        "y": 0.25
-       },
-       {
-        "x": 0.75,
-        "y": 0.75
-       }
-      ]
-     }
-    },
-    {
-     "id": 2,
-     "name": "Pulse",
-     "color": "#D9A441",
-     "duration": 2,
-     "triggerStyle": 0,
-     "loopStyle": 1,
-     "relative": 0,
-     "type": 1,
-     "fixtures": [
-      3,
-      4
-     ],
-     "channels": [
-      {
-       "type": "Dimmer",
-       "fixtures": [
-        {
-         "id": 3,
-         "active": true,
-         "phase": 0
-        },
-        {
-         "id": 4,
-         "active": true,
-         "phase": 3.141592653589793
-        }
-       ],
-       "direction": 0,
-       "waveform": 0,
-       "max": 255,
-       "min": 0,
-       "frequency": 1,
-       "phase": 0,
-       "fixturePhaseStart": 0,
-       "fixturePhaseStop": 360,
-       "cellPhase": false
-      }
-     ]
-    }
-   ],
-   "chases": [
-    {
-     "id": 0,
-     "name": "PAR loop",
-     "color": "#D9A441",
-     "duration": 3,
-     "trigger": 0,
-     "cues": [
-      {
-       "cue": 0,
-       "items": [
-        {
-         "id": 0,
-         "name": "Red",
-         "color": "#D9416B",
-         "tickStart": 0,
-         "tickDuration": 64
-        }
-       ]
-      },
-      {
-       "cue": 1,
-       "items": [
-        {
-         "id": 0,
-         "name": "Teal",
-         "color": "#3FB6A8",
-         "tickStart": 64,
-         "tickDuration": 64
-        }
-       ]
-      },
-      {
-       "cue": 2,
-       "items": [
-        {
-         "id": 0,
-         "name": "Pulse",
-         "color": "#D9A441",
-         "tickStart": 128,
-         "tickDuration": 64
-        }
-       ]
-      }
-     ]
-    }
-   ],
-   "solo": false,
-   "disabled": false,
-   "color": "#D9A441",
    "master": 255
   }
  ],

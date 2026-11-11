@@ -93,7 +93,11 @@ export function loadShow(page, force = false) {
   if (!loading || force || loadedFor !== page) {
     loadedFor = page;
     loading = (async () => {
-      show.groupPool.groups.forEach((group) => group.stopAllChases?.());
+      // Nothing may keep playing on the show being cleared: stop every chase and cue first
+      show.groupPool.groups.forEach((group) => {
+        group.stopAllChases?.();
+        group.cuePool.cues.forEach((cue) => { if (cue.animationId != null) cue.cue(false); });
+      });
       const res = await fetch(withBase(SHOWFILE));
       if (!res.ok) throw new Error(`Demo show unavailable (${res.status})`);
       await show.loadFromData(await res.json());
@@ -151,8 +155,20 @@ export function setClock(id, needed) {
 export async function mountPreset(el, preset, onError, popupHost) {
   const component = (await preset.component()).default;
   const props = () => (preset.props ? preset.props(show) : {});
+  const inner = preset.panel ? RouterView : component;
+  // `stage`: the component next to the visualizer (see StageWrap.vue)
+  const StageWrap = preset.stage ? (await import('./StageWrap.vue')).default : null;
   const app = createApp({
-    render: () => (preset.panel ? h(RouterView) : h(component, props())),
+    render: () => {
+      if (!StageWrap) return preset.panel ? h(RouterView) : h(component, props());
+      return h(StageWrap, {
+        inner,
+        innerProps: preset.panel ? {} : props(),
+        innerWidth: preset.componentWidth || 0,
+        innerHeight: preset.componentHeight || 239,
+        viewWidth: preset.viewWidth || 480,
+      });
+    },
   });
   registerComponents(uikit, app);
   app.config.globalProperties.$show = show;
@@ -162,11 +178,15 @@ export async function mountPreset(el, preset, onError, popupHost) {
   app.config.errorHandler = (err) => onError(err);
   app.provide('popupHost', popupHost);
   const router = createRouter({ history: createMemoryHistory(), routes });
+  // A preset can stand in for a panel the preview doesn't show, when the component navigates
+  if (preset.onRoute) router.afterEach((to) => preset.onRoute(show, to));
   app.use(router);
   await router.push(preset.warmRoute || preset.route || '/');
   await router.isReady();
   app.mount(el);
   if (preset.warmRoute) await router.push(preset.route);
+  // Some demos start with the rig already playing (a cue, the chase), as the reader would have it
+  if (preset.start) preset.start(show);
   return app;
 }
 

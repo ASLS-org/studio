@@ -74,7 +74,7 @@ clips that nobody re-records.
 |---|---|---|---|
 | 1 | `restyle-manual-site`: Studio look (tokens, fonts, dark default + light), hero and product presentation, URL config, a working docs build and deploy | none | archived (branch `docs/restyle-manual-site`) |
 | 2 | `add-manual-live-previews`: `<LivePreview>` harness, manual dummy showfile, presets per widget, video fallback; the home page already runs Studio's real widgets live (unit 1), so this unit covers the manual pages (no screenshots anywhere) | 1 | archived (branch `docs/add-manual-live-previews`) |
-| 3 | `document-show-programming`: concepts + patch → group → scene → effect → chase → master/live, with live previews | 2 | proposed |
+| 3 | `document-show-programming`: concepts + patch → group → scene → effect → chase → master/live, with live previews | 2 | archived (branch `docs/document-show-programming`) |
 | 4 | `document-rig-and-output`: fixture library/OFL/GDTF, outputs and gateway, visualizer, showfiles, desktop app, shortcuts, glossary, troubleshooting | 2 (can run beside 3) | proposed |
 | 5 | `gate-manual-upkeep`: OpenSpec rules, archive check, PR template, `user-manual` skill + coverage map | 3, 4 | proposed |
 
@@ -85,6 +85,37 @@ Units 2–5 hold a proposal and a draft design only, so `openspec validate` repo
 same new capability `user-manual`.
 
 ## Backlog (not scheduled in this epic)
+
+- **Studio bugs found while documenting (2026-11-06; checked in the running app).** The manual
+  doesn't present these as working:
+  - Cue **Trigger Style** is saved but never used: every cue toggles on click; **Temporary**
+    does nothing.
+  - The group pool's **dimmer knob**, **Isolate** and **Blackout** are saved but don't affect
+    output. The master column's knob and buttons aren't bound to anything.
+  - Effect waveform **PWM** outputs a constant 1 (dark): no case in `FXChannel.getValue`.
+  - Effect directions **BOUNCELRT** / **BOUNCERTL** give every fixture the same phase: no case in
+    `slotPhase`.
+  - Chase **Quantize** stores the option's index as beats, so **1/8**, **1/4** and **1/2** wait
+    1, 2 and 3 beats. Only **None** and **1/1** (one bar) match their labels.
+  - Patch bay **Shift+click** range selection selects nothing (`handleGroupedSelection`).
+  - The scene panel throws on opening a scene of a group whose fixtures aren't the show's first
+    (`selectionKey`); the panel goes on.
+  - <kbd>Ctrl</kbd> multi-selection in **Scene Fixtures** is ignored for a group's first cue
+    (`selectMultipleFixtures` checks `scene.id`, which is 0), and it starts from fixture id 0
+    (`getFixtureValueFromId(0)`): the same root as the error above.
+  - The patch bay's **New** button does nothing (`displayPatchPopup() {}`).
+  - `CuePool.genCueId()` reduces over `this.chases` and throws when a cue is added without an
+    id (the UI always passes one).
+  - (2026-11-11) The patch bay's list asks to delete (popup, OK) but the patch bay fragment has no
+    `@delete` handler: deleting from the patch bay does nothing. The universe view's fixture pool
+    deletes.
+  - (2026-11-11) The visualizer's scene is a module singleton (`SceneManager`) and `Controls` keeps
+    the last camera: a second `Visualizer` adds its floor and lights to the first's, and its
+    constructor's `autoFocus = true` starts a focus flight on the old camera that lands on the new
+    one (at z = 0, looking at the origin). Studio mounts one visualizer, so only the manual's
+    previews hit it (handled there); a `Visualizer.dispose()` would fix it at the source.
+  - (2026-11-11) With auto-focus on, deselecting doesn't fly the camera back out
+    (`setFocus(false)` is commented out in `Controls.handleKeydown`).
 
 - CI drift check (fail a PR that changes user-facing code without a manual change), generated
   reference pages, and a scheduled AI routine that proposes manual updates. All three were

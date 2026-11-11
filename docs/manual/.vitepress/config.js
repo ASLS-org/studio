@@ -127,8 +127,9 @@ export default {
     logo: { dark: '/studio_standalone_logo.png', light: '/studio_standalone_logo_dark.png' },
     nav,
     sidebar: {
+      // By the reader's path (stubs for the old pages are left out, see openspec unit 3)
       '/': [{
-        text: 'Introduction',
+        text: 'Getting started',
         collapsible: true,
         items: [{
           text: 'About',
@@ -140,62 +141,56 @@ export default {
           text: 'Installation',
           link: '/introduction/installation',
         }, {
+          text: 'Your First Show',
+          link: '/getting-started/first-show',
+        }, {
+          text: 'The Interface',
+          link: '/getting-started/interface',
+        }, {
           text: 'License',
           link: '/introduction/license',
         }],
       }, {
-        text: 'Interface',
+        text: 'Concepts',
+        collapsible: true,
+        items: [{
+          text: 'Show Structure',
+          link: '/concepts/',
+        }, {
+          text: 'Timing and Playback',
+          link: '/concepts/timing',
+        }],
+      }, {
+        text: 'Programming a show',
+        collapsible: true,
+        items: [{
+          text: 'Patching Fixtures',
+          link: '/programming/patching',
+        }, {
+          text: 'Groups',
+          link: '/programming/groups',
+        }, {
+          text: 'Scenes',
+          link: '/programming/scenes',
+        }, {
+          text: 'Effects',
+          link: '/programming/effects',
+        }, {
+          text: 'Chases',
+          link: '/programming/chases',
+        }, {
+          text: 'Playing a Show',
+          link: '/programming/playback',
+        }],
+      }, {
+        text: 'Rig & output',
         collapsible: true,
         items: [{
           text: 'Toolbar',
           link: '/interface/toolbar/',
         }, {
-          text: 'Patch Bay',
-          link: '/interface/patchbay/',
-        }, {
-          text: 'Group Pool',
-          link: '/interface/grouppool/',
-        }, {
           text: 'Visualizer',
           link: '/interface/visualizer/',
-        }, {
-          text: 'Modifier',
-          link: '/interface/modifier/',
-        }],
-      }, {
-        text: 'Modifiers',
-        collapsible: true,
-        items: [{
-          text: 'Universe',
-          link: '/modifiers/universe/',
-        }, {
-          text: 'Group',
-          link: '/modifiers/group/',
-        }, {
-          text: 'Chase',
-          link: '/modifiers/chase/',
-        }],
-      }, {
-        text: 'Workflow',
-        collapsible: true,
-        items: [{
-          text: 'Setting up Environment',
-          link: '/workflow/environment/',
-        }, {
-          text: 'Patching Fixtures',
-          link: '/workflow/patching/',
-        }, {
-          text: 'Setting up Groups',
-          link: '/workflow/grouping/',
-        }, {
-          text: 'Creating Scenes',
-          link: '/workflow/scenes/',
-        }, {
-          text: 'Creating Effects',
-          link: '/workflow/effects/',
-        }, {
-          text: 'Triggering Cues',
-          link: '/workflow/triggering/',
         }],
       }],
     },

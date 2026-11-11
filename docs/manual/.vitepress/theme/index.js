@@ -6,6 +6,10 @@ import uikit from '../../../../src/views/components/uikit';
 import Video from './components/video.vue';
 import StudioFrame from './components/StudioFrame.vue';
 import LivePreview from './components/LivePreview.vue';
+import ShowMap from './components/ShowMap.vue';
+import SceneFade from './components/SceneFade.vue';
+import EffectWave from './components/EffectWave.vue';
+import CellsBar from './components/CellsBar.vue';
 import ResourceLink from './components/ResourceLink.vue';
 import StudioLayout from './shell/Layout.vue';
 import HomeStory from './hero/HomeStory.vue';
@@ -43,6 +47,10 @@ export default {
     app.component('Video', Video);
     app.component('StudioFrame', StudioFrame);
     app.component('LivePreview', LivePreview);
+    app.component('ShowMap', ShowMap);
+    app.component('SceneFade', SceneFade);
+    app.component('EffectWave', EffectWave);
+    app.component('CellsBar', CellsBar);
     app.component('ResourceLink', ResourceLink);
     app.component('HomeStory', HomeStory);
   },
