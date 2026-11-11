@@ -311,24 +311,25 @@ import {
 let cached = null;
 
 /**
- * Throttle: how far (story units: a chapter is 1) the page's scroll may run ahead of the story
+ * The reader's scrolling plays the story like a player (forward, or backward when scrolling up)
+ * at this many times real time; Autoplay plays at real time
  * @type {Number}
  */
-const LEAD = 0.15;
+const PLAY_SPEED = 1.6;
 
 /**
- * Wheel and touch: events closer together than this (ms) are one gesture, momentum included. A
- * gesture can't carry the story past the next chapter: the reader pauses, then scrolls on
- * @type {Number}
+ * Seconds the playback speed takes to ease in when the reader starts scrolling, and to ease out
+ * when they stop (along a smoothstep, so it starts and settles softly)
+ * @type {Object}
  */
-const GESTURE_GAP = 250;
+const RAMP = { in: 0.45, out: 0.7 };
 
 /**
- * A scroll that keeps going (not momentum) carries on past a chapter once the story has rested
- * on it this long (ms)
- * @type {Number}
+ * How long (ms) an input keeps the story playing after its last event: a wheel notch, a touch
+ * move, a key press (a key's auto-repeat keeps it going)
+ * @type {Object}
  */
-const GATE_REST = 400;
+const HOLD = { wheel: 260, touch: 140, key: 500 };
 
 /**
  * Scene chapters (after the 2D hero): copy, accent token, where the copy sits
@@ -476,9 +477,8 @@ export default {
       blurElements: {},
       position: 0,
       target: 0,
-      idle: true,
+      playing: false,
       autoplaying: false,
-      jumpTo: null,
       ready: false,
       fallback: false,
       still: false,
@@ -525,8 +525,7 @@ export default {
      * @type {Object}
      */
     hintStyle() {
-      const settled = this.idle && Math.abs(this.target - this.position) < 0.002;
-      const p = settled ? 1 - this.smooth(this.outro * 2) : 0;
+      const p = this.playing ? 0 : 1 - this.smooth(this.outro * 2);
       return {
         opacity: p,
         visibility: p > 0.001 ? 'visible' : 'hidden',
@@ -646,14 +645,14 @@ export default {
   },
   async mounted() {
     window.addEventListener('scroll', this.onScroll, { passive: true });
-    // A glide (rail, scroll hint) gives way to the reader's own scrolling
-    ['wheel', 'touchstart', 'keydown'].forEach((type) => {
-      window.addEventListener(type, this.stopGlide, { passive: true });
-    });
-    // Not passive: a wheel event that would run past the throttle (or is momentum) is held back
-    // before it scrolls, rather than scrolled back after
+    // Inside the story, the wheel, swipes and keys play it (forward or back) instead of scrolling
+    // the page: not passive, so they can be kept from scrolling
     window.addEventListener('wheel', this.onWheel, { passive: false });
-    window.addEventListener('touchmove', this.onGesture, { passive: true });
+    window.addEventListener('touchstart', this.onTouchStart, { passive: true });
+    window.addEventListener('touchmove', this.onTouchMove, { passive: false });
+    window.addEventListener('touchend', this.onTouchEnd, { passive: true });
+    window.addEventListener('keydown', this.onKeyDown);
+    window.addEventListener('keyup', this.onKeyUp);
     window.addEventListener('pointermove', this.onPointer, { passive: true });
     window.addEventListener('resize', this.onResize);
     document.addEventListener('visibilitychange', this.updateLoop);
@@ -716,12 +715,12 @@ export default {
   beforeUnmount() {
     this.unmounted = true;
     this.stopGlide();
-    clearTimeout(this.idleTimer);
-    ['wheel', 'touchstart', 'keydown'].forEach((type) => {
-      window.removeEventListener(type, this.stopGlide);
-    });
     window.removeEventListener('wheel', this.onWheel);
-    window.removeEventListener('touchmove', this.onGesture);
+    window.removeEventListener('touchstart', this.onTouchStart);
+    window.removeEventListener('touchmove', this.onTouchMove);
+    window.removeEventListener('touchend', this.onTouchEnd);
+    window.removeEventListener('keydown', this.onKeyDown);
+    window.removeEventListener('keyup', this.onKeyUp);
     window.removeEventListener('pointermove', this.onPointer);
     this.stopLoop();
     this.observer.disconnect();
@@ -857,29 +856,34 @@ export default {
       };
     },
     /**
-     * Runs the show once the stage starts to appear, while on screen and the tab is visible
+     * Runs the frame loop while there is something to draw: the stage once it starts to appear,
+     * a playback, a seek. On screen and with the tab visible only
      */
     updateLoop() {
+      const busy = this.dir || this.seekAnim || this.follow || this.autoplaying
+        || performance.now() - (this.inputAt || 0) < 400;
       const run = this.ready && !this.still && this.visible && !document.hidden
-        && (this.position > 0.01 || this.target > 0.01);
+        && (this.position > 0.01 || busy);
       if (run && !this.frameId) {
         let n = 0;
         let last = performance.now();
         const tick = (now) => {
           const t = now / 1000;
           // rAF timestamps can precede the moment the loop started: never a negative step
-          this.advance(Math.min(Math.max((now - last) / 1000, 0), 0.1));
+          const dt = Math.min(Math.max((now - last) / 1000, 0), 0.1);
           last = now;
+          this.advance(now, dt);
           cached.stage.setPosition(this.position);
           cached.stage.render(t);
           if (this.morph < 1 || this.outro > 0) this.drawReveal(t);
           n += 1;
           if (n % 3 === 0) this.sync();
-          // Settled on the first hero, or under the final one: nothing left to draw until the
-          // next scroll (onScroll starts the loop again)
+          // Resting on the first hero, or under the final one: nothing to draw until the next
+          // input or scroll starts the loop again
           const end = this.chapters.length - 1;
-          const settled = Math.abs(this.target - this.position) < 0.0005 && this.jumpTo === null;
-          if (settled && (this.position < 0.001 || this.position > end - 0.001)) {
+          const idle = !this.dir && !this.seekAnim && !this.follow && !this.autoplaying
+            && now - (this.inputAt || 0) > 400;
+          if (idle && (this.position < 0.001 || this.position > end - 0.001)) {
             this.frameId = null;
             return;
           }
@@ -891,85 +895,225 @@ export default {
       }
     },
     /**
-     * Moves the story position towards the scroll position at a constant pace, independent of
-     * the scroll's velocity (trackpad flicks don't speed it up). A jump (rail, back to top)
-     * glides instead
+     * Playback speed (story units per second, at real time) where the story is: a chapter's show
+     * plays at its own pace, a move between chapters takes 0.7 s, the reveal 1.2 s, the last
+     * show runs across its whole chapter while the final hero arrives
+     * @param {Number} position story position
+     * @param {Number} dir 1 forward, -1 back
+     * @returns {Number} rate
+     */
+    rateAt(position, dir) {
+      const last = this.chapters.length - 1;
+      const index = clamp(Math.floor(position + (dir < 0 ? -1e-6 : 0)), 0, last);
+      if (index === 0) return 1 / 1.2;
+      if (index >= last - 1) return 1 / SHOW_SECONDS[this.chapters[last - 1].id];
+      const { id } = this.chapters[index];
+      return position - index < SHOW_SHARE
+        ? SHOW_SHARE / SHOW_SECONDS[id]
+        : (1 - SHOW_SHARE) / 0.7;
+    },
+    /**
+     * One frame of the player. A seek (rail, Next, Replay) runs its eased course. Otherwise the
+     * reader's input (or Autoplay) sets a direction, and the speed eases in towards it along a
+     * smoothstep, eases out when the input stops, and passes through zero to reverse. A scroll the
+     * story didn't make (the scrollbar, a link) is followed with a glide
+     * @param {Number} now ms (rAF time)
      * @param {Number} dt seconds since the last frame
      */
-    advance(dt) {
-      // The story reached its gesture's gate: note when (a scroll that keeps going moves on
-      // after GATE_REST)
-      if (this.gate != null && !this.gateAt && Math.abs(this.position - this.gate) < 0.002) {
-        this.gateAt = performance.now();
-      }
-      const delta = this.target - this.position;
-      // A skip (Next, the rail, Replay) glides until the story gets there, however long the
-      // page takes to start moving
-      if (this.jumpTo !== null) {
-        this.jumping = true;
-        if (Math.abs(this.jumpTo - this.position) < 0.002) this.jumpTo = null;
-      }
-      if (Math.abs(delta) < 0.0005) {
-        this.position = this.target;
-        if (this.jumpTo === null) this.jumping = false;
-        return;
-      }
-      const gesture = performance.now() - (this.gestureAt || 0) < 300;
-      // Far away without a gesture (scrollbar drag, End key…): glide there
-      if (!gesture && Math.abs(delta) > 1.5) this.jumping = true;
-      if (this.jumping) {
-        this.position += delta * (1 - Math.exp(-8 * dt));
-        return;
-      }
-      // Walk towards the scroll at a fixed pace for the part of the story we're in, whatever
-      // the scroll's speed: shows at 2× real time, transitions in ~0.7 s, the reveal in ~1.2 s
+    advance(now, dt) {
       const last = this.chapters.length - 1;
-      const nudge = delta < 0 ? -1e-6 : 0;
-      const index = Math.max(0, Math.min(Math.floor(this.position + nudge), last));
-      const fraction = this.position - index;
-      let rate = 1 / 1.2;
-      if (index === last) {
-        rate = 1 / 0.8;
-      } else if (index === last - 1) {
-        rate = 2 / SHOW_SECONDS[this.chapters[index].id];
-      } else if (index > 0) {
-        rate = fraction < SHOW_SHARE
-          ? (2 * SHOW_SHARE) / SHOW_SECONDS[this.chapters[index].id]
-          : (1 - SHOW_SHARE) / 0.7;
-      }
-      this.position += Math.sign(delta) * Math.min(Math.abs(delta), rate * dt);
-      // Touch (and its fling): the page can't run past the throttle either. The wheel is held
-      // back before it scrolls (onWheel); a swipe's fling can only be scrolled back
-      if (gesture && !this.glide && this.touching) {
-        if (this.gate === null) this.beginGesture(Math.sign(delta));
-        const cap = this.cap(Math.sign(delta));
-        if ((delta > 0 && this.target > cap + 0.01) || (delta < 0 && this.target < cap - 0.01)) {
-          this.holdScroll(cap);
+      if (this.seekAnim) {
+        const { from, to, start, duration } = this.seekAnim;
+        const k = clamp((now - start) / (duration * 1000));
+        const e = k < 0.5 ? 4 * k * k * k : 1 - (-2 * k + 2) ** 3 / 2;
+        this.position = from + (to - from) * e;
+        if (k >= 1) {
+          this.seekAnim = null;
+          this.settle();
         }
+        return;
+      }
+      if (this.follow) {
+        const delta = this.target - this.position;
+        if (Math.abs(delta) < 0.0005) {
+          this.position = this.target;
+          this.follow = false;
+          this.setPlaying(false);
+        } else {
+          this.position += delta * (1 - Math.exp(-8 * dt));
+        }
+        return;
+      }
+      // What the reader asks for: a direction while their input lasts (Autoplay: forward)
+      let wanted = 0;
+      if (this.autoplaying) wanted = 1;
+      else if (now - (this.inputAt || 0) < (this.holdMs || 0)) wanted = this.inputDir;
+      if (!this.dir && wanted) this.dir = wanted;
+      const rampIn = wanted !== 0 && wanted === this.dir;
+      this.ramp = rampIn
+        ? Math.min(1, (this.ramp || 0) + dt / RAMP.in)
+        : Math.max(0, (this.ramp || 0) - dt / RAMP.out);
+      if (this.ramp === 0) {
+        this.rate = 0;
+        // Stopped: reverse if asked, else rest here
+        if (this.dir && !wanted) {
+          this.dir = 0;
+          this.settle();
+        } else if (wanted) {
+          this.dir = wanted;
+        }
+        return;
+      }
+      const speed = (this.autoplaying ? 1 : PLAY_SPEED) * this.smooth(this.ramp);
+      // Each part of the story has its own pace (a show, a camera move, the reveal): ease from
+      // one to the next so the speed never jumps at a boundary
+      const rate = this.rateAt(this.position, this.dir);
+      this.rate = this.rate ? this.rate + (rate - this.rate) * (1 - Math.exp(-dt / 0.3)) : rate;
+      const next = this.position + this.dir * speed * this.rate * dt;
+      this.position = clamp(next, 0, last);
+      this.setPlaying(true);
+      // The ends of the story: stop there (Autoplay is done at the final hero)
+      if ((this.dir > 0 && this.position >= last) || (this.dir < 0 && this.position <= 0)) {
+        this.ramp = 0;
+        this.dir = 0;
+        this.autoplaying = false;
+        this.inputAt = 0;
+        this.settle();
       }
     },
     /**
-     * A gesture starts: it may carry the story up to the next chapter in its direction, not past
-     * @param {Number} dir 1 (down) or -1 (up)
+     * Playback stopped: the page's scroll catches up with the story, once (the scrollbar and the
+     * browser's back/forward stay true; nothing scrolls while playing)
      */
-    beginGesture(dir) {
-      const last = this.chapters.length - 1;
-      this.gestureDir = dir;
-      this.gate = dir > 0
-        ? Math.min(Math.floor(this.position + 1e-6) + 1, last)
-        : Math.max(Math.ceil(this.position - 1e-6) - 1, 0);
-      this.gateAt = null;
+    settle() {
+      this.target = this.position;
+      this.expectedY = null;
+      if (this.storyTop !== undefined) {
+        const i = Math.max(0, Math.min(Math.floor(this.position), this.lengths.length - 1));
+        const y = this.starts[i] + clamp(this.position - i) * this.lengths[i];
+        this.expectedY = Math.round(this.storyTop + y * (window.innerHeight / 100));
+        window.scrollTo(0, this.expectedY);
+      }
+      this.setPlaying(false);
     },
     /**
-     * How far the current gesture may take the scroll: no more than LEAD ahead of the story, and
-     * not past its chapter gate
-     * @param {Number} dir 1 or -1
-     * @returns {Number} story position
+     * The scroll cue and the copy know whether the story is moving (only written on change: the
+     * template doesn't re-render every frame)
+     * @param {Boolean} state playing
      */
-    cap(dir) {
-      return dir > 0
-        ? Math.min(this.gate, this.position + LEAD)
-        : Math.max(this.gate, this.position - LEAD);
+    setPlaying(state) {
+      if (this.playing !== state) this.playing = state;
+    },
+    /**
+     * Whether an input in this direction plays the story (else the page scrolls as usual: past
+     * the final hero, above the top, or the page under the story)
+     * @param {Number} dir 1 or -1
+     * @returns {Boolean}
+     */
+    captures(dir) {
+      if (!this.ready || this.still || this.fallback || this.storyTop === undefined) return false;
+      const last = this.chapters.length - 1;
+      const y = window.scrollY;
+      const end = this.storyTop + this.starts[last] * (window.innerHeight / 100);
+      if (y < this.storyTop - 2 || y > end + 2) return false;
+      if (dir > 0) return this.position < last - 0.001 || this.dir < 0;
+      return this.position > 0.001 || this.dir > 0;
+    },
+    /**
+     * The reader asked to play in a direction
+     * @param {Number} dir 1 or -1
+     * @param {Number} hold ms the input keeps playing without a new event
+     */
+    press(dir, hold) {
+      this.stopGlide();
+      this.seekAnim = null;
+      this.follow = false;
+      this.inputDir = dir;
+      this.inputAt = performance.now();
+      this.holdMs = hold;
+      this.updateLoop();
+    },
+    /**
+     * Wheel: plays the story while the wheel turns. Momentum (a run of weakening events after a
+     * trackpad flick) doesn't keep it playing
+     * @param {WheelEvent} e wheel event
+     */
+    onWheel(e) {
+      const dir = Math.sign(e.deltaY);
+      if (!dir || e.ctrlKey || !this.captures(dir)) return;
+      e.preventDefault();
+      const at = e.timeStamp || performance.now();
+      const mag = Math.abs(e.deltaY);
+      const fresh = at - (this.wheelAt || -1e9) > 120 || dir !== this.wheelDir;
+      // A new flick inside a gesture: much stronger than the event before (momentum only fades)
+      const flick = mag > (this.wheelMag || 0) * 1.6 && mag >= 10;
+      this.decay = !fresh && mag < (this.wheelMag || 0) ? (this.decay || 0) + 1 : 0;
+      if (fresh || flick) this.momentum = false;
+      // Three weakening events in a row: the rest of the gesture is momentum, even its flat tail
+      if (this.decay >= 3) this.momentum = true;
+      this.wheelAt = at;
+      this.wheelDir = dir;
+      this.wheelMag = mag;
+      if (this.momentum) return;
+      this.press(dir, HOLD.wheel);
+    },
+    /**
+     * Touch: where the finger is
+     * @param {TouchEvent} e touch event
+     */
+    onTouchStart(e) {
+      this.touchY = e.touches[0].clientY;
+    },
+    /**
+     * Touch: plays while the finger moves (up: forward), never flings
+     * @param {TouchEvent} e touch event
+     */
+    onTouchMove(e) {
+      if (this.touchY == null) return;
+      const y = e.touches[0].clientY;
+      const dy = this.touchY - y;
+      const dir = Math.sign(dy);
+      if (!dir || !this.captures(dir)) return;
+      e.preventDefault();
+      if (Math.abs(dy) < 3) return;
+      this.touchY = y;
+      this.press(dir, HOLD.touch);
+    },
+    /**
+     * Touch: the finger lifted, playback eases out
+     */
+    onTouchEnd() {
+      this.touchY = null;
+      this.inputAt = 0;
+    },
+    /**
+     * Keys: arrows, Page Up/Down and Space play while held (a tap plays a moment)
+     * @param {KeyboardEvent} e key event
+     */
+    onKeyDown(e) {
+      const field = e.target && (e.target.isContentEditable
+        || /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(e.target.tagName));
+      if (field || e.altKey || e.ctrlKey || e.metaKey) return;
+      const keys = {
+        ArrowDown: 1, PageDown: 1, ArrowUp: -1, PageUp: -1, ' ': e.shiftKey ? -1 : 1,
+      };
+      const dir = keys[e.key];
+      if (!dir || !this.captures(dir)) return;
+      e.preventDefault();
+      this.keyDir = dir;
+      this.press(dir, HOLD.key);
+    },
+    /**
+     * Keys: released, playback eases out
+     * @param {KeyboardEvent} e key event
+     */
+    onKeyUp(e) {
+      if (!this.keyDir) return;
+      const keys = ['ArrowDown', 'PageDown', 'ArrowUp', 'PageUp', ' '];
+      if (!keys.includes(e.key)) return;
+      this.keyDir = 0;
+      // A tap still plays a moment
+      this.holdMs = Math.min(this.holdMs, performance.now() - this.inputAt + 200);
     },
     /**
      * Story position for a page scroll offset
@@ -984,49 +1128,6 @@ export default {
       return i + clamp((y - this.starts[i]) / this.lengths[i]);
     },
     /**
-     * Wheel: the story scrubs with the scroll, throttled. A wheel event that would take the page
-     * more than LEAD ahead of the story, or past the next chapter within one gesture, is held back
-     * (the page goes as far as allowed); momentum (a run of weakening events) is ignored. Outside
-     * the story (below the final hero, above the top) the page scrolls as usual
-     * @param {WheelEvent} e wheel event
-     */
-    onWheel(e) {
-      this.gestureAt = performance.now();
-      this.touching = false;
-      const dir = Math.sign(e.deltaY);
-      if (!dir || e.ctrlKey || !this.ready || this.still || this.fallback || this.glide) return;
-      const at = e.timeStamp || performance.now();
-      const mag = Math.abs(e.deltaY);
-      const fresh = at - (this.wheelAt || -1e9) > GESTURE_GAP || dir !== this.gestureDir;
-      // Momentum decays event after event; a hand on the wheel or the trackpad doesn't for long
-      this.decay = !fresh && mag < (this.wheelMag || 0) ? (this.decay || 0) + 1 : 0;
-      this.wheelAt = at;
-      this.wheelMag = mag;
-      if (fresh) {
-        this.beginGesture(dir);
-      } else if (this.decay < 3 && this.gateAt && performance.now() - this.gateAt > GATE_REST) {
-        // Still scrolling, by hand, after the story rested on the chapter: on to the next one
-        this.beginGesture(dir);
-      }
-      // Outside the story: the page scrolls on
-      const last = this.chapters.length - 1;
-      const y = window.scrollY;
-      const end = this.storyTop + this.starts[last] * (window.innerHeight / 100);
-      if ((dir > 0 && (this.position >= last - 0.001 || y >= end))
-        || (dir < 0 && y <= this.storyTop)) return;
-      if (this.decay >= 3) {
-        e.preventDefault();
-        return;
-      }
-      const px = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
-      const next = this.positionAt(y + px);
-      const cap = this.cap(dir);
-      if ((dir > 0 && next > cap) || (dir < 0 && next < cap)) {
-        e.preventDefault();
-        if (Math.abs(this.target - cap) > 0.001) this.holdScroll(cap);
-      }
-    },
-    /**
      * Scrolls the page to a story position
      * @param {Number} position story position
      */
@@ -1034,15 +1135,6 @@ export default {
       const i = Math.max(0, Math.min(Math.floor(position), this.lengths.length - 1));
       const y = this.starts[i] + clamp(position - i) * this.lengths[i];
       window.scrollTo(0, this.storyTop + y * (window.innerHeight / 100));
-    },
-    /**
-     * A touch scroll happened (a new touch starts a new gesture)
-     */
-    onGesture() {
-      const now = performance.now();
-      if (!this.touching || now - (this.gestureAt || 0) > GESTURE_GAP) this.gate = null;
-      this.touching = true;
-      this.gestureAt = now;
     },
     /**
      * Where the story starts on the page (px), read once per layout change: the scroll handler
@@ -1106,40 +1198,24 @@ export default {
       if (this.chapterId === 'cues' || this.chapterId === 'chase') ManualTicker.bump();
     },
     /**
-     * Story position from the scroll: 0..1 the reveal, then i + how far chapter i has played
+     * The page scrolled. Our own catch-up scroll is ignored; any other scroll (the scrollbar, a
+     * link, the page under the story) moves the story to match, with a glide
      */
     onScroll() {
       if (!this.$refs.story) return;
       if (this.storyTop === undefined) this.measure();
+      if (this.expectedY != null && Math.abs(window.scrollY - this.expectedY) < 2) return;
+      this.expectedY = null;
       this.target = this.positionAt(window.scrollY);
-      this.idle = false;
-      clearTimeout(this.idleTimer);
-      this.idleTimer = setTimeout(() => { this.idle = true; }, 900);
-      if (!this.ready) {
+      if (!this.ready || this.still) {
         this.position = this.target;
-        if (this.morph < 1) this.drawReveal(performance.now() / 1000);
-      } else {
-        this.updateLoop();
+        if (!this.ready && this.morph < 1) this.drawReveal(performance.now() / 1000);
+        return;
       }
-    },
-    /**
-     * Eases the page to a scroll offset (rail, scroll hint); the reader's own scrolling takes over
-     * @param {Number} top target scroll offset (px)
-     */
-    glideTo(top) {
-      this.stopGlide();
-      const from = window.scrollY;
-      const distance = top - from;
-      if (Math.abs(distance) < 1) return;
-      const duration = Math.min(1100, 700 + Math.abs(distance) * 0.25);
-      const start = performance.now();
-      const step = (now) => {
-        const k = Math.min((now - start) / duration, 1);
-        const e = k < 0.5 ? 4 * k * k * k : 1 - (-2 * k + 2) ** 3 / 2;
-        window.scrollTo(0, from + distance * e);
-        this.glide = k < 1 ? requestAnimationFrame(step) : null;
-      };
-      this.glide = requestAnimationFrame(step);
+      if (this.dir || this.seekAnim) return;
+      this.follow = true;
+      this.setPlaying(true);
+      this.updateLoop();
     },
     /**
      * Pointer over the page: the stage's camera tilts a little towards it
@@ -1153,73 +1229,61 @@ export default {
       );
     },
     /**
-     * Stops a glide in progress
+     * Stops Autoplay (the reader's own input takes over)
      */
     stopGlide() {
-      if (this.glide) cancelAnimationFrame(this.glide);
-      this.glide = null;
       this.autoplaying = false;
-      this.jumpTo = null;
     },
     /**
-     * Autoplay, one toggle for the whole story: scrolls through the shows at their real speed,
-     * each chapter starting as soon as the previous one ends, up to the final hero. Again to
-     * pause; the reader's own scrolling (wheel, touch, keys) also stops it
+     * Autoplay, one toggle for the whole story: plays the shows at real time, easing in, up to the
+     * final hero. Again to pause (it eases out); the reader's wheel, swipes and keys also stop it
      */
     toggleAutoplay() {
       if (this.autoplaying) {
         this.stopGlide();
         return;
       }
-      this.stopGlide();
-      const end = this.chapters.length - 1;
-      this.autoPosition = Math.max(this.target, 1);
-      let last = performance.now();
+      this.seekAnim = null;
+      this.follow = false;
       this.autoplaying = true;
-      const step = (now) => {
-        const dt = Math.min(Math.max((now - last) / 1000, 0), 0.1);
-        last = now;
-        const index = Math.floor(this.autoPosition);
-        const fraction = this.autoPosition - index;
-        let rate = 1;
-        if (index === end - 1) {
-          rate = 1 / SHOW_SECONDS[this.chapters[index].id];
-        } else if (index < end) {
-          rate = fraction < SHOW_SHARE
-            ? SHOW_SHARE / SHOW_SECONDS[this.chapters[index].id]
-            : (1 - SHOW_SHARE) / 0.7;
-        }
-        this.autoPosition = Math.min(this.autoPosition + rate * dt, end);
-        this.holdScroll(this.autoPosition);
-        if (this.autoPosition < end) {
-          this.glide = requestAnimationFrame(step);
-        } else {
-          this.glide = null;
-          this.autoplaying = false;
-        }
-      };
-      this.glide = requestAnimationFrame(step);
+      this.updateLoop();
     },
     /**
-     * Skips to the start of chapter i; autoplay, if on, carries on from there
+     * Glides to a story position (the rail, Next, Replay): eased in and out, timed by distance
+     * @param {Number} to story position
+     */
+    seek(to) {
+      const target = clamp(to, 0, this.chapters.length - 1);
+      this.follow = false;
+      this.dir = 0;
+      this.ramp = 0;
+      this.inputAt = 0;
+      const distance = Math.abs(target - this.position);
+      if (distance < 0.001) return;
+      this.seekAnim = {
+        from: this.position,
+        to: target,
+        start: performance.now(),
+        duration: Math.min(0.9 + 0.3 * distance, 2.2),
+      };
+      this.setPlaying(true);
+      this.updateLoop();
+    },
+    /**
+     * Skips to chapter i; Autoplay, if on, carries on from there
      * @param {Number} i chapter index
      */
     next(i) {
-      const target = Math.min(i, this.chapters.length - 1);
-      if (this.autoplaying) {
-        this.jumpTo = target;
-        this.autoPosition = target;
-        this.holdScroll(target);
-      } else {
-        this.goTo(target);
-      }
+      const playing = this.autoplaying;
+      this.seek(Math.min(i, this.chapters.length - 1));
+      this.autoplaying = playing;
     },
     /**
-     * Back to the hero
+     * Back to the first hero
      */
     backToTop() {
-      this.glideTo(0);
-      this.jumpTo = 0;
+      this.stopGlide();
+      this.seek(0);
     },
     /**
      * Keeps the renderer, the reveal and the panels at the screen size
@@ -1239,14 +1303,12 @@ export default {
       }
     },
     /**
-     * Scrolls to a chapter
+     * To a chapter (the rail, the scroll cue)
      * @param {Number} i chapter index
      */
     goTo(i) {
-      const { story } = this.$refs;
-      const top = story.getBoundingClientRect().top + window.scrollY;
-      this.glideTo(top + this.starts[i] * (window.innerHeight / 100) + 1);
-      this.jumpTo = i;
+      this.stopGlide();
+      this.seek(i);
     },
   },
 };
