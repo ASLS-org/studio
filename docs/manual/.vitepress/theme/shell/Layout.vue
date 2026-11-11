@@ -172,6 +172,9 @@
       </div>
     </div>
 
+    <!-- The page's one visualizer, on pages whose previews drive the rig -->
+    <FloatingVisualizer v-if="!isHome" />
+
     <footer
       v-if="!isHome"
       class="app_footer"
@@ -226,6 +229,7 @@ import ManualNav from './ManualNav.vue';
 import ManualOutline from './ManualOutline.vue';
 import ManualSearch from './ManualSearch.vue';
 import ManualContentBar from './ManualContentBar.vue';
+import FloatingVisualizer from '../components/FloatingVisualizer.vue';
 
 /**
  * Where the reader's theme choice is kept: 'light' | 'dark' | 'system'
@@ -250,7 +254,7 @@ const SearchBox = markRaw(defineAsyncComponent(
 export default {
   name: 'StudioLayout',
   components: {
-    ManualNav, ManualOutline, ManualSearch, ManualContentBar,
+    FloatingVisualizer, ManualNav, ManualOutline, ManualSearch, ManualContentBar,
   },
   setup() {
     // VitePress state is only reachable through its composables

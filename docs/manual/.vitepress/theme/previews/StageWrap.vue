@@ -1,36 +1,38 @@
 <template>
-  <div class="stage_wrap">
-    <div
-      class="stage_wrap_component"
-      :style="componentStyle"
-    >
-      <component
-        :is="inner"
-        v-bind="innerProps"
-      />
-    </div>
-    <div
-      class="stage_wrap_view"
-      :style="{ width: `${viewWidth}px` }"
-    >
-      <visualizer-preview />
-    </div>
+  <div
+    ref="box"
+    class="stage_wrap_component"
+    :style="componentStyle"
+  >
+    <component
+      :is="inner"
+      v-bind="innerProps"
+    />
   </div>
 </template>
 
 <script>
-import VisualizerPreview from './VisualizerPreview.vue';
 
 /**
- * A Studio component next to the visualizer, so the reader sees what it does to the rig: move a
- * fader, play a cue, start a chase, and the lights answer. The component keeps its size in Studio;
- * the visualizer fills the rest of the stage's height.
+ * A Studio component that drives the rig, at its size in Studio. The page's floating visualizer
+ * card comes next to it while it runs (see FloatingVisualizer.vue), so the reader sees what it
+ * does to the rig: move a fader, play a cue, start a chase, and the lights answer.
  * @displayName StageWrap
  */
 export default {
   name: 'StageWrap',
   compatConfig: { MODE: 3 },
-  components: { VisualizerPreview },
+  /**
+   * Studio's popups mount into the injected `popupHost`: it must exist before the component
+   * mounts, so it is created here and placed in the box once mounted
+   * @returns {Object} provided values
+   */
+  provide() {
+    if (!this.popupInBox) return {};
+    this.boxHost = document.createElement('div');
+    this.boxHost.className = 'stage_wrap_popups';
+    return { popupHost: this.boxHost };
+  },
   props: {
     /**
      * The Studio component (or the router view, for panels)
@@ -61,11 +63,12 @@ export default {
       default: 239,
     },
     /**
-     * The visualizer's width (px)
+     * Popups open in the component's box (beside the visualizer) instead of over the whole
+     * preview: for a component that is a popup, such as the visualizer settings
      */
-    viewWidth: {
-      type: Number,
-      default: 480,
+    popupInBox: {
+      type: Boolean,
+      default: false,
     },
   },
   computed: {
@@ -80,31 +83,29 @@ export default {
       };
     },
   },
+  mounted() {
+    if (this.boxHost) this.$refs.box.appendChild(this.boxHost);
+  },
 };
 </script>
 
 <style scoped>
-.stage_wrap {
-  display: flex;
-  gap: 16px;
-  height: 100%;
-  align-items: flex-start;
-}
-
 .stage_wrap_component {
+  position: relative;
   display: flex;
   flex: none;
   overflow: hidden;
+}
+
+/* Popups placed in the box: they center on it, as Studio's do on the window */
+.stage_wrap_component :deep(.stage_wrap_popups) {
+  position: absolute;
+  inset: 0;
+  transform: translateZ(0);
 }
 
 .stage_wrap_component > :deep(*) {
   height: 100%;
 }
 
-.stage_wrap_view {
-  flex: none;
-  height: 100%;
-  overflow: hidden;
-  border-radius: 4px;
-}
 </style>

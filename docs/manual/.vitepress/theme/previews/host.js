@@ -1,4 +1,4 @@
-/* eslint-disable import/no-extraneous-dependencies, import/first */
+/* eslint-disable import/no-extraneous-dependencies, import/first, vue/one-component-per-file */
 // First: requests resolve from the site root before Studio's Show is built (see site-root.js)
 import './site-root';
 /*
@@ -98,6 +98,10 @@ export function loadShow(page, force = false) {
         group.stopAllChases?.();
         group.cuePool.cues.forEach((cue) => { if (cue.animationId != null) cue.cue(false); });
       });
+      // Outputs a demo added: previews never connect them, so drop them before the load clears
+      // the pool (Studio's own clearing throws once an output exists, see Known limitations)
+      show.universePool.universes.forEach((u) => { if (u.stream) u.stream.stop?.(); });
+      show.outputPool.outputs.splice(0);
       const res = await fetch(withBase(SHOWFILE));
       if (!res.ok) throw new Error(`Demo show unavailable (${res.status})`);
       await show.loadFromData(await res.json());
@@ -166,7 +170,7 @@ export async function mountPreset(el, preset, onError, popupHost) {
         innerProps: preset.panel ? {} : props(),
         innerWidth: preset.componentWidth || 0,
         innerHeight: preset.componentHeight || 239,
-        viewWidth: preset.viewWidth || 480,
+        popupInBox: Boolean(preset.popupInBox),
       });
     },
   });
@@ -187,6 +191,21 @@ export async function mountPreset(el, preset, onError, popupHost) {
   if (preset.warmRoute) await router.push(preset.route);
   // Some demos start with the rig already playing (a cue, the chase), as the reader would have it
   if (preset.start) preset.start(show);
+  return app;
+}
+
+/**
+ * Mounts the page's one visualizer (the floating card) into an element: Studio's visualizer on
+ * the shared show, as its own Vue app with Studio's globals
+ * @param {HTMLElement} el target element
+ * @returns {Promise<Object>} the mounted app
+ */
+export async function mountVisualizer(el) {
+  const VisualizerPreview = (await import('./VisualizerPreview.vue')).default;
+  const app = createApp({ render: () => h(VisualizerPreview) });
+  app.config.globalProperties.$show = show;
+  app.config.errorHandler = (err) => console.error('[Visualizer]', err); // eslint-disable-line no-console
+  app.mount(el);
   return app;
 }
 
