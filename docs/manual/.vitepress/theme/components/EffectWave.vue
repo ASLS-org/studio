@@ -95,7 +95,7 @@
             class="light"
             :style="lightStyle(light)"
           />
-          <p>PAR {{ i + 1 }}<br><small>{{ Math.round(light.offset) }}°</small></p>
+          <p>MAC Aura {{ i + 1 }}<br><small>{{ Math.round(light.offset) }}°</small></p>
         </div>
       </div>
     </div>
@@ -116,9 +116,10 @@ const WAVES = {
 };
 
 /**
- * Interactive illustration of an effect: four PARs follow a waveform (Freq 1 over a 1-bar
- * duration: one cycle every 2 s at 120 BPM). Each light is offset by its phase, spread between
- * Phase start (0°) and Phase stop, in the chosen direction, as Studio's effect tool does.
+ * Interactive illustration of an effect: the demo rig's four heads follow a waveform (Freq 1
+ * over a 1-bar duration: one cycle every 2 s at 120 BPM). Each light is offset by its phase,
+ * spread between Phase start (0°) and Phase stop, in the chosen direction, as Studio's effect
+ * tool does.
  * @example <EffectWave />
  */
 export default {
@@ -126,8 +127,8 @@ export default {
   data() {
     return {
       time: 0,
-      caption: 'A dimmer effect on four PARs: the waveform sets each light\'s level over time; '
-        + 'the phase spread offsets each light along it',
+      caption: 'A dimmer effect on the four MAC Auras: the waveform sets each light\'s level over '
+        + 'time; the phase spread offsets each light along it',
       settings: { waveform: 'SINE', stop: 360, direction: 'LTR' },
       controls: [
         {

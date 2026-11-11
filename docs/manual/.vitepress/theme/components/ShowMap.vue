@@ -155,8 +155,8 @@ export default {
   data() {
     return {
       show: null,
-      caption: 'The manual\'s demo show, as Studio stores it: one universe, five fixtures, three '
-        + 'groups with their cues and chases, and the master',
+      caption: 'The manual\'s demo show, the home page\'s rig, as Studio stores it: one universe, '
+        + 'four moving heads, one group with its four cues and its chase, and the master',
     };
   },
   async mounted() {

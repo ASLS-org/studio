@@ -33,7 +33,7 @@
 <script>
 /**
  * Muted looping screen recording that plays while it sits near the middle of the viewport.
- * @example <Video src="/interface/visualizer_controls_rotate.webm" />
+ * @example <Video src="/clip.webm" />
  */
 export default {
   // Existing pages use <Video>; renaming it would break them

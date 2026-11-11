@@ -70,9 +70,9 @@
 </template>
 
 <script>
-/** The scene's colour (Deep blue) and the look on stage before it (warm white) */
-const SCENE = [40, 70, 255];
-const BEFORE = [255, 200, 140];
+/** The scene's colour (Sunset, a deep orange) and the look on stage before it (Warm wash, amber) */
+const SCENE = [255, 70, 0];
+const BEFORE = [255, 140, 30];
 /** Ease-in-out cubic-bezier(0.42, 0, 0.58, 1), as the scene's fade curve */
 const ease = (x) => {
   // Solve the Bézier's x for t (Newton), return its y
@@ -98,14 +98,14 @@ export default {
   data() {
     return {
       progress: 0.6,
-      caption: 'A scene with a 1-bar duration, played twice: from 0 (Absolute) and from what\'s '
-        + 'on stage (Relative)',
+      caption: 'Sunset, a scene with a 1-bar duration, played twice: from 0 (Absolute) and from '
+        + 'what\'s on stage, Warm wash (Relative)',
       rows: [
         {
-          start: 'Absolute', from: 0, text: 'Fades from 0: the lights rise from dark to the scene\'s colour.', color: 'var(--accent-blue)',
+          start: 'Absolute', from: 0, text: 'Fades from 0: the lights rise from dark to Sunset\'s orange.', color: 'var(--accent-red)',
         },
         {
-          start: 'Relative', from: 1, text: 'Fades from the current values: the warm look on stage turns into the scene\'s colour.', color: 'var(--accent-gold)',
+          start: 'Relative', from: 1, text: 'Fades from the current values: Warm wash\'s amber turns into Sunset\'s orange.', color: 'var(--accent-gold)',
         },
       ],
     };

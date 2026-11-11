@@ -9,6 +9,7 @@ import LivePreview from './components/LivePreview.vue';
 import ShowMap from './components/ShowMap.vue';
 import SceneFade from './components/SceneFade.vue';
 import EffectWave from './components/EffectWave.vue';
+import CellsBar from './components/CellsBar.vue';
 import ResourceLink from './components/ResourceLink.vue';
 import StudioLayout from './shell/Layout.vue';
 import HomeStory from './hero/HomeStory.vue';
@@ -49,6 +50,7 @@ export default {
     app.component('ShowMap', ShowMap);
     app.component('SceneFade', SceneFade);
     app.component('EffectWave', EffectWave);
+    app.component('CellsBar', CellsBar);
     app.component('ResourceLink', ResourceLink);
     app.component('HomeStory', HomeStory);
   },
