@@ -9,7 +9,7 @@
     >
       <!-- Stage: the component at its size in Studio, scaled down (or scrolled) to fit -->
       <div
-        v-if="state === 'idle' || state === 'loading' || state === 'ready'"
+        v-if="hasStage"
         ref="viewport"
         class="live_preview_viewport"
         :class="{ scroll: fit === 'scroll' }"
@@ -29,7 +29,7 @@
               class="live_preview_mount"
               :style="mountStyle"
             />
-            <!-- Loading: the component's title and an empty body, never a picture of the app -->
+            <!-- Paused or loading: the component's title and an empty body, never a picture -->
             <uk-widget
               v-if="state !== 'ready'"
               class="live_preview_placeholder"
@@ -40,8 +40,24 @@
         </div>
       </div>
 
+      <!-- Paused: only one preview runs at a time, the one in view. Click to run this one -->
+      <button
+        v-if="state === 'paused' || state === 'loading'"
+        type="button"
+        class="live_preview_paused"
+        @click="pinAndRun"
+      >
+        <span class="live_preview_paused_label">
+          <svg
+            viewBox="0 0 12 12"
+            aria-hidden="true"
+          ><path d="M3 1.5v9l7.5-4.5z" /></svg>
+          {{ state === 'loading' ? 'Starting…' : pausedLabel }}
+        </span>
+      </button>
+
       <!-- Over the whole frame, unscaled: Studio's popups open here (centred on the frame, their
-           backdrop dims only the frame); in a demo, the cursor and its hint -->
+           backdrop dims only the frame); in a demo, the cursor -->
       <div
         v-if="state === 'ready'"
         class="live_preview_overlay"
@@ -52,10 +68,6 @@
         />
         <template v-if="isDemo">
           <div class="live_preview_blocker" />
-          <div
-            ref="hint"
-            class="live_preview_hint"
-          />
           <svg
             ref="cursor"
             class="live_preview_cursor"
@@ -67,11 +79,11 @@
 
       <!-- Can't run: its recording, or a short message -->
       <Video
-        v-else-if="state === 'fallback' && fallbackVideo"
+        v-if="state === 'fallback' && fallbackVideo"
         :src="fallbackVideo"
       />
       <p
-        v-else
+        v-else-if="state === 'fallback' || state === 'unknown'"
         class="live_preview_message"
       >
         {{ message }}
@@ -79,11 +91,22 @@
 
       <!-- Under the stage, so nothing covers the component -->
       <div
-        v-if="state === 'ready'"
+        v-if="hasStage"
         class="live_preview_bar"
       >
+        <!-- A demo's caption: what the cursor is doing and why, under the stage -->
+        <p
+          v-if="state === 'ready' && isDemo"
+          ref="hint"
+          class="live_preview_hint"
+          aria-live="polite"
+        />
         <span
-          v-if="isDemo"
+          v-if="state !== 'ready'"
+          class="live_preview_badge off"
+        >Paused</span>
+        <span
+          v-else-if="isDemo"
           class="live_preview_badge"
         >
           <svg
@@ -114,14 +137,79 @@
 <script>
 import PRESETS from '../previews/presets';
 
-/** Window events: previews unmount before a reset reloads the show, then mount again */
-const SUSPEND_EVENT = 'asls-preview-suspend';
-const RESUME_EVENT = 'asls-preview-resume';
 /** Window events: the reader changed something in a preview / the show is back as loaded */
 const DIRTY_EVENT = 'asls-preview-dirty';
 const CLEAN_EVENT = 'asls-preview-clean';
 /** Reader input that may change the show */
 const EDIT_EVENTS = ['pointerdown', 'keydown', 'input', 'wheel'];
+
+/* ── One preview at a time ────────────────────────────────────────────────
+ * Every live preview of the page registers here. Only one runs (mounted, its clock and 3D view
+ * going): the one well in view nearest the centre of the screen, or the one the reader clicked.
+ * The others are paused: unmounted (their WebGL context released), shown dimmed. */
+const registry = new Set();
+const page = {
+  active: null, pinned: null, scheduled: false, demoRan: false,
+};
+
+/**
+ * Picks the preview to run and switches to it
+ */
+function arbitrate() {
+  const vh = window.innerHeight;
+  let best = null;
+  let bestScore = -Infinity;
+  registry.forEach((preview) => {
+    if (!preview.runnable()) return;
+    const r = preview.$el.getBoundingClientRect();
+    const visible = Math.max(0, Math.min(r.bottom, vh) - Math.max(r.top, 0));
+    const ratio = visible / Math.max(1, Math.min(r.height, vh));
+    if (ratio < 0.5) return; // less than half of it in view: never runs
+    const centre = Math.abs((r.top + r.bottom) / 2 - vh / 2) / vh;
+    let score = ratio - centre;
+    if (preview === page.active) score += 0.35; // the running one keeps running unless leaving
+    if (preview === page.pinned) score += 2;
+    if (score > bestScore) {
+      best = preview;
+      bestScore = score;
+    }
+  });
+  if (page.pinned && page.pinned !== best) page.pinned = null;
+  if (best === page.active) return;
+  const previous = page.active;
+  page.active = best;
+  if (previous) previous.deactivate();
+  if (best) best.activate();
+}
+
+/**
+ * Re-picks on the next frame (scroll, resize, a preview appearing)
+ */
+function schedule() {
+  if (page.scheduled) return;
+  page.scheduled = true;
+  requestAnimationFrame(() => {
+    page.scheduled = false;
+    arbitrate();
+  });
+}
+
+let webgl = null;
+/**
+ * Whether the browser gives WebGL, probed once: the probe's context is released right away (the
+ * browser keeps only 16 and drops the oldest, which may be a visualizer's)
+ * @returns {Boolean}
+ */
+function hasWebGL() {
+  if (webgl === null) {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+    webgl = Boolean(gl);
+    const lose = gl && gl.getExtension('WEBGL_lose_context');
+    if (lose) lose.loseContext();
+  }
+  return webgl;
+}
 
 /**
  * Whether this browser can run a preview
@@ -130,11 +218,8 @@ const EDIT_EVENTS = ['pointerdown', 'keydown', 'input', 'wheel'];
  */
 function unsupported(preset) {
   if (typeof Worker === 'undefined') return 'This preview needs Web Workers, which this browser has turned off.';
-  if (preset.webgl) {
-    const canvas = document.createElement('canvas');
-    if (!(canvas.getContext('webgl2') || canvas.getContext('webgl'))) {
-      return 'This preview needs WebGL, which this browser has turned off.';
-    }
+  if ((preset.webgl || preset.stage) && !hasWebGL()) {
+    return 'This preview needs WebGL, which this browser has turned off.';
   }
   return null;
 }
@@ -142,9 +227,9 @@ function unsupported(preset) {
 /**
  * A live Studio component in a manual page: the real widget or panel named by a preset
  * (previews/presets.js), at the size it has in Studio, on Studio's idle surface, running on the
- * manual's demo show. Interactive, or a demo a cursor plays. Loads when it comes near the
- * screen, pauses Studio's clock off screen, and falls back to its video or a message when it
- * can't run.
+ * manual's demo show. Interactive, or a demo a cursor plays. One preview runs at a time: the one
+ * in view (or clicked); the others are paused and dimmed. Falls back to its video or a message
+ * when it can't run.
  * @example <LivePreview preset="group-cuepool" />
  */
 export default {
@@ -169,7 +254,7 @@ export default {
   },
   data() {
     return {
-      state: 'idle',
+      state: 'paused',
       message: '',
       dirty: false,
       resetting: false,
@@ -186,11 +271,27 @@ export default {
       return PRESETS[this.preset] || null;
     },
     /**
+     * Whether the stage is shown (not for fallbacks and unknown presets)
+     * @type {Boolean}
+     */
+    hasStage() {
+      return ['paused', 'loading', 'ready'].includes(this.state);
+    },
+    /**
      * Whether a scripted cursor plays this preset
      * @type {Boolean}
      */
     isDemo() {
       return Boolean(this.definition && this.definition.demo);
+    },
+    /**
+     * Label of the paused state
+     * @type {String}
+     */
+    pausedLabel() {
+      return this.isDemo
+        ? 'Demo paused · scroll here or click to play'
+        : 'Paused · scroll here or click to use';
     },
     /**
      * How the stage fits the page: 'scale' (whole, scaled down) or 'scroll' (panels)
@@ -211,7 +312,8 @@ export default {
      * @type {Number}
      */
     stageWidth() {
-      return (this.definition && this.definition.width) || this.contentWidth || 240;
+      const def = this.definition || {};
+      return def.width || this.contentWidth || def.componentWidth || 760;
     },
     /**
      * The stage at Studio's size, scaled
@@ -235,24 +337,25 @@ export default {
       };
     },
     /**
-     * Where the component sits on the stage (top left, at its own width unless the preset sets
-     * the component's width)
+     * Where the component sits on the stage: top left, at its own size (a stage preset fills the
+     * stage: its component and the visualizer side by side)
      * @type {Object}
      */
     mountStyle() {
-      const { componentWidth, componentHeight } = this.definition || {};
+      const { componentWidth, componentHeight, stage } = this.definition || {};
+      if (stage) return { width: '100%', height: '100%' };
       return {
         width: componentWidth ? `${componentWidth}px` : 'max-content',
         height: componentHeight ? `${componentHeight}px` : '100%',
       };
     },
     /**
-     * The loading placeholder takes the component's place
+     * The placeholder takes the component's place
      * @type {Object}
      */
     placeholderStyle() {
-      const { componentWidth, width } = this.definition || {};
-      return { width: `${componentWidth || width || 240}px` };
+      const { componentWidth, width, stage } = this.definition || {};
+      return { width: `${stage ? width : componentWidth || width || this.stageWidth}px` };
     },
     /**
      * The preset's recording, played when it can't run
@@ -277,62 +380,98 @@ export default {
       this.fail(why);
       return;
     }
-    window.addEventListener(SUSPEND_EVENT, this.suspend);
-    window.addEventListener(RESUME_EVENT, this.resume);
     window.addEventListener(DIRTY_EVENT, this.markDirty);
     window.addEventListener(CLEAN_EVENT, this.markClean);
     // The reader's edits enable Reset on every preview of the page
     this.onEdit = (e) => {
-      if (e.isTrusted && !this.isDemo) window.dispatchEvent(new Event(DIRTY_EVENT));
+      if (e.isTrusted && !this.isDemo && this.state === 'ready') {
+        window.dispatchEvent(new Event(DIRTY_EVENT));
+      }
     };
     EDIT_EVENTS.forEach((type) => this.$el.addEventListener(type, this.onEdit, true));
-    // Load when within a screen height; run Studio's clock only while on screen
-    this.nearObserver = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        this.nearObserver.disconnect();
-        this.load();
-      }
-    }, { rootMargin: '100% 0px' });
-    this.nearObserver.observe(this.$el);
-    this.viewObserver = new IntersectionObserver(([entry]) => {
-      this.visible = entry.isIntersecting;
-      this.updateClock();
-    });
-    this.viewObserver.observe(this.$el);
     this.sizeObserver = new ResizeObserver(() => this.measure());
     this.sizeObserver.observe(this.$el);
+    if (!registry.size) {
+      window.addEventListener('scroll', schedule, { passive: true });
+      window.addEventListener('resize', schedule);
+      document.addEventListener('visibilitychange', schedule);
+    }
+    registry.add(this);
+    this.$nextTick(() => {
+      this.measure();
+      schedule();
+    });
   },
   beforeUnmount() {
-    window.removeEventListener(SUSPEND_EVENT, this.suspend);
-    window.removeEventListener(RESUME_EVENT, this.resume);
     window.removeEventListener(DIRTY_EVENT, this.markDirty);
     window.removeEventListener(CLEAN_EVENT, this.markClean);
     if (this.onEdit) {
       EDIT_EVENTS.forEach((type) => this.$el.removeEventListener(type, this.onEdit, true));
     }
-    if (this.nearObserver) this.nearObserver.disconnect();
-    if (this.viewObserver) this.viewObserver.disconnect();
     if (this.sizeObserver) this.sizeObserver.disconnect();
-    if (this.popupObserver) this.popupObserver.disconnect();
-    this.visible = false;
-    this.updateClock();
-    this.stopDemo();
-    this.unmountApp();
+    registry.delete(this);
+    if (page.active === this) page.active = null;
+    if (page.pinned === this) page.pinned = null;
+    if (!registry.size) {
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+      document.removeEventListener('visibilitychange', schedule);
+    } else {
+      schedule();
+    }
+    this.deactivate();
   },
   methods: {
     /**
-     * Loads the host and the demo show, then mounts the component
+     * Whether this preview can be the running one
+     * @returns {Boolean} runnable
      */
-    async load() {
+    runnable() {
+      return Boolean(this.definition) && this.state !== 'fallback' && this.state !== 'unknown'
+        && document.visibilityState === 'visible';
+    },
+    /**
+     * The reader clicked a paused preview: run this one while it stays in view
+     */
+    pinAndRun() {
+      page.pinned = this;
+      arbitrate();
+    },
+    /**
+     * Becomes the running preview: loads the host and the demo show, mounts the component
+     */
+    async activate() {
+      const token = Symbol('activation');
+      this.activation = token;
       this.state = 'loading';
       try {
-        this.host = await import('../previews/host');
-        await this.host.loadShow(this.page);
+        if (!this.host) this.host = await import('../previews/host');
+        // A demo leaves the show as its loop left it: start from the demo show again
+        await this.host.loadShow(this.page, page.demoRan);
+        page.demoRan = false;
+        if (this.activation !== token) return;
         await this.mountApp();
-        if (this.isDemo) this.startDemo();
+        if (this.activation !== token) {
+          this.unmountApp();
+          return;
+        }
+        if (this.isDemo) {
+          page.demoRan = true;
+          this.startDemo();
+        }
       } catch (err) {
         this.fail('This preview could not start.', err);
       }
+    },
+    /**
+     * Stops running: the component unmounts (its 3D view's WebGL context is released)
+     */
+    deactivate() {
+      this.activation = null;
+      this.stopDemo();
+      this.unmountApp();
+      if (this.state === 'ready' || this.state === 'loading') this.state = 'paused';
+      this.updateClock();
     },
     /**
      * Mounts the preset as its own Vue app
@@ -394,7 +533,8 @@ export default {
     measure() {
       const { mount, viewport } = this.$refs;
       if (!viewport) return;
-      if (mount && mount.firstElementChild && !(this.definition && this.definition.width)) {
+      const def = this.definition || {};
+      if (mount && mount.firstElementChild && !def.width && this.state === 'ready') {
         this.contentWidth = Math.ceil(mount.firstElementChild.getBoundingClientRect().width
           / (this.scale || 1));
       }
@@ -403,7 +543,7 @@ export default {
         ? Math.min(1, available / this.stageWidth) : 1;
     },
     /**
-     * Starts the scripted cursor
+     * Starts the scripted cursor; each loop starts again from the demo show
      */
     async startDemo() {
       await this.$nextTick();
@@ -415,9 +555,11 @@ export default {
         cursor,
         hint,
         steps: this.definition.demo,
-        visible: () => Boolean(this.visible) && document.visibilityState === 'visible',
+        visible: () => page.active === this && document.visibilityState === 'visible',
         restart: async () => {
           this.unmountApp();
+          await this.host.loadShow(this.page, true);
+          if (page.active !== this) return;
           await this.mountApp();
         },
       });
@@ -430,18 +572,17 @@ export default {
       this.stopDemoFn = null;
     },
     /**
-     * Reset: every preview on the page unmounts, the demo show reloads, they all mount again
-     * (components must never render a show being cleared)
+     * Reset: the demo show reloads (only this preview is mounted) and the component mounts again
      */
     async reset() {
       this.resetting = true;
-      window.dispatchEvent(new Event(SUSPEND_EVENT));
+      this.unmountApp();
       try {
         await this.host.loadShow(this.page, true);
+        if (page.active === this) await this.mountApp();
       } catch (err) {
         this.fail('This preview could not reset.', err);
       }
-      window.dispatchEvent(new Event(RESUME_EVENT));
       window.dispatchEvent(new Event(CLEAN_EVENT));
       this.resetting = false;
     },
@@ -458,34 +599,12 @@ export default {
       this.dirty = false;
     },
     /**
-     * Before a reset: unmount
-     */
-    suspend() {
-      if (!this.app) return;
-      this.stopDemo();
-      this.unmountApp();
-      this.suspended = true;
-      this.updateClock();
-    },
-    /**
-     * After a reset: mount again, on the reloaded show's objects
-     */
-    async resume() {
-      if (!this.suspended) return;
-      this.suspended = false;
-      try {
-        await this.mountApp();
-        if (this.isDemo) this.startDemo();
-      } catch (err) {
-        this.fail('This preview could not restart.', err);
-      }
-    },
-    /**
      * Tells the host whether this preview needs Studio's clock right now
      */
     updateClock() {
       if (!this.host || !this.definition) return;
-      this.host.setClock(this.id, Boolean(this.visible && this.app && this.definition.clock));
+      const running = Boolean(this.app && page.active === this && this.definition.clock);
+      this.host.setClock(this.id, running);
     },
     /**
      * The preview can't run: its video or a message replaces it; the rest of the page goes on
@@ -499,6 +618,10 @@ export default {
       this.message = message;
       this.state = 'fallback';
       this.updateClock();
+      if (page.active === this) {
+        page.active = null;
+        schedule();
+      }
     },
   },
 };
@@ -554,6 +677,52 @@ export default {
   height: 100%;
 }
 
+/* Paused: dimmed, with what to do */
+.live_preview.paused .live_preview_viewport,
+.live_preview.loading .live_preview_viewport {
+  opacity: 0.35;
+  filter: grayscale(0.6);
+}
+
+.live_preview_paused {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.live_preview_paused_label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border-radius: 4px;
+  background: var(--primary-dark);
+  font-family: Roboto-Medium, sans-serif;
+  font-size: 12px;
+  line-height: 32px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--secondary-lighter);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+
+.live_preview_paused:hover .live_preview_paused_label {
+  background: var(--primary-lighter);
+}
+
+.live_preview_paused_label svg {
+  width: 12px;
+  height: 12px;
+  fill: currentColor;
+}
+
 .live_preview_overlay {
   position: absolute;
   inset: 0;
@@ -602,22 +771,16 @@ export default {
 }
 
 .live_preview_hint {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 1001;
-  padding: 4px 8px;
-  border-radius: 4px;
-  background: var(--primary-dark);
-  font-family: Roboto-Medium, sans-serif;
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  white-space: nowrap;
+  flex: 1;
+  min-height: 28px;
+  margin: 0;
+  font-family: Roboto-Regular, sans-serif;
+  padding-top: 5px;
+  font-size: 13px;
+  line-height: 1.45;
   color: var(--secondary-lighter);
   opacity: 0;
-  transition: transform 0.6s cubic-bezier(0.45, 0, 0.2, 1), opacity 0.2s;
-  pointer-events: none;
+  transition: opacity 0.25s;
 }
 
 .live_preview_hint.shown {
@@ -639,7 +802,9 @@ export default {
 
 .live_preview_bar {
   display: flex;
+  align-items: flex-start;
   justify-content: flex-end;
+  gap: 12px;
 }
 
 .live_preview_reset,
@@ -676,6 +841,10 @@ export default {
 .live_preview_badge {
   background: var(--primary-lighter);
   color: var(--secondary-light);
+}
+
+.live_preview_badge.off {
+  color: var(--secondary-dark);
 }
 
 .live_preview_reset svg,

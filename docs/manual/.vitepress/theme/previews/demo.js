@@ -12,12 +12,16 @@
  *   { context: sel }                      glide, then right click
  *   { type: sel, text }                   glide, then type the text into the field, key by key
  *   { key: 'Delete' }                     press a key on the last element clicked (never past the
- *                                         preview)
+ *                                         preview); with `global: true`, on the window
+ *                                         (shortcuts Studio listens to there: visualizer T, R, H)
+ *   { field: 'Pos Z', text: '6' }         glide to the form field with that label (in `within`),
+ *                                         replace its value, press Enter (Studio's fields commit
+ *                                         on Enter)
  *
  * Demos never take the page's focus from the reader: only a key step focuses its target, and
  * only when focus isn't on something else of the page.
  *   { wait: ms }                          pause
- *   { caption: 'text' }                   show a hint next to the cursor (null clears it)
+ *   { caption: 'text' }                   caption under the stage (null clears it)
  * Any targeted step takes `x`: a point that many pixels from the element's left edge instead of
  * its centre (for wide elements, such as a timeline row, whose centre is out of view).
  */
@@ -50,6 +54,7 @@ function find(stage, step, selector) {
  * @param {String} type event type
  * @param {Object} at client position
  * @param {Object} step step (modifier keys)
+ * @returns {Boolean} false when a listener cancelled it (no default focus then)
  */
 function mouse(el, type, at, step) {
   const init = {
@@ -66,7 +71,7 @@ function mouse(el, type, at, step) {
     shiftKey: Boolean(step.shift),
   };
   const Ctor = type.startsWith('pointer') && typeof PointerEvent !== 'undefined' ? PointerEvent : MouseEvent;
-  el.dispatchEvent(new Ctor(type, { ...init, pointerId: 1, isPrimary: true }));
+  return el.dispatchEvent(new Ctor(type, { ...init, pointerId: 1, isPrimary: true }));
 }
 
 /**
@@ -75,7 +80,7 @@ function mouse(el, type, at, step) {
  * @param {HTMLElement} options.root the preview (component, popups, overlay; cursor coordinates
  *   are relative to it, in CSS pixels)
  * @param {HTMLElement} options.cursor the fake cursor element
- * @param {HTMLElement} options.hint the hint bubble element
+ * @param {HTMLElement} options.hint the caption element (under the stage)
  * @param {Array<Object>} options.steps the demo
  * @param {Function} options.visible returns whether the preview is on screen
  * @param {Function} options.restart remounts the component between loops (async)
@@ -86,6 +91,19 @@ export default function playDemo({
 }) {
   let stopped = false;
   let lastTarget = null;
+  /**
+   * Focuses what a real press or key would focus: the closest focusable element from el, inside
+   * the preview, unless the reader is typing in a field elsewhere on the page
+   * @param {?HTMLElement} el element pressed
+   */
+  const focusFrom = (el) => {
+    const focusable = el && el.closest('input, textarea, select, button, a[href], [tabindex]');
+    if (!focusable || !stage.contains(focusable)) return;
+    const active = document.activeElement;
+    const typing = active && !stage.contains(active)
+      && (active.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName));
+    if (!typing) focusable.focus({ preventScroll: true });
+  };
   const position = { x: 40, y: 40 };
   // Scripted keys stay in this preview: Studio components also listen on window (the chase
   // timeline deletes on Delete), and other previews on the page must not react
@@ -95,7 +113,6 @@ export default function playDemo({
 
   const place = () => {
     cursor.style.transform = `translate(${position.x}px, ${position.y}px)`;
-    hint.style.transform = `translate(${position.x + 22}px, ${position.y + 18}px)`;
   };
   // Waits while off screen; false once stopped
   const ready = async () => {
@@ -133,14 +150,41 @@ export default function playDemo({
       hint.classList.toggle('shown', Boolean(step.caption));
       return;
     }
+    if (step.key && step.global) {
+      const init = { key: step.key, code: `Key${step.key.toUpperCase()}`, bubbles: true };
+      window.dispatchEvent(new KeyboardEvent('keydown', init));
+      window.dispatchEvent(new KeyboardEvent('keyup', init));
+      cursor.classList.add('pressing');
+      await sleep(180);
+      cursor.classList.remove('pressing');
+      return;
+    }
+    if (step.field) {
+      const scope = (step.within && find(stage, {}, step.within)) || stage;
+      const label = step.field.toLowerCase();
+      const controls = [...scope.querySelectorAll('*')].filter((e) => e.querySelector(':scope input')
+        && e.getClientRects().length && e.textContent.trim().toLowerCase().startsWith(label));
+      // The smallest element holding both the label and its input
+      const control = controls.find((e) => !controls.some((o) => o !== e && e.contains(o)));
+      const input = control && control.querySelector('input');
+      if (!input) throw new Error(`demo field not found: ${step.field}`);
+      await glide(input);
+      input.value = '';
+      input.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'deleteContentBackward' }));
+      for (const char of String(step.text)) { // eslint-disable-line no-restricted-syntax
+        input.value += char;
+        input.dispatchEvent(new InputEvent('input', { bubbles: true, data: char, inputType: 'insertText' }));
+        await sleep(KEY_MS); // eslint-disable-line no-await-in-loop
+      }
+      input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      lastTarget = input;
+      return;
+    }
     if (step.key) {
       // Lists act on keys only when focused, as after a real click: focus the last element
       // clicked, unless the reader's focus is elsewhere on the page
-      const focusable = lastTarget
-        && lastTarget.closest('input, textarea, select, button, [tabindex]');
-      const active = document.activeElement;
-      const free = active === document.body || stage.contains(active);
-      if (focusable && free && stage.contains(focusable)) focusable.focus({ preventScroll: true });
+      focusFrom(lastTarget);
       const target = stage.contains(document.activeElement) ? document.activeElement : stage;
       const init = {
         key: step.key, code: step.key, bubbles: true, cancelable: true, ctrlKey: Boolean(step.ctrl),
@@ -177,7 +221,9 @@ export default function playDemo({
       const presses = step.dblclick ? 2 : 1;
       for (let i = 0; i < presses; i++) {
         mouse(el, 'pointerdown', at, step);
-        mouse(el, 'mousedown', at, step);
+        const pressed = mouse(el, 'mousedown', at, step);
+        // As a real press: focus goes to what was pressed (lists select and style on focus)
+        if (pressed) focusFrom(el);
         await sleep(90); // eslint-disable-line no-await-in-loop
         mouse(el, 'pointerup', at, step);
         mouse(el, 'mouseup', at, step);

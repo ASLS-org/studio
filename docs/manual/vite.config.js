@@ -10,8 +10,8 @@ const root = fileURLToPath(new URL('../..', import.meta.url));
 /**
  * Files from the app's public folder the manual uses at run time: the hero's rig, and the live
  * previews' demo show (public/presets/manual.showfile.json): the library index the show loader
- * reads (OFL and the GDTF bundle's), each fixture profile it patches, the moving-head model and
- * the visualizer's floor.
+ * reads (OFL and the GDTF bundle's), each fixture profile it patches, the generic PAR the patching
+ * demo adds, the moving-head model and the visualizer's floor.
  * Served from there in dev, copied into the build by config.js (buildEnd), at the same paths as
  * in the app.
  */
@@ -21,6 +21,7 @@ export const APP_STATIC_FILES = [
   'fixtures/chauvet-dj/colorband-pix.json',
   'fixtures/eurolite/led-par-56-tcl.json',
   'gdtf/gdtf_list.json',
+  'gdtf/generic-par-rgbw.gdtf',
   'visualizer/models/model_list.json',
   'visualizer/models/scenography/moving_head_lowpoly.glb',
   'visualizer/textures/environment/checkerboard_default.jpg',
@@ -37,7 +38,9 @@ function appStaticFiles() {
       server.middlewares.use((req, res, next) => {
         const file = decodeURIComponent((req.url || '').split('?')[0]).replace(/^\//, '');
         if (!APP_STATIC_FILES.includes(file)) return next();
-        const types = { json: 'application/json', glb: 'model/gltf-binary', jpg: 'image/jpeg' };
+        const types = {
+          json: 'application/json', glb: 'model/gltf-binary', jpg: 'image/jpeg', gdtf: 'application/zip',
+        };
         res.setHeader('Content-Type', types[file.split('.').pop()] || 'application/octet-stream');
         fs.createReadStream(path.join(root, 'public', file)).pipe(res);
         return undefined;

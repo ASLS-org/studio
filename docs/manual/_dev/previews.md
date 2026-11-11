@@ -18,10 +18,6 @@ Dev only (excluded from the build). Every preset, in registry order, then an unk
 
 <LivePreview preset="fixture-pantilt" />
 
-## fixture-cells
-
-<LivePreview preset="fixture-cells" />
-
 ## fixture-pool
 
 <LivePreview preset="fixture-pool" />
@@ -94,10 +90,6 @@ Dev only (excluded from the build). Every preset, in registry order, then an unk
 
 <LivePreview preset="scene-modifier" />
 
-## scene-modifier-bar
-
-<LivePreview preset="scene-modifier-bar" />
-
 ## effect-modifier
 
 <LivePreview preset="effect-modifier" />
@@ -110,6 +102,18 @@ Dev only (excluded from the build). Every preset, in registry order, then an unk
 
 <LivePreview preset="visualizer" />
 
+## visualizer-modes
+
+<LivePreview preset="visualizer-modes" />
+
+## scene-stage
+
+<LivePreview preset="scene-stage" />
+
+## effect-stage
+
+<LivePreview preset="effect-stage" />
+
 ## patch-bay-select
 
 <LivePreview preset="patch-bay-select" />
@@ -118,21 +122,17 @@ Dev only (excluded from the build). Every preset, in registry order, then an unk
 
 <LivePreview preset="patch-bay-filter" />
 
-## patch-bay-delete
-
-<LivePreview preset="patch-bay-delete" />
-
 ## fixture-pool-delete
 
 <LivePreview preset="fixture-pool-delete" />
 
+## group-fixture-pool-delete
+
+<LivePreview preset="group-fixture-pool-delete" />
+
 ## patch-add
 
 <LivePreview preset="patch-add" />
-
-## group-patch-add
-
-<LivePreview preset="group-patch-add" />
 
 ## cuepool-add
 
@@ -149,18 +149,6 @@ Dev only (excluded from the build). Every preset, in registry order, then an unk
 ## chase-play
 
 <LivePreview preset="chase-play" />
-
-## scene-stage
-
-<LivePreview preset="scene-stage" />
-
-## effect-stage
-
-<LivePreview preset="effect-stage" />
-
-## pixel-stage
-
-<LivePreview preset="pixel-stage" />
 
 ## master-row
 
@@ -181,10 +169,6 @@ Dev only (excluded from the build). Every preset, in registry order, then an unk
 ## toolbar-preferences
 
 <LivePreview preset="toolbar-preferences" />
-
-## group-fixture-pool-delete
-
-<LivePreview preset="group-fixture-pool-delete" />
 
 ## unknown
 
