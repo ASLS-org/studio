@@ -10,6 +10,7 @@ import ShowMap from './components/ShowMap.vue';
 import SceneFade from './components/SceneFade.vue';
 import EffectWave from './components/EffectWave.vue';
 import CellsBar from './components/CellsBar.vue';
+import OutputPath from './components/OutputPath.vue';
 import ResourceLink from './components/ResourceLink.vue';
 import StudioLayout from './shell/Layout.vue';
 import HomeStory from './hero/HomeStory.vue';
@@ -51,6 +52,7 @@ export default {
     app.component('SceneFade', SceneFade);
     app.component('EffectWave', EffectWave);
     app.component('CellsBar', CellsBar);
+    app.component('OutputPath', OutputPath);
     app.component('ResourceLink', ResourceLink);
     app.component('HomeStory', HomeStory);
   },

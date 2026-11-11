@@ -18,14 +18,6 @@ Dev only (excluded from the build). Every preset, in registry order, then an unk
 
 <LivePreview preset="fixture-pantilt" />
 
-## fixture-pool
-
-<LivePreview preset="fixture-pool" />
-
-## group-fixture-pool
-
-<LivePreview preset="group-fixture-pool" />
-
 ## fixture-settings
 
 <LivePreview preset="fixture-settings" />
@@ -50,25 +42,13 @@ Dev only (excluded from the build). Every preset, in registry order, then an unk
 
 <LivePreview preset="cue-settings" />
 
-## scene-fixtures
-
-<LivePreview preset="scene-fixtures" />
-
 ## scene-curve
 
 <LivePreview preset="scene-curve" />
 
-## effect-channels
-
-<LivePreview preset="effect-channels" />
-
 ## effect-wave
 
 <LivePreview preset="effect-wave" />
-
-## chase-timeline
-
-<LivePreview preset="chase-timeline" />
 
 ## patch-bay
 
@@ -78,10 +58,6 @@ Dev only (excluded from the build). Every preset, in registry order, then an unk
 
 <LivePreview preset="group-pool" />
 
-## universe-modifier
-
-<LivePreview preset="universe-modifier" />
-
 ## group-modifier
 
 <LivePreview preset="group-modifier" />
@@ -90,17 +66,9 @@ Dev only (excluded from the build). Every preset, in registry order, then an unk
 
 <LivePreview preset="scene-modifier" />
 
-## effect-modifier
-
-<LivePreview preset="effect-modifier" />
-
 ## chase-modifier
 
 <LivePreview preset="chase-modifier" />
-
-## visualizer
-
-<LivePreview preset="visualizer" />
 
 ## visualizer-modes
 
@@ -162,13 +130,21 @@ Dev only (excluded from the build). Every preset, in registry order, then an unk
 
 <LivePreview preset="toolbar-menus" />
 
+## visualizer-settings
+
+<LivePreview preset="visualizer-settings" />
+
+## outputs-popup
+
+<LivePreview preset="outputs-popup" />
+
+## universe-stream
+
+<LivePreview preset="universe-stream" />
+
 ## toolbar-file
 
 <LivePreview preset="toolbar-file" />
-
-## toolbar-preferences
-
-<LivePreview preset="toolbar-preferences" />
 
 ## unknown
 
