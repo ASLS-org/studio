@@ -180,12 +180,12 @@ No new screenshots or recordings.
 
 ## Home page revision (2026-11-11, on the same PR)
 
-- **Throttled scrub.** The scroll still drives the show. A non-passive wheel handler holds back
-  any event that would take the page more than 0.15 chapter ahead of the story, or past the next
-  chapter within one gesture. Momentum (weakening events) is ignored. A scroll that keeps going
-  moves on once the story has rested on the chapter. Fast scrolling can no longer skip to the end.
-  A stepped version (one chapter per gesture, shows on their own clock) was tried and dropped: it
-  felt laggy and lost the scroll-driven animation.
+- **Scrolling plays the story like a player.** Inside the story, the wheel, swipes and keys
+  don't scroll the page. They play the story forward or back at 1.6x its real-time pace, easing
+  in and out on a smoothstep, and Autoplay runs on the same engine. The page's scroll catches up
+  once playback stops. Momentum is ignored and fast scrolling can't outrun the pace. Two
+  approaches were tried first and dropped: scrubbing on scroll ticks (even throttled) and a
+  one-chapter-per-gesture stepper. Autoplay looked smoothest, hence the player.
 - **Lighter.** No layout per frame and about 1 ms of JS per frame, against 1.2–1.7 ms before:
   - the scroll path never measures the page;
   - the CSS3D size is cached;
