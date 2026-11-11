@@ -157,4 +157,12 @@ export default class LiquidReveal {
     gl.uniform1f(uniforms.time, time);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
+
+  /**
+   * Releases the WebGL context
+   */
+  dispose() {
+    const lose = this.gl.getExtension('WEBGL_lose_context');
+    if (lose) lose.loseContext();
+  }
 }

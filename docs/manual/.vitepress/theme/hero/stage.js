@@ -11,6 +11,7 @@ import * as THREE from 'three';
 // eslint-disable-next-line import/extensions -- three's example modules need their extension
 import { CSS3DRenderer, CSS3DObject } from 'three/examples/jsm/renderers/CSS3DRenderer.js';
 import Visualizer from '@/plugins/visualizer/visualizer';
+import SceneManager from '@/plugins/visualizer/scene_manager';
 import FixtureLibrary from '@/models/fixtures/fixture.library';
 import { PROFILE_SOURCES } from '@/models/fixtures/fixture.profile';
 import {
@@ -89,6 +90,16 @@ export default class StoryStage {
      * show has played)
      */
     this.position = 0;
+    /**
+     * Show time of the chapter in view (s), from the story's own clock: a chapter's show plays
+     * while the reader rests on it. null: taken from the scroll (still mode)
+     */
+    this.showTime = null;
+    /** The CSS3D layer's size, kept from the last resize (never read back per frame) */
+    this.cssWidth = 1;
+    this.cssHeight = 1;
+    /** What the visualizer added to Studio's shared scene, taken out again on dispose */
+    this.added = [];
     /** Camera pose for the current story position */
     this.camPos = new THREE.Vector3(...FRAMING.reveal[0]);
     this.camLook = new THREE.Vector3(...FRAMING.reveal[1]);
@@ -216,8 +227,18 @@ export default class StoryStage {
   async init() {
     const profile = await FixtureLibrary.getProfile(PROFILE_SOURCES.OFL, 'martin', 'mac-aura');
     const mode = profile.modes.find((m) => m.channels.length === CHANNELS) || profile.modes[0];
+    // Studio's scene is one per page, shared with the manual's visualizer previews: keep what this
+    // visualizer adds (floor, lights) to take it out on dispose
+    const before = new Set(SceneManager.children);
     await this.visualizer.init();
     const { visualizer } = this;
+    const start = performance.now();
+    while (!(visualizer.globalLightHandle && visualizer.globalLightHandle.parent === SceneManager)
+      && performance.now() - start < 5000) {
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise((resolve) => { requestAnimationFrame(resolve); });
+    }
+    this.added = SceneManager.children.filter((child) => !before.has(child));
     visualizer.hazeDensity = 65;
     visualizer.exposure = 140;
     visualizer.globalBrightness = 22;
@@ -257,7 +278,15 @@ export default class StoryStage {
    */
   pickCue(id) {
     this.state.pickedCue = id;
-    this.state.pickedAt = this.lastT;
+    this.state.pickedAt = this.showTime === null ? this.lastT : this.showTime;
+  }
+
+  /**
+   * Show time of the chapter in view, from the story's clock
+   * @param {?Number} t seconds since the chapter was reached; null: from the scroll position
+   */
+  setShowTime(t) {
+    this.showTime = t;
   }
 
   /**
@@ -279,7 +308,11 @@ export default class StoryStage {
     camera.fov = camera.aspect < 1 ? 62 : 40;
     camera.updateProjectionMatrix();
     const host = this.css.domElement.parentNode;
-    if (host) this.css.setSize(host.clientWidth, host.clientHeight);
+    if (host) {
+      this.cssWidth = host.clientWidth || 1;
+      this.cssHeight = host.clientHeight || 1;
+      this.css.setSize(this.cssWidth, this.cssHeight);
+    }
     this.panels.forEach((panel) => this.placePanel(panel));
   }
 
@@ -304,7 +337,9 @@ export default class StoryStage {
       this.state.pickedCue = null;
     }
     this.state.fade = Math.min(this.position, 1);
-    const showTime = Math.min(fraction / share, 1) * SHOW_SECONDS[chapter];
+    const showTime = this.showTime !== null
+      ? this.showTime
+      : Math.min(fraction / share, 1) * SHOW_SECONDS[chapter];
     program(chapter, showTime, this.frame, this.state);
     // During the transition the chapter's last state fades into the next chapter's first one
     if (index < last && fraction > share) {
@@ -358,9 +393,13 @@ export default class StoryStage {
 
     this.visualizer.invalidate();
     this.visualizer.render(t);
-    // Panels drift a little in the scene, then the blur layers follow their outlines
+    // Only the panels of the chapters around the reader are in the layer (the others are
+    // display: none, so the browser doesn't restyle them each frame). They drift a little in the
+    // scene, then the blur layers follow their outlines
     for (let i = 0; i < this.panels.length; i++) {
       const panel = this.panels[i];
+      panel.object.visible = Math.abs(this.position - (panel.index + 0.5)) < 1.1;
+      if (!panel.object.visible) continue; // eslint-disable-line no-continue
       panel.object.position.copy(panel.base)
         .addScaledVector(panel.up, Math.sin(t * 0.55 + panel.phase) * 0.035)
         .addScaledVector(panel.right, Math.cos(t * 0.4 + panel.phase) * 0.025);
@@ -374,11 +413,11 @@ export default class StoryStage {
    */
   updateBlurs() {
     const camera = this.cssCamera;
-    const width = this.css.domElement.clientWidth;
-    const height = this.css.domElement.clientHeight;
+    const width = this.cssWidth;
+    const height = this.cssHeight;
     for (let i = 0; i < this.panels.length; i++) {
       const { object, layout, blur } = this.panels[i];
-      if (blur && Number(blur.style.opacity) > 0) {
+      if (blur && object.visible && Number(blur.style.opacity) > 0) {
         let path = '';
         let visible = true;
         for (let c = 0; c < 4 && visible; c++) {
@@ -395,5 +434,23 @@ export default class StoryStage {
         blur.style.clipPath = visible ? `polygon(${path})` : 'polygon(0 0, 0 0, 0 0)';
       }
     }
+  }
+
+  /**
+   * Releases everything: the fixtures and what the visualizer added to Studio's shared scene,
+   * the WebGL context and the CSS3D layer
+   */
+  dispose() {
+    this.clearPanels();
+    const { visualizer } = this;
+    if (visualizer.fixtureRenderer) visualizer.fixtureRenderer.setPatch([]);
+    this.added.forEach((child) => SceneManager.remove(child));
+    this.added = [];
+    if (visualizer.renderer) {
+      visualizer.renderer.dispose();
+      visualizer.renderer.forceContextLoss();
+    }
+    const css = this.css.domElement;
+    if (css.parentNode) css.parentNode.removeChild(css);
   }
 }
