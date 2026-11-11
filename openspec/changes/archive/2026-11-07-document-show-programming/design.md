@@ -180,17 +180,21 @@ No new screenshots or recordings.
 
 ## Home page revision (2026-11-11, on the same PR)
 
-- **One chapter per gesture.** Inside the story, the wheel, swipes and keys step one chapter at a
-  time. Momentum and the rest of a gesture are swallowed, so fast scrolling can't skip to the end.
-  Each chapter's show runs on its own clock while the visitor rests on it, instead of being
-  scrubbed by the scroll (it froze as soon as scrolling stopped). The first chapter's show now
-  moves from the start.
-- **Lighter.** Measured with CDP at rest on a chapter: no layout per frame.
-  - the CSS3D layer's size is cached instead of read back each frame;
+- **Throttled scrub.** The scroll still drives the show. A non-passive wheel handler holds back
+  any event that would take the page more than 0.15 chapter ahead of the story, or past the next
+  chapter within one gesture. Momentum (weakening events) is ignored. A scroll that keeps going
+  moves on once the story has rested on the chapter. Fast scrolling can no longer skip to the end.
+  A stepped version (one chapter per gesture, shows on their own clock) was tried and dropped: it
+  felt laggy and lost the scroll-driven animation.
+- **Lighter.** No layout per frame and about 1 ms of JS per frame, against 1.2–1.7 ms before:
+  - the scroll path never measures the page;
+  - the CSS3D size is cached;
   - out-of-reach panels are taken out of the layer;
   - the scroll cue animates `transform` and pauses while hidden;
   - the loop stops on both heroes.
 
   The stage is disposed when leaving the home page instead of cached. It kept a WebGL context
   and its rig in Studio's shared scene, where the manual's previews drew it too.
+- **First chapter** moves more (white beams sweeping in a wave, pulsing on the beat). Chapters
+  scroll shorter, since momentum no longer counts.
 - **Manual link** in the toolbar.

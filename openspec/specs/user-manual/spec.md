@@ -74,14 +74,15 @@ moving heads drawn as beam guides. Each following chapter SHALL explain one part
 the real Studio widget for it, displayed in the 3D scene and fed by the show playing on the stage.
 The story SHALL end on a final hero with the calls to action.
 
-#### Scenario: One chapter per gesture
-- **WHEN** the visitor scrolls, swipes or presses a key inside the story
-- **THEN** the story moves one chapter forward or back per gesture, however fast or far the
-  gesture goes; scroll momentum and the rest of the gesture don't move it further
+#### Scenario: Scroll drives the show
+- **WHEN** the visitor scrolls through a chapter
+- **THEN** that chapter's show plays forward at a steady pace in step with the scroll, plays
+  backwards when scrolling up, and holds still when scrolling stops
 
-#### Scenario: A chapter plays while the visitor reads
-- **WHEN** the visitor stops on a chapter
-- **THEN** that chapter's show plays from its start, in real time, without scrolling
+#### Scenario: Scrolling is throttled
+- **WHEN** the visitor scrolls fast, flicks a trackpad, or keeps scrolling without a pause
+- **THEN** the story never runs ahead of its pace, scroll momentum doesn't move it, and a
+  gesture stops at the next chapter until the story has rested there
 
 #### Scenario: Cues fade like Studio's
 - **WHEN** the show moves from one cue to the next

@@ -214,38 +214,39 @@ outlined pills, no coloured shadows: plain type and Studio's solid round buttons
   domain-warped noise in `--primary-dark`) recedes like ink, centre first, and the camera dollies
   in from its `reveal` framing. The scene isn't rendered before the reveal starts. Then: The stage
   → Patch → Control → Program → Sequence → Output, with numbered copy (01 / 06) alternating left
-  and right on a frosted, darkened pool feathered with a radial mask (no box). **The story moves
-  in steps, one chapter per gesture** (`step`): inside the story, the wheel, swipes and keys
-  (arrows, Page Up/Down, Space, Home) are captured (`preventDefault`) and each gesture plays one
-  move to the next or previous chapter; the page's scroll follows the story (`holdScroll`), so the
-  scrollbar and back/forward stay true. Wheel: a gesture is events less than `GESTURE_GAP`
-  (200 ms) apart, measured on the events' own timestamps; the rest of a gesture and its momentum
-  (a weak tail that doesn't grow) are swallowed, a new flick (an event 1.6× stronger) steps again
-  only `STEP_COOLDOWN` after the last landing, and nothing steps while a move plays. Swipes step
-  once past 40 px and can't fling. Past the final hero (or above the first) the page scrolls
-  normally. A scroll we didn't make (scrollbar, a link) moves the story with it, then it settles on
-  the nearest chapter (`jump`). **Each chapter's show has its own clock** (`showTime`, from the
-  moment the chapter is reached, handed to `stage.setShowTime`): it plays while the reader rests
-  on it, whether they scroll or not; scroll no longer scrubs it. A move skips the still part of
-  the chapter it leaves and plays the transition: `STEP_SECONDS` (reveal 1.2 s, chapter 0.9 s,
-  final hero 1.4 s), cubic ease-in-out; the rail, Next, the scroll cue and Replay `jump` straight
-  to a chapter. The chapter's camera framing, copy and panels hand over during the transition
-  (`SHOW_SHARE`..1; `OUTRO_FROM`..1 into the final hero). Cue changes follow Studio: a scene fades
+  and right on a frosted, darkened pool feathered with a radial mask (no box). **The scroll is the
+  show's clock**: each chapter has its own scroll length (`LENGTHS` in vh, reveal first; short,
+  since momentum doesn't count). Its first `SHOW_SHARE` (82%) plays its show (`SHOW_SECONDS`,
+  story.js); the rest is a scroll-driven transition where the camera travels to the next chapter's
+  framing and copy and panels hand over. Everything is a function of the story position, so it is
+  anchored and reversible. The position **walks towards the scroll at a constant pace**
+  (`advance`: shows at 2× real time, transitions ~0.7 s, the reveal ~1.2 s), whatever the
+  scroll's velocity. **Throttle** (`onWheel`, non-passive, so it holds events back before they
+  scroll instead of scrolling back after): the page may run at most `LEAD` (0.15 chapter) ahead
+  of the story, and one gesture (wheel events less than `GESTURE_GAP`, 250 ms, apart, on the
+  events' own timestamps) can't carry the story past the next chapter (its gate). A scroll that
+  keeps going by hand moves on once the story has rested on that chapter `GATE_REST` (400 ms);
+  momentum (three weakening events in a row) is swallowed and never opens a gate. Touch: the same
+  gate and lead, enforced by scrolling a fling back. Without a gesture (scrollbar, End key) a gap
+  over 1.5 chapters glides, as do the rail, Next and Back to top. Never step the story or run
+  shows on a clock of their own: that was tried (2026-11-11) and felt laggy and wrong; readers
+  want the animation under their scroll. Cue changes follow Studio: a scene fades
   in as a relative scene does, from the previous cue's last values (the cue pool's first scene: the
   control chapter's last frame) to its own, with a cubic ease-in-out across its whole duration
   (`playCueFaded`); an effect starts at once with a short `CUE_FADE`
   crossfade (0.6 s of show time; `blendFrames` blends pan/tilt as 16-bit), and a chapter's end state blends into the next
   chapter's opening state during the transition, so the boundary is continuous. The first
-  chapter (The stage) moves from the start: white beams sweep in a wave and pulse on the beat. A
-  bold scroll cue sits bottom centre ("Scroll to discover" on the hero, "Scroll" after, chevron,
-  click = next chapter), hidden during a move; Back to top is hidden on the final hero. A thin
-  progress bar in the chapter's colour above the chapter number fills as its show plays
-  (`showProgress`, updated with the widgets). Clamp the frame step to ≥ 0 (rAF timestamps can
-  precede the loop's start). **Autoplay** and **Next** sit under each description. Autoplay is
-  one global toggle (`toggleAutoplay`): each chapter plays its show through, then the story steps
-  on, up to the final hero, then turns off (any wheel, swipe or key also stops it). As the **final
-  hero** (`outro`) takes over, Output's copy fades, the liquid cover flows back over the stage and a
-  second hero
+  chapter (The stage) moves as soon as it is scrolled: white beams sweep in a wave and pulse on
+  the beat. A bold scroll cue sits bottom centre ("Scroll to discover" on the hero, "Scroll"
+  after, chevron, click = next chapter), shown only when scrolling is idle (900 ms) and the story
+  has caught up; Back to top is hidden on the final hero. A thin progress bar in the chapter's
+  colour above the chapter number fills as its show plays (`stepProgress`). Clamp the frame step
+  to ≥ 0 (rAF timestamps can precede the loop's start). **Autoplay** and **Next** sit under each
+  description. Autoplay is one global toggle (`toggleAutoplay`): it scrolls through the shows at
+  real time, up to the final hero, then turns off (any wheel, touch or key also stops it). The
+  last scene (Output, no CTAs) is all show: from `OUTRO_FROM` (55%) the final hero takes over
+  while that show still runs. As the **final hero** (`outro`) takes over, Output's copy fades,
+  the liquid cover flows back over the stage and a second hero
   ("Your next show starts here.", Download / Try the live demo / Read the manual, with
   **Replay** → top stacked under them as a text button) sharpens in, the first hero's
   transition in reverse; the rail and scroll cue fade out. Every scene shows its progress bar.
@@ -260,11 +261,14 @@ outlined pills, no coloured shadows: plain type and Studio's solid round buttons
   stalls); call the widget's own handler once. Bump `$liveTicker` only while a live widget (cue
   pool, timeline) is on screen. Pixel ratio is the biggest remaining cost (DPR 2 ≈ 7 ms median
   per scrolling frame on an M2, DPR 1 ≈ 4 ms).
-  Per frame (re-measured 2026-11-11 with CDP `Performance.getMetrics`, at rest on a chapter):
-  no layout. Never read layout after the CSS3D render (`cssWidth`/`cssHeight` are kept from
+  Per frame (re-measured 2026-11-11; `scratchpad`-style checks: CDP `Performance.getMetrics`
+  for layouts, and timing `stage.render` itself, since script share means nothing with the frame
+  rate uncapped): no layout while scrolling or at rest, ≈ 1 ms of JS per frame. Never measure the
+  page in the scroll path (`storyTop` is measured on mount, when ready and on resize; the scroll
+  handler only reads `scrollY`) nor after the CSS3D render (`cssWidth`/`cssHeight` kept from
   `resize`); panels of chapters out of reach are `visible = false` (display: none); CSS
   animations use `transform`/`opacity` only and pause while hidden (`--hint-run`). The render
-  loop stops on the first hero and once the final hero covers the stage.
+  loop stops itself once settled on the first hero or under the final one.
 - **Lifetime**: the stage lives only while the home page is mounted. On unmount it is disposed
   (`stage.dispose()`: fixtures out, what its visualizer added to Studio's shared `SceneManager`
   taken out, WebGL context and CSS3D layer released; `reveal.dispose()` too). A cached stage kept
