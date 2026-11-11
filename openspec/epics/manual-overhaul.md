@@ -75,7 +75,7 @@ clips that nobody re-records.
 | 1 | `restyle-manual-site`: Studio look (tokens, fonts, dark default + light), hero and product presentation, URL config, a working docs build and deploy | none | archived (branch `docs/restyle-manual-site`) |
 | 2 | `add-manual-live-previews`: `<LivePreview>` harness, manual dummy showfile, presets per widget, video fallback; the home page already runs Studio's real widgets live (unit 1), so this unit covers the manual pages (no screenshots anywhere) | 1 | archived (branch `docs/add-manual-live-previews`) |
 | 3 | `document-show-programming`: concepts + patch → group → scene → effect → chase → master/live, with live previews | 2 | archived (branch `docs/document-show-programming`) |
-| 4 | `document-rig-and-output`: fixture library/OFL/GDTF, outputs and gateway, visualizer, showfiles, desktop app, shortcuts, glossary, troubleshooting | 2 (can run beside 3) | proposed |
+| 4 | `document-rig-and-output`: fixture library/OFL/GDTF, outputs and gateway, visualizer, showfiles, desktop app, shortcuts, glossary, troubleshooting | 2 (can run beside 3) | refining (branch `docs/document-rig-and-output`) |
 | 5 | `gate-manual-upkeep`: OpenSpec rules, archive check, PR template, `user-manual` skill + coverage map | 3, 4 | proposed |
 
 Status values: proposed, refining, applying, archived, deferred.
