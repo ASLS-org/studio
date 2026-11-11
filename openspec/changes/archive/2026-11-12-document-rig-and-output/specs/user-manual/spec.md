@@ -4,17 +4,16 @@
 
 ### Requirement: Manual follows the reader's path
 The manual's navigation SHALL be organised as **Getting started**, **Concepts**, **Programming a
-show**, **Rig & output** and **Reference**. Programming pages SHALL each cover one task (patching,
-groups, scenes, effects, chases, playing a show), in the order a show is built. Getting started
-SHALL hold installing Studio (browser or desktop app) and the map of its interface. Rig & output
-pages SHALL each cover one part of getting a show to real lights and keeping it (fixtures, the
-visualizer, outputs, showfiles). Reference pages SHALL be for looking things up (shortcuts,
-glossary, troubleshooting, known limitations).
+show**, **Rig & output** and **Reference**. Programming pages SHALL each cover one task, in the
+order a show is built; Rig & output pages one part of reaching real lights and keeping a show;
+Reference pages SHALL be for looking things up.
 
 #### Scenario: New reader
 - **WHEN** a reader opens the manual's navigation
-- **THEN** they see Getting started first, then Concepts, then Programming a show with its pages
-  in the order a show is built, then Rig & output, then Reference
+- **THEN** they see Getting started (installing Studio, browser or desktop, and the map of its
+  interface), Concepts, Programming a show (patching, groups, scenes, effects, chases, playing a
+  show), Rig & output (fixtures, the visualizer, outputs, showfiles), then Reference (shortcuts,
+  glossary, troubleshooting, known limitations)
 
 #### Scenario: Looking something up
 - **WHEN** a reader wants a shortcut, a term or a fix for a problem
