@@ -90,11 +90,6 @@ export default class StoryStage {
      * show has played)
      */
     this.position = 0;
-    /**
-     * Show time of the chapter in view (s), from the story's own clock: a chapter's show plays
-     * while the reader rests on it. null: taken from the scroll (still mode)
-     */
-    this.showTime = null;
     /** The CSS3D layer's size, kept from the last resize (never read back per frame) */
     this.cssWidth = 1;
     this.cssHeight = 1;
@@ -278,15 +273,7 @@ export default class StoryStage {
    */
   pickCue(id) {
     this.state.pickedCue = id;
-    this.state.pickedAt = this.showTime === null ? this.lastT : this.showTime;
-  }
-
-  /**
-   * Show time of the chapter in view, from the story's clock
-   * @param {?Number} t seconds since the chapter was reached; null: from the scroll position
-   */
-  setShowTime(t) {
-    this.showTime = t;
+    this.state.pickedAt = this.lastT;
   }
 
   /**
@@ -337,9 +324,7 @@ export default class StoryStage {
       this.state.pickedCue = null;
     }
     this.state.fade = Math.min(this.position, 1);
-    const showTime = this.showTime !== null
-      ? this.showTime
-      : Math.min(fraction / share, 1) * SHOW_SECONDS[chapter];
+    const showTime = Math.min(fraction / share, 1) * SHOW_SECONDS[chapter];
     program(chapter, showTime, this.frame, this.state);
     // During the transition the chapter's last state fades into the next chapter's first one
     if (index < last && fraction > share) {

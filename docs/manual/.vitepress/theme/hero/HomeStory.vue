@@ -311,27 +311,24 @@ import {
 let cached = null;
 
 /**
- * Seconds a step takes: the reveal, a chapter-to-chapter move, the final hero
- * @type {Object}
- */
-const STEP_SECONDS = { reveal: 1.2, chapter: 0.9, outro: 1.4 };
-
-/**
- * Wheel input: a pause this long (ms) starts a new gesture; events closer together belong to the
- * same gesture, its momentum included
+ * Throttle: how far (story units: a chapter is 1) the page's scroll may run ahead of the story
  * @type {Number}
  */
-const GESTURE_GAP = 200;
+const LEAD = 0.15;
 
 /**
- * After a step lands, how long (ms) before a new flick inside a gesture (a wheel event much
- * stronger than the one before it, where momentum only decays) may step again
+ * Wheel and touch: events closer together than this (ms) are one gesture, momentum included. A
+ * gesture can't carry the story past the next chapter: the reader pauses, then scrolls on
  * @type {Number}
  */
-const STEP_COOLDOWN = 450;
+const GESTURE_GAP = 250;
 
-/** Touch: how far (px) a swipe travels before it steps */
-const SWIPE = 40;
+/**
+ * A scroll that keeps going (not momentum) carries on past a chapter once the story has rested
+ * on it this long (ms)
+ * @type {Number}
+ */
+const GATE_REST = 400;
 
 /**
  * Scene chapters (after the 2D hero): copy, accent token, where the copy sits
@@ -413,7 +410,8 @@ const clamp = (x, a = 0, b = 1) => Math.min(Math.max(x, a), b);
  * length), and the final hero
  * @type {Array<Number>}
  */
-const LENGTHS = [100, 120, 170, 170, 190, 190, 110, 40];
+// Momentum doesn't move the story, so a chapter takes less scrolling than a page normally would
+const LENGTHS = [100, 85, 120, 120, 135, 135, 80, 40];
 
 /**
  * Where, in the last scene, the final hero starts to take over (its show keeps running under it)
@@ -477,10 +475,10 @@ export default {
       panelElements: {},
       blurElements: {},
       position: 0,
-      stop: 0,
-      moving: false,
-      showProgress: 0,
+      target: 0,
+      idle: true,
       autoplaying: false,
+      jumpTo: null,
       ready: false,
       fallback: false,
       still: false,
@@ -527,7 +525,8 @@ export default {
      * @type {Object}
      */
     hintStyle() {
-      const p = this.moving ? 0 : 1 - this.smooth(this.outro * 2);
+      const settled = this.idle && Math.abs(this.target - this.position) < 0.002;
+      const p = settled ? 1 - this.smooth(this.outro * 2) : 0;
       return {
         opacity: p,
         visibility: p > 0.001 ? 'visible' : 'hidden',
@@ -647,12 +646,14 @@ export default {
   },
   async mounted() {
     window.addEventListener('scroll', this.onScroll, { passive: true });
-    // Inside the story, the wheel, swipes and keys step from chapter to chapter (they can't scroll
-    // the page past a chapter, and momentum doesn't count)
+    // A glide (rail, scroll hint) gives way to the reader's own scrolling
+    ['wheel', 'touchstart', 'keydown'].forEach((type) => {
+      window.addEventListener(type, this.stopGlide, { passive: true });
+    });
+    // Not passive: a wheel event that would run past the throttle (or is momentum) is held back
+    // before it scrolls, rather than scrolled back after
     window.addEventListener('wheel', this.onWheel, { passive: false });
-    window.addEventListener('touchstart', this.onTouchStart, { passive: true });
-    window.addEventListener('touchmove', this.onTouchMove, { passive: false });
-    window.addEventListener('keydown', this.onKey);
+    window.addEventListener('touchmove', this.onGesture, { passive: true });
     window.addEventListener('pointermove', this.onPointer, { passive: true });
     window.addEventListener('resize', this.onResize);
     document.addEventListener('visibilitychange', this.updateLoop);
@@ -662,9 +663,8 @@ export default {
     });
     this.observer.observe(this.$refs.story);
     this.visible = true;
-    this.showTime = 0;
-    this.showChapter = 0;
     this.narrow = window.innerWidth < 768;
+    this.measure();
     this.onScroll();
     if (!hasWebGL2()) {
       this.fallback = true;
@@ -693,6 +693,8 @@ export default {
           this.blurElements[panel.id],
         );
       });
+      // The page has its final layout now: measure where the story sits, then follow the scroll
+      this.measure();
       this.onScroll();
       if (import.meta.env.DEV) {
         window.__aslsStory = cached.stage;
@@ -703,7 +705,6 @@ export default {
         cached.stage.render(4);
         this.sync();
       } else {
-        cached.stage.setShowTime(0);
         this.updateLoop();
       }
     } catch (error) {
@@ -715,11 +716,12 @@ export default {
   beforeUnmount() {
     this.unmounted = true;
     this.stopGlide();
-    clearTimeout(this.settleTimer);
+    clearTimeout(this.idleTimer);
+    ['wheel', 'touchstart', 'keydown'].forEach((type) => {
+      window.removeEventListener(type, this.stopGlide);
+    });
     window.removeEventListener('wheel', this.onWheel);
-    window.removeEventListener('touchstart', this.onTouchStart);
-    window.removeEventListener('touchmove', this.onTouchMove);
-    window.removeEventListener('keydown', this.onKey);
+    window.removeEventListener('touchmove', this.onGesture);
     window.removeEventListener('pointermove', this.onPointer);
     this.stopLoop();
     this.observer.disconnect();
@@ -751,8 +753,7 @@ export default {
      * @returns {Number} progress
      */
     stepProgress(i) {
-      if (i === this.current) return this.showProgress;
-      return this.current > i ? 1 : 0;
+      return clamp((this.position - i) / (i === this.scenes.length ? 1 : SHOW_SHARE));
     },
     /**
      * Two-digit chapter number
@@ -808,8 +809,8 @@ export default {
      */
     copyStyle(i, chapter) {
       const p = this.presence(i);
-      // Rises into place as it arrives
-      const rise = (1 - p) * 24;
+      // A slight rise while its chapter plays
+      const rise = (0.5 - clamp((this.position - i) / SHOW_SHARE)) * 28;
       return {
         '--chapter-color': `var(${chapter.token})`,
         opacity: p,
@@ -859,25 +860,29 @@ export default {
      * Runs the show once the stage starts to appear, while on screen and the tab is visible
      */
     updateLoop() {
-      // Nothing to draw on the first hero, nor once the final hero covers the stage
-      const end = this.chapters.length - 1;
       const run = this.ready && !this.still && this.visible && !document.hidden
-        && ((this.position > 0.01 && this.position < end - 0.001) || this.anim);
+        && (this.position > 0.01 || this.target > 0.01);
       if (run && !this.frameId) {
         let n = 0;
         let last = performance.now();
         const tick = (now) => {
           const t = now / 1000;
           // rAF timestamps can precede the moment the loop started: never a negative step
-          const dt = Math.min(Math.max((now - last) / 1000, 0), 0.1);
+          this.advance(Math.min(Math.max((now - last) / 1000, 0), 0.1));
           last = now;
-          this.advance(now, dt);
           cached.stage.setPosition(this.position);
-          cached.stage.setShowTime(this.showTime);
           cached.stage.render(t);
           if (this.morph < 1 || this.outro > 0) this.drawReveal(t);
           n += 1;
           if (n % 3 === 0) this.sync();
+          // Settled on the first hero, or under the final one: nothing left to draw until the
+          // next scroll (onScroll starts the loop again)
+          const end = this.chapters.length - 1;
+          const settled = Math.abs(this.target - this.position) < 0.0005 && this.jumpTo === null;
+          if (settled && (this.position < 0.001 || this.position > end - 0.001)) {
+            this.frameId = null;
+            return;
+          }
           this.frameId = requestAnimationFrame(tick);
         };
         this.frameId = requestAnimationFrame(tick);
@@ -886,232 +891,166 @@ export default {
       }
     },
     /**
-     * One frame of the story: a step in progress moves the position along its curve (and the
-     * page's scroll with it); the chapter in view plays its show on its own clock, from the moment
-     * it is reached, whether the reader scrolls or not
-     * @param {Number} now ms (rAF time)
+     * Moves the story position towards the scroll position at a constant pace, independent of
+     * the scroll's velocity (trackpad flicks don't speed it up). A jump (rail, back to top)
+     * glides instead
      * @param {Number} dt seconds since the last frame
      */
-    advance(now, dt) {
-      const { anim } = this;
-      if (anim) {
-        const k = clamp((now - anim.start) / (anim.duration * 1000));
-        const e = k < 0.5 ? 4 * k * k * k : 1 - (-2 * k + 2) ** 3 / 2;
-        this.position = anim.from + (anim.to - anim.from) * e;
-        if (k >= 1) {
-          this.position = anim.land;
-          this.anim = null;
-          this.moving = false;
-          this.landedAt = now;
-          this.holdScroll(this.position);
-          // Landed on a hero: draw it once more, then the loop can stop
-          if (this.position < 0.01 || this.position > this.chapters.length - 1.001) {
-            requestAnimationFrame(() => this.updateLoop());
-          }
-          return;
-        }
-        this.holdScroll(this.position);
+    advance(dt) {
+      // The story reached its gesture's gate: note when (a scroll that keeps going moves on
+      // after GATE_REST)
+      if (this.gate != null && !this.gateAt && Math.abs(this.position - this.gate) < 0.002) {
+        this.gateAt = performance.now();
       }
-      // The chapter's show clock restarts when a new chapter is reached
-      const chapter = Math.min(Math.floor(this.position + 1e-6), this.chapters.length - 1);
-      if (chapter !== this.showChapter) {
-        this.showChapter = chapter;
-        this.showTime = 0;
-      } else {
-        this.showTime += dt;
+      const delta = this.target - this.position;
+      // A skip (Next, the rail, Replay) glides until the story gets there, however long the
+      // page takes to start moving
+      if (this.jumpTo !== null) {
+        this.jumping = true;
+        if (Math.abs(this.jumpTo - this.position) < 0.002) this.jumpTo = null;
       }
-      // Autoplay: on to the next chapter once this one's show has played through
-      const { id } = this.chapters[chapter];
-      if (this.autoplaying && !this.anim && this.showTime >= (SHOW_SECONDS[id] || 0)) {
-        if (this.stop < this.chapters.length - 1) this.step(1);
-        else this.autoplaying = false;
-      }
-    },
-    /**
-     * Where a chapter's own show ends and its move to the next chapter starts (story position
-     * within the chapter: before it nothing moves but the show, so a step starts there)
-     * @param {Number} i chapter index
-     * @returns {Number} fraction 0..1
-     */
-    leaveAt(i) {
-      if (i === 0) return 0;
-      return i === this.chapters.length - 2 ? OUTRO_FROM : SHOW_SHARE;
-    },
-    /**
-     * How long a move from chapter i to i + 1 takes
-     * @param {Number} i chapter index
-     * @returns {Number} seconds
-     */
-    stepSeconds(i) {
-      if (i === 0) return STEP_SECONDS.reveal;
-      return i === this.chapters.length - 2 ? STEP_SECONDS.outro : STEP_SECONDS.chapter;
-    },
-    /**
-     * One step forward or back: the move to the next (or previous) chapter plays, and the story
-     * rests there with its show running
-     * @param {Number} dir 1 or -1
-     * @returns {Boolean} whether it stepped
-     */
-    step(dir) {
-      const last = this.chapters.length - 1;
-      const to = clamp(this.stop + dir, 0, last);
-      if (to === this.stop) return false;
-      this.stop = to;
-      // Autoplay ends with the final hero
-      if (to === last) this.autoplaying = false;
-      const now = performance.now();
-      if (dir > 0) {
-        // Skip the still part of the chapter being left (its show isn't scrubbed any more)
-        const from = Math.max(this.position, to - 1 + this.leaveAt(to - 1));
-        this.anim = {
-          from, to, land: to, start: now, duration: this.stepSeconds(to - 1),
-        };
-      } else {
-        // Back through the move, then land at the start of the chapter
-        const end = to + this.leaveAt(to);
-        this.anim = {
-          from: this.position, to: end, land: to, start: now, duration: this.stepSeconds(to),
-        };
-      }
-      this.moving = true;
-      this.updateLoop();
-      return true;
-    },
-    /**
-     * Straight to chapter i (rail, Next, Replay, a scroll that landed elsewhere)
-     * @param {Number} i chapter index
-     */
-    jump(i) {
-      const to = clamp(Math.round(i), 0, this.chapters.length - 1);
-      this.stop = to;
-      if (Math.abs(this.position - to) < 0.001) {
-        this.position = to;
-        this.holdScroll(to);
+      if (Math.abs(delta) < 0.0005) {
+        this.position = this.target;
+        if (this.jumpTo === null) this.jumping = false;
         return;
       }
-      this.anim = {
-        from: this.position,
-        to,
-        land: to,
-        start: performance.now(),
-        duration: Math.min(0.9 + 0.3 * Math.abs(to - this.position), 2.2),
-      };
-      this.moving = true;
-      this.updateLoop();
+      const gesture = performance.now() - (this.gestureAt || 0) < 300;
+      // Far away without a gesture (scrollbar drag, End key…): glide there
+      if (!gesture && Math.abs(delta) > 1.5) this.jumping = true;
+      if (this.jumping) {
+        this.position += delta * (1 - Math.exp(-8 * dt));
+        return;
+      }
+      // Walk towards the scroll at a fixed pace for the part of the story we're in, whatever
+      // the scroll's speed: shows at 2× real time, transitions in ~0.7 s, the reveal in ~1.2 s
+      const last = this.chapters.length - 1;
+      const nudge = delta < 0 ? -1e-6 : 0;
+      const index = Math.max(0, Math.min(Math.floor(this.position + nudge), last));
+      const fraction = this.position - index;
+      let rate = 1 / 1.2;
+      if (index === last) {
+        rate = 1 / 0.8;
+      } else if (index === last - 1) {
+        rate = 2 / SHOW_SECONDS[this.chapters[index].id];
+      } else if (index > 0) {
+        rate = fraction < SHOW_SHARE
+          ? (2 * SHOW_SHARE) / SHOW_SECONDS[this.chapters[index].id]
+          : (1 - SHOW_SHARE) / 0.7;
+      }
+      this.position += Math.sign(delta) * Math.min(Math.abs(delta), rate * dt);
+      // Touch (and its fling): the page can't run past the throttle either. The wheel is held
+      // back before it scrolls (onWheel); a swipe's fling can only be scrolled back
+      if (gesture && !this.glide && this.touching) {
+        if (this.gate === null) this.beginGesture(Math.sign(delta));
+        const cap = this.cap(Math.sign(delta));
+        if ((delta > 0 && this.target > cap + 0.01) || (delta < 0 && this.target < cap - 0.01)) {
+          this.holdScroll(cap);
+        }
+      }
     },
     /**
-     * Scrolls the page to a story position (the scroll follows the story, so the scrollbar and the
-     * browser's back/forward stay true)
-     * @param {Number} position story position
+     * A gesture starts: it may carry the story up to the next chapter in its direction, not past
+     * @param {Number} dir 1 (down) or -1 (up)
      */
-    holdScroll(position) {
-      const { story } = this.$refs;
-      if (!story) return;
-      const i = Math.max(0, Math.min(Math.floor(position), this.lengths.length - 1));
-      const y = this.starts[i] + clamp(position - i) * this.lengths[i];
-      const top = story.getBoundingClientRect().top + window.scrollY;
-      this.expectedY = Math.round(top + y * (window.innerHeight / 100));
-      window.scrollTo(0, this.expectedY);
+    beginGesture(dir) {
+      const last = this.chapters.length - 1;
+      this.gestureDir = dir;
+      this.gate = dir > 0
+        ? Math.min(Math.floor(this.position + 1e-6) + 1, last)
+        : Math.max(Math.ceil(this.position - 1e-6) - 1, 0);
+      this.gateAt = null;
     },
     /**
-     * Story position for the page's scroll
+     * How far the current gesture may take the scroll: no more than LEAD ahead of the story, and
+     * not past its chapter gate
+     * @param {Number} dir 1 or -1
+     * @returns {Number} story position
+     */
+    cap(dir) {
+      return dir > 0
+        ? Math.min(this.gate, this.position + LEAD)
+        : Math.max(this.gate, this.position - LEAD);
+    },
+    /**
+     * Story position for a page scroll offset
+     * @param {Number} scrollY page scroll (px)
      * @returns {Number} position
      */
-    scrollPosition() {
-      const { story } = this.$refs;
+    positionAt(scrollY) {
       const vh = window.innerHeight / 100;
-      const y = clamp(-story.getBoundingClientRect().top / vh, 0, this.totalLength);
+      const y = clamp((scrollY - this.storyTop) / vh, 0, this.totalLength);
       let i = 0;
       while (i < this.lengths.length - 1 && y >= this.starts[i + 1]) i += 1;
       return i + clamp((y - this.starts[i]) / this.lengths[i]);
     },
     /**
-     * Whether a step in this direction stays inside the story (else the page scrolls on: past
-     * the final hero, or above the top)
-     * @param {Number} dir 1 or -1
-     * @returns {Boolean}
-     */
-    captures(dir) {
-      if (!this.ready || this.fallback || this.still) return false;
-      const { story } = this.$refs;
-      const rect = story.getBoundingClientRect();
-      // The story fills the screen (its top is at or above the top of the window)
-      if (rect.top > 2 || rect.bottom < window.innerHeight - 2) return false;
-      if (dir > 0) return this.stop < this.chapters.length - 1 || Boolean(this.anim);
-      return this.stop > 0 || this.position > 0.001;
-    },
-    /**
-     * Wheel: one step per gesture. The rest of a gesture and its momentum (the decaying tail of a
-     * trackpad flick) are swallowed; a new gesture starts after a pause, or with a new flick
-     * (a much stronger event) once the last step has landed
+     * Wheel: the story scrubs with the scroll, throttled. A wheel event that would take the page
+     * more than LEAD ahead of the story, or past the next chapter within one gesture, is held back
+     * (the page goes as far as allowed); momentum (a run of weakening events) is ignored. Outside
+     * the story (below the final hero, above the top) the page scrolls as usual
      * @param {WheelEvent} e wheel event
      */
     onWheel(e) {
+      this.gestureAt = performance.now();
+      this.touching = false;
       const dir = Math.sign(e.deltaY);
-      if (!dir || e.ctrlKey || !this.captures(dir)) return;
-      e.preventDefault();
-      this.stopGlide();
-      const now = performance.now();
+      if (!dir || e.ctrlKey || !this.ready || this.still || this.fallback || this.glide) return;
+      const at = e.timeStamp || performance.now();
       const mag = Math.abs(e.deltaY);
-      // Gaps from the events' own timestamps: a busy frame mustn't split one gesture in two
-      const at = e.timeStamp || now;
-      const gap = at - (this.wheelAt || 0);
-      // A weak tail that doesn't grow is momentum, even after a short gap
-      const tail = gap < 500 && mag <= (this.wheelMag || 0) + 1 && (this.wheelMag || 0) < 12;
-      const fresh = (gap > GESTURE_GAP && !tail) || dir !== this.wheelDir;
-      // A new flick while the last one's momentum still runs (momentum only decays)
-      const again = !this.anim && now - (this.landedAt || 0) > STEP_COOLDOWN
-        && mag > (this.wheelMag || 0) * 1.6 && mag >= 30;
+      const fresh = at - (this.wheelAt || -1e9) > GESTURE_GAP || dir !== this.gestureDir;
+      // Momentum decays event after event; a hand on the wheel or the trackpad doesn't for long
+      this.decay = !fresh && mag < (this.wheelMag || 0) ? (this.decay || 0) + 1 : 0;
       this.wheelAt = at;
-      this.wheelDir = dir;
       this.wheelMag = mag;
-      if (this.anim || !(fresh || again)) return;
-      this.step(dir);
-    },
-    /**
-     * Touch: where a swipe starts
-     * @param {TouchEvent} e touch event
-     */
-    onTouchStart(e) {
-      this.touchY = e.touches[0].clientY;
-      this.swiped = false;
-    },
-    /**
-     * Touch: a swipe steps once it travels far enough; the page doesn't scroll (no fling)
-     * @param {TouchEvent} e touch event
-     */
-    onTouchMove(e) {
-      if (this.touchY == null) return;
-      const dy = this.touchY - e.touches[0].clientY;
-      const dir = Math.sign(dy);
-      if (!dir || !this.captures(dir)) return;
-      e.preventDefault();
-      if (this.swiped || this.anim || Math.abs(dy) < SWIPE) return;
-      this.swiped = true;
-      this.stopGlide();
-      this.step(dir);
-    },
-    /**
-     * Keys: arrows, Page Up/Down and Space step; Home goes back to the first hero
-     * @param {KeyboardEvent} e key event
-     */
-    onKey(e) {
-      const field = e.target && (e.target.isContentEditable
-        || /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(e.target.tagName));
-      if (field || e.altKey || e.ctrlKey || e.metaKey) return;
-      const keys = {
-        ArrowDown: 1, PageDown: 1, ArrowUp: -1, PageUp: -1, ' ': e.shiftKey ? -1 : 1,
-      };
-      const dir = keys[e.key];
-      if (dir && this.captures(dir)) {
-        e.preventDefault();
-        this.stopGlide();
-        if (!this.anim) this.step(dir);
-      } else if (e.key === 'Home' && this.captures(-1)) {
-        e.preventDefault();
-        this.stopGlide();
-        this.jump(0);
+      if (fresh) {
+        this.beginGesture(dir);
+      } else if (this.decay < 3 && this.gateAt && performance.now() - this.gateAt > GATE_REST) {
+        // Still scrolling, by hand, after the story rested on the chapter: on to the next one
+        this.beginGesture(dir);
       }
+      // Outside the story: the page scrolls on
+      const last = this.chapters.length - 1;
+      const y = window.scrollY;
+      const end = this.storyTop + this.starts[last] * (window.innerHeight / 100);
+      if ((dir > 0 && (this.position >= last - 0.001 || y >= end))
+        || (dir < 0 && y <= this.storyTop)) return;
+      if (this.decay >= 3) {
+        e.preventDefault();
+        return;
+      }
+      const px = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+      const next = this.positionAt(y + px);
+      const cap = this.cap(dir);
+      if ((dir > 0 && next > cap) || (dir < 0 && next < cap)) {
+        e.preventDefault();
+        if (Math.abs(this.target - cap) > 0.001) this.holdScroll(cap);
+      }
+    },
+    /**
+     * Scrolls the page to a story position
+     * @param {Number} position story position
+     */
+    holdScroll(position) {
+      const i = Math.max(0, Math.min(Math.floor(position), this.lengths.length - 1));
+      const y = this.starts[i] + clamp(position - i) * this.lengths[i];
+      window.scrollTo(0, this.storyTop + y * (window.innerHeight / 100));
+    },
+    /**
+     * A touch scroll happened (a new touch starts a new gesture)
+     */
+    onGesture() {
+      const now = performance.now();
+      if (!this.touching || now - (this.gestureAt || 0) > GESTURE_GAP) this.gate = null;
+      this.touching = true;
+      this.gestureAt = now;
+    },
+    /**
+     * Where the story starts on the page (px), read once per layout change: the scroll handler
+     * never measures the page
+     */
+    measure() {
+      const { story } = this.$refs;
+      if (story) this.storyTop = story.getBoundingClientRect().top + window.scrollY;
     },
     /**
      * Stops the show
@@ -1134,8 +1073,6 @@ export default {
      */
     sync() {
       const { frame, state } = cached.stage;
-      const seconds = SHOW_SECONDS[this.chapterId];
-      this.showProgress = seconds ? clamp(this.showTime / seconds) : 0;
       switch (this.chapterId) {
         case 'channels':
           this.channels.forEach((channel, i) => { channel.value = frame[i]; });
@@ -1169,39 +1106,40 @@ export default {
       if (this.chapterId === 'cues' || this.chapterId === 'chase') ManualTicker.bump();
     },
     /**
-     * The page scrolled. Our own scrolls (a step moving the page along) are ignored. Any other
-     * scroll (the scrollbar, a link, the browser) moves the story with it, then the story settles
-     * on the nearest chapter once the scroll stops
+     * Story position from the scroll: 0..1 the reveal, then i + how far chapter i has played
      */
     onScroll() {
-      const { story } = this.$refs;
-      if (!story) return;
-      if (this.expectedY != null && Math.abs(window.scrollY - this.expectedY) < 2) return;
-      this.expectedY = null;
-      const target = this.scrollPosition();
+      if (!this.$refs.story) return;
+      if (this.storyTop === undefined) this.measure();
+      this.target = this.positionAt(window.scrollY);
+      this.idle = false;
+      clearTimeout(this.idleTimer);
+      this.idleTimer = setTimeout(() => { this.idle = true; }, 900);
       if (!this.ready) {
-        this.position = target;
-        this.stop = Math.round(target);
+        this.position = this.target;
         if (this.morph < 1) this.drawReveal(performance.now() / 1000);
-        return;
+      } else {
+        this.updateLoop();
       }
-      // Reduced motion: the story follows the scroll as it is, without moves
-      if (this.still) {
-        this.position = target;
-        this.stop = Math.round(target);
-        return;
-      }
-      if (this.anim) return;
-      this.position = target;
-      this.moving = true;
-      this.updateLoop();
-      clearTimeout(this.settleTimer);
-      this.settleTimer = setTimeout(() => {
-        this.moving = false;
-        // Below the story (the page under it): leave the scroll alone
-        if (story.getBoundingClientRect().bottom < window.innerHeight - 2) return;
-        this.jump(this.scrollPosition());
-      }, 220);
+    },
+    /**
+     * Eases the page to a scroll offset (rail, scroll hint); the reader's own scrolling takes over
+     * @param {Number} top target scroll offset (px)
+     */
+    glideTo(top) {
+      this.stopGlide();
+      const from = window.scrollY;
+      const distance = top - from;
+      if (Math.abs(distance) < 1) return;
+      const duration = Math.min(1100, 700 + Math.abs(distance) * 0.25);
+      const start = performance.now();
+      const step = (now) => {
+        const k = Math.min((now - start) / duration, 1);
+        const e = k < 0.5 ? 4 * k * k * k : 1 - (-2 * k + 2) ** 3 / 2;
+        window.scrollTo(0, from + distance * e);
+        this.glide = k < 1 ? requestAnimationFrame(step) : null;
+      };
+      this.glide = requestAnimationFrame(step);
     },
     /**
      * Pointer over the page: the stage's camera tilts a little towards it
@@ -1215,43 +1153,80 @@ export default {
       );
     },
     /**
-     * Stops autoplay
+     * Stops a glide in progress
      */
     stopGlide() {
+      if (this.glide) cancelAnimationFrame(this.glide);
+      this.glide = null;
       this.autoplaying = false;
+      this.jumpTo = null;
     },
     /**
-     * Autoplay, one toggle for the whole story: each chapter plays its show through, then the
-     * story moves on, up to the final hero. Again to pause; the reader's own wheel, swipes and
-     * keys also stop it
+     * Autoplay, one toggle for the whole story: scrolls through the shows at their real speed,
+     * each chapter starting as soon as the previous one ends, up to the final hero. Again to
+     * pause; the reader's own scrolling (wheel, touch, keys) also stops it
      */
     toggleAutoplay() {
       if (this.autoplaying) {
         this.stopGlide();
         return;
       }
+      this.stopGlide();
+      const end = this.chapters.length - 1;
+      this.autoPosition = Math.max(this.target, 1);
+      let last = performance.now();
       this.autoplaying = true;
-      if (this.stop === 0) this.step(1);
+      const step = (now) => {
+        const dt = Math.min(Math.max((now - last) / 1000, 0), 0.1);
+        last = now;
+        const index = Math.floor(this.autoPosition);
+        const fraction = this.autoPosition - index;
+        let rate = 1;
+        if (index === end - 1) {
+          rate = 1 / SHOW_SECONDS[this.chapters[index].id];
+        } else if (index < end) {
+          rate = fraction < SHOW_SHARE
+            ? SHOW_SHARE / SHOW_SECONDS[this.chapters[index].id]
+            : (1 - SHOW_SHARE) / 0.7;
+        }
+        this.autoPosition = Math.min(this.autoPosition + rate * dt, end);
+        this.holdScroll(this.autoPosition);
+        if (this.autoPosition < end) {
+          this.glide = requestAnimationFrame(step);
+        } else {
+          this.glide = null;
+          this.autoplaying = false;
+        }
+      };
+      this.glide = requestAnimationFrame(step);
     },
     /**
-     * Skips to chapter i; autoplay, if on, carries on from there
+     * Skips to the start of chapter i; autoplay, if on, carries on from there
      * @param {Number} i chapter index
      */
     next(i) {
-      this.jump(Math.min(i, this.chapters.length - 1));
+      const target = Math.min(i, this.chapters.length - 1);
+      if (this.autoplaying) {
+        this.jumpTo = target;
+        this.autoPosition = target;
+        this.holdScroll(target);
+      } else {
+        this.goTo(target);
+      }
     },
     /**
-     * Back to the first hero
+     * Back to the hero
      */
     backToTop() {
-      this.stopGlide();
-      this.jump(0);
+      this.glideTo(0);
+      this.jumpTo = 0;
     },
     /**
      * Keeps the renderer, the reveal and the panels at the screen size
      */
     onResize() {
       this.narrow = window.innerWidth < 768;
+      this.measure();
       if (this.reveal) {
         this.reveal.resize();
         this.drawReveal(performance.now() / 1000);
@@ -1264,12 +1239,14 @@ export default {
       }
     },
     /**
-     * To a chapter (the rail, the scroll cue)
+     * Scrolls to a chapter
      * @param {Number} i chapter index
      */
     goTo(i) {
-      this.stopGlide();
-      this.jump(i);
+      const { story } = this.$refs;
+      const top = story.getBoundingClientRect().top + window.scrollY;
+      this.glideTo(top + this.starts[i] * (window.innerHeight / 100) + 1);
+      this.jumpTo = i;
     },
   },
 };
