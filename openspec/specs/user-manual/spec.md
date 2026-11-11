@@ -74,10 +74,14 @@ moving heads drawn as beam guides. Each following chapter SHALL explain one part
 the real Studio widget for it, displayed in the 3D scene and fed by the show playing on the stage.
 The story SHALL end on a final hero with the calls to action.
 
-#### Scenario: Scroll drives the show
-- **WHEN** the visitor scrolls through a chapter
-- **THEN** that chapter's show plays forward at a steady pace in step with the scroll, plays
-  backwards when scrolling up, and holds still when scrolling stops
+#### Scenario: One chapter per gesture
+- **WHEN** the visitor scrolls, swipes or presses a key inside the story
+- **THEN** the story moves one chapter forward or back per gesture, however fast or far the
+  gesture goes; scroll momentum and the rest of the gesture don't move it further
+
+#### Scenario: A chapter plays while the visitor reads
+- **WHEN** the visitor stops on a chapter
+- **THEN** that chapter's show plays from its start, in real time, without scrolling
 
 #### Scenario: Cues fade like Studio's
 - **WHEN** the show moves from one cue to the next
@@ -109,6 +113,11 @@ or WebGL is unavailable.
 - **WHEN** the visitor scrolls past the hero or switches tabs
 - **THEN** the hero stops drawing frames until it is visible again
 
+#### Scenario: Leaving the home page
+- **WHEN** the visitor goes from the home page to a manual page
+- **THEN** the hero's 3D view is released, and the manual's visualizer previews show only their
+  own rig
+
 #### Scenario: Reduced motion
 - **WHEN** the visitor's system asks for reduced motion
 - **THEN** the hero shows a still frame of the rig and the text, with no camera or beam movement
@@ -127,9 +136,9 @@ the introduction. Product visuals SHALL be live: the 3D hero, or real Studio com
 - **THEN** no image of the app's interface is shown, and every product visual is rendered live
 
 ### Requirement: Home page leads to the right resources
-The final hero SHALL offer three actions: try the live demo, download the desktop app, and read
-the manual. The toolbar SHALL link the source repository, the live demo and the download on
-every page.
+The first and the final hero SHALL offer three actions: try the live demo, download the desktop
+app, and read the manual. The toolbar SHALL link the manual, the source repository, the live demo
+and the download on every page.
 
 #### Scenario: Calls to action
 - **WHEN** a visitor clicks **Try the live demo**, **Download** or **Read the manual**

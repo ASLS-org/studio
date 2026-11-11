@@ -177,3 +177,20 @@ No new screenshots or recordings.
   toolbar and the hero show it. Pages link it where they invite readers to try something.
 - **Patch bay delete demo dropped.** Deleting from the patch bay does nothing in Studio (epic
   backlog), so the manual deletes from the universe view's fixture pool.
+
+## Home page revision (2026-11-11, on the same PR)
+
+- **One chapter per gesture.** Inside the story, the wheel, swipes and keys step one chapter at a
+  time. Momentum and the rest of a gesture are swallowed, so fast scrolling can't skip to the end.
+  Each chapter's show runs on its own clock while the visitor rests on it, instead of being
+  scrubbed by the scroll (it froze as soon as scrolling stopped). The first chapter's show now
+  moves from the start.
+- **Lighter.** Measured with CDP at rest on a chapter: no layout per frame.
+  - the CSS3D layer's size is cached instead of read back each frame;
+  - out-of-reach panels are taken out of the layer;
+  - the scroll cue animates `transform` and pauses while hidden;
+  - the loop stops on both heroes.
+
+  The stage is disposed when leaving the home page instead of cached. It kept a WebGL context
+  and its rig in Studio's shared scene, where the manual's previews drew it too.
+- **Manual link** in the toolbar.
