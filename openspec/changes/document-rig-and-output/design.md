@@ -53,18 +53,39 @@ Facts that shape the pages:
 
 ## Decisions
 
-### D1. Page map
-| Section | Page | Path |
-| --- | --- | --- |
-| Rig & output | Fixture Library | `rig/fixtures` (OFL, GDTF import and library, generic bundle, missing fixtures, models and cells in 3D, channel types; patching links here instead of repeating it) |
-| | Outputs | `rig/outputs` (the gateway, Preferences → Outputs, a universe's connection settings, checking it works, what's verified) |
-| | Visualizer | `interface/visualizer` (existing; adds Preferences → Visualizer, the standalone view for a second screen) |
-| | Showfiles | `rig/showfiles` |
-| | Desktop App | `rig/desktop` (replaces the developer content of `introduction/installation`, which becomes a short "browser or desktop" page) |
-| | Toolbar | `interface/toolbar` (rewritten in the manual's voice) |
-| Reference | Shortcuts, Glossary, Troubleshooting, Known Limitations | `reference/*` |
+### D1. Page map (revised after review, 2026-11-12)
+| Section | Pages |
+| --- | --- |
+| Getting started | About, How Studio Works (a short narrative linking each topic), Installation (browser or desktop, **including the desktop app**: downloads, first launch, built-in gateway), Your First Show (steps only, linking the pages with the demos), The Interface (the map, **including the toolbar**) |
+| Concepts | Show Structure (definitions + demo-show facts, links instead of previews), Timing (units only) |
+| Programming a show | unchanged |
+| Rig & output | Fixture Library (`rig/fixtures`), Visualizer, Outputs (`rig/outputs`), Showfiles (`rig/showfiles`) |
+| Reference | Shortcuts, Glossary, Troubleshooting, Known Limitations (`reference/*`) |
 
-Moved content keeps its old URL as a one-line stub, as unit 3 did.
+`interface/toolbar` becomes a one-line stub to The Interface (old URL). The separate Desktop App
+page, never published, merged into Installation.
+
+### D8. One home per topic (revised after review)
+Each topic is explained once, on its home page, with its live preview or illustration. Other pages
+summarise it in a sentence and link there. Every preset and illustration appears on exactly one
+page. Whole-panel previews that repeat the widgets shown one by one are dropped; one panel, the
+group view, stays on The Interface as the modifier strip's example. Known-limitation notes stay
+where the reader hits the problem, as one line linking Known Limitations.
+
+### D9. One floating visualizer per page (revised after review)
+The visualizer is no longer drawn inside each stage preview: the page has one floating card
+(`FloatingVisualizer.vue`, in the layout), shown on pages with stage previews.
+- **Docked:** small, bottom right, while no stage preview runs.
+- **Attached:** while one runs, the card floats beside it, in the right margin first, else the
+  left, else above or below it, and follows it as the page scrolls.
+- **Moved and resized:** the reader can drag it by its title (it stays put until sent back) and
+  resize it from its corner, within limits.
+- **Collapsed:** **–** reduces it to a title pill with "Show the stage", releasing the 3D view.
+- **Phones:** a bottom sheet.
+
+Collapsed and sizes are kept in the browser's storage. Stage previews are now the component's
+size; `StageWrap` keeps only the component box and the in-box popup host. The standalone
+`visualizer` preset is gone: the card is the visualizer.
 
 ### D2. User terms, not protocol terms
 "The gateway is a small program that turns Studio's output into Art-Net, sACN or DMX on a USB

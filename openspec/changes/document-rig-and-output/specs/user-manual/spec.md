@@ -5,10 +5,11 @@
 ### Requirement: Manual follows the reader's path
 The manual's navigation SHALL be organised as **Getting started**, **Concepts**, **Programming a
 show**, **Rig & output** and **Reference**. Programming pages SHALL each cover one task (patching,
-groups, scenes, effects, chases, playing a show), in the order a show is built. Rig & output
-pages SHALL each cover one part of getting a show to real lights and keeping it (fixtures,
-outputs, the visualizer, showfiles, the desktop app). Reference pages SHALL be for looking things
-up (shortcuts, glossary, troubleshooting, known limitations).
+groups, scenes, effects, chases, playing a show), in the order a show is built. Getting started
+SHALL hold installing Studio (browser or desktop app) and the map of its interface. Rig & output
+pages SHALL each cover one part of getting a show to real lights and keeping it (fixtures, the
+visualizer, outputs, showfiles). Reference pages SHALL be for looking things up (shortcuts,
+glossary, troubleshooting, known limitations).
 
 #### Scenario: New reader
 - **WHEN** a reader opens the manual's navigation
@@ -86,3 +87,27 @@ Studio behaviour the manual doesn't present as working.
 #### Scenario: A term
 - **WHEN** a reader meets a term they don't know on any page
 - **THEN** the glossary defines it in one or two sentences and links the page that explains it
+
+### Requirement: Each topic has one home
+Each topic SHALL be explained once, on its home page, with its live preview, demo or
+illustration; other pages SHALL summarise it briefly and link there. A preview or illustration
+SHALL appear on one page only.
+
+#### Scenario: Reading on
+- **WHEN** a reader moves from the tutorial or a concept to the page about a feature
+- **THEN** they find new detail and the feature's demo there, not the same demo and wording again
+
+### Requirement: One floating visualizer
+A page whose previews drive the rig SHALL show one visualizer, as a floating card: small in a
+corner while no such preview runs, next to the running one while it runs (following it as the
+page scrolls). The reader SHALL be able to move it, resize it within limits, and reduce it to its
+title (its 3D view then released) with a call to show it again. Stage previews SHALL NOT draw a
+visualizer of their own.
+
+#### Scenario: A demo starts
+- **WHEN** a reader scrolls to a demo that plays cues on the rig
+- **THEN** the visualizer card comes next to the demo and shows the rig answering
+
+#### Scenario: Putting it away
+- **WHEN** the reader reduces the card to its title
+- **THEN** only the title and a "Show the stage" action remain, until they expand it again

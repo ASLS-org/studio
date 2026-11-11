@@ -11,5 +11,6 @@ no screenshots of the app as product imagery. The home hero is Studio's visualiz
 mode (`.vitepress/theme/hero/`). Studio URLs come from `MANUAL_URL_*` in the repo `.env`, never
 hard-coded. Pages show Studio's widgets and panels live with `<LivePreview preset="…">`
 (`.vitepress/theme/previews/`, demo show in `public/presets/` = the home page's rig); one preview
-runs at a time, demos run to their end next to the visualizer; no recordings of the app.
+runs at a time, demos run to their end; one floating visualizer card per page comes next to the
+running stage preview; each topic and each preview has one home page; no recordings of the app.
 Details: skill `user-manual` § Theme, § Live previews, § Resource links, § Home page.
