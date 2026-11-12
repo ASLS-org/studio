@@ -84,6 +84,11 @@ export default {
         .filter((item) => item && item.unfold === undefined && item.universe !== undefined
           && this.$show.fixturePool.checkIfExists(item.id))
         .forEach((fixture) => this.$show.deleteFixture(fixture));
+      // the route no longer points at a deleted fixture
+      const { fixtureId } = this.$route.query;
+      if (fixtureId !== undefined && !this.$show.fixturePool.checkIfExists(Number(fixtureId))) {
+        this.$router.replace({ path: this.$route.path }).catch(() => {});
+      }
       this.$show.refreshSaveState();
     },
   },

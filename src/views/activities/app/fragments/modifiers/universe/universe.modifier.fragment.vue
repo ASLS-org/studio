@@ -148,6 +148,14 @@ export default {
     selectedFixture() {
       this.selectedCells = null;
     },
+    // A fixture deleted elsewhere (the patch bay) leaves the view: show the universe's first one
+    'universe.fixturePool.fixtures.length': function fixtureCountWatcher() {
+      const fixtures = this.universe.fixturePool?.fixtures || [];
+      if (this.selectedFixture && !fixtures.some((f) => f.id === this.selectedFixture.id)) {
+        this.selectedFixture = fixtures[0] || null;
+        this.selectedFixtureIndex = 0;
+      }
+    },
     '$route.query.fixtureId': function routeQueryFixtureIdWatcher(fixtureId) {
       this.selectFixture(fixtureId);
     },

@@ -325,36 +325,58 @@ export default {
       if (this.jsonData === jsonData) return false;
 
       this.jsonData = jsonData;
-      // Rows keep their unfolded state across item changes (patching a fixture, adding a
-      // universe…), matched by id, else by name
+      // Rows keep their state (unfolded, selected, highlighted) across item changes (patching
+      // or deleting a fixture, adding a universe…), matched by id, else by name
       const rowKey = (value) => (value?.id !== undefined ? `id:${value.id}` : `name:${value?.name}`);
-      const unfolded = new Set((this.tree || [])
-        .filter((treeItem) => treeItem.unfolded)
-        .map((treeItem) => rowKey(treeItem.value)));
-      this._tree = [];
-      items.forEach((item, index) => {
-        if (this._tree[index]) {
-          this._tree[index].value = item;
-        } else {
-          this._tree.push({
-            value: item,
-            unfolded: unfolded.has(rowKey(item)),
-            highlighted: this.tree[index] ? this.tree[index].highlighted : false,
-            toggled: item.active,
-            selected: this.tree[index] ? this.tree[index].selected : false,
-          });
-        }
-        if (item.unfold) {
-          this._tree[index].value.unfold = this._tree[index].value.unfold.map((subItem) => ({
-            value: subItem,
-            highlighted: false,
-            selected: false,
-            toggled: subItem.active,
-          }));
-        }
+      const oldTree = this.tree || [];
+      const oldRows = new Map();
+      oldTree.forEach((treeItem) => {
+        const key = rowKey(treeItem.value);
+        oldRows.set(key, treeItem);
+        treeItem.value.unfold?.forEach((sub) => oldRows.set(`${key}/${rowKey(sub.value)}`, sub));
       });
-      this.tree = this._tree;
+      const newKeys = new Set(items.map(rowKey));
+      const carry = (key, value, fallback) => {
+        const old = oldRows.get(key) || fallback;
+        return {
+          value,
+          highlighted: !!old?.highlighted,
+          selected: !!old?.selected,
+          toggled: value.active,
+        };
+      };
+      this.tree = items.map((item, index) => {
+        const key = rowKey(item);
+        // A row whose id or name changed (no old row with its key) takes over the old row at
+        // its place, if that one is gone
+        const replaced = oldTree[index] && !newKeys.has(rowKey(oldTree[index].value))
+          ? oldTree[index] : undefined;
+        const treeItem = carry(key, item, oldRows.has(key) ? undefined : replaced);
+        treeItem.unfolded = !!(oldRows.get(key) || replaced)?.unfolded;
+        if (item.unfold) {
+          const parentKey = oldRows.has(key) || !replaced ? key : rowKey(replaced.value);
+          item.unfold = item.unfold.map((subItem) => carry(`${parentKey}/${rowKey(subItem)}`, subItem));
+        }
+        return treeItem;
+      });
+      // Selection and highlights point at the new rows; deleted rows drop out
+      const rows = this.tree.flatMap((treeItem) => [treeItem, ...(treeItem.value.unfold || [])]);
+      this.highlightedItems = rows.filter((row) => row.highlighted);
+      this.selectedItem = rows.find((row) => row.selected) || null;
+      this.selectedIndex = this.selectedItem
+        ? this.siblingsOf(this.selectedItem).indexOf(this.selectedItem) : null;
       return true;
+    },
+    /**
+     * The rows a row sits among: the top-level rows, or its parent's unfolded rows
+     *
+     * @param {Object} item tree row
+     * @returns {Array<Object>}
+     */
+    siblingsOf(item) {
+      if (this.tree.includes(item)) return this.tree;
+      return this.tree.find((treeItem) => treeItem.value.unfold?.includes(item))?.value.unfold
+        || [];
     },
     unfold(item) {
       if (this.accordion) {
@@ -446,7 +468,7 @@ export default {
         });
       });
       this.selectedItem = item;
-      this.selectedIndex = this.tree.indexOf(item);
+      this.selectedIndex = this.siblingsOf(item).indexOf(item);
       item.selected = true;
       if (!this.noHighlight && clearHighlighted) {
         this.clearHighlighted();
@@ -474,8 +496,12 @@ export default {
     handleGroupedSelection(item, childs) {
       if (!this.selectedItem) {
         this.handleSingleSelection(item, true);
-      } else if (childs.some((c) => c === item) && item !== this.selectedItem) {
-        const index = childs.findIndex((c) => c === item);
+      } else if (!childs.includes(this.selectedItem)) {
+        // a range only spans rows of the same level: start a new selection instead
+        this.handleSingleSelection(item, true);
+      } else if (item !== this.selectedItem) {
+        const index = childs.indexOf(item);
+        this.selectedIndex = childs.indexOf(this.selectedItem);
         const start = Math.min(index, this.selectedIndex);
         const stop = Math.max(index, this.selectedIndex);
         this.clearHighlighted();
