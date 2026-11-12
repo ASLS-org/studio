@@ -32,9 +32,11 @@ views/
   colours; palette lives in `uikit/colors/uikit.colors.js` and `views/utils/palette.js`.
 - The user manual mounts real widgets and panels as live previews
   (`docs/manual/.vitepress/theme/previews/presets.js`). Renaming or moving a widget, or changing
-  its props, breaks them: update the preset (the dev page `/_dev/previews` mounts all of them).
+  its props, breaks them: update the preset (`npm run docs:manual:check` mounts all of them).
   `previews/FixtureControl.vue` copies the universe fragment's wiring of the channels, colour,
   pan/tilt and cells widgets.
+- The patch bay lists top-level items only (universes; other media types later), never their
+  fixtures: fixtures are selected in the universe view's fixture pool.
 - `uk-popup` opens in the injected `popupHost` element when one is provided (the manual's
   previews), else on the body. Idle surfaces (empty lists, the modifier strip, the group pool)
   use `var(--idle-stripes)` over their base colour.
