@@ -73,8 +73,8 @@ Enums live next to their model and are exported: `CUE_TYPES`, `CUE_STATES`,
   Time units: `Live.beatDuration` / `Live.barDuration` in ms, derived from BPM.
 - **Pools:** `addRaw`, `addExisting`, `getFromId` (throws), `delete`, `clearAll`, plus a `listable`
   getter that shapes data for `uk-list`. New pools follow the same API.
-- **Ids:** numeric and unique per pool. Getters coerce with `Number(id)`. `FixturePool.addRaw`
-  renumbers fixtures in load order, so never skip a saved fixture on load (references would shift).
+- **Ids:** numeric and unique per pool. Getters coerce with `Number(id)`. A fixture or universe
+  loaded from a show keeps its saved id (references point to it); new ones get the highest id + 1.
 
 ## Known debt (don't copy these patterns)
 
