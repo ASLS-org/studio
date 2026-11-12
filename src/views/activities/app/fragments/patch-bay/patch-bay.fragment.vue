@@ -7,25 +7,30 @@
         icon="new"
         style="margin-right: 8px"
         label="new"
-        @click="addUniverse"
+        @click="mediaPopupState = true"
       />
     </div>
     <uk-list
       deletable
       colored
+      auto-select-first
       class="patch_bay_universe_list"
       filterable
-      :items="pool.patchBayListable"
-      :auto-select="routeUniverseIndex"
-      delete-note="Every fixture patched on them is deleted too, from its groups and cues."
-      @select="displayUniverse"
-      @delete="deleteUniverses"
+      :items="pool.listable"
+      accordion
+      @unfold="displayUniverse"
+      @select="displayFixture"
+      @delete="deleteFixtures"
+    />
+    <media-popup
+      v-model="mediaPopupState"
+      @create="displayUniverse"
     />
   </div>
 </template>
 
 <script>
-import ukColors from '@/views/components/uikit/colors/uikit.colors';
+import MediaPopup from './_popups/popup.media.vue';
 
 export default {
   name: 'PatchBayFragment',
@@ -33,30 +38,23 @@ export default {
     // or, for full vue 3 compat in this component:
     MODE: 3,
   },
+  components: {
+    MediaPopup,
+  },
   data() {
     return {
       pool: this.$show.universePool,
+      /**
+       * New media popup display state
+       */
+      mediaPopupState: false,
     };
-  },
-  computed: {
-    /**
-     * Index of the universe the universe view shows, so the list highlights it
-     *
-     * @type {?Number}
-     */
-    routeUniverseIndex() {
-      const { universeId } = this.$route.params || {};
-      if (universeId === undefined) return null;
-      const index = this.pool.universes.findIndex((u) => u.id === Number(universeId));
-      return index > -1 ? index : null;
-    },
   },
   methods: {
     /**
-     * Opens the selected universe in the universe view
+     * Displays the modifier of the unfolded universe
      *
      * @public
-     * @param {Object} universeData listable universe data
      */
     displayUniverse(universeData) {
       if (universeData) {
@@ -64,37 +62,29 @@ export default {
       }
     },
     /**
-     * Adds an empty universe (next free id) and opens it
+     * Displays the modifier of the unfolded universe
+     * and pre-selects selected fixture within the modifier.
      *
      * @public
      */
-    addUniverse() {
-      const id = this.pool.genUniverseId();
-      const colors = Object.values(ukColors);
-      const universe = this.pool.addRaw({
-        id,
-        name: `Universe ${id}`,
-        color: colors[id % colors.length],
-      });
-      this.$show.refreshSaveState();
-      this.displayUniverse(universe);
+    displayFixture(fixtureData) {
+      if (fixtureData) {
+        this.$router.push({ path: `/universe/${fixtureData.universe}`, query: { fixtureId: fixtureData.id } }).catch(() => {});
+      }
     },
     /**
-     * Deletes the selected universes with every fixture patched on them, and leaves the universe
-     * view if it showed one of them
+     * Deletes the selected fixtures from the show (as the universe view's fixture pool does).
+     * Universes in the selection are left alone
      *
      * @public
-     * @param {Array<Object>} universesData listable data of the universes to delete
+     * @param {Array<Object>} items listable data of the selected rows
      */
-    deleteUniverses(universesData) {
-      const ids = universesData.map((u) => Number(u.id));
-      ids.forEach((id) => {
-        this.$show.deleteUniverse({ id });
-      });
+    deleteFixtures(items) {
+      items
+        .filter((item) => item && item.unfold === undefined && item.universe !== undefined
+          && this.$show.fixturePool.checkIfExists(item.id))
+        .forEach((fixture) => this.$show.deleteFixture(fixture));
       this.$show.refreshSaveState();
-      if (ids.includes(Number(this.$route.params?.universeId))) {
-        this.$router.push('/').catch(() => {});
-      }
     },
   },
 };

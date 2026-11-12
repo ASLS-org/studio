@@ -291,21 +291,6 @@ class Show extends EventEmitter {
   }
 
   /**
-   * Deletes a universe from the show, with every fixture patched on it (they also leave their
-   * groups, scenes and effects). Its stream stops; connections stay.
-   *
-   * @public
-   * @param {Object} universe universe instance handle
-   */
-  deleteUniverse(universe) {
-    const handle = this.universePool.getFromId(universe.id);
-    [...handle.fixturePool.fixtures].forEach((fixture) => this.deleteFixture(fixture));
-    if (handle.stream) handle.stream.stop?.();
-    handle.stream = null;
-    this.universePool.delete(handle);
-  }
-
-  /**
    * Deletes a fixture from the show.
    *
    * @param {Object} fixture a fixture configuration object

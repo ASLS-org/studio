@@ -3,17 +3,6 @@ import Live from './live.model';
 import EventBus from '../../plugins/eventbus';
 
 /**
- * Patch bay summary of a universe: how many fixtures it holds
- *
- * @param {Object} universe universe instance
- * @returns {String} e.g. "4 fixtures"
- */
-function universePatchSummary(universe) {
-  const count = universe.fixturePool.fixtures.length;
-  return `${count} fixture${count === 1 ? '' : 's'}`;
-}
-
-/**
  * @class UniversePool
  * @classdesc Pool of universe instances
  */
@@ -41,7 +30,7 @@ class UniversePool {
   }
 
   /**
-   * Pool's listable data: each universe unfolds to its fixtures (fixture pickers in popups)
+   * Pool's listable data: each universe unfolds to its fixtures (patch bay, fixture pickers)
    *
    * @readonly
    * @type {Array}
@@ -52,21 +41,6 @@ class UniversePool {
       name: universe.name,
       color: universe.color,
       unfold: universe.fixturePool.listable,
-    }));
-  }
-
-  /**
-   * The patch bay's listable data: universes only, each with its fixture count
-   *
-   * @readonly
-   * @type {Array}
-   */
-  get patchBayListable() {
-    return this.universes.map((universe) => ({
-      id: universe.id,
-      name: universe.name,
-      color: universe.color,
-      more: universePatchSummary(universe),
     }));
   }
 

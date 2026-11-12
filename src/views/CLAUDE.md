@@ -35,8 +35,8 @@ views/
   its props, breaks them: update the preset (`npm run docs:manual:check` mounts all of them).
   `previews/FixtureControl.vue` copies the universe fragment's wiring of the channels, colour,
   pan/tilt and cells widgets.
-- The patch bay lists top-level items only (universes; other media types later), never their
-  fixtures: fixtures are selected in the universe view's fixture pool.
+- The patch bay lists top-level media items (DMX universes; other media types later, added
+  through its **New** popup, `popup.media.vue`), each unfolding to its fixtures.
 - `uk-popup` opens in the injected `popupHost` element when one is provided (the manual's
   previews), else on the body. Idle surfaces (empty lists, the modifier strip, the group pool)
   use `var(--idle-stripes)` over their base colour.
