@@ -76,13 +76,11 @@ clips that nobody re-records.
 | 2 | `add-manual-live-previews`: `<LivePreview>` harness, manual dummy showfile, presets per widget, video fallback; the home page already runs Studio's real widgets live (unit 1), so this unit covers the manual pages (no screenshots anywhere) | 1 | archived (branch `docs/add-manual-live-previews`) |
 | 3 | `document-show-programming`: concepts + patch → group → scene → effect → chase → master/live, with live previews | 2 | archived (branch `docs/document-show-programming`) |
 | 4 | `document-rig-and-output`: fixture library/OFL/GDTF, outputs and gateway, visualizer, showfiles, desktop app, shortcuts, glossary, troubleshooting | 2 (can run beside 3) | archived (branch `docs/document-rig-and-output`) |
-| 5 | `gate-manual-upkeep`: OpenSpec rules, archive check, PR template, `user-manual` skill + coverage map | 3, 4 | proposed |
+| 5 | `gate-manual-upkeep`: OpenSpec rules, archive check, PR template, `user-manual` skill + coverage map, preview check | 3, 4 | archived (branch `chore/gate-manual-upkeep`) |
 
 Status values: proposed, refining, applying, archived, deferred.
 
-Units 2–5 hold a proposal and a draft design only, so `openspec validate` reports them as failing
-(no spec deltas) until their unit writes specs and tasks. That's expected. They all add to the
-same new capability `user-manual`.
+All five units are archived (2026-11-12): the epic branch is ready for its PR into `develop`.
 
 ## Backlog (not scheduled in this epic)
 
@@ -123,6 +121,12 @@ same new capability `user-manual`.
     called, and with the memory-history router `/visualizer` would open the app anyway. About →
     Manual opens a hard-coded URL. Menu shortcuts match Ctrl only (not Cmd on macOS). Open Fixture
     Library entries are listed by file key (`mac-aura.json`).
+
+  - (2026-11-12, unit 5, from the code and the manual's preview check) `CuePool.delete` and
+    `clearAll` don't stop a playing cue: its `Live` animation stays. Deleting a cue while it plays
+    leaves it driving the lights; opening or creating a show while a cue plays leaves the old cue
+    running on the old (emptied) fixtures, throwing on every tick (forever for a looping cue).
+    Not yet reproduced in the running app.
 
 - CI drift check (fail a PR that changes user-facing code without a manual change), generated
   reference pages, and a scheduled AI routine that proposes manual updates. All three were
