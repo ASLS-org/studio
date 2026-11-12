@@ -284,12 +284,25 @@ class Show extends EventEmitter {
   prepareOutputs(showData) {
     if (showData.outputs) {
       showData.outputs.forEach((o) => {
-        this.outputPool.addRaw({
-          ...o,
-          universe: this.universePool.getFromId(o.universe),
-        });
+        // An output's saved universe isn't used (and may have been deleted)
+        this.outputPool.addRaw(o);
       });
     }
+  }
+
+  /**
+   * Deletes a universe from the show, with every fixture patched on it (they also leave their
+   * groups, scenes and effects). Its stream stops; connections stay.
+   *
+   * @public
+   * @param {Object} universe universe instance handle
+   */
+  deleteUniverse(universe) {
+    const handle = this.universePool.getFromId(universe.id);
+    [...handle.fixturePool.fixtures].forEach((fixture) => this.deleteFixture(fixture));
+    if (handle.stream) handle.stream.stop?.();
+    handle.stream = null;
+    this.universePool.delete(handle);
   }
 
   /**

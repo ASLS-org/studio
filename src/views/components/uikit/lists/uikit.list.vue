@@ -191,6 +191,7 @@
               ...{{ highlightedItems.length - 5 }} additional items are not shown
             </p>
           </uk-flex>
+          <span v-if="deleteNote">{{ deleteNote }}</span>
         </p>
       </uk-flex>
     </uk-popup>
@@ -205,6 +206,13 @@ export default {
   props: {
     disabled: Boolean,
     deletable: Boolean,
+    /**
+     * Extra line in the deletion confirmation (what else deleting removes)
+     */
+    deleteNote: {
+      type: String,
+      default: '',
+    },
     filterable: Boolean,
     toggleable: Boolean,
     draggable: Boolean,

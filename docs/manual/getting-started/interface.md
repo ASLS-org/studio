@@ -7,7 +7,7 @@ map; each region's own page explains it in full.
 | Region | Where | Use it to |
 | --- | --- | --- |
 | [Toolbar](#toolbar) | Top | Open and save shows, set preferences and outputs, run the clock |
-| [Patch Bay](#patch-bay) | Left | Browse universes and their fixtures |
+| [Patch Bay](#patch-bay) | Left | The show's universes: open, add, delete |
 | [Group Pool](#group-pool) | Middle | See groups and their chases, start chases and master rows |
 | [Visualizer](#visualizer) | Right | Watch the rig in 3D |
 | [Modifier strip](#modifier-strip) | Bottom | Edit what you picked: a universe, a group and its cues, or a chase |
@@ -33,10 +33,10 @@ The **show's name** in the middle gets a `*` when it has changes you haven't sav
 
 ## Patch Bay
 
-Lists the universes, each unfolding to its fixtures with their address (`U0 - CH14`: universe 0,
-address 14). Unfold a universe to open it in the modifier strip; click a fixture to select it
-there and outline it in the visualizer. Type in **Search items** to find fixtures across
-universes. More in [Patching fixtures](/programming/patching).
+Lists the show's universes, each with how many fixtures it holds. Click a universe to open it in
+the modifier strip, where you patch and select its fixtures. **New** adds an empty universe;
+select one and press <kbd>Delete</kbd> to remove it with its fixtures. More in
+[Patching fixtures](/programming/patching#universes).
 
 <LivePreview preset="patch-bay" />
 

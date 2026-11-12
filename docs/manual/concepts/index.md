@@ -46,8 +46,8 @@ your rig grows.
 Universes are how the rig is wired, not how it is programmed: a group can hold fixtures of several
 universes, and a cue doesn't care which universe a fixture is in.
 
-**In the demo show:** one universe, *Stage*, holds the four heads; the patch bay lists them with
-their addresses ([The interface](/getting-started/interface#patch-bay)).
+**In the demo show:** one universe, *Stage*, holds the four heads; its fixture pool lists them with
+their addresses ([Patching fixtures](/programming/patching)).
 → [Patching fixtures](/programming/patching)
 
 ## Fixture
