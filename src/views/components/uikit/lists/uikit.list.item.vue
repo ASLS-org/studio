@@ -11,6 +11,7 @@
       disabled: item.value.disabled || disabled,
       empty: empty,
       tall: tall,
+      large: large,
       noSelect: noSelect,
     }"
     @click="(e)=>$emit('click',e)"
@@ -90,6 +91,11 @@ export default {
     focused: Boolean,
     disabled: Boolean,
     tall: Boolean,
+    /**
+     * Roomier reading mode (opt-in): 40px rows, wider padding, 14px labels and 16px icons, for
+     * lists people read rather than scan (e.g. the user manual's navigation)
+     */
+    large: Boolean,
     noSelect: Boolean,
     empty: Boolean,
   },
@@ -118,6 +124,19 @@ export default {
 }
 .uikit_list_item h4 {
   font-family: Roboto-medium;
+}
+.large {
+  min-height: 40px;
+  height: auto;
+  padding: 0 16px;
+  gap: 12px;
+}
+.large h4 {
+  font-size: 14px;
+}
+.large .uikit_list_item_icon {
+  width: 16px !important;
+  height: 16px !important;
 }
 .unfold h4 {
   font-family: Roboto-bold !important;
@@ -206,13 +225,7 @@ export default {
   cursor: not-allowed;
 }
 .empty {
-  background: var(--primary-light) repeating-linear-gradient(
-    45deg,
-   #1619130a,
-    #1619130a 10px,
-    #0c0e0a38 10px,
-    #0c0e0a38 20px
-  );
+  background: var(--primary-light) var(--idle-stripes);
   text-transform: uppercase!important;
 }
 .unfold{

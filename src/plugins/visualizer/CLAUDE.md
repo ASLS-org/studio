@@ -52,13 +52,18 @@ Three.js r170 WebGL renderer for the rig. It is instantiated by
   Electron). Never hard-code `/`.
 - Many files are `/* eslint-disable */`. Don't spread that: new modules lint clean, and imports from
   `three/examples/jsm/*` keep the explicit `.js` extension (lint override is in `.eslintrc.js`).
+- `new Visualizer(canvas, { showcase: true, quality })` is the user manual's hero mode: no
+  grid, axes, Stats, orbit or transform controls, a plain matte floor, no render loop of its own
+  (the caller calls `render(t)`), and quality settings neither read from nor written to
+  `localStorage`. The app never passes options; keep the default path unchanged.
 - `hazeDensity` and `exposure` are in the visualizer `showData` (older showfiles without them open
   at 50 and 100; their `globalFogging*` keys are ignored). Quality settings are not.
 - `visualizer.render` wraps every fixture class's `update(t, beamState)` in one
   `beamState.begin()` / `end()`. A new fixture class writes its rows there and exposes `_dummy`,
   `position` / `rotation` (radians) and `highlighted` for `Controls` and `FixtureRenderer`.
 - Geometry trees use the GDTF convention (beams along -Z, hanging); `GeometryFixture` flips them
-  so a fixture rotation of x = 180° hangs it. OFL Pan/Tilt ranges start at 0 and are re-centred,
+  so a fixture rotation of x = 180° hangs it (the renderer takes radians: `x: Math.PI`; the
+  fixture model converts its degree setters). OFL Pan/Tilt ranges start at 0 and are re-centred,
   and OFL pan is reversed to turn as the retired `MovingHead` did; GDTF ranges are already signed.
 - Fixture meshes follow the quality level: `Visualizer.applyQuality()` → `FixtureRenderer.setModelLevel`.
   A fixture shows its generated parts first and swaps when its meshes resolve (`onChange` redraws);

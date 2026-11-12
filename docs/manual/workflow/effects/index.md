@@ -1,3 +1,3 @@
 # Creating Effects
 
-Documentation in progress.
+This page moved: see [Effects](/programming/effects).

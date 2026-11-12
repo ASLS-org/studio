@@ -1,0 +1,25 @@
+/*
+ * Roboto as one family with real weights for the manual's prose. The app's own per-weight
+ * families (Roboto-Regular, Roboto-Medium, Roboto-Bold) come from src/assets/styles/fonts.css
+ * for the embedded uk-* controls. Both point at the same files, so each loads once.
+ */
+@font-face {
+  font-family: 'Roboto';
+  font-weight: 400;
+  font-display: swap;
+  src: url('../../../../src/assets/fonts/Roboto/Roboto-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Roboto';
+  font-weight: 500;
+  font-display: swap;
+  src: url('../../../../src/assets/fonts/Roboto/Roboto-Medium.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Roboto';
+  font-weight: 600 700;
+  font-display: swap;
+  src: url('../../../../src/assets/fonts/Roboto/Roboto-Bold.ttf') format('truetype');
+}

@@ -1,3 +1,3 @@
-# Setting Up Environment
+# Setting up Environment
 
-Documentation in progress.
+This page moved: see [Installation](/introduction/installation).

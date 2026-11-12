@@ -1,0 +1,112 @@
+/*
+ * The app's element rules (src/assets/styles/global.css) that uk-* controls rely on, replayed
+ * only inside `.asls-scope` so they never touch the manual's own pages. Use together with
+ * VitePress's `.vp-raw`, which opts the block out of the manual's prose styles.
+ * Wrap controls with <StudioFrame> rather than writing these classes by hand.
+ */
+.asls-scope {
+  font-family: Roboto-Regular, sans-serif;
+  /* The browser default Studio runs on; a frame inside a manual page must not inherit 15px prose */
+  font-size: 16px;
+  color: var(--secondary-lighter);
+  line-height: normal;
+  white-space: normal;
+}
+
+.asls-scope,
+.asls-scope * {
+  box-sizing: border-box;
+  user-select: none;
+  outline: none;
+  scrollbar-color: var(--secondary-dark) var(--primary-dark);
+  scrollbar-width: thin;
+}
+
+.asls-scope input {
+  user-select: auto;
+}
+
+.asls-scope input:focus {
+  outline: none;
+}
+
+.asls-scope ::placeholder {
+  color: var(--secondary-light);
+  opacity: 1;
+}
+
+.asls-scope h1,
+.asls-scope h2,
+.asls-scope h3,
+.asls-scope h4,
+.asls-scope p {
+  margin: 0;
+  padding: 0;
+  border: none;
+  letter-spacing: normal;
+  line-height: normal;
+  color: var(--secondary-lighter);
+  font-weight: normal;
+}
+
+.asls-scope h1 { font-family: Roboto-Regular; font-size: 24px; }
+.asls-scope h2 { font-family: Roboto-Regular; font-size: 16px; }
+.asls-scope h3 { font-family: Roboto-Bold; font-size: 12px; text-transform: uppercase; }
+
+.asls-scope h4 {
+  font-family: Roboto-Bold;
+  font-size: 12px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.asls-scope p {
+  font-family: Roboto-Medium;
+  -webkit-font-smoothing: antialiased;
+  line-height: 16px;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+}
+
+.asls-scope button {
+  text-transform: uppercase;
+  font-family: Roboto-Regular;
+  font-size: 12px;
+  color: var(--secondary-lighter);
+  border: none;
+}
+
+.asls-scope .label {
+  font-family: Roboto-Medium;
+  font-size: 12px;
+  color: var(--secondary-lighter);
+  margin: 0 0 8px;
+  padding: 0;
+}
+
+.asls-scope .label::after { content: ':'; }
+.asls-scope .label.disabled { color: var(--secondary-light); }
+
+.asls-scope .select_value {
+  font-family: Roboto-Bold;
+  font-size: 12px;
+  color: var(--secondary-lighter);
+}
+
+.asls-scope input:disabled,
+.asls-scope .disabled {
+  cursor: not-allowed !important;
+}
+
+.asls-scope ::-webkit-scrollbar {
+  -webkit-appearance: none;
+  background: var(--primary-dark);
+  width: 5px;
+  height: 5px;
+}
+
+.asls-scope ::-webkit-scrollbar-thumb {
+  background: var(--secondary-dark);
+}

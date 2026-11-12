@@ -96,9 +96,16 @@ class Visualizer {
    * Constructs Visualizer instance
    *
    * @param {Object} domElement handle to domElement to be used by the WEBGL renderer
+   * @param {Object} [options]
+   * @param {Boolean} [options.showcase=false] Presentation mode (the user manual's hero): no
+   * editor helpers (grid, axes, orbit and transform controls, stats), a plain matte floor, no
+   * render loop of its own (the caller calls render(t)), and quality settings that are neither
+   * read from nor written to this device's storage
+   * @param {Object} [options.quality] Quality settings to use instead of the stored ones
    */
-  constructor(domElement) {
+  constructor(domElement, options = {}) {
     this.domElement = domElement;
+    this.showcase = Boolean(options.showcase);
     this.renderer = null;
     this.camera = null;
     this.controls = null;
@@ -118,7 +125,7 @@ class Visualizer {
     /**
      * Quality settings stored on this device (never in the showfile)
      */
-    this.qualitySettings = loadQualitySettings();
+    this.qualitySettings = options.quality ? { ...options.quality } : loadQualitySettings();
     this.governor = null;
     this.floorMaterial = null;
     this._hazeDensity = DEFAULT_PREFERENCES.HAZE_DENSITY;
@@ -150,12 +157,14 @@ class Visualizer {
     await ModelInstancer.init(`${import.meta.env.VITE_STATIC_URL}/visualizer/models/model_list.json`);
     this.prepareRenderer();
     this.prepareCamera();
-    this.prepareControls();
+    if (!this.showcase) this.prepareControls();
     this.prepareLighting();
     this.resize();
-    Controls.init(this.camera, this.domElement, this.controls);
-    Controls.handle.addEventListener('change', this.invalidate);
-    this.startRender();
+    if (!this.showcase) {
+      Controls.init(this.camera, this.domElement, this.controls);
+      Controls.handle.addEventListener('change', this.invalidate);
+      this.startRender();
+    }
     this.main();
     this.resize();
   }
@@ -357,7 +366,7 @@ class Visualizer {
    * @private
    */
   saveQuality() {
-    saveQualitySettings(this.qualitySettings);
+    if (!this.showcase) saveQualitySettings(this.qualitySettings);
     this.applyQuality();
   }
 
@@ -459,14 +468,19 @@ class Visualizer {
     this.fixtureRenderer = new FixtureRenderer(this.invalidate);
     if (this.lighting) this.fixtureRenderer.setModelLevel(this.lighting.level);
 
-    // Floor
-    const loader = new THREE.TextureLoader()
-    .setPath(import.meta.env.VITE_STATIC_URL)
-    const texture = await loader.loadAsync('./visualizer/textures/environment/checkerboard_default.jpg');
+    // Floor: the checkerboard, or a plain matte surface in showcase mode
+    const texture = this.showcase ? Visualizer.plainTexture() : await new THREE.TextureLoader()
+      .setPath(import.meta.env.VITE_STATIC_URL)
+      .loadAsync('./visualizer/textures/environment/checkerboard_default.jpg');
 
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
-    texture.repeat.set(8, 8);
+    if (!this.showcase) texture.repeat.set(8, 8);
+
+    if (this.showcase) {
+      this.addFloor(texture);
+      return;
+    }
 
     const gridHelper = new InfiniteGridHelper(5, 100, new THREE.Color('white'), 100);
     gridHelper.rotateX(Math.PI / 2.0);
@@ -487,6 +501,17 @@ class Visualizer {
       new THREE.Color('#4da6ff')  // Z
     );
 
+    this.addFloor(texture);
+    SceneManager.add(axesHelper);
+  }
+
+  /**
+   * Adds the floor, a beam light receiver, and the body lights aimed at it
+   *
+   * @private
+   * @param {THREE.Texture} texture Floor albedo map
+   */
+  addFloor(texture) {
     // The floor is unlit: beam light is added by the lighting passes (see stage_lighting.js)
     this.floorMaterial = new THREE.MeshBasicMaterial({ map: texture });
     this.floorMaterial.color.copy(FLOOR_TINT).multiplyScalar(this._globalBrightness * FLOOR_AMBIENT);
@@ -499,7 +524,7 @@ class Visualizer {
 
     this.globalLightHandle.target = floor;
 
-    SceneManager.add(this.globalLightHandle, this.skyLightHandle, floor, axesHelper);
+    SceneManager.add(this.globalLightHandle, this.skyLightHandle, floor);
     this.invalidate();
   }
 
@@ -647,6 +672,17 @@ Visualizer.matrixMoved = (last, current) => {
     if (Math.abs(last.elements[i] - current.elements[i]) > 1e-6) return true;
   }
   return false;
+};
+
+/**
+ * A 1×1 white texture: a plain floor whose colour comes from the floor tint
+ *
+ * @returns {THREE.DataTexture} Texture
+ */
+Visualizer.plainTexture = () => {
+  const texture = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1);
+  texture.needsUpdate = true;
+  return texture;
 };
 
 /**

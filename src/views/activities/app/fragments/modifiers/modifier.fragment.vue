@@ -36,13 +36,7 @@ export default {
   position: relative;
   flex: 1;
   width: 100%;
-  background: var(--primary-light) repeating-linear-gradient(
-    45deg,
-    #1619130a,
-    #1619130a 10px,
-    #0c0e0a38 10px,
-    #0c0e0a38 20px
-  );
+  background: var(--primary-light) var(--idle-stripes);
   border-top: 1px solid var(--primary-dark);
   overflow: hidden;
   overflow-x: auto;

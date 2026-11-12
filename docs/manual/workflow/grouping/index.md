@@ -1,3 +1,3 @@
-# Setting Up Groups
+# Setting up Groups
 
-Documentation in progress.
+This page moved: see [Groups](/programming/groups).
