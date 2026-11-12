@@ -325,6 +325,12 @@ export default {
       if (this.jsonData === jsonData) return false;
 
       this.jsonData = jsonData;
+      // Rows keep their unfolded state across item changes (patching a fixture, adding a
+      // universe…), matched by id, else by name
+      const rowKey = (value) => (value?.id !== undefined ? `id:${value.id}` : `name:${value?.name}`);
+      const unfolded = new Set((this.tree || [])
+        .filter((treeItem) => treeItem.unfolded)
+        .map((treeItem) => rowKey(treeItem.value)));
       this._tree = [];
       items.forEach((item, index) => {
         if (this._tree[index]) {
@@ -332,7 +338,7 @@ export default {
         } else {
           this._tree.push({
             value: item,
-            unfolded: false,
+            unfolded: unfolded.has(rowKey(item)),
             highlighted: this.tree[index] ? this.tree[index].highlighted : false,
             toggled: item.active,
             selected: this.tree[index] ? this.tree[index].selected : false,
