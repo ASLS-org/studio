@@ -115,7 +115,14 @@ export default {
   and unfolded state follow that key across item changes. So give items a stable `id` (or a
   unique `name`), and rebuild `items` freely (a getter like `pool.listable` is fine): the list
   never writes to them. Events send the caller's own item objects. Keys reach only the focused
-  list; drag-to-reorder (`draggable`) is pointer-based and emits `reorder({ original, final })`.
+  list; `draggable` rows get a grip handle (drag from it only) and emit
+  `reorder({ original, final })`. Right-click opens `uk-context-menu` with the entries the
+  list's props allow (Move up/down, Select all, Delete).
+- **Context menus** (`uk-context-menu`): `v-model`, `x`, `y` (viewport px) and `items`
+  (`{ name, icon?, more?, disabled? }`, never `action`: rows draw it as a button); emits
+  `select(item)`. It teleports to `popupHost` or the body and closes itself.
+- **Icons in `icons/images/`** need a `viewBox` and no `width`/`height` attributes (the SVG loader
+  drops the `viewBox` when both are there, so the icon is clipped when scaled).
 - **Icons.** `<uk-icon name="...">` maps to `components/uikit/icons/images/*.svg`. Add new SVGs
   there.
 - **Keyboard.** Reuse the existing patterns: Ctrl/Shift multi-select in lists, Del/Backspace

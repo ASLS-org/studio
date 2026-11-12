@@ -16,6 +16,16 @@
     }"
     @click="(e)=>$emit('click',e)"
   >
+    <!-- Grip to drag the row (reorderable lists) -->
+    <span
+      v-if="handle"
+      class="uikit_list_item_handle"
+      title="Drag to reorder"
+      @pointerdown.stop="$emit('handle', $event)"
+      @click.stop
+    >
+      <uk-icon name="drag" />
+    </span>
     <!-- The checkbox only shows the state: one toggle path, so a click flips it once -->
     <span
       v-if="toggleable"
@@ -65,18 +75,6 @@
       :class="{ open: item.unfolded }"
       name="arrow_down"
     />
-    <span
-      v-if="deletable && !item.value.unfold"
-      class="uikit_list_item_delete"
-      title="Delete"
-      @click.stop="$emit('delete', $event)"
-      @pointerdown.stop
-    >
-      <uk-icon
-        class="uikit_list_item_icon_small"
-        name="cross"
-      />
-    </span>
   </div>
 </template>
 
@@ -90,7 +88,7 @@ export default {
     /**
      * The row to display: `{ value, selected, highlighted, toggled, unfolded }`, where `value` is
      * the caller's item (`name`, `icon`, `color`, `more`, `action`, `unfold`, `disabled`).
-     * Read only: the row reports clicks, checks and deletes through its events.
+     * Read only: the row reports clicks, checks and handle presses through its events.
      */
     item: {
       type: Object,
@@ -110,8 +108,10 @@ export default {
     large: Boolean,
     noSelect: Boolean,
     empty: Boolean,
+    /** Shows a grip at the left of the row; pressing it emits `handle` (drag to reorder) */
+    handle: Boolean,
   },
-  emits: ['click', 'toggle', 'delete'],
+  emits: ['click', 'toggle', 'handle'],
   methods: {
     /**
      * Reports a click on the checkbox, unless the row is disabled
@@ -197,26 +197,26 @@ export default {
   transform: rotate(180deg);
   opacity: 0.5;
 }
-/* Shown on hover, laid over the row's right edge (fading into the row's colour) so it doesn't
-   squeeze the labels */
-.uikit_list_item_delete {
-  display: none;
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 40px;
-  padding-right: 8px;
-  align-items: center;
-  justify-content: flex-end;
-  background: linear-gradient(90deg, transparent, var(--row-bg) 45%);
-}
-.uikit_list_item_delete:hover :deep(svg),
-.uikit_list_item_delete:hover .uikit_list_item_icon_small {
-  fill: var(--accent-maroon) !important;
-}
-.deletable:hover .uikit_list_item_delete {
+.uikit_list_item_handle {
   display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 100%;
+  margin: 0 -6px 0 -4px;
+  cursor: grab;
+  touch-action: none;
+}
+.uikit_list_item_handle :deep(svg) {
+  width: 14px;
+  height: 14px;
+  fill: var(--secondary-light);
+  transition: fill 0.1s;
+}
+.uikit_list_item:hover .uikit_list_item_handle :deep(svg),
+.uikit_list_item_handle:active :deep(svg) {
+  fill: var(--secondary-lighter);
 }
 @media (prefers-reduced-motion: reduce) {
   .uikit_list_item_arrow {

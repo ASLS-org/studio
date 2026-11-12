@@ -63,25 +63,42 @@ rows SHALL not change.
 - **WHEN** the operator clicks its checkbox
 - **THEN** the row is checked and the selection count goes up by one
 
-### Requirement: Reorder by dragging
-On a list that allows reordering, dragging a top-level row SHALL show the new order live while
-the pointer moves. Releasing SHALL apply it. Escape, or releasing on the starting place, SHALL
-leave the order unchanged. Reordering SHALL be off while a search is typed. A click without
-movement SHALL not start a drag.
+### Requirement: Reorder by dragging a handle
+On a list that allows reordering, each top-level row SHALL show a grip handle. Dragging the
+handle SHALL lift the row so it follows the pointer, while the other rows slide apart to show
+where it will land. Releasing SHALL apply the new order. Escape, or releasing at the starting
+place, SHALL leave the order unchanged. Pressing a row outside its handle SHALL not drag. Handles
+SHALL be hidden and reordering off while a search is typed.
 
-#### Scenario: Move a fixture in a group
-- **GIVEN** a group's fixture pool
-- **WHEN** the operator drags the first fixture below the third and releases
-- **THEN** the rows show the fixture in third place while dragging, and the group's order matches
-  after release
+#### Scenario: Move a fixture in a pool
+- **GIVEN** a universe's fixture pool
+- **WHEN** the operator drags the first fixture's handle below the third fixture and releases
+- **THEN** while dragging, the fixture follows the pointer and a gap opens below the third row;
+  after release, the pool's order has the fixture in third place
 
-### Requirement: Delete from a row
-On a deletable list, a row's ✕ SHALL open the delete confirmation for that row, as Delete does
-for the selection.
+### Requirement: List context menu
+Right-clicking a row SHALL open a context menu at the pointer, styled as Studio's menus, after
+selecting the row unless it is already part of the selection. The menu SHALL offer, where the
+list allows them: **Move up** and **Move down** (reorderable lists), **Select all** (the row's
+level, lists with multi-selection) and **Delete** (deletable lists, for the selection, after the
+usual confirmation). Escape, a click elsewhere, scrolling or choosing an entry SHALL close it.
 
-#### Scenario: Delete with the cross
-- **WHEN** the operator clicks the ✕ of a fixture row in the patch bay and confirms
+#### Scenario: Delete from the context menu
+- **WHEN** the operator right-clicks a fixture row in the patch bay, chooses **Delete** and
+  confirms
 - **THEN** that fixture is removed from the show and its row disappears
+
+#### Scenario: Move with the context menu
+- **WHEN** the operator right-clicks the second fixture of a fixture pool and chooses **Move up**
+- **THEN** it becomes the first fixture
+
+### Requirement: Delete confirmation
+The delete confirmation SHALL list up to five of the rows to delete, and how many more, in
+Studio's popup text style.
+
+#### Scenario: Delete three fixtures
+- **WHEN** the operator selects three fixtures and presses Delete
+- **THEN** the confirmation names the three fixtures in Studio's popup text style
 
 ### Requirement: List unfolding and empty space
 Unfolding a row SHALL reveal its sub-rows with a short height and fade animation of at most

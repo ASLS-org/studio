@@ -75,7 +75,6 @@
                     :data-key="child.key"
                     :item="child"
                     :toggleable="toggleable"
-                    :deletable="deletable && !toggleable"
                     :no-highlight="noHighlight"
                     :focused="hasFocus"
                     :tall="tall"
@@ -83,8 +82,8 @@
                     :disabled="disabled"
                     @pointerdown="focusBody"
                     @click="(e) => clickRow(e, child)"
+                    @contextmenu="(e) => openContextMenu(e, child)"
                     @toggle="toggleRow(child)"
-                    @delete="deleteRow(child)"
                   />
                 </template>
                 <div
@@ -102,18 +101,20 @@
           :data-key="row.key"
           :item="row"
           :class="{ uikit_list_dragged: drag?.active && drag.key === row.key }"
+          :style="dragStyle(row)"
           :colored="colored"
           :toggleable="toggleable"
-          :deletable="deletable && !toggleable"
+          :handle="canReorder"
           :no-highlight="noHighlight"
           :focused="hasFocus"
           :tall="tall"
           :no-select="noSelect"
           :disabled="disabled"
-          @pointerdown="(e) => pressRow(e, row)"
+          @pointerdown="focusBody"
+          @handle="(e) => pressHandle(e, row)"
           @click="(e) => clickRow(e, row)"
+          @contextmenu="(e) => openContextMenu(e, row)"
           @toggle="toggleRow(row)"
-          @delete="deleteRow(row)"
         />
       </template>
       <!-- the space the rows don't fill -->
@@ -138,32 +139,48 @@
         col
         style="max-width: 350px;min-width:350px"
       >
-        <div class="uikit_list_delete_body">
-          <b>
-            Are you sure you want to delete the following
-            {{ deletionRows.length > 1 ? deletionRows.length : '' }}
-            item(s)?
-          </b>
-          <uk-flex col>
-            <p
-              v-for="row in deletionRows.slice(0, 5)"
-              :key="row.key"
-            >
-              {{ row.value.name }} {{ row.value.more ? `(${row.value.more})` : '' }}
-            </p>
-            <p v-show="deletionRows.length > 5">
-              ...{{ deletionRows.length - 5 }} additional items are not shown
-            </p>
-          </uk-flex>
-        </div>
+        <p class="uikit_list_delete_text">
+          Are you sure you want to delete
+          {{ deletionRows.length > 1 ? `these ${deletionRows.length} items` : 'this item' }}?
+        </p>
+        <uk-flex
+          col
+          class="uikit_list_delete_items"
+        >
+          <p
+            v-for="row in deletionRows.slice(0, 5)"
+            :key="row.key"
+          >
+            {{ row.value.name }}
+            <span
+              v-if="row.value.more"
+              class="uikit_list_delete_more"
+            >{{ row.value.more }}</span>
+          </p>
+          <p
+            v-if="deletionRows.length > 5"
+            class="uikit_list_delete_more"
+          >
+            and {{ deletionRows.length - 5 }} more
+          </p>
+        </uk-flex>
       </uk-flex>
     </uk-popup>
+    <uk-context-menu
+      v-model="contextMenu.open"
+      :x="contextMenu.x"
+      :y="contextMenu.y"
+      :items="contextMenu.entries"
+      @select="runContextEntry"
+    />
   </div>
 </template>
 
 <script>
-/** Pointer travel (px) before a press on a draggable row becomes a drag */
-const DRAG_THRESHOLD = 4;
+/** Pointer travel (px) before a press on a row's handle becomes a drag */
+const DRAG_THRESHOLD = 3;
+/** Duration of the rows sliding apart while dragging */
+const DRAG_SLIDE = 'transform 0.15s ease';
 /** Distance (px) from the list's top or bottom edge where a drag scrolls it */
 const DRAG_SCROLL_EDGE = 24;
 
@@ -263,8 +280,16 @@ export default {
       deletionKeys: [],
       deletePopupState: false,
       hasFocus: false,
-      /** Drag in progress: { key, from, to, startY, active } */
+      /** Drag in progress: { key, from, to, startY, startScroll, rows, dy, active, settling } */
       drag: null,
+      /** Context menu: where it opens, its entries and the row it was opened on */
+      contextMenu: {
+        open: false,
+        x: 0,
+        y: 0,
+        entries: [],
+        row: null,
+      },
       /** Parents whose sub-rows are folding away (they share the space while animating) */
       closing: {},
     };
@@ -294,7 +319,7 @@ export default {
     },
     /**
      * Rows as shown: filtered by the search string (a parent with matching sub-rows shows open
-     * with only those), and in drag preview order while dragging
+     * with only those)
      */
     visibleRows() {
       let { rows } = this;
@@ -306,11 +331,6 @@ export default {
           if (children?.length) return [{ ...row, unfolded: true, children }];
           return matches(row.value.name) ? [row] : [];
         });
-      }
-      if (this.drag?.active) {
-        const dragged = rows.find((row) => row.key === this.drag.key);
-        rows = rows.filter((row) => row !== dragged);
-        rows.splice(this.drag.to, 0, dragged);
       }
       return rows;
     },
@@ -329,6 +349,10 @@ export default {
         if (!row.children) return [row];
         return row.unfolded ? row.children : [];
       }).filter((row) => !row.value.disabled);
+    },
+    /** Whether rows can be reordered now (flat lists, no search typed) */
+    canReorder() {
+      return this.draggable && !this.disabled && !this.hasParents && !this.searchString.trim();
     },
     /** Whether any item unfolds */
     hasParents() {
@@ -728,17 +752,6 @@ export default {
       this.deletionKeys = deletable;
       this.deletePopupState = true;
     },
-    /**
-     * A row's ✕: selects it and asks to delete it
-     *
-     * @param {Object} row row to delete
-     */
-    deleteRow(row) {
-      if (this.disabled || row.value.disabled) return;
-      this.focusBody();
-      if (!this.highlighted.includes(row.key)) this.selectRow(row);
-      this.displayDeletionPopup();
-    },
     handleDeletion() {
       const values = this.deletionRows.map((row) => row.value);
       this.deletePopupState = false;
@@ -747,49 +760,181 @@ export default {
       this.clearHighlighted();
     },
     /**
-     * Pointer press on a top-level row: may start a drag
+     * Opens the context menu on a row, selecting it first unless it's part of the selection.
+     * Lists that allow no entry leave the browser's own menu.
+     *
+     * @param {MouseEvent} e contextmenu event
+     * @param {Object} row row under the pointer
+     */
+    openContextMenu(e, row) {
+      if (this.disabled || row.value.disabled || this.drag) return;
+      const entries = this.contextEntries(row);
+      if (!entries.length) return;
+      e.preventDefault();
+      this.focusBody();
+      const inSelection = this.highlighted.includes(row.key) || this.selectedKey === row.key;
+      if (!inSelection && !this.toggleable) this.selectRow(row);
+      this.contextMenu = {
+        open: true,
+        x: e.clientX,
+        y: e.clientY,
+        entries: this.contextEntries(row),
+        row,
+      };
+    },
+    /**
+     * The context menu's entries for a row: what this list allows
+     *
+     * @param {Object} row row the menu is opened on
+     * @returns {Array<Object>}
+     */
+    contextEntries(row) {
+      const entries = [];
+      if (this.canReorder && !row.parentKey) {
+        entries.push(
+          {
+            name: 'Move up', icon: 'arrow_up', command: 'up', disabled: row.index === 0,
+          },
+          {
+            name: 'Move down',
+            icon: 'arrow_down',
+            command: 'down',
+            disabled: row.index === this.rows.length - 1,
+          },
+        );
+      }
+      if (!this.toggleable && !this.noHighlight) {
+        entries.push({ name: 'Select all', icon: 'check', command: 'all' });
+      }
+      if (this.deletable && !this.toggleable) {
+        const count = this.highlighted.includes(row.key) ? this.highlighted.length : 1;
+        entries.push({
+          name: 'Delete', icon: 'trash', command: 'delete', more: count > 1 ? `${count} items` : '',
+        });
+      }
+      return entries;
+    },
+    /**
+     * Runs a context menu entry
+     *
+     * @param {Object} entry chosen entry
+     */
+    runContextEntry(entry) {
+      const { row } = this.contextMenu;
+      if (!row) return;
+      this.focusBody();
+      if (entry.command === 'up' || entry.command === 'down') {
+        const final = row.index + (entry.command === 'up' ? -1 : 1);
+        if (final >= 0 && final < this.rows.length) {
+          this.$emit('reorder', { original: row.index, final });
+        }
+      } else if (entry.command === 'all') {
+        this.selectAll(row);
+      } else if (entry.command === 'delete') {
+        this.displayDeletionPopup();
+      }
+    },
+    /**
+     * Highlights every visible, enabled row of a row's level
+     *
+     * @param {Object} row a row of that level
+     */
+    selectAll(row) {
+      const siblings = (row.parentKey
+        ? this.visibleRows.find((r) => r.key === row.parentKey)?.children || []
+        : this.visibleRows.filter((r) => !r.children))
+        .filter((r) => !r.value.disabled);
+      if (!siblings.length) return;
+      if (!siblings.some((r) => r.key === this.selectedKey)) {
+        this.selectedKey = siblings[0].key;
+        this.$emit('select', siblings[0].value);
+      }
+      this.highlighted = siblings.map((r) => r.key);
+      this.$emit('highlight', this.highlightedValues());
+    },
+    /**
+     * Press on a row's handle: starts a drag once the pointer moves
      *
      * @param {PointerEvent} e pointerdown event
-     * @param {Object} row pressed row
+     * @param {Object} row the row
      */
-    pressRow(e, row) {
+    pressHandle(e, row) {
+      if (!this.canReorder || e.button !== 0) return;
+      e.preventDefault();
       this.focusBody();
-      if (!this.draggable || this.disabled || e.button !== 0 || this.searchString.trim()) return;
+      const { body } = this.$refs;
+      // Top-level rows as laid out now: the drag works on these positions
+      const rows = [...body.children]
+        .filter((el) => el.dataset.key)
+        .map((el) => ({ key: el.dataset.key, top: el.offsetTop, height: el.offsetHeight }));
+      const from = rows.findIndex((r) => r.key === row.key);
+      if (from < 0) return;
       this.drag = {
         key: row.key,
-        from: row.index,
-        to: row.index,
+        from,
+        to: from,
         startY: e.clientY,
+        startScroll: body.scrollTop,
+        rows,
+        dy: 0,
         active: false,
+        settling: false,
       };
       window.addEventListener('pointermove', this.moveDrag);
       window.addEventListener('pointerup', this.endDrag);
       window.addEventListener('pointercancel', this.cancelDrag);
     },
     moveDrag(e) {
-      if (!this.drag) return;
-      if (!this.drag.active) {
-        if (Math.abs(e.clientY - this.drag.startY) < DRAG_THRESHOLD) return;
-        this.drag.active = true;
+      const { drag } = this;
+      const { body } = this.$refs;
+      if (!drag || drag.settling || !body) return;
+      if (!drag.active) {
+        if (Math.abs(e.clientY - drag.startY) < DRAG_THRESHOLD) return;
+        drag.active = true;
       }
       e.preventDefault();
-      const { body } = this.$refs;
-      if (!body) return;
       const bounds = body.getBoundingClientRect();
       if (e.clientY < bounds.top + DRAG_SCROLL_EDGE) body.scrollTop -= 8;
       else if (e.clientY > bounds.bottom - DRAG_SCROLL_EDGE) body.scrollTop += 8;
-      // Target: how many other rows have their middle above the pointer
-      const others = [...body.children]
-        .filter((el) => el.dataset.key && el.dataset.key !== this.drag.key);
-      this.drag.to = others.filter((el) => {
-        const rect = el.getBoundingClientRect();
-        return rect.top + rect.height / 2 < e.clientY;
-      }).length;
+      const dragged = drag.rows[drag.from];
+      const first = drag.rows[0];
+      const last = drag.rows[drag.rows.length - 1];
+      // The row follows the pointer, kept between the first and last rows
+      const dy = e.clientY - drag.startY + (body.scrollTop - drag.startScroll);
+      drag.dy = Math.max(first.top - dragged.top, Math.min(last.top + last.height
+        - dragged.top - dragged.height, dy));
+      // Target: how many other rows have their middle above the dragged row's middle
+      const middle = dragged.top + drag.dy + dragged.height / 2;
+      drag.to = drag.rows.filter((r, index) => index !== drag.from
+        && r.top + r.height / 2 < middle).length;
+    },
+    /**
+     * Where a row is drawn while dragging: the dragged row at the pointer, the rows it passed
+     * moved by its height to open the gap where it will land
+     *
+     * @param {Object} row a top-level row
+     * @returns {Object} inline style
+     */
+    dragStyle(row) {
+      const { drag } = this;
+      if (!drag?.active) return null;
+      const index = drag.rows.findIndex((r) => r.key === row.key);
+      if (index === drag.from) {
+        return {
+          transform: `translateY(${drag.dy}px)`,
+          transition: drag.settling ? DRAG_SLIDE : 'none',
+        };
+      }
+      const height = drag.rows[drag.from].height;
+      let shift = 0;
+      if (drag.from < drag.to && index > drag.from && index <= drag.to) shift = -height;
+      else if (drag.to < drag.from && index >= drag.to && index < drag.from) shift = height;
+      return { transform: `translateY(${shift}px)`, transition: DRAG_SLIDE };
     },
     endDrag() {
       const { drag } = this;
       this.stopDragListeners();
-      if (!drag) return;
+      if (!drag || drag.settling) return;
       this.drag = null;
       if (!drag.active) return;
       // the click that ends a drag isn't a selection
@@ -802,9 +947,22 @@ export default {
       const row = this.rowsByKey[drag.key];
       if (row && !this.toggleable) this.selectRow(row);
     },
+    /**
+     * Cancels a drag: the rows slide back to where they were
+     */
     cancelDrag() {
       this.stopDragListeners();
-      this.drag = null;
+      const { drag } = this;
+      if (!drag?.active || drag.settling) {
+        this.drag = null;
+        return;
+      }
+      drag.settling = true;
+      drag.dy = 0;
+      drag.to = drag.from;
+      setTimeout(() => {
+        if (this.drag === drag) this.drag = null;
+      }, 160);
     },
     stopDragListeners() {
       window.removeEventListener('pointermove', this.moveDrag);
@@ -918,16 +1076,27 @@ export default {
 }
 .uikit_list_dragged {
   position: relative;
-  z-index: 1;
-  outline: 1px dashed var(--secondary-light);
+  z-index: 2;
+  opacity: 1 !important;
+  outline: 1px solid var(--accent-blue);
   outline-offset: -1px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
 }
-.uikit_list_delete_body {
-  display: flex;
-  flex-direction: column;
-  align-items: start;
-  gap: 10px;
-  padding: 16px;
+.uikit_list_body.dragging :deep(.uikit_list_item_handle) {
+  cursor: grabbing;
+}
+.uikit_list_delete_text {
+  padding: 16px 16px 8px;
+}
+.uikit_list_delete_items {
+  padding: 0 16px 16px;
+  gap: 4px;
+}
+.uikit_list_delete_items > p {
+  gap: 8px;
+}
+.uikit_list_delete_more {
+  color: var(--secondary-light-alt);
+  font-family: Roboto-Regular;
 }
 </style>

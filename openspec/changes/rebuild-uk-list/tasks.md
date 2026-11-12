@@ -31,13 +31,19 @@ See design.md for the row model, focus, drag and animation decisions.
 - [x] 2.3 Checks: `uk-list-item` gets a `toggle` event from its checkbox (click stopped there), the
   row click toggles once; **Check All** (top and per parent) counts from state. Verify in the
   group popup, the group patch popup (disabled rows) and an effect's fixtures.
-- [x] 2.4 Reorder: pointer-based drag of top-level rows (`draggable`, not while searching, starts
-  after 4 px), rows render in the preview order with the dragged row lifted, release emits
-  `reorder` and selects the row, Escape or pointercancel restores. Remove the HTML5 drag
-  handlers. Verify in a group's fixture pool and an effect's fixtures (order applied, phases
-  follow).
-- [x] 2.5 Delete: the ✕ on a deletable row selects it and opens the confirmation; `item.action`
-  buttons don't select the row. Verify in the patch bay and the fixture pool.
+- [x] 2.4 Reorder with a handle: `drag` icon, `uk-list-item` `handle` prop and event; drag only from
+  the handle (hidden while searching); rows keep their DOM order, the dragged row follows the
+  pointer (translate, lifted) and the rows in between slide by its height; release emits
+  `reorder` in the same tick, Escape/pointercancel slides back; auto-scroll near the edges.
+  Verify in the universe fixture pool and an effect's fixtures: gap opens where the row lands,
+  order applied, phases follow, pressing the row outside the handle doesn't drag.
+- [x] 2.5 Context menu: new `uk-context-menu` (teleported to `popupHost` or body, kept on screen,
+  ↑/↓/Enter, closes on Escape, outside press, wheel, resize, blur) styled like the toolbar menus;
+  `uk-list` opens it on right-click with Move up/down, Select all and Delete entries as allowed;
+  the row's ✕ goes; `item.action` buttons still don't select the row. Verify in the patch bay
+  (Delete), fixture pool (Move up/down, Select all) and a list with no entries (browser menu).
+- [x] 2.5b Delete confirmation in Studio's popup text style (plain `<p>`, as the group pool's
+  confirmation). Verify with a screenshot of the confirmation for three fixtures.
 - [x] 2.6 Unfold: reveal animation on sub-rows (grid rows 0fr→1fr plus opacity, 150 ms ease;
   respects `prefers-reduced-motion`); accordion behaviour kept. Verify by unfolding universes.
 - [x] 2.7 Empty space: list body background `var(--primary-light) var(--idle-stripes)`, rows keep
@@ -52,10 +58,11 @@ See design.md for the row model, focus, drag and animation decisions.
 
 ## 4. Docs and AI context
 
-- [x] 4.1 Manual: `reference/shortcuts` Lists table (⌘+click, Shift+click range, arrows, drag to
-  reorder, ✕), `getting-started/interface#widgets`, remove the Shift+click row from
+- [x] 4.1 Manual: `reference/shortcuts` Lists table (⌘+click, Shift+click range, arrows, drag by
+  the handle, right-click menu), `getting-started/interface#widgets`, remove the Shift+click row from
   `reference/limitations`. Check in `npm run docs:manual:serve`, then `npm run docs:manual:check`
   passes (presets click `.uikit_list_item` / `.uikit_sublist_body`, which stay).
 - [x] 4.2 AI context: note in `src/views/CLAUDE.md` that list row state is keyed by item id/name
-  (items need a stable `id` or unique `name`) and lists never mutate `items`.
+  (items need a stable `id` or unique `name`) and lists never mutate `items`; add
+  `uk-context-menu` to the vue-ui-change skill.
 - [x] 4.3 `npx eslint` on all touched files is clean.

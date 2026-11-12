@@ -95,22 +95,53 @@ Selection, checks and highlights act on keys, so they stick after the search is 
 - **`toggle` payload:** checked top-level rows, then the checked sub-rows of unchecked parents,
   as today.
 
-### Reorder with pointer events
+### Reorder with a handle and transforms
 
-- **Start:**
-  - only on lists with `draggable`, only for top-level rows, and only while no search is typed;
-  - `pointerdown` on a row records the start, and a move of 4 px starts the drag.
-- **During the drag:**
-  - the target index is the number of other rows whose midpoint is above the pointer;
-  - `dragOrder` re-renders the rows in preview order, with the dragged row marked `dragging`
-    (lifted, accent outline);
+- **Handle:** draggable top-level rows render a grip (`drag` icon) at their left
+  (`uk-list-item` `handle` prop, `handle` event on its `pointerdown`). Only the handle starts a
+  drag, so clicks and selection on the rest of the row stay unambiguous. Handles are hidden while
+  a search is typed.
+- **During the drag** the DOM order doesn't change. At the start the list measures the
+  top-level rows. On each move:
+  - the dragged row is translated by the pointer's travel (plus any auto-scroll), lifted with a
+    shadow and outline;
+  - the target index is the number of other rows whose original midpoint is above the dragged
+    row's midpoint;
+  - the rows between the start and the target slide by the dragged row's height
+    (`transform`, 150 ms), opening the gap where it will land;
   - the body auto-scrolls near its edges.
-- **Release** emits `reorder({ original, final })`, in item indices, and selects the row as
-  today. The click that follows a drag is ignored.
-- **Escape or `pointercancel`** restores the order.
+- **Release** clears the transforms and emits `reorder({ original, final })` in the same tick.
+  The caller reorders the model, so the new items render already in place, without a flicker.
+  Lists without checkboxes then select the moved row.
+- **Escape or `pointercancel`** clears the transforms, and the rows slide back.
 
 HTML5 drag-and-drop is dropped: its ghost images, child `dragenter` flicker and prop splicing
-caused the ambiguity.
+caused the ambiguity. An earlier version of this rebuild re-rendered rows in preview order. It
+didn't show what was being dragged.
+
+### Context menu
+
+- **`uk-context-menu`** (`uikit/menus/uikit.context.menu.vue`) is a new uikit component.
+  - It takes `v-model` (open), `x`, `y` and `items` (`{ name, icon, more, disabled }`), and
+    emits `select(item)`.
+  - It teleports to the injected `popupHost` (the manual's previews), else the body, positioned
+    `fixed` and kept inside the viewport.
+  - It looks like the toolbar menus: `uk-list-item` rows on the menu panel, with its border and
+    shadow.
+  - ↑/↓ and Enter pick an entry; Escape, a pointer press outside, wheel, resize or blur close it.
+  - Window listeners run in the capture phase while it's open, and its keys `preventDefault` so
+    the list ignores them.
+- **`uk-list`** opens it on `contextmenu` on a row, selecting the row first unless it's already
+  highlighted or selected. Entries come from the list's props:
+  - **Move up / Move down** (`draggable`, top-level, no search) emit `reorder` like a drag;
+  - **Select all** (no `toggleable`, no `noHighlight`) highlights the row's level;
+  - **Delete** (`deletable`) opens the same confirmation as the Delete key.
+
+  With no entries, the browser's menu is left alone. The row's ✕ is removed: it didn't fit the
+  uikit.
+- **Delete confirmation:** written like the group pool's own confirmation, in plain `<p>` text
+  with 16 px padding, in the global text style. A `<b>` outside a `<p>` fell back to the
+  browser's serif font.
 
 ### Unfold animation and empty space
 
@@ -124,8 +155,6 @@ caused the ambiguity.
     its sub-rows scroll inside it, so the other headers stay visible;
   - the body's background is `var(--primary-light) var(--idle-stripes)`, and rows keep their
     solid background.
-- **Row ✕:** rows now get `deletable` (it was never passed, so the ✕ never showed). Clicking it
-  selects the row and opens the confirmation.
 
 ## Risks / Trade-offs
 
@@ -135,5 +164,5 @@ caused the ambiguity.
   index-like. The notes in `src/views/CLAUDE.md` ask for an `id` or a unique `name`.
 - **`grid-template-rows` transitions** need Chromium 107 or later. Electron 41 and current
   browsers have it; older browsers just skip the animation.
-- **The ✕ appears on deletable rows** (on hover, or when selected). This is a visible change,
-  and intended.
+- **The context menu is new to Studio.** Right-click had no meaning before. Entries are limited
+  to what each list already allows, so no caller gets a new action it doesn't handle.

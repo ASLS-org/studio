@@ -20,9 +20,10 @@ breaking something else.
 - Click selects; Ctrl/⌘+click adds or removes; Shift+click selects a range within one level;
   ↑/↓ move the selection.
 - Checkable rows: row and checkbox each toggle once; **Check All** stays accurate.
-- Drag top-level rows to reorder with a live preview; release confirms, Escape cancels; off
-  during a search.
-- A row's ✕ asks to delete that row; the list keeps focus after a delete.
+- Reorderable rows get a grip handle. Dragging it lifts the row under the pointer while the
+  others slide apart where it will land; release confirms, Escape cancels; off during a search.
+- Right-click a row for a context menu (new `uk-context-menu`): Move up/down, Select all,
+  Delete. The list keeps focus after a delete; the confirmation uses Studio's text styles.
 - Unfolding reveals sub-rows with a short (about 150 ms) height-and-fade animation.
 - Space below the rows shows the idle stripes.
 - Props, events, payloads and the row classes the manual's demos use stay the same.
@@ -39,8 +40,9 @@ None.
 
 ## Impact
 
-- Code: `uikit/lists/uikit.list.vue`, `uikit.list.item.vue`. Every `<uk-list>` caller is
-  retested, none edited.
+- Code: `uikit/lists/uikit.list.vue`, `uikit.list.item.vue`, new
+  `uikit/menus/uikit.context.menu.vue` and a `drag` icon. Every `<uk-list>` caller is retested,
+  none edited.
 - Showfile format, unsaved marker, live playback/timing, WSC output, visualizer: none.
 - Web vs Electron: same.
 
