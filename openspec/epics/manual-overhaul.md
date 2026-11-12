@@ -90,11 +90,6 @@ All five units are archived (2026-11-12): the epic branch is ready for its PR in
     does nothing.
   - The group pool's **dimmer knob**, **Isolate** and **Blackout** are saved but don't affect
     output. The master column's knob and buttons aren't bound to anything.
-  - Effect waveform **PWM** outputs a constant 1 (dark): no case in `FXChannel.getValue`.
-  - Effect directions **BOUNCELRT** / **BOUNCERTL** give every fixture the same phase: no case in
-    `slotPhase`.
-  - Chase **Quantize** stores the option's index as beats, so **1/8**, **1/4** and **1/2** wait
-    1, 2 and 3 beats. Only **None** and **1/1** (one bar) match their labels.
   - Patch bay **Shift+click** range selection selects nothing (`handleGroupedSelection`).
   - The scene panel throws on opening a scene of a group whose fixtures aren't the show's first
     (`selectionKey`); the panel goes on.

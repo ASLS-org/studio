@@ -19,7 +19,7 @@ clock.
 #### Scenario: Bar
 - **GIVEN** a chase on **1/1** at 120 BPM (one bar = 2 s)
 - **WHEN** it is started 1.2 s after the clock started
-- **THEN** it begins at 2 s, on the toolbar clock's next bar
+- **THEN** it begins at 2 s, on the next bar
 
 ### Requirement: Quantize is saved
 A chase's **Quantize** SHALL be saved with the show. A chase saved without one SHALL load on

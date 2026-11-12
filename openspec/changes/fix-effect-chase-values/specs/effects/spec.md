@@ -23,17 +23,18 @@ channel saved without a width SHALL load at 50 %.
 
 ### Requirement: Bounce directions
 With the directions **BOUNCELRT** and **BOUNCERTL**, the effect SHALL spread its phase across the
-fixtures (or cells) as **LTR** does. The effect's time SHALL then run forward for one cycle and
-backward for the next, so the wave travels across the fixtures one way, then back, without
-jumping. **BOUNCELRT** SHALL start left to right, **BOUNCERTL** right to left.
+fixtures (or cells) as **LTR** and **RTL** do. The effect's time SHALL then run forward for one
+cycle and backward for the next, so the wave travels across the fixtures one way, then back,
+without jumping. **BOUNCELRT** SHALL start travelling as **LTR** does, **BOUNCERTL** as **RTL**
+does.
 
 #### Scenario: Back and forth
 - **GIVEN** an effect on Dimmer for 4 fixtures, sine, phase start 0, phase stop 360, direction
   **BOUNCELRT**
 - **WHEN** the effect plays for two cycles
-- **THEN** the brightest point moves from the first fixture to the last during the first cycle,
-  and from the last back to the first during the second
+- **THEN** the brightest point travels as with **LTR** during the first cycle, then back the
+  other way during the second, and no fixture jumps at the turn
 
 #### Scenario: Reverse start
 - **WHEN** the same effect uses **BOUNCERTL**
-- **THEN** the brightest point moves from the last fixture to the first during the first cycle
+- **THEN** the brightest point travels as with **RTL** during the first cycle, then back

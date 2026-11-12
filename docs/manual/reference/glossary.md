@@ -27,7 +27,7 @@ The terms this manual uses, in alphabetical order.
 | **OFL (Open Fixture Library)** | A free, community-made library of fixture descriptions. Studio has 480 of them built in. [Fixture Library](/rig/fixtures) |
 | **Patch** | Telling Studio which lights you have, at which addresses, in which universes. [Patching](/programming/patching) |
 | **Phase** | Where a fixture is on an effect's waveform, in degrees. Spreading phases makes a movement travel across the rig. [Effects](/programming/effects#how-an-effect-moves) |
-| **Quantize** | When a chase you start actually begins: at once, or on the next bar. [Chases](/programming/chases#chase-settings) |
+| **Quantize** | When a chase you start actually begins: at once, or on the next bar, half bar, beat or half beat. [Chases](/programming/chases#chase-settings) |
 | **sACN** | Another protocol for DMX over a network (E1.31). Not available with the current gateway yet. [Outputs](/rig/outputs#what-s-verified) |
 | **Scene** | A cue that brings channels to set values, with a fade. [Scenes](/programming/scenes) |
 | **Showfile** | A show saved as a file (`.json`): everything you programmed, for the web and desktop versions. [Showfiles](/rig/showfiles) |
