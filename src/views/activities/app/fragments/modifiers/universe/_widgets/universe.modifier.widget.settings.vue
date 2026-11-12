@@ -44,6 +44,7 @@
             square
             label="config"
             style="height:25px; min-width: 75px; margin-top:22px"
+            @click="connectionsPopupState = true"
           />
         </uk-flex>
         <uk-select-input
@@ -61,17 +62,22 @@
     >
       No Universe Selected
     </h3>
+    <connections-popup v-model="connectionsPopupState" />
   </uk-widget>
 </template>
 
 <script>
 import colorMixin from '@/views/mixins/color.mixin';
+import ConnectionsPopup from '@/views/activities/app/fragments/toolbar/_popups/popup.connections.vue';
 
 export default {
   name: 'UniverseModifierSettings',
   compatConfig: {
     // or, for full vue 3 compat in this component:
     MODE: 3,
+  },
+  components: {
+    ConnectionsPopup,
   },
   mixins: [colorMixin],
   props: {
@@ -88,6 +94,10 @@ export default {
       },
       universe: this.modelValue,
       output: null,
+      /**
+       * Connections popup display state (opened by Config)
+       */
+      connectionsPopupState: false,
     };
   },
   computed: {

@@ -54,8 +54,10 @@
               class="grid_item"
               :draggable="true"
               @click="playCue(cue)"
+              @pointerdown="pressCue(cue, $event)"
               @dragstart="
                 (e) => {
+                  releaseHeldCue();
                   startDrag(e, cue);
                 }
               "
@@ -129,6 +131,7 @@
 
 <script>
 import LiveMixin from '@/views/mixins/live.mixin';
+import { CUE_TRIGGER_STYLES } from '@/models/DMX/cue.model';
 import popupCuePool from '../_popups/group.modifier.popup.cuepool.vue';
 
 export default {
@@ -157,6 +160,10 @@ export default {
   emits: ['select', 'add'],
   data() {
     return {
+      /**
+       * Temporary cue held down with the pointer (stops on release)
+       */
+      heldCue: null,
       /**
        * Widget header data
        */
@@ -201,6 +208,7 @@ export default {
   },
   beforeUnmount() {
     window.removeEventListener('keydown', this.keydownHandler);
+    this.releaseHeldCue();
   },
   methods: {
     /**
@@ -280,8 +288,39 @@ export default {
      * @param {Object} cue handle to cue instance
      */
     playCue(cue) {
+      // A Temporary cue plays while held (see pressCue): the click after the release is ignored
+      if (cue.triggerStyle === CUE_TRIGGER_STYLES.TEMPORARY) return;
       this.selectCue(cue);
       cue.cue(true);
+    },
+    /**
+     * Starts a Temporary cue while the pointer is held on it, until the button is released
+     * (anywhere), the press is cancelled or the cue is dragged
+     *
+     * @public
+     * @param {Object} cue handle to cue instance
+     * @param {PointerEvent} e pointerdown event
+     */
+    pressCue(cue, e) {
+      if (cue.triggerStyle !== CUE_TRIGGER_STYLES.TEMPORARY || e.button !== 0) return;
+      this.releaseHeldCue();
+      this.selectCue(cue);
+      if (cue.animationId == null) cue.cue(true);
+      this.heldCue = cue;
+      window.addEventListener('pointerup', this.releaseHeldCue);
+      window.addEventListener('pointercancel', this.releaseHeldCue);
+    },
+    /**
+     * Stops the Temporary cue held down, if any
+     *
+     * @public
+     */
+    releaseHeldCue() {
+      window.removeEventListener('pointerup', this.releaseHeldCue);
+      window.removeEventListener('pointercancel', this.releaseHeldCue);
+      const cue = this.heldCue;
+      this.heldCue = null;
+      if (cue && cue.animationId != null) cue.cue(false);
     },
     /**
      * Displays cue creation popup
