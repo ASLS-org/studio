@@ -26,6 +26,9 @@ Closes #
 
 - [ ] Targets `develop` (hotfix: `master` + back-merge PR)
 - [ ] `npx eslint` clean on touched files
-- [ ] User manual (`docs/manual`) updated, or n/a because:
+- [ ] User manual (`docs/manual`), from the coverage map in skill `user-manual`:
+  - Pages updated:
+  - Previews checked (`npm run docs:manual:check`):
+  - or n/a because:
 - [ ] AI context (`CLAUDE.md`, `.claude/skills`, `openspec/config.yaml`) updated, or n/a
-- [ ] Screenshots or recordings attached for UI changes
+- [ ] Screenshots or recordings attached for UI changes (in the PR only, never in the manual)

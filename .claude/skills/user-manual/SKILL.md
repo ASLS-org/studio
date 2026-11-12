@@ -28,6 +28,49 @@ Update it in the **same PR** as the code whenever a change:
 Pure refactors, perf work and invisible fixes need no manual update. Say so in the PR
 ("Manual: n/a").
 
+## Coverage map
+
+Which manual pages and live preview presets each part of Studio feeds. Look up every file a
+change touches: the pages are what the proposal's **Manual** line names, and the presets are what
+`npm run docs:manual:check` must pass for. `F` = `src/views/activities/app/fragments`, `M` =
+`src/models`. Keep this table current when views, pages or presets are added, moved or renamed.
+
+| Source | Pages | Presets |
+| --- | --- | --- |
+| `F/toolbar/toolbar.fragment.vue` (menus, show name, clock) | `getting-started/interface#toolbar`, `reference/shortcuts` | `toolbar-menus`, `toolbar-file` |
+| `F/toolbar/_popups/popup.newshow.vue`, `popup.saveas.vue`, `M/DMX/show.model.js` (save, load, export, templates) | `rig/showfiles` | `toolbar-file` |
+| `F/toolbar/_popups/popup.connections.vue`, `F/modifiers/universe/_widgets/universe.modifier.widget.connection.vue`, `src/plugins/wsc.connection.js`, `M/DMX/output.pool.model.js`, the bundled gateway (`src/electron/`) | `rig/outputs`, `reference/troubleshooting`, `reference/limitations` | `outputs-popup`, `universe-stream` |
+| `F/toolbar/_popups/popup.visualizer.vue` | `interface/visualizer#settings` | `visualizer-settings` |
+| `F/toolbar/_popups/popup.license.vue`, `popup.credits.vue` | `introduction/license` | none |
+| `F/patch-bay/` | `getting-started/interface#patch-bay`, `programming/patching` | `patch-bay`, `patch-bay-select`, `patch-bay-filter`, `visualizer-modes` |
+| `F/modifiers/universe/universe.modifier.fragment.vue`, `_popups/universe.modifier.popup.patch.vue` | `programming/patching`, `rig/fixtures` | `patch-add`, `universe-stream` |
+| `F/modifiers/universe/_widgets/universe.modifier.widget.settings.vue` | `programming/patching` | `universe-settings` |
+| `F/modifiers/universe/_widgets/universe.modifier.widget.fixture.settings.vue` | `programming/patching` | `fixture-settings` |
+| `F/modifiers/universe/_widgets/universe.modifier.widget.fixture.position.tool.vue` | `programming/patching`, `interface/visualizer#placing-fixtures` | `fixture-position` |
+| `F/modifiers/_widgets/modifier.widget.fixture.pool.vue` | `programming/patching`, `programming/groups` | `fixture-pool-delete`, `group-fixture-pool-delete` |
+| `F/modifiers/_widgets/modifier.widget.fixture.channels.vue`, `colorpicker`, `pantilt`, `cells`, `curve` (via the theme's `previews/FixtureControl.vue`) | `programming/patching`, `programming/scenes` | `fixture-channels`, `fixture-color`, `fixture-pantilt` |
+| `F/group-pool/` (fragment, `_popups/popup.group.vue`), `M/DMX/master.model.js` | `getting-started/interface#group-pool`, `programming/groups`, `programming/playback` | `group-pool`, `group-pool-new`, `chase-play`, `master-row` |
+| `F/modifiers/group/group.modifier.fragment.vue`, `_widgets/group.modifier.widget.settings.vue`, `_popups/group.modifier.popup.patch.vue`, `M/DMX/group.model.js` | `programming/groups`, `getting-started/interface#modifier-strip` | `group-modifier`, `group-settings` |
+| `F/modifiers/group/_widgets/group.modifier.widget.cuepool.vue`, `_popups/group.modifier.popup.cuepool.vue` | `programming/scenes`, `programming/effects`, `programming/playback` | `group-cuepool`, `cuepool-add`, `scene-stage`, `effect-stage` |
+| `F/modifiers/group/_widgets/group.modifier.widget.cue.settings.vue`, `M/DMX/cue.model.js` | `programming/scenes` | `cue-settings` |
+| `F/modifiers/group/group.scene.modifier.fragment.vue`, `group.scene.modifier.widget.*`, `M/DMX/scene.model.js`, `fade.model.js` | `programming/scenes` | `scene-modifier`, `scene-curve` |
+| `F/modifiers/group/group.effect.modifier.fragment.vue`, `group.effect.modifier.widget.*`, `group.effect.modifier.popup.channels.vue`, `M/DMX/effect*.model.js` | `programming/effects` | `effect-wave`, `effect-channel-add` |
+| `F/modifiers/chase/`, `M/DMX/chase*.model.js`, `cue.item*.model.js` | `programming/chases` | `chase-modifier`, `timeline-add` |
+| `M/DMX/live.model.js`, `src/worker.js` (BPM, bars, quantize, play/pause) | `concepts/timing`, `programming/playback` | `chase-play`, `master-row` |
+| `M/DMX/*.pool.model.js`, `universe.model.js`, `fixture.model.js` (what a show holds) | `concepts/index`, `introduction/overview` | none |
+| `F/visualizer/`, `src/views/activities/visualizer/`, `src/plugins/visualizer/` | `interface/visualizer`, `reference/limitations#visualizer` | `visualizer-modes`, every `stage: true` preset (the floating card) |
+| `M/fixtures/`, `public/fixtures/`, `public/gdtf/` | `rig/fixtures`, `programming/patching` | `patch-add` |
+| `src/views/activities/app/_popups/` (error, missing fixtures, splash) | `reference/troubleshooting` | none |
+| `src/views/components/uikit/` (lists, fields, popups, widgets) | `getting-started/interface#widgets`, `reference/shortcuts` | all (run the check) |
+| any `keydown` handler or menu shortcut | `reference/shortcuts` | the preset of that component |
+| `src/electron/`, `electron-builder` config, release artifacts | `introduction/installation` | none |
+| any step of the first-show flow: patch, group, scene, chase, play (labels, order, defaults) | `getting-started/first-show` | none |
+| a behaviour that doesn't work (found or fixed) | `reference/limitations` (+ the epic backlog) | none |
+| a new term in the UI | `reference/glossary` | none |
+
+The theme's own files (`docs/manual/.vitepress/theme/previews/*`, `components/LivePreview.vue`,
+`public/presets/manual.showfile.json`) feed every preset: run the check after changing them.
+
 ## Structure
 
 ```
@@ -52,7 +95,7 @@ docs/manual/
                                  one-line "This page moved" stubs (old URLs keep working; not in
                                  the sidebar; remove in a later release)
   public/presets/manual.showfile.json   the live previews' demo show
-  _dev/*.md                      dev-only check pages (previews, behaviour, visualizer), never built
+  _dev/*.md                      dev-only check pages (behaviour, visualizer), never built
   .vitepress/config.js           sidebar (add every new page here), resource links
   .vitepress/theme/              Studio shell, live previews, home story
 ```
@@ -158,7 +201,8 @@ Flows to watch rather than try are **demos**: a cursor plays them on the real co
   parent panel would handle: the fixture pool only asks to delete), `popupInBox` (a stage
   preset whose component is a popup: it opens in the component's own box, via `StageWrap`'s own
   `popupHost`), `demo`, `webgl`. No video
-  fallbacks. To add one: add the entry, regenerate `_dev/previews.md`, check it mounts. Never
+  fallbacks. To add one: add the entry, use it on its page, add it to the coverage map, run
+  `npm run docs:manual:check`. Never
   offer anything interactive that saves or connects (connections widget/popup); the toolbar only
   as a demo.
 - **One preview runs at a time** (`LivePreview.vue` coordinator): the one most in view (at least
@@ -174,9 +218,13 @@ Flows to watch rather than try are **demos**: a cursor plays them on the real co
   as a browser does (lists select, style and take keys only when focused), unless the reader is
   typing elsewhere; the reader's input is blocked. **A demo runs its flow to the end and shows
   the result** (the fixture gone from the rig, the new cue played, the effect drawing on the
-  floor); captions say what happens and why. Each loop reloads the demo show and remounts.
+  floor); captions say what happens and why. Each loop reloads the demo show and remounts. A stopped demo never presses again (a
+  press after the component is gone lands on the show being reloaded), loads of the demo show
+  never overlap (`host.loadShow` waits for the one in flight), and a component that finishes
+  mounting after its preview stopped is unmounted at once.
   Scripted keys stop at the preview (Studio components listen on `window`). CSS `:hover` can't
-  be triggered. Check each demo reaches its end state (`/_dev/previews`), not only that it starts.
+  be triggered. Check each demo reaches its end state, not only that it starts (`docs:manual:check` fails
+  on a step that can't run).
 - **On stage** (`stage: true`, `StageWrap.vue`): the component at its Studio size; the stage is
   the component's size (a demo with popups gets room for them). Use it for every preview or demo
   that changes the rig (faders, cues, chases, patching, deleting, effects), so the visualizer card
@@ -230,8 +278,15 @@ Flows to watch rather than try are **demos**: a cursor plays them on the real co
   keys come from the fixture adapter. Every fixture profile it or a demo uses (the patch demo's
   `gdtf/generic-par-rgbw.gdtf`), plus `fixtures/fixture_list.json`, must be in
   `APP_STATIC_FILES`.
-- **Check**: `npx vitepress dev docs/manual` then `/_dev/previews` (every preset),
-  `/_dev/behaviour` (lazy load, sync, Reset, clock), `/_dev/visualizer`.
+- **Check**: `npm run docs:manual:check` (`scripts/manual/check-previews.mjs`) starts the manual,
+  runs every preview a page uses in headless Chrome (each demo through one loop) and fails on a
+  preview that can't start, a `[LivePreview …]` error, a page error, a demo step that can't run,
+  a preset no page uses, and a broken `#anchor` link. A full run takes several minutes;
+  `-- --page /programming/scenes` checks one page, `-- --url <running manual>` skips the start.
+  Chrome comes from `CHROME_PATH` or the usual install path. Required before archiving a change
+  that touches a source the coverage map links to a preset. It doesn't see a preview that runs
+  but looks wrong: look at the page in `docs:manual:serve` too. Harness behaviour (lazy load,
+  sync, Reset, clock) has its dev pages `/_dev/behaviour` and `/_dev/visualizer`.
 
 ### Resource links
 
@@ -379,7 +434,10 @@ outlined pills, no coloured shadows: plain type and Studio's solid round buttons
 
 ## Steps
 
-1. Find the affected pages: `grep -rln "<feature words>" docs/manual --include=*.md`.
-2. Edit them, or create a page and register it in `.vitepress/config.js` `sidebar`.
+1. Find the affected pages and presets in the [coverage map](#coverage-map), then
+   `grep -rln "<feature words>" docs/manual --include=*.md` for mentions elsewhere.
+2. Edit them, or create a page and register it in `.vitepress/config.js` `sidebar` (and add it
+   to the coverage map).
 3. `npm run docs:manual:serve` and check rendering, links, and the sidebar entry.
-4. Mention it in the PR's "Manual" section.
+4. `npm run docs:manual:check` when a preset's source changed (coverage map, Presets column).
+5. Fill the PR's manual line: pages updated, previews checked, or n/a with the reason.
