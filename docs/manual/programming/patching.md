@@ -103,7 +103,7 @@ and the rig on stage loses its right-hand head.
 | Setting | Description |
 | --- | --- |
 | **Name** | The universe's name |
-| **ID** | The universe's number |
+| **ID** | The universe's number, unique in the show (a number another universe uses is refused). Its fixtures follow it |
 | **Output** | The connection this universe is sent through: see [Outputs](/rig/outputs#_3-send-a-universe) |
 | **Color** | The universe's colour in the patch bay |
 

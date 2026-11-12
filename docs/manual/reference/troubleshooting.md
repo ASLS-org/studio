@@ -36,6 +36,7 @@ check [Known limitations](/reference/limitations), then ask in the
 | Studio opens the demo show | First run, another browser, a private window, or cleared data | **Load Showfile** your exported show |
 | The `*` stays after saving | Something changed since | Save again with <kbd>Ctrl</kbd>+<kbd>S</kbd> |
 | **Load Showfile** did nothing | The file isn't a Studio showfile | Pick a `.json` file exported from Studio |
+| "Fixture reference(s) … were dropped" when opening a show | The show listed fixtures it no longer had (left over from an earlier delete) | Nothing to do: the show opens without them and is saved that way. Check your universes and groups |
 | A shortcut does nothing on a Mac | Shortcuts use <kbd>Ctrl</kbd>, not <kbd>Cmd</kbd> | Use <kbd>Ctrl</kbd> ([Shortcuts](/reference/shortcuts)) |
 
 ## Visualizer

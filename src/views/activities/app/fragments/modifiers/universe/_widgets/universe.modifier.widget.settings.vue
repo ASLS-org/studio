@@ -18,9 +18,11 @@
             style="width: 100%"
           />
           <uk-num-input
-            v-model="universe.id"
+            :key="idFieldKey"
+            :model-value="universe.id"
             style="width: 60px"
             label="ID"
+            @update:model-value="setUniverseId"
           />
         </uk-flex>
         <uk-flex
@@ -98,6 +100,10 @@ export default {
        * Connections popup display state (opened by Config)
        */
       connectionsPopupState: false,
+      /**
+       * Re-mounts the ID field, so a refused id shows the current one again
+       */
+      idFieldKey: 0,
     };
   },
   computed: {
@@ -116,6 +122,27 @@ export default {
     },
   },
   methods: {
+    /**
+     * Changes the universe's id (its fixtures follow), unless another universe uses it. The
+     * universe view's route follows the new id.
+     *
+     * @public
+     * @param {Number} id new id
+     */
+    setUniverseId(id) {
+      const previous = this.universe.id;
+      if (Number(id) === previous) return;
+      if (!this.$show.universePool.changeId(this.universe, id)) {
+        this.idFieldKey += 1;
+        return;
+      }
+      const route = this.$route;
+      if (route?.params?.universeId !== undefined && Number(route.params.universeId) === previous) {
+        this.$router.replace({ path: `/universe/${this.universe.id}`, query: route.query })
+          .catch(() => {});
+      }
+      this.$show.refreshSaveState();
+    },
     setUniverseColor(colorIndex) {
       this.universe.color = this.getColorFromIndex(colorIndex);
     },
