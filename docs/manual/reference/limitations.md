@@ -27,7 +27,6 @@ it. The rest of the manual only describes what works. Found something else? Repo
 | What doesn't work | Workaround |
 | --- | --- |
 | A universe can't be deleted (deleting in the patch bay removes the selected fixtures only) | Leave the universe empty |
-| <kbd>Shift</kbd>+click selects nothing | <kbd>Ctrl</kbd>+click each fixture |
 
 ## Visualizer
 
