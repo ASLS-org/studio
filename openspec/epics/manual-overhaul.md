@@ -118,9 +118,9 @@ All five units are archived (2026-11-12): the epic branch is ready for its PR in
     (outputs) and universe streams aren't restored after a reload (worse than the WSC known issue
     6, which only names streams). The bundled gateway (WSC 2.2.0-rc.6) forwards Art-Net; sACN
     gets "Unsupported protocol: 0x3". The visualizer's `popout()` (second-screen window) is never
-    called, and with the memory-history router `/visualizer` would open the app anyway. About →
-    Manual opens a hard-coded URL. Menu shortcuts match Ctrl only (not Cmd on macOS). Open Fixture
-    Library entries are listed by file key (`mac-aura.json`).
+    called, and with the memory-history router `/visualizer` would open the app anyway. Menu
+    shortcuts match Ctrl only (not Cmd on macOS). Open Fixture Library entries are listed by file
+    key (`mac-aura.json`).
 
 - CI drift check (fail a PR that changes user-facing code without a manual change), generated
   reference pages, and a scheduled AI routine that proposes manual updates. All three were

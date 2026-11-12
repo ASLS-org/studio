@@ -210,7 +210,7 @@ export default {
               name: 'Manual',
               icon: 'help',
               callback: () => {
-                window.open('https://studio.asls.timekadel.com/', '_blank');
+                window.open(import.meta.env.VITE_MANUAL_URL, '_blank');
               },
             },
             {
