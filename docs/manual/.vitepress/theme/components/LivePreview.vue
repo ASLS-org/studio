@@ -6,6 +6,8 @@
     <div
       class="live_preview"
       :class="[state, { demo: isDemo }]"
+      :data-preset="preset"
+      :data-demo-loops="isDemo ? demoLoops : null"
     >
       <!-- Stage: the component at its size in Studio, scaled down (or scrolled) to fit -->
       <div
@@ -261,6 +263,7 @@ export default {
       resetting: false,
       scale: 1,
       contentWidth: 0,
+      demoLoops: 0,
     };
   },
   computed: {
@@ -488,6 +491,7 @@ export default {
      * Mounts the preset as its own Vue app
      */
     async mountApp() {
+      const token = this.activation;
       // The overlay (popup host) exists once ready: show it before mounting
       this.state = 'ready';
       await this.$nextTick();
@@ -496,6 +500,13 @@ export default {
       this.app = await this.host.mountPreset(this.$refs.mount, this.definition, (err) => {
         console.error(`[LivePreview ${this.preset}]`, err); // eslint-disable-line no-console
       }, this.$refs.popups);
+      // Deactivated while mounting (a demo's loop restarting as the reader scrolls on): unmount,
+      // or the component would stay alive on a show that other previews reload
+      if (!token || this.activation !== token) {
+        this.unmountApp();
+        if (this.state === 'ready') this.state = 'paused';
+        return;
+      }
       this.updateClock();
       await this.$nextTick();
       this.measure();
@@ -574,6 +585,8 @@ export default {
         steps: this.definition.demo,
         visible: () => page.active === this && document.visibilityState === 'visible',
         restart: async () => {
+          // A loop ended: the manual's preview check waits for this count
+          this.demoLoops += 1;
           this.unmountApp();
           await this.host.loadShow(this.page, true);
           if (page.active !== this) return;

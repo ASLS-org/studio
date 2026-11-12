@@ -131,6 +131,9 @@ export default function playDemo({
     position.y = at.y - origin.top;
     place();
     await sleep(GLIDE_MS);
+    // Stopped meanwhile (the reader scrolled on): the press mustn't land on a component that is
+    // gone, or on the show being reloaded
+    if (stopped) throw new Error('stopped');
     return at;
   };
 
@@ -178,6 +181,7 @@ export default function playDemo({
         input.value += char;
         input.dispatchEvent(new InputEvent('input', { bubbles: true, data: char, inputType: 'insertText' }));
         await sleep(KEY_MS); // eslint-disable-line no-await-in-loop
+        if (stopped) return;
       }
       input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true }));
       input.dispatchEvent(new Event('change', { bubbles: true }));
@@ -228,6 +232,7 @@ export default function playDemo({
         // As a real press: focus goes to what was pressed (lists select and style on focus)
         if (pressed) focusFrom(el);
         await sleep(90); // eslint-disable-line no-await-in-loop
+        if (stopped) return;
         mouse(el, 'pointerup', at, step);
         mouse(el, 'mouseup', at, step);
         mouse(el, 'click', at, step);
@@ -243,6 +248,7 @@ export default function playDemo({
         el.dispatchEvent(new InputEvent('input', { bubbles: true, data: char, inputType: 'insertText' }));
         el.dispatchEvent(new KeyboardEvent('keyup', { key: char, bubbles: true }));
         await sleep(KEY_MS); // eslint-disable-line no-await-in-loop
+        if (stopped) return;
       }
     }
   };
@@ -255,6 +261,7 @@ export default function playDemo({
         try {
           await run(step); // eslint-disable-line no-await-in-loop
         } catch (err) {
+          if (stopped) return;
           console.warn('[LivePreview demo]', err.message); // eslint-disable-line no-console
           break;
         }
