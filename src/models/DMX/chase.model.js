@@ -31,6 +31,12 @@ const CHASE_STATES = {
   RUNNING: 1,
 };
 /**
+ * Beats each Quantize option waits for, by option index (None, 1/8, 1/4, 1/2, 1/1), in 4/4
+ *
+ * @constant {Array<Number>} CHASE_QUANTIZE_BEATS
+ */
+const CHASE_QUANTIZE_BEATS = [0, 0.5, 1, 2, 4];
+/**
  * Default chase data
  *
  * @constant {Object} DEFAULT_CHASE_DATA
@@ -38,6 +44,7 @@ const CHASE_STATES = {
 const DEFAULT_CHASE_DATA = {
   DURATION: 1,
   TRIGGER: CHASE_TRIGGER_STYLES.LOOP,
+  QUANTIZE: 4,
 };
 
 /**
@@ -54,11 +61,12 @@ class Chase {
    * @param {String} data.color the chase's color string
    * @param {Number} data.duration the chase's duration in bars
    * @param {CHASE_TRIGGER_STYLES} data.trigger the chase's trigger style
+   * @param {Number} [data.quantize=4] the chase's Quantize option index (see CHASE_QUANTIZE_BEATS)
    * @param {Object} data.cues the chase's cue list
    */
   constructor(data = {}) {
     this.id = data.id;
-    this.quantize = 4;
+    this.quantize = data.quantize ?? DEFAULT_CHASE_DATA.QUANTIZE;
     this.onEnd = () => {};
     this.name = data.name || `Chase ${this.id}`;
     this.gridIndex = data.gridIndex;
@@ -204,6 +212,7 @@ class Chase {
       color: this.color,
       duration: this.duration,
       trigger: this.trigger,
+      quantize: this.quantize,
       cues: this.cues.map((c) => c.showData),
     };
   }
@@ -221,7 +230,8 @@ class Chase {
       this.deltaStart = null;
       // Playback runs on the raw chase (see Cue.cue)
       const raw = toRaw(this);
-      this.animationId = Live.add(raw.update.bind(raw), this.quantize, 60, onReadyCallback);
+      const beats = CHASE_QUANTIZE_BEATS[this.quantize] ?? 0;
+      this.animationId = Live.add(raw.update.bind(raw), beats, 60, onReadyCallback);
     } else if (this.animationId != null) {
       this.elapsed = 0;
       this.cues.forEach((cueItemPool) => {
