@@ -42,12 +42,12 @@ change touches: the pages are what the proposal's **Manual** line names, and the
 | `F/toolbar/_popups/popup.connections.vue`, `F/modifiers/universe/_widgets/universe.modifier.widget.connection.vue`, `src/plugins/wsc.connection.js`, `M/DMX/output.pool.model.js`, the bundled gateway (`src/electron/`) | `rig/outputs`, `reference/troubleshooting`, `reference/limitations` | `outputs-popup`, `universe-stream` |
 | `F/toolbar/_popups/popup.visualizer.vue` | `interface/visualizer#settings` | `visualizer-settings` |
 | `F/toolbar/_popups/popup.license.vue`, `popup.credits.vue` | `introduction/license` | none |
-| `F/patch-bay/`, `M/DMX/universe.pool.model.js` (`patchBayListable`) | `getting-started/interface#patch-bay`, `programming/patching#universes` | `patch-bay`, `patch-bay-universes` |
+| `F/patch-bay/` (fragment, `_popups/popup.media.vue`) | `getting-started/interface#patch-bay`, `programming/patching` | `patch-bay`, `patch-bay-new`, `patch-bay-select`, `patch-bay-filter`, `visualizer-modes` |
 | `F/modifiers/universe/universe.modifier.fragment.vue`, `_popups/universe.modifier.popup.patch.vue` | `programming/patching`, `rig/fixtures` | `patch-add`, `universe-stream` |
 | `F/modifiers/universe/_widgets/universe.modifier.widget.settings.vue` | `programming/patching` | `universe-settings` |
 | `F/modifiers/universe/_widgets/universe.modifier.widget.fixture.settings.vue` | `programming/patching` | `fixture-settings` |
 | `F/modifiers/universe/_widgets/universe.modifier.widget.fixture.position.tool.vue` | `programming/patching`, `interface/visualizer#placing-fixtures` | `fixture-position` |
-| `F/modifiers/_widgets/modifier.widget.fixture.pool.vue` | `programming/patching`, `programming/groups`, `interface/visualizer#placing-fixtures` | `fixture-pool-select`, `fixture-pool-filter`, `fixture-pool-delete`, `group-fixture-pool-delete`, `visualizer-modes` |
+| `F/modifiers/_widgets/modifier.widget.fixture.pool.vue` | `programming/patching`, `programming/groups` | `fixture-pool-delete`, `group-fixture-pool-delete` |
 | `F/modifiers/_widgets/modifier.widget.fixture.channels.vue`, `colorpicker`, `pantilt`, `cells`, `curve` (via the theme's `previews/FixtureControl.vue`) | `programming/patching`, `programming/scenes` | `fixture-channels`, `fixture-color`, `fixture-pantilt` |
 | `F/group-pool/` (fragment, `_popups/popup.group.vue`), `M/DMX/master.model.js` | `getting-started/interface#group-pool`, `programming/groups`, `programming/playback` | `group-pool`, `group-pool-new`, `chase-play`, `master-row` |
 | `F/modifiers/group/group.modifier.fragment.vue`, `_widgets/group.modifier.widget.settings.vue`, `_popups/group.modifier.popup.patch.vue`, `M/DMX/group.model.js` | `programming/groups`, `getting-started/interface#modifier-strip` | `group-modifier`, `group-settings` |

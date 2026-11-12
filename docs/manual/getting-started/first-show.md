@@ -15,7 +15,7 @@ In the toolbar, open **File** and pick **New Showfile**. Choose the **Blank** te
 
 ## 2. Patch Two PARs
 
-1. In the **Patch Bay** on the left, click **Universe 0**. The universe view opens at the bottom.
+1. In the **Patch Bay** on the left, unfold **Universe 0**. The universe view opens at the bottom.
 2. In its **Fixture Pool**, press **Add**.
 3. In the popup, unfold **Bundled (GDTF)** and pick **Generic PAR RGBW**. Keep its first **Fixture
    mode** (6 channels).
@@ -25,7 +25,7 @@ In the toolbar, open **File** and pick **New Showfile**. Choose the **Blank** te
 With **Amount** `2`, Studio patches both at once, one after the other in the universe, each
 **Offset X** further along.
 
-The two PARs appear in the fixture pool and the visualizer. More in
+The two PARs appear in the fixture pool, the patch bay and the visualizer. More in
 [Patching fixtures](/programming/patching).
 
 ## 3. Make a Group

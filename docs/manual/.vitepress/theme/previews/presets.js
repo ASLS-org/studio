@@ -62,6 +62,19 @@ const VisualizerSettings = () => import('@/views/activities/app/fragments/toolba
 
 /* ── Demo steps ─────────────────────────────────────────────────────── */
 
+/** A fixture row in the patch bay (under its universe) */
+const patchRow = (has) => ({ click: '.uikit_list_item.uikit_sublist_body', has });
+/**
+ * The patch bay opens a fixture in the universe panel, whose fixture pool outlines it in the
+ * visualizer (with the move/rotate controls): without that panel, outline it here
+ * @param {Show} show
+ * @param {Object} to route
+ */
+const outlineFixture = (show, to) => {
+  const id = Number(to.query.fixtureId);
+  if (Number.isNaN(id) || !show.fixturePool.checkIfExists(id)) return;
+  show.fixturePool.getFromId(id).highlightSingle(true, true);
+};
 /** A row in a widget's list */
 const row = (has) => ({ click: '.uikit_list_item', has });
 /** A cue's body in the cue pool (plays or stops it), by slot */
@@ -224,6 +237,7 @@ const PRESETS = {
     componentHeight: 620,
     stage: true,
     component: PatchBay,
+    onRoute: outlineFixture,
     clock: true,
   },
   'group-pool': {
@@ -268,18 +282,18 @@ const PRESETS = {
   },
   /* ── Visualizer ── */
   'visualizer-modes': {
-    // Select a fixture in the fixture pool: the visualizer shows its transform controls; T, R, H
-    title: 'Fixture Pool',
-    width: 480,
-    height: 420,
-    componentWidth: 250,
-    componentHeight: STRIP,
+    // Select a fixture in the patch bay: the visualizer shows its transform controls; T, R, H
+    title: 'Patch Bay',
+    width: 200,
+    height: 520,
+    componentWidth: 200,
+    componentHeight: 520,
     stage: true,
-    component: FixturePool,
-    props: (show) => ({ pool: universe(show).fixturePool, onDelete: unpatch(show) }),
+    component: PatchBay,
+    onRoute: outlineFixture,
     demo: [
       { caption: 'Select a fixture' },
-      row('MAC Aura 2'),
+      patchRow('MAC Aura 2'),
       { wait: 1500 },
       { caption: 'T: move (arrows)' },
       { key: 't', global: true },
@@ -344,51 +358,49 @@ const PRESETS = {
     ],
   },
   /* ── Demos: a cursor plays the flow on the real component, to the end ── */
-  'patch-bay-universes': {
+  'patch-bay-select': {
     title: 'Patch Bay',
     width: 200,
-    height: 420,
-    component: PatchBay,
-    demo: [
-      { caption: 'New: an empty universe' },
-      { click: '.patch_bay_header .uikit_button', has: 'new' },
-      { wait: 1800 },
-      { caption: 'Select it, then Delete' },
-      row('Universe 1'),
-      { key: 'Delete' },
-      { wait: 1500 },
-      { caption: 'Confirm: it leaves the show, with its fixtures' },
-      popupButton('ok'),
-      { wait: 2000 },
-      { caption: null },
-    ],
-  },
-  'fixture-pool-select': {
-    title: 'Fixture Pool',
-    width: 480,
-    height: 420,
-    componentWidth: 250,
-    componentHeight: STRIP,
+    height: 520,
+    componentWidth: 200,
+    componentHeight: 520,
     stage: true,
-    component: FixturePool,
-    props: (show) => ({ pool: universe(show).fixturePool, onDelete: unpatch(show) }),
+    component: PatchBay,
+    onRoute: outlineFixture,
     demo: [
       { caption: 'Click: one fixture' },
-      row('MAC Aura 1'),
+      patchRow('MAC Aura 1'),
       { wait: 1500 },
       { caption: 'Ctrl + click: add to the selection' },
-      { ...row('MAC Aura 3'), ctrl: true },
-      { ...row('MAC Aura 4'), ctrl: true },
+      { ...patchRow('MAC Aura 3'), ctrl: true },
+      { ...patchRow('MAC Aura 4'), ctrl: true },
       { wait: 2500 },
       { caption: null },
     ],
   },
-  'fixture-pool-filter': {
-    title: 'Fixture Pool',
-    width: 250,
+  'patch-bay-new': {
+    // New opens the media popup: a DMX universe (the only type so far), named, then added
+    title: 'Patch Bay',
+    width: 440,
     height: 420,
-    component: FixturePool,
-    props: (show) => ({ pool: universe(show).fixturePool }),
+    component: PatchBay,
+    demo: [
+      { caption: 'New: choose what to add' },
+      { click: '.patch_bay_header .uikit_button', has: 'new' },
+      { wait: 1200 },
+      { caption: 'A DMX universe: name it' },
+      { field: 'Name', text: 'Truss', within: '.popup' },
+      { caption: 'OK adds it to the patch bay' },
+      popupButton('ok'),
+      { wait: 2600 },
+      { caption: null },
+    ],
+  },
+  'patch-bay-filter': {
+    title: 'Patch Bay',
+    width: 200,
+    height: 420,
+    component: PatchBay,
     demo: [
       { caption: 'Type to filter' },
       { type: '.uikit_list_searchbox input', text: 'Aura 3' },

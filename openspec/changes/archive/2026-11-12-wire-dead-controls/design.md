@@ -114,3 +114,12 @@ Shows saved with gaps reopen correctly; contiguous ones load as before.
   fixture pool, or `patch-bay-select` goes.
 - **Temporary with the keyboard:** there is no keyboard path to hold a cue. Cue tiles have no
   keyboard play today either.
+
+## Revised in review (2026-11-12)
+
+After the user's review, before merging: the patch bay keeps its fixture rows (a universes-only
+list looked odd, and selecting universes misbehaved), and universes can't be deleted (it broke
+things). Instead, fixtures are deletable from the patch bay, and **New** opens a **New Media**
+popup (`patch-bay/_popups/popup.media.vue`) whose only type is **DMX Universe**. D2, D4's
+universe deletion and the `delete-note` prop are dropped; D3's id fix, D4's output load fix and
+D6 stay. The main `patching` spec carries the revised requirements.

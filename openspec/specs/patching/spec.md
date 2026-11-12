@@ -47,46 +47,29 @@ moving heads.
 - **WHEN** the operator patches an OFL fixture whose category is `Color Changer`
 - **THEN** it is patched at the chosen DMX address and its channels play like any fixture's
 
-### Requirement: Patch bay lists universes
-The patch bay SHALL list the show's universes only, without their fixtures. Clicking a universe
-SHALL open it in the universe view. The filter SHALL match universe names.
-
-#### Scenario: Demo show
-- **GIVEN** the demo show
-- **WHEN** the patch bay is shown
-- **THEN** it lists the universe *Stage* with no fixture rows under it
-
-#### Scenario: Open a universe
-- **WHEN** the operator clicks a universe in the patch bay
-- **THEN** the universe view opens on it
-
-### Requirement: Add a universe
-The patch bay's **New** button SHALL add an empty universe with an id one above the highest
-existing id (0 in a show with none), named *Universe <id>*, and SHALL open it. Adding a universe
-SHALL mark the show unsaved.
+### Requirement: Add a universe from the patch bay
+The patch bay's **New** button SHALL open the **New Media** popup, which asks for a **Type**
+(only **DMX Universe** so far), a **Name** and a **Color**. **OK** SHALL add an empty universe
+with an id one above the highest existing id (0 in a show with none), list it in the patch bay,
+open it in the universe view and mark the show unsaved. The popup SHALL propose *Universe <id>*
+as the name.
 
 #### Scenario: New universe
 - **GIVEN** a show with universes 0, 3 and 1, in that order
-- **WHEN** the operator presses **New** in the patch bay
+- **WHEN** the operator presses **New** in the patch bay, keeps **DMX Universe** and presses **OK**
 - **THEN** *Universe 4* appears in the patch bay and opens in the universe view
 
-### Requirement: Delete universes
-Deleting universes in the patch bay (select, <kbd>Delete</kbd>, confirm) SHALL delete each
-selected universe and every fixture patched on it. Those fixtures SHALL also leave their groups,
-scenes and effects, and the visualizer. The confirmation SHALL name the number of fixtures that
-will be removed. A deleted universe's stream SHALL stop, and its connection SHALL stay in the
-show. If the deleted universe was open, the universe view SHALL close.
+### Requirement: Delete fixtures from the patch bay
+Deleting in the patch bay (select fixture rows, <kbd>Delete</kbd>, confirm) SHALL delete the
+selected fixtures from the show, as the universe view's fixture pool does: they also leave their
+groups, scenes and effects, and the visualizer. Universes in the selection SHALL be left in the
+show.
 
-#### Scenario: Delete a patched universe
-- **GIVEN** universe *Stage* with 4 fixtures, all in group *Rig*
-- **WHEN** the operator deletes *Stage* in the patch bay and confirms
-- **THEN** *Stage* and its 4 fixtures are gone from the patch bay, the group, its cues and the
-  visualizer, and the show is marked unsaved
-
-#### Scenario: Save and reload
-- **GIVEN** a show with an output, whose universe was deleted
-- **WHEN** the show is saved and opened again
-- **THEN** it loads without error, with the output in its connections
+#### Scenario: Delete a fixture
+- **GIVEN** the demo show
+- **WHEN** the operator selects *MAC Aura 4* under its universe in the patch bay, presses
+  <kbd>Delete</kbd> and confirms
+- **THEN** *MAC Aura 4* leaves the patch bay, the universe view, its groups and the visualizer
 
 ### Requirement: Fixtures keep their ids
 A fixture loaded from a show SHALL keep its saved id, so its universe, groups and scenes find it

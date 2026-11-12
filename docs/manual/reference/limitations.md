@@ -22,11 +22,12 @@ it. The rest of the manual only describes what works. Found something else? Repo
 | In **Scene Fixtures**, <kbd>Ctrl</kbd>+click selecting several fixtures doesn't work in a group's first cue (the top-left slot) | Set that cue's fixtures one at a time |
 | Opening a scene of a group whose fixtures aren't the show's first ones can log an error | The scene panel works anyway |
 
-## Lists
+## Patch Bay
 
 | What doesn't work | Workaround |
 | --- | --- |
-| <kbd>Shift</kbd>+click selects nothing in a list (fixture pools) | <kbd>Ctrl</kbd>+click each fixture |
+| A universe can't be deleted (deleting in the patch bay removes the selected fixtures only) | Leave the universe empty |
+| <kbd>Shift</kbd>+click selects nothing | <kbd>Ctrl</kbd>+click each fixture |
 
 ## Visualizer
 
