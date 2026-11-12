@@ -52,7 +52,9 @@ rules:
     - Always include an "Out of scope" list.
     - "State the impact on: showfile format (and older-file compatibility), unsaved marker, live
       playback/timing, WSC output, visualizer, web vs Electron. Write 'none' where it doesn't apply."
-    - State whether the user manual needs updating and which pages.
+    - "Include a 'Manual:' line: the manual pages this change affects, found in the coverage map
+      (skill user-manual § Coverage map) from the files it touches, or 'n/a' with the reason
+      (e.g. 'n/a: refactor, nothing users see changes')."
   specs:
     - "Capabilities are organised by product area. Reuse these paths before inventing new ones:
       patching, fixtures, grouping, scenes, effects, chases, live-engine, master, showfile,
@@ -73,8 +75,11 @@ rules:
     - "Group tasks by layer: engine (models/DMX), UI (views), visualizer, output, docs."
     - "Every task ends with its verification: a concrete manual step in the running app
       (npm start or npm run electron:start) or a lint/command check."
-    - Include a task to update docs/manual when user-facing behaviour changes, or state "Manual
-      n/a" in the last task.
+    - "When user-facing behaviour changes, include a docs task naming the manual pages and preview
+      presets to update (from the proposal's Manual line and the coverage map in skill
+      user-manual), verified in npm run docs:manual:serve, plus npm run docs:manual:check when a
+      touched file has presets in the coverage map. Otherwise state 'Manual n/a' and the reason in
+      the last task."
     - Include a task to update CLAUDE.md / skills when architecture or conventions change.
     - Final task is always "npx eslint on all touched files is clean".
 
@@ -95,6 +100,13 @@ operations:
   archive:
     guidance:
       - Before archiving, confirm the manual and AI-context tasks are done or explicitly n/a.
+      - "Manual gate: compare `git diff --name-only <base>...HEAD -- docs/manual` (base: the branch
+        the change merges into) with the proposal's Manual line. If the proposal names pages and
+        none of them changed, or docs/manual changed while the line says n/a, stop and ask the
+        user; don't fix it silently."
+      - "Preview gate: if the diff touches a source file that the coverage map (skill user-manual)
+        links to a preset, or the manual's preview theme, run npm run docs:manual:check and
+        archive only when it passes. If it can't run (no Chrome), say so in the summary and the PR."
       - Summarise the user-facing change in one line suitable for a Conventional Commit subject.
       - For an epic change, archive in its unit branch before the PR into the epic branch, and
         update the status table in openspec/epics/<name>.md.

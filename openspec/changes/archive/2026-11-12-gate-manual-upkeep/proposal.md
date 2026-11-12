@@ -7,9 +7,8 @@ registry).
 
 The manual fell behind because updating it was a soft checklist item. "Manual updated, or n/a"
 is ticked in the PR template, and nothing tells the author *which* pages or previews a change
-affects. After units 1–4 the manual is complete, and without a stronger habit it will drift
-again by the next epic. The user chose workflow gates (2026-11-05): no CI drift check, no
-generated pages, no scheduled routine.
+affects. Units 1–4 brought it up to date; without a stronger habit it drifts again. The user
+chose workflow gates (2026-11-05): no CI check, no generated pages, no scheduled routine.
 
 ## What Changes
 
@@ -25,10 +24,11 @@ generated pages, no scheduled routine.
     line. If the proposal names pages and `docs/manual` is untouched, stop and ask.
 - **PR template**: the Manual checkbox becomes "Pages updated: … / Previews checked: … / n/a
   because …".
-- **Preview check** (local, optional to run, required before archive when previews are listed):
-  `npm run docs:manual:check-previews` mounts every preset headless against the manual showfile
-  and reports the ones that fail. The archive guidance runs it when a change touches a widget
-  that has a preset.
+- **Preview check** (local, required before archive when a change touches a file with a
+  preset): `npm run docs:manual:check` runs the manual in headless Chrome, runs every preview a
+  page uses (each demo through one loop), and fails on a preview that can't start, a demo step
+  that can't run, a preset no page uses, or a broken `#anchor` link. It replaces the hand-kept
+  `_dev/previews.md` list.
 - `CLAUDE.md` definition-of-done item 3 and skill `ai-context-maintenance` point to the coverage
   map.
 
@@ -38,21 +38,22 @@ generated pages, no scheduled routine.
 None.
 
 ### Modified Capabilities
-None. This is process and tooling. The change sets `skip_specs: true` unless refinement finds a
-user-observable manual behaviour to specify.
+None. This is process and tooling; nothing a manual reader sees changes (`skip_specs: true`).
 
 ## Impact
 
 - Code: `openspec/config.yaml`, `.github/pull_request_template.md`,
   `.claude/skills/user-manual/SKILL.md`, `.claude/skills/ai-context-maintenance/SKILL.md`,
-  `CLAUDE.md`, `docs/manual/CLAUDE.md`, `package.json` (one script), a small check script under
-  `scripts/`.
+  `CLAUDE.md`, `docs/manual/CLAUDE.md`, `package.json` (one script, `puppeteer-core` as a
+  devDependency), a check script under `scripts/manual/`, one line in `LivePreview.vue`,
+  removal of `docs/manual/_dev/previews.md`.
 - Showfile format: none. Unsaved marker: none. Live playback/timing: none. WSC output: none.
   Visualizer: none. Web vs Electron: none.
-- Manual: none (meta only).
+- Manual: no pages. The preview harness (`demo.js`, `host.js`, `LivePreview.vue`),
+  `docs/manual/CLAUDE.md` and the dev page `_dev/previews.md` (removed) change.
 
 ## Out of scope
 
 - CI enforcement in GitHub Actions, generated reference pages, and scheduled AI routines (set
   aside on 2026-11-05; listed in the epic backlog).
-- Re-auditing manual content (units 3–4 did that).
+- Re-auditing manual content.

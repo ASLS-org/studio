@@ -13,4 +13,6 @@ hard-coded. Pages show Studio's widgets and panels live with `<LivePreview prese
 (`.vitepress/theme/previews/`, demo show in `public/presets/` = the home page's rig); one preview
 runs at a time, demos run to their end; one floating visualizer card per page comes next to the
 running stage preview; each topic and each preview has one home page; no recordings of the app.
+Which pages and presets each source file feeds: skill `user-manual` § Coverage map. Check
+previews, demos and anchors with `npm run docs:manual:check`.
 Details: skill `user-manual` § Theme, § Live previews, § Resource links, § Home page.

@@ -16,6 +16,7 @@ GPL-3.0. Plain JavaScript (no TypeScript), no test suite.
 | Embed build | `npm run build:embed` |
 | Desktop dist | `npm run dist:mac` / `dist:linux` / `dist:win` |
 | User manual | `npm run docs:manual:serve` (VitePress, `docs/manual`) |
+| Manual preview check | `npm run docs:manual:check` (headless Chrome: previews, demos, anchors) |
 | Spec workflow | `openspec list`, `openspec validate --all` |
 
 Node 18 (`.nvmrc`). Path aliases: `@` → `src/`, `@root` → repo root.
@@ -90,7 +91,9 @@ buffer; a `WscConnectionStream` sends the buffer to the gateway every tick.
 - Definition of done for any change:
   1. Touched files lint clean.
   2. Verified in the running app (skill `run-studio`).
-  3. User manual updated if the change alters how the app is used (skill `user-manual`).
+  3. User manual updated if the change alters how the app is used: the pages and previews the
+     touched files map to in skill `user-manual` § Coverage map, and `npm run docs:manual:check`
+     passing when a mapped preview's source changed.
   4. AI context updated if the change alters architecture, conventions, or commands
      (skill `ai-context-maintenance`).
 

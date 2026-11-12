@@ -33,6 +33,8 @@ after upgrading the CLI): `.claude/skills/openspec-*`, `.claude/commands/opsx/*`
   `code-quality`
 - fixes a bug listed under "Known issues" or "Known traps" → remove the entry
 - reveals a trap that cost time → add it (one line, with the fix)
+- adds, moves or renames a view (fragment, modifier, widget, popup), a manual page or a live
+  preview preset → the coverage map in `user-manual` § Coverage map
 - changes the branch, PR or release flow → `git-collaboration`
 - changes the domain vocabulary or the OpenSpec capability list → `openspec/config.yaml`
 

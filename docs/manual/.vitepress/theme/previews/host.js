@@ -92,7 +92,14 @@ let loadedFor = null;
 export function loadShow(page, force = false) {
   if (!loading || force || loadedFor !== page) {
     loadedFor = page;
+    const previous = loading;
     loading = (async () => {
+      // Never two loads on the show at once (a demo's loop restarting while the reader scrolls
+      // to the next preview): interleaved clears and rebuilds leave fixtures half built
+      if (previous) await previous.catch(() => {});
+      const res = await fetch(withBase(SHOWFILE));
+      if (!res.ok) throw new Error(`Demo show unavailable (${res.status})`);
+      const data = await res.json();
       // Nothing may keep playing on the show being cleared: stop every chase and cue first
       show.groupPool.groups.forEach((group) => {
         group.stopAllChases?.();
@@ -102,9 +109,7 @@ export function loadShow(page, force = false) {
       // the pool (Studio's own clearing throws once an output exists, see Known limitations)
       show.universePool.universes.forEach((u) => { if (u.stream) u.stream.stop?.(); });
       show.outputPool.outputs.splice(0);
-      const res = await fetch(withBase(SHOWFILE));
-      if (!res.ok) throw new Error(`Demo show unavailable (${res.status})`);
-      await show.loadFromData(await res.json());
+      await show.loadFromData(data);
     })();
     loading.catch(() => { loading = null; });
   }
