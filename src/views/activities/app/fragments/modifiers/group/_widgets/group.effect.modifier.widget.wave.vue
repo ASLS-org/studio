@@ -202,6 +202,15 @@ export default {
      *
      * @type {Boolean}
      */
+    /**
+     * Whether the channel's direction is a bounce (its time runs back on odd cycles)
+     *
+     * @type {Boolean}
+     */
+    isBounce() {
+      const name = this.channel.directionOptions?.[this.channel.direction];
+      return name === 'BOUNCELRT' || name === 'BOUNCERTL';
+    },
     isPWM() {
       return this.channel.waveOptions?.[this.channel.waveform] === 'PWM';
     },
@@ -304,10 +313,23 @@ export default {
       }
 
       const freq = Math.max(Number(this.channel.frequency) || 0, 0.0001);
-      // Same scaling as the original implementation — this is what produces
-      // visible separation between fixtures across the canvas width.
-      const phaseFraction = ((((Number(fixture.phase) || 0) / freq) * (180 / Math.PI)) / 360);
-      let t = (this.channel.time || 0) + phaseFraction;
+      const time = this.channel.time || 0;
+      let t;
+      if (this.isBounce) {
+        // The curve runs forward on even cycles and backward on odd ones (FXChannel.bounceTime):
+        // place the dot, in the current cycle, where the curve has the fixture's wave position
+        const cycles = freq * time;
+        const k = Math.floor(cycles);
+        const folded = k % 2 === 0 ? cycles - k : 1 - (cycles - k);
+        let q = folded + (Number(fixture.phase) || 0) / (2 * Math.PI);
+        q -= Math.floor(q);
+        t = (k % 2 === 0 ? k + q : k + 1 - q) / freq;
+      } else {
+        // Same scaling as the original implementation — this is what produces
+        // visible separation between fixtures across the canvas width.
+        const phaseFraction = ((((Number(fixture.phase) || 0) / freq) * (180 / Math.PI)) / 360);
+        t = time + phaseFraction;
+      }
       t -= Math.floor(t); // wrap into [0, 1) safely for negative values
 
       const xOffset = t * w;
