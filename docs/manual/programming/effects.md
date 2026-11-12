@@ -60,6 +60,8 @@ Try the settings below on the demo rig's four heads, with a dimmer effect:
   first head to the last, as a wave.
 - **SYM**: the offsets grow from both ends towards the middle: the movement opens and closes like a
   curtain.
+- **BOUNCELRT**: the offsets of **LTR**, but the wave runs one way for a cycle, then back the
+  other way for the next, smoothly. **BOUNCERTL** starts the other way, as **RTL**.
 
 ## Effect Tool
 
@@ -70,11 +72,12 @@ on it. Below is *Ballyhoo*'s pan: a sine between 92 and 164, twice per effect du
 
 | Setting | Description |
 | --- | --- |
-| **Waveform** | The shape: **SINE** (smooth), **TRIANGLE** (straight up and down), **SQUARE** (jumps between min and max) |
+| **Waveform** | The shape: **SINE** (smooth), **TRIANGLE** (straight up and down), **SQUARE** (jumps between min and max), **PWM** (a square whose time at max you set with **Width**) |
+| **Width** | With **PWM** only: the share of each cycle spent at **Max**, 1–99 %. At 10 %, short flashes; at 90 %, short blackouts |
 | **Min**, **Max** | The channel's lowest and highest value (DMX 0–255) |
 | **Freq** | How many times the waveform repeats over the effect's **Duration** (1–100). At 1, a 2-bar effect does one cycle every 2 bars |
 | **Phase** | Shifts the whole waveform, in degrees |
-| **Direction** | How the offset runs across fixtures: **LTR** first to last, **RTL** last to first, **SYM** from both ends to the middle |
+| **Direction** | How the offset runs across fixtures: **LTR** first to last, **RTL** last to first, **SYM** from both ends to the middle, **BOUNCELRT** and **BOUNCERTL** back and forth |
 | **Spread over** | **Fixtures**: one offset per fixture, a fixture's cells move together. **Cells**: one offset per cell (fixture order, then cell order), so the movement runs along a pixel bar |
 | **Phase start**, **Phase stop** | The offset of the first and of the last fixture (or cell), −360° to 360°. Those in between are spread evenly |
 
@@ -87,10 +90,6 @@ effect runs its colour cycle along the pixels instead of changing the whole bar 
 
 > **Note:** An effect moves its channel in every cell of a fixture (each pixel's dimmer, each head's
 > pan).
-
-> **Note:** In this release, the **PWM** waveform keeps the channel at its lowest, and the
-> **BOUNCELRT** and **BOUNCERTL** directions don't spread the fixtures (they all move together).
-> Use the other waveforms and directions ([Known limitations](/reference/limitations#programming)).
 
 ## Timing
 

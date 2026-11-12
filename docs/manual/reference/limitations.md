@@ -21,9 +21,6 @@ it. The rest of the manual only describes what works. Found something else? Repo
 | --- | --- |
 | **Trigger Style** is saved but unused: every cue starts and stops on a click; **Temporary** does nothing | Click the cue again to stop it |
 | The group pool's **dimmer** knob, **Isolate** and **Blackout**, and the master column's knob and buttons, don't change the output | Stop a group's cues and chases to darken it; keep a dark scene to click |
-| Effect waveform **PWM** keeps the channel at its lowest | Use **SQUARE** |
-| Effect directions **BOUNCELRT** and **BOUNCERTL** don't spread the fixtures: they all move together | Use **SYM**, **LTR** or **RTL** |
-| Chase **Quantize** **1/8**, **1/4** and **1/2** wait 1, 2 and 3 beats rather than the fraction of a bar their names say | Use **1/1** (next bar) or **None** |
 | In **Scene Fixtures**, <kbd>Ctrl</kbd>+click selecting several fixtures doesn't work in a group's first cue (the top-left slot) | Set that cue's fixtures one at a time |
 | Opening a scene of a group whose fixtures aren't the show's first ones can log an error | The scene panel works anyway |
 
