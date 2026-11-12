@@ -21,8 +21,9 @@ The patch bay is meant to list top-level items only (universes; later pyro, medi
 - Deleting in the patch bay deletes the selected universes with every fixture patched on them,
   including those fixtures in groups, scenes and effects. The confirmation says so. A deleted
   universe stops its stream.
-- **Config** opens the **Connections** popup (as the toolbar does).
-- New universe ids are unique (the generator used the last id, not the highest).
+- **Config** opens the outputs popup (as **Preferences → Outputs** does).
+- New universe and fixture ids are unique, and loaded fixtures keep their saved ids: a show with a
+  deleted fixture (or universe) reopened with fixtures missing.
 
 ## Capabilities
 
@@ -30,7 +31,7 @@ The patch bay is meant to list top-level items only (universes; later pyro, medi
 - `grouping`: how a group's cues trigger (Toggle, Temporary).
 
 ### Modified Capabilities
-- `patching`: the patch bay lists, adds and deletes universes.
+- `patching`: the patch bay lists, adds and deletes universes; fixtures keep their ids.
 - `output-wsc`: the universe's **Config** opens the Connections popup. Deleting a universe stops
   its stream.
 
@@ -38,7 +39,7 @@ The patch bay is meant to list top-level items only (universes; later pyro, medi
 
 - Group dimmer, **Isolate**, **Blackout**, master column controls (own change).
 - Effect PWM, bounce, chase quantize (change `fix-effect-chase-values`).
-- Non-DMX patch bay items (pyro, media).
+- Non-DMX patch bay items.
 - Restoring streams after reload (WSC known issue 6) and the other WSC known issues.
 
 ## Impact
@@ -48,8 +49,7 @@ The patch bay is meant to list top-level items only (universes; later pyro, medi
 - **Unsaved marker:** adding or deleting a universe marks the show unsaved (it's in `showData`).
 - **Live playback and timing:** none per tick.
 - **WSC output:** a deleted universe's stream stops; connections stay.
-- **Visualizer:** a deleted universe's fixtures leave the stage (`patch_changed`).
-- **Web vs Electron:** none.
+- **Visualizer:** a deleted universe's fixtures leave the stage. **Web vs Electron:** none.
 
 Manual: `getting-started/interface#patch-bay`, `programming/patching`, `programming/scenes`,
 `programming/playback`, `rig/outputs`, `getting-started/first-show`, `interface/visualizer`,

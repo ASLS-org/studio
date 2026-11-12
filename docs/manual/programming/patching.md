@@ -3,12 +3,12 @@
 Patching tells Studio which lights you have and where they listen: each fixture gets a DMX
 **universe**, a first **address** and a **mode**, plus a position on stage for the visualizer. You
 patch, try and adjust fixtures in the **universe view**, which opens at the bottom of the screen
-when you pick a universe in the [patch bay](/getting-started/interface#patch-bay). From left to
+when you click a universe in the [patch bay](/getting-started/interface#patch-bay). From left to
 right: the universe's settings and **Stream**, its **Fixture Pool**, then the selected fixture's
 settings, position and controls, each explained below.
 
 A new show comes with four universes (**Universe 0** to **Universe 3**). Each holds 512 DMX
-channels.
+channels. Add or remove universes in the patch bay: see [Universes](#universes).
 
 Before you start, have your rig's paperwork at hand: for each light, its model, the DMX mode set
 on its menu, its start address and the universe (the cable or node) it hangs on. Patching is
@@ -20,13 +20,14 @@ addresses 0, 14, 28 and 42, so 56 addresses in use and 456 free.
 
 ## Patching a Fixture
 
-1. In the patch bay, unfold the universe you want to patch into.
+1. In the patch bay, click the universe you want to patch into.
 2. In the **Fixture Pool** widget, press **Add**. The **Patch Fixture** popup opens.
 3. Pick a fixture in the list on the left. Type in **Search items** to filter it.
 4. Choose its **Fixture mode**. The mode sets how many channels the fixture uses.
 5. Check the **Address** (Studio proposes the first free one) and, to patch several identical
    fixtures one after another, the **Amount**.
-6. Press **OK**. The fixtures appear in the fixture pool, in the patch bay and in the visualizer.
+6. Press **OK**. The fixtures appear in the fixture pool and in the visualizer, and the patch
+   bay counts them.
 
 The preview adds a *Generic PAR RGBW* to the demo rig: it takes the first free address, 56, and
 hangs 4 m up, 3 m in front of the heads (**Pos Y** −3, **Pos Z** 4, **°Rot X** 180).
@@ -66,18 +67,18 @@ doesn't have opens with a **Missing fixtures** prompt first: see
 
 ## Selecting and Filtering Fixtures
 
-Click a fixture in the **Fixture Pool** (or the patch bay) to select it: the universe view shows its
+Click a fixture in the **Fixture Pool** to select it: the universe view shows its
 settings and controls, and the visualizer outlines it, so you can tell which light on stage is
 which. Hold <kbd>Ctrl</kbd> and click to select several. Type in **Search items** to show only the
 fixtures whose name matches.
 
-<LivePreview preset="patch-bay-select" />
+<LivePreview preset="fixture-pool-select" />
 
 Filtering matches any part of the name: `Aura 3` finds *MAC Aura 3*, `Aura` all four. Name your
 fixtures by position (*Front PAR L*, *Back wash 2*) and the filter becomes the fastest way around a
 big rig.
 
-<LivePreview preset="patch-bay-filter" />
+<LivePreview preset="fixture-pool-filter" />
 
 ## Deleting Fixtures
 
@@ -87,6 +88,16 @@ effect that used it, and its addresses become free. In the preview, *MAC Aura 4*
 and the rig on stage loses its right-hand head.
 
 <LivePreview preset="fixture-pool-delete" />
+
+## Universes
+
+The patch bay lists the show's universes. **New** adds an empty one, numbered after the highest
+(*Universe 4* in a new show), and opens it. To remove universes, select them in the patch bay,
+press <kbd>Delete</kbd> or <kbd>Backspace</kbd> and confirm: every fixture patched on them goes
+too, from every group, scene and effect. The confirmation lists how many fixtures each universe
+holds. In the preview, a new universe is added, then deleted.
+
+<LivePreview preset="patch-bay-universes" />
 
 ## Universe Settings
 

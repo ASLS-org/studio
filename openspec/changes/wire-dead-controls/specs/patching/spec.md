@@ -40,3 +40,13 @@ show. If the deleted universe was open, the universe view SHALL close.
 - **GIVEN** a show with an output, whose universe was deleted
 - **WHEN** the show is saved and opened again
 - **THEN** it loads without error, with the output in its connections
+
+### Requirement: Fixtures keep their ids
+A fixture loaded from a show SHALL keep its saved id, so its universe, groups and scenes find it
+whatever fixtures were deleted before the save. A new fixture SHALL get an id one above the
+highest existing id.
+
+#### Scenario: Delete then reopen
+- **GIVEN** the demo show, whose first fixture is deleted
+- **WHEN** the show is saved and opened again
+- **THEN** every remaining fixture is in its universe, group and scenes, with no error

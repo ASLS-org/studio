@@ -42,7 +42,7 @@ In Studio's visualizer header:
 
 ## Placing Fixtures
 
-Fixtures you select in the patch bay or a fixture pool are outlined in the visualizer, with the
+Fixtures you select in a fixture pool are outlined in the visualizer, with the
 **transform controls** on them. Drag the controls to move or turn the fixtures on stage; the change
 is written to their **Position** and **Rotation** when you release the mouse. Keys switch the
 controls:
@@ -54,7 +54,7 @@ controls:
 | <kbd>H</kbd> | Hidden | Only the outline: select without risking a drag |
 | <kbd>Esc</kbd> | | Clears the outline |
 
-Watch them on the demo rig: *MAC Aura 2* is selected in the patch bay, then each mode in turn. In
+Watch them on the demo rig: *MAC Aura 2* is selected in the fixture pool, then each mode in turn. In
 Studio, or the <ResourceLink to="demo">live demo</ResourceLink>, drag an arrow to move it along
 the truss.
 

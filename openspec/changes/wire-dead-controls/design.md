@@ -58,8 +58,9 @@
 - **Chases:** a chase calls `cue.cue()` directly, so it isn't affected.
 
 ### D2. The patch bay lists universes only
-- **List items:** `UniversePool.listable` drops `unfold`. Nothing else uses it (to confirm with a
-  grep during apply).
+- **List items:** a new `UniversePool.patchBayListable` lists universes without `unfold`, with
+  their fixture count as `more`. `listable` keeps `unfold`: the new group and group patch popups
+  pick fixtures from it.
 - **Opening a universe:** the patch bay's `uk-list` loses `accordion` and opens a universe on
   `@select` (the route `/universe/<id>`). `displayFixture` goes.
 - **Fixture selection elsewhere:** the universe view's fixture pool already selects fixtures, and
@@ -81,12 +82,20 @@
   3. calls `universePool.delete(universe)`.
 - **Handler:** the patch bay's `@delete` handler calls it for each selected item.
 - **The universe view:** if the current route is a deleted universe, the handler pushes `/`.
-- **Confirmation:** `uk-list` owns the popup and its text. It gains an optional
-  `delete-message` prop (a function of the items). The patch bay passes "Delete N universes and
-  the M fixtures patched on them?". Lists without the prop keep their text.
+- **Confirmation:** `uk-list` owns the popup, which lists each item with its `more` text. The
+  universe's listable `more` is its fixture count ("4 fixtures"), so the popup names it. `uk-list`
+  gains an optional `delete-note` string shown under the items; the patch bay's says the fixtures
+  go too. Lists without it keep their text.
 - **Loading:** `Show.loadFromData` stops passing `universe` to `OutputPool.addRaw`, and
   `OutputPool.showData` writes `universe: output.universe?.id ?? null`. Saved files keep the key,
   so older Studio versions still read them.
+
+### D6. Fixtures keep their saved ids (added during apply)
+`FixturePool.addRaw` gave every fixture `genFixtureId()` on load, which renumbers 0, 1, 2… in
+load order, while universes, groups and scenes refer to the saved ids. Any deleted fixture but
+the last left a show that reopened with a fixture missing (on `develop` too). `addRaw` now keeps
+`fixtureData.id` when given, and `genFixtureId` (like `genUniverseId`) returns the highest id + 1.
+Shows saved with gaps reopen correctly; contiguous ones load as before.
 
 ### D5. Config: the widget mounts the Connections popup
 - **The widget:** `universe.modifier.widget.settings.vue` imports `popup.connections.vue` and
