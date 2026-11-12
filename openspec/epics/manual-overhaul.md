@@ -122,12 +122,6 @@ All five units are archived (2026-11-12): the epic branch is ready for its PR in
     Manual opens a hard-coded URL. Menu shortcuts match Ctrl only (not Cmd on macOS). Open Fixture
     Library entries are listed by file key (`mac-aura.json`).
 
-  - (2026-11-12, unit 5, from the code and the manual's preview check) `CuePool.delete` and
-    `clearAll` don't stop a playing cue: its `Live` animation stays. Deleting a cue while it plays
-    leaves it driving the lights; opening or creating a show while a cue plays leaves the old cue
-    running on the old (emptied) fixtures, throwing on every tick (forever for a looping cue).
-    Not yet reproduced in the running app.
-
 - CI drift check (fail a PR that changes user-facing code without a manual change), generated
   reference pages, and a scheduled AI routine that proposes manual updates. All three were
   considered and set aside on 2026-11-05 in favour of workflow gates.
