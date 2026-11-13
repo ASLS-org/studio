@@ -16,16 +16,6 @@
     }"
     @click="(e)=>$emit('click',e)"
   >
-    <!-- Grip to drag the row (reorderable lists) -->
-    <span
-      v-if="handle"
-      class="uikit_list_item_handle"
-      title="Drag to reorder"
-      @pointerdown.stop="$emit('handle', $event)"
-      @click.stop
-    >
-      <uk-icon name="drag" />
-    </span>
     <!-- The checkbox only shows the state: one toggle path, so a click flips it once -->
     <span
       v-if="toggleable"
@@ -75,6 +65,26 @@
       :class="{ open: item.unfolded }"
       name="arrow_down"
     />
+    <!-- Deletes the row (deletable lists) -->
+    <span
+      v-if="deletable"
+      class="uikit_list_item_tool uikit_list_item_delete"
+      title="Delete"
+      @pointerdown.stop
+      @click.stop="remove"
+    >
+      <uk-icon name="trash" />
+    </span>
+    <!-- Grip to drag the row (reorderable lists) -->
+    <span
+      v-if="handle"
+      class="uikit_list_item_tool uikit_list_item_handle"
+      title="Drag to reorder"
+      @pointerdown.stop="$emit('handle', $event)"
+      @click.stop
+    >
+      <uk-icon name="drag" />
+    </span>
   </div>
 </template>
 
@@ -97,6 +107,7 @@ export default {
     toggleable: Boolean,
     noHighlight: Boolean,
     colored: Boolean,
+    /** Shows a trash icon at the right of the row; clicking it emits `delete` */
     deletable: Boolean,
     focused: Boolean,
     disabled: Boolean,
@@ -108,10 +119,10 @@ export default {
     large: Boolean,
     noSelect: Boolean,
     empty: Boolean,
-    /** Shows a grip at the left of the row; pressing it emits `handle` (drag to reorder) */
+    /** Shows a grip at the right of the row; pressing it emits `handle` (drag to reorder) */
     handle: Boolean,
   },
-  emits: ['click', 'toggle', 'handle'],
+  emits: ['click', 'toggle', 'handle', 'delete'],
   methods: {
     /**
      * Reports a click on the checkbox, unless the row is disabled
@@ -124,6 +135,18 @@ export default {
        * The row's checkbox was clicked
        */
       this.$emit('toggle');
+    },
+    /**
+     * Reports a click on the trash icon, unless the row is disabled
+     *
+     * @public
+     */
+    remove() {
+      if (this.item.value.disabled || this.disabled) return;
+      /**
+       * The row's trash icon was clicked
+       */
+      this.$emit('delete');
     },
   },
 };
@@ -197,26 +220,40 @@ export default {
   transform: rotate(180deg);
   opacity: 0.5;
 }
-.uikit_list_item_handle {
+.uikit_list_item_tool {
   display: flex;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
   width: 16px;
   height: 100%;
-  margin: 0 -6px 0 -4px;
+  cursor: pointer;
+}
+.uikit_list_item_tool + .uikit_list_item_tool {
+  margin-left: -4px;
+}
+.uikit_list_item_handle {
   cursor: grab;
   touch-action: none;
 }
-.uikit_list_item_handle :deep(svg) {
+.uikit_list_item_tool :deep(svg) {
   width: 14px;
   height: 14px;
   fill: var(--secondary-light);
   transition: fill 0.1s;
 }
-.uikit_list_item:hover .uikit_list_item_handle :deep(svg),
-.uikit_list_item_handle:active :deep(svg) {
+/* Same colour as the row's label when the row is selected or hovered */
+.uikit_list_item:hover .uikit_list_item_tool :deep(svg),
+.selected:not(.noSelect) .uikit_list_item_tool :deep(svg),
+.highlighted:not(.noSelect) .uikit_list_item_tool :deep(svg),
+.uikit_list_item_tool:active :deep(svg) {
   fill: var(--secondary-lighter);
+}
+.disabled .uikit_list_item_tool {
+  cursor: not-allowed;
+}
+.disabled .uikit_list_item_tool :deep(svg) {
+  fill: var(--secondary-light) !important;
 }
 @media (prefers-reduced-motion: reduce) {
   .uikit_list_item_arrow {

@@ -77,6 +77,6 @@ The demo rig's group view, with *Rig*'s settings, fixtures and cue pool:
 Each widget has a title bar with its icon. Lists in widgets work the same everywhere: click to
 select, <kbd>Ctrl</kbd>+click (<kbd>Cmd</kbd>+click on a Mac) to add to the selection,
 <kbd>Shift</kbd>+click to select a range, **Search items** to filter, <kbd>Delete</kbd> or
-<kbd>Backspace</kbd> to delete (with a confirmation), and right-click for a menu of what the list
-allows. Items you can reorder have a grip at their left: drag it. The striped area below the last
+<kbd>Backspace</kbd> to delete (with a confirmation). In lists you can delete from, each item has
+a trash icon at its right. Items you can reorder have a grip at their far right: drag it. The striped area below the last
 item is the list's empty space. All the list keys are in [Shortcuts](/reference/shortcuts#lists).

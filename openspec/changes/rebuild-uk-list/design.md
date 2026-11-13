@@ -119,26 +119,16 @@ HTML5 drag-and-drop is dropped: its ghost images, child `dragenter` flicker and 
 caused the ambiguity. An earlier version of this rebuild re-rendered rows in preview order. It
 didn't show what was being dragged.
 
-### Context menu
+### Row tools
 
-- **`uk-context-menu`** (`uikit/menus/uikit.context.menu.vue`) is a new uikit component.
-  - It takes `v-model` (open), `x`, `y` and `items` (`{ name, icon, more, disabled }`), and
-    emits `select(item)`.
-  - It teleports to the injected `popupHost` (the manual's previews), else the body, positioned
-    `fixed` and kept inside the viewport.
-  - It looks like the toolbar menus: `uk-list-item` rows on the menu panel, with its border and
-    shadow.
-  - ↑/↓ and Enter pick an entry; Escape, a pointer press outside, wheel, resize or blur close it.
-  - Window listeners run in the capture phase while it's open, and its keys `preventDefault` so
-    the list ignores them.
-- **`uk-list`** opens it on `contextmenu` on a row, selecting the row first unless it's already
-  highlighted or selected. Entries come from the list's props:
-  - **Move up / Move down** (`draggable`, top-level, no search) emit `reorder` like a drag;
-  - **Select all** (no `toggleable`, no `noHighlight`) highlights the row's level;
-  - **Delete** (`deletable`) opens the same confirmation as the Delete key.
-
-  With no entries, the browser's menu is left alone. The row's ✕ is removed: it didn't fit the
-  uikit.
+- **Trash icon:** `uk-list-item` shows it when `deletable` and emits `delete` on click
+  (pointerdown and click stopped, so the row isn't selected). `uk-list` passes `deletable` to
+  top-level and sub-rows; `deleteRow(row)` opens the confirmation for the highlighted rows when
+  the row is one of several, else for that row.
+- **Grip:** at the far right of the row, after the trash icon.
+- **Colour:** both icons use `--secondary-light`, and `--secondary-lighter` (the label's colour)
+  on hover and on selected or highlighted rows.
+- An earlier version used a right-click context menu; it didn't fit the uikit and was removed.
 - **Delete confirmation:** written like the group pool's own confirmation, in plain `<p>` text
   with 16 px padding, in the global text style. A `<b>` outside a `<p>` fell back to the
   browser's serif font.
@@ -151,8 +141,9 @@ didn't show what was being dragged.
   - the CSS animates `grid-template-rows` from 0fr to 1fr, with opacity, over 150 ms ease;
   - it is disabled under `prefers-reduced-motion`.
 - **Layout:**
-  - in an `accordion` list, the open group can shrink (`flex: 0 1 auto; min-height: 0`), and
-    its sub-rows scroll inside it, so the other headers stay visible;
+  - in an `accordion` list, the open group grows into the space left (`flex-grow` animated
+    with the reveal), pushing the closed headers after it to the bottom, and shrinks with its
+    sub-rows scrolling inside it when they don't fit; stripes fill below its last sub-row;
   - the body's background is `var(--primary-light) var(--idle-stripes)`, and rows keep their
     solid background.
 
@@ -164,5 +155,5 @@ didn't show what was being dragged.
   index-like. The notes in `src/views/CLAUDE.md` ask for an `id` or a unique `name`.
 - **`grid-template-rows` transitions** need Chromium 107 or later. Electron 41 and current
   browsers have it; older browsers just skip the animation.
-- **The context menu is new to Studio.** Right-click had no meaning before. Entries are limited
-  to what each list already allows, so no caller gets a new action it doesn't handle.
+- **Trash icons take row width.** Labels in narrow lists ellipsize sooner; the icon only shows on
+  lists that pass `deletable`.

@@ -116,11 +116,8 @@ export default {
   unique `name`), and rebuild `items` freely (a getter like `pool.listable` is fine): the list
   never writes to them. Events send the caller's own item objects. Keys reach only the focused
   list; `draggable` rows get a grip handle (drag from it only) and emit
-  `reorder({ original, final })`. Right-click opens `uk-context-menu` with the entries the
-  list's props allow (Move up/down, Select all, Delete).
-- **Context menus** (`uk-context-menu`): `v-model`, `x`, `y` (viewport px) and `items`
-  (`{ name, icon?, more?, disabled? }`, never `action`: rows draw it as a button); emits
-  `select(item)`. It teleports to `popupHost` or the body and closes itself.
+  `reorder({ original, final })`. `deletable` rows show a trash icon at their right (before the
+  grip); clicking it confirms and deletes the row, or the highlighted rows when it's one of them.
 - **Icons in `icons/images/`** need a `viewBox` and no `width`/`height` attributes (the SVG loader
   drops the `viewBox` when both are there, so the icon is clipped when scaled).
 - **Icons.** `<uk-icon name="...">` maps to `components/uikit/icons/images/*.svg`. Add new SVGs

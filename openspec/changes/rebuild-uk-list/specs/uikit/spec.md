@@ -76,21 +76,21 @@ SHALL be hidden and reordering off while a search is typed.
 - **THEN** while dragging, the fixture follows the pointer and a gap opens below the third row;
   after release, the pool's order has the fixture in third place
 
-### Requirement: List context menu
-Right-clicking a row SHALL open a context menu at the pointer, styled as Studio's menus, after
-selecting the row unless it is already part of the selection. The menu SHALL offer, where the
-list allows them: **Move up** and **Move down** (reorderable lists), **Select all** (the row's
-level, lists with multi-selection) and **Delete** (deletable lists, for the selection, after the
-usual confirmation). Escape, a click elsewhere, scrolling or choosing an entry SHALL close it.
+### Requirement: Row trash icon
+On a list that allows deleting, each row SHALL show a trash icon at its right, before the grip
+handle when there is one. Clicking it SHALL open the delete confirmation for the highlighted rows
+when the row is one of several highlighted rows, else for that row alone, without changing the
+selection. On a selected or highlighted row, the trash and grip icons SHALL take the colour of
+the row's label.
 
-#### Scenario: Delete from the context menu
-- **WHEN** the operator right-clicks a fixture row in the patch bay, chooses **Delete** and
-  confirms
+#### Scenario: Delete from the trash icon
+- **WHEN** the operator clicks the trash icon of a fixture row in the patch bay and confirms
 - **THEN** that fixture is removed from the show and its row disappears
 
-#### Scenario: Move with the context menu
-- **WHEN** the operator right-clicks the second fixture of a fixture pool and chooses **Move up**
-- **THEN** it becomes the first fixture
+#### Scenario: Delete a selection from the trash icon
+- **GIVEN** three highlighted fixtures in a fixture pool
+- **WHEN** the operator clicks the trash icon of one of them
+- **THEN** the confirmation lists the three fixtures
 
 ### Requirement: Delete confirmation
 The delete confirmation SHALL list up to five of the rows to delete, and how many more, in

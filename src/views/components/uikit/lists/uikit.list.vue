@@ -26,7 +26,7 @@
       ref="body"
       tabindex="0"
       class="uikit_list_body"
-      :class="{ accordion, dragging: !!drag?.active }"
+      :class="{ accordion, expanded: accordion && hasExpanded, dragging: !!drag?.active }"
       @focusin="handleFocusIn"
       @focusout="handleFocusOut"
       @keydown="handleKeydown"
@@ -38,7 +38,7 @@
         <div
           v-if="row.children"
           class="uikit_list_group"
-          :class="{ open: row.unfolded || closing[row.key] }"
+          :class="{ open: row.unfolded || closing[row.key], expanded: row.unfolded }"
         >
           <uk-list-item
             :colored="colored"
@@ -81,8 +81,9 @@
                     :no-select="noSelect"
                     :disabled="disabled"
                     @pointerdown="focusBody"
+                    :deletable="deletable"
                     @click="(e) => clickRow(e, child)"
-                    @contextmenu="(e) => openContextMenu(e, child)"
+                    @delete="deleteRow(child)"
                     @toggle="toggleRow(child)"
                   />
                 </template>
@@ -112,8 +113,9 @@
           :disabled="disabled"
           @pointerdown="focusBody"
           @handle="(e) => pressHandle(e, row)"
+          :deletable="deletable"
           @click="(e) => clickRow(e, row)"
-          @contextmenu="(e) => openContextMenu(e, row)"
+          @delete="deleteRow(row)"
           @toggle="toggleRow(row)"
         />
       </template>
@@ -166,13 +168,6 @@
         </uk-flex>
       </uk-flex>
     </uk-popup>
-    <uk-context-menu
-      v-model="contextMenu.open"
-      :x="contextMenu.x"
-      :y="contextMenu.y"
-      :items="contextMenu.entries"
-      @select="runContextEntry"
-    />
   </div>
 </template>
 
@@ -282,14 +277,6 @@ export default {
       hasFocus: false,
       /** Drag in progress: { key, from, to, startY, startScroll, rows, dy, active, settling } */
       drag: null,
-      /** Context menu: where it opens, its entries and the row it was opened on */
-      contextMenu: {
-        open: false,
-        x: 0,
-        y: 0,
-        entries: [],
-        row: null,
-      },
       /** Parents whose sub-rows are folding away (they share the space while animating) */
       closing: {},
     };
@@ -357,6 +344,10 @@ export default {
     /** Whether any item unfolds */
     hasParents() {
       return this.rows.some((row) => row.children);
+    },
+    /** Whether a shown parent is unfolded (accordion: it takes the space left) */
+    hasExpanded() {
+      return this.visibleRows.some((row) => row.children && row.unfolded);
     },
     /** Rows the delete confirmation lists */
     deletionRows() {
@@ -760,97 +751,20 @@ export default {
       this.clearHighlighted();
     },
     /**
-     * Opens the context menu on a row, selecting it first unless it's part of the selection.
-     * Lists that allow no entry leave the browser's own menu.
+     * Trash icon clicked on a row: deletes the highlighted rows when the row is one of them,
+     * else this row alone, after confirmation
      *
-     * @param {MouseEvent} e contextmenu event
-     * @param {Object} row row under the pointer
+     * @param {Object} row the row
      */
-    openContextMenu(e, row) {
-      if (this.disabled || row.value.disabled || this.drag) return;
-      const entries = this.contextEntries(row);
-      if (!entries.length) return;
-      e.preventDefault();
+    deleteRow(row) {
+      if (!this.deletable || this.disabled || row.value.disabled || this.drag) return;
       this.focusBody();
-      const inSelection = this.highlighted.includes(row.key) || this.selectedKey === row.key;
-      if (!inSelection && !this.toggleable) this.selectRow(row);
-      this.contextMenu = {
-        open: true,
-        x: e.clientX,
-        y: e.clientY,
-        entries: this.contextEntries(row),
-        row,
-      };
-    },
-    /**
-     * The context menu's entries for a row: what this list allows
-     *
-     * @param {Object} row row the menu is opened on
-     * @returns {Array<Object>}
-     */
-    contextEntries(row) {
-      const entries = [];
-      if (this.canReorder && !row.parentKey) {
-        entries.push(
-          {
-            name: 'Move up', icon: 'arrow_up', command: 'up', disabled: row.index === 0,
-          },
-          {
-            name: 'Move down',
-            icon: 'arrow_down',
-            command: 'down',
-            disabled: row.index === this.rows.length - 1,
-          },
-        );
-      }
-      if (!this.toggleable && !this.noHighlight) {
-        entries.push({ name: 'Select all', icon: 'check', command: 'all' });
-      }
-      if (this.deletable && !this.toggleable) {
-        const count = this.highlighted.includes(row.key) ? this.highlighted.length : 1;
-        entries.push({
-          name: 'Delete', icon: 'trash', command: 'delete', more: count > 1 ? `${count} items` : '',
-        });
-      }
-      return entries;
-    },
-    /**
-     * Runs a context menu entry
-     *
-     * @param {Object} entry chosen entry
-     */
-    runContextEntry(entry) {
-      const { row } = this.contextMenu;
-      if (!row) return;
-      this.focusBody();
-      if (entry.command === 'up' || entry.command === 'down') {
-        const final = row.index + (entry.command === 'up' ? -1 : 1);
-        if (final >= 0 && final < this.rows.length) {
-          this.$emit('reorder', { original: row.index, final });
-        }
-      } else if (entry.command === 'all') {
-        this.selectAll(row);
-      } else if (entry.command === 'delete') {
+      if (this.highlighted.includes(row.key) && this.highlighted.length > 1) {
         this.displayDeletionPopup();
+        return;
       }
-    },
-    /**
-     * Highlights every visible, enabled row of a row's level
-     *
-     * @param {Object} row a row of that level
-     */
-    selectAll(row) {
-      const siblings = (row.parentKey
-        ? this.visibleRows.find((r) => r.key === row.parentKey)?.children || []
-        : this.visibleRows.filter((r) => !r.children))
-        .filter((r) => !r.value.disabled);
-      if (!siblings.length) return;
-      if (!siblings.some((r) => r.key === this.selectedKey)) {
-        this.selectedKey = siblings[0].key;
-        this.$emit('select', siblings[0].value);
-      }
-      this.highlighted = siblings.map((r) => r.key);
-      this.$emit('highlight', this.highlightedValues());
+      this.deletionKeys = [row.key];
+      this.deletePopupState = true;
     },
     /**
      * Press on a row's handle: starts a drag once the pointer moves
@@ -925,7 +839,7 @@ export default {
           transition: drag.settling ? DRAG_SLIDE : 'none',
         };
       }
-      const height = drag.rows[drag.from].height;
+      const { height } = drag.rows[drag.from];
       let shift = 0;
       if (drag.from < drag.to && index > drag.from && index <= drag.to) shift = -height;
       else if (drag.to < drag.from && index >= drag.to && index < drag.from) shift = height;
@@ -1014,12 +928,26 @@ export default {
   width: 100%;
   min-height: 0;
 }
-/* Accordion: the open parent shrinks to the space left and scrolls its sub-rows */
+/*
+ * Accordion: the open parent takes the space left, pushing the closed parents after it to the
+ * bottom, and scrolls its sub-rows when they don't fit
+ */
+.uikit_list_body.accordion > .uikit_list_group,
+.uikit_list_body.accordion > .uikit_list_filler {
+  transition: flex-grow 0.15s ease;
+}
 .uikit_list_body.accordion > .uikit_list_group.open {
   flex-shrink: 1;
 }
+.uikit_list_body.accordion > .uikit_list_group.expanded {
+  flex-grow: 1;
+}
+.uikit_list_body.accordion.expanded > .uikit_list_filler {
+  flex-grow: 0 !important;
+}
 .uikit_list_children {
   display: grid;
+  flex: 1 1 auto;
   grid-template-rows: 1fr;
   min-height: 0;
 }
@@ -1027,6 +955,7 @@ export default {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  background: var(--primary-light) var(--idle-stripes);
   overflow-x: hidden;
   overflow-y: auto;
 }
@@ -1047,6 +976,8 @@ export default {
   opacity: 0;
 }
 @media (prefers-reduced-motion: reduce) {
+  .uikit_list_body.accordion > .uikit_list_group,
+  .uikit_list_body.accordion > .uikit_list_filler,
   .uikit-unfold-enter-active,
   .uikit-unfold-leave-active {
     transition: none;

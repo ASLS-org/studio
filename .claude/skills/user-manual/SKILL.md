@@ -61,7 +61,7 @@ change touches: the pages are what the proposal's **Manual** line names, and the
 | `F/visualizer/`, `src/views/activities/visualizer/`, `src/plugins/visualizer/` | `interface/visualizer`, `reference/limitations#visualizer` | `visualizer-modes`, every `stage: true` preset (the floating card) |
 | `M/fixtures/`, `public/fixtures/`, `public/gdtf/` | `rig/fixtures`, `programming/patching` | `patch-add` |
 | `src/views/activities/app/_popups/` (error, missing fixtures, splash) | `reference/troubleshooting` | none |
-| `src/views/components/uikit/` (lists, context menus, fields, popups, widgets) | `getting-started/interface#widgets`, `reference/shortcuts` | all (run the check) |
+| `src/views/components/uikit/` (lists, fields, popups, widgets) | `getting-started/interface#widgets`, `reference/shortcuts` | all (run the check) |
 | any `keydown` handler or menu shortcut | `reference/shortcuts` | the preset of that component |
 | `src/electron/`, `electron-builder` config, release artifacts | `introduction/installation` | none |
 | any step of the first-show flow: patch, group, scene, chase, play (labels, order, defaults) | `getting-started/first-show` | none |
