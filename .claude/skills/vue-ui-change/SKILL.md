@@ -122,10 +122,15 @@ export default {
   drops the `viewBox` when both are there, so the icon is clipped when scaled).
 - **Icons.** `<uk-icon name="...">` maps to `components/uikit/icons/images/*.svg`. Add new SVGs
   there.
-- **Keyboard.** Reuse the existing patterns: Ctrl/Shift multi-select in lists, Del/Backspace
-  delete, and Space play/pause (global, in `toolbar.fragment.vue` `handleKeydownEvent`). The
-  menu's Ctrl+Z / Ctrl+Y labels aren't bound yet. Bind new global shortcuts there, and don't fire
-  them while a text input has focus.
+- **Keyboard.** One path, `views/keyboard.js` (`$keyboard`): the top popup, then the focused
+  block, then global shortcuts. A widget that reacts to keys while focused uses
+  `mixins/keys.mixin.js` (`handleKeys(e)` → true when handled; focusable element via
+  `keysElement()`); app-wide shortcuts use `$keyboard.addShortcut(match, handler)` (Space
+  play/pause in the toolbar; `uk-menu` items with a `shortcut` register theirs, modifiers matched
+  exactly). Never add `window` keydown listeners. Fields keep their keys.
+- **Selection and popups** go through `$view` (`views/view.state.js`, see `src/views/CLAUDE.md`):
+  bind lists with `uk-list`'s `selection` prop/event, name popups with `modal(name, owner)`.
+- **Check the flow** with `npm run app:check` after changing panels, selection, popups or keys.
 
 ## Finish
 
