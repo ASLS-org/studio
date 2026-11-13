@@ -111,12 +111,26 @@ export default {
   16px icons) are opt-in modes; defaults stay as in the app. `large` is for lists people read
   (the user manual's navigation). Extend components with opt-in props like these rather than
   restyling them from outside.
+- **Lists** (`uk-list`): rows are keyed by item `id`, else `name`, and their selection, checks
+  and unfolded state follow that key across item changes. So give items a stable `id` (or a
+  unique `name`), and rebuild `items` freely (a getter like `pool.listable` is fine): the list
+  never writes to them. Events send the caller's own item objects. Keys reach only the focused
+  list; `draggable` rows get a grip handle (drag from it only) and emit
+  `reorder({ original, final })`. `deletable` rows show a trash icon at their right (before the
+  grip); clicking it confirms and deletes the row, or the highlighted rows when it's one of them.
+- **Icons in `icons/images/`** need a `viewBox` and no `width`/`height` attributes (the SVG loader
+  drops the `viewBox` when both are there, so the icon is clipped when scaled).
 - **Icons.** `<uk-icon name="...">` maps to `components/uikit/icons/images/*.svg`. Add new SVGs
   there.
-- **Keyboard.** Reuse the existing patterns: Ctrl/Shift multi-select in lists, Del/Backspace
-  delete, and Space play/pause (global, in `toolbar.fragment.vue` `handleKeydownEvent`). The
-  menu's Ctrl+Z / Ctrl+Y labels aren't bound yet. Bind new global shortcuts there, and don't fire
-  them while a text input has focus.
+- **Keyboard.** One path, `views/keyboard.js` (`$keyboard`): the top popup, then the focused
+  block, then global shortcuts. A widget that reacts to keys while focused uses
+  `mixins/keys.mixin.js` (`handleKeys(e)` → true when handled; focusable element via
+  `keysElement()`); app-wide shortcuts use `$keyboard.addShortcut(match, handler)` (Space
+  play/pause in the toolbar; `uk-menu` items with a `shortcut` register theirs, modifiers matched
+  exactly). Never add `window` keydown listeners. Fields keep their keys.
+- **Selection and popups** go through `$view` (`views/view.state.js`, see `src/views/CLAUDE.md`):
+  bind lists with `uk-list`'s `selection` prop/event, name popups with `modal(name, owner)`.
+- **Check the flow** with `npm run app:check` after changing panels, selection, popups or keys.
 
 ## Finish
 

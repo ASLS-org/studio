@@ -481,6 +481,7 @@ export default {
       if (stageState.frame === this.$el) {
         stageState.frame = null;
         stageState.demo = false;
+        stageState.view = null;
       }
       this.stopDemo();
       this.unmountApp();
@@ -516,6 +517,7 @@ export default {
         stageState.frame = this.$el;
         stageState.title = this.definition.title || '';
         stageState.demo = this.isDemo;
+        stageState.view = this.app.config.globalProperties.$view || null;
       }
     },
     /**

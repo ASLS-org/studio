@@ -17,6 +17,7 @@ GPL-3.0. Plain JavaScript (no TypeScript), no test suite.
 | Desktop dist | `npm run dist:mac` / `dist:linux` / `dist:win` |
 | User manual | `npm run docs:manual:serve` (VitePress, `docs/manual`) |
 | Manual preview check | `npm run docs:manual:check` (headless Chrome: previews, demos, anchors) |
+| App flow check | `npm run app:check` (headless Chrome: panels, selection memory, deletes, highlight, keys, popups, main-thread blocks) |
 | Spec workflow | `openspec list`, `openspec validate --all` |
 
 Node 18 (`.nvmrc`). Path aliases: `@` → `src/`, `@root` → repo root.
@@ -29,7 +30,9 @@ src/
   singletons/show.singleton.js   the one Show instance (exposed as this.$show)
   models/DMX/             show engine (pure-ish JS classes)  → see models/DMX/CLAUDE.md
   models/fixtures/        fixture profiles: library loader, OFL + GDTF adapters, GDTF store (IndexedDB)
-  plugins/router.js       memory-history router; modifiers are routes
+  views/view.state.js     $view: what's in view, selected and open (ids, per-context memory)
+  views/keyboard.js       $keyboard: the one key path (top popup → focused block → shortcuts)
+  plugins/router.js       memory router: activities only (`/`, `/visualizer`), no panel routes
   plugins/eventbus.js     mitt bus (app_error, app_ready, visualizer_*)
   plugins/wsc.connection.js  WSC output (connections + per-universe streams) → skill wsc-output
   plugins/visualizer/     Three.js r170 renderer → see plugins/visualizer/CLAUDE.md
@@ -101,8 +104,9 @@ buffer; a `WscConnectionStream` sends the buffer to the gateway every tick.
 
 - `@asls/wsc-client` is sometimes `npm link`ed to `./wsc-client` (git-ignored). If that folder is
   empty, imports break: run `npm install` to restore the registry package.
-- Models don't import the visualizer: they emit `patch_changed`, `fixture_pose` and
-  `fixture_highlight` on the EventBus, and the visualizer reads universe frames.
+- Models don't import the visualizer: they emit `patch_changed` and `fixture_pose` on the
+  EventBus, and the visualizer reads universe frames. The selection highlight comes from
+  `$view.highlight` (views/view.state.js), never from models.
 - Channel `type` keys (`Dimmer`, `Pan`, ...) and their index are stored in showfile scenes. The
   OFL and GDTF adapters in `src/models/fixtures/` must keep deriving them exactly; see skill
   `fixture-library`.

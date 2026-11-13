@@ -9,7 +9,6 @@ it. The rest of the manual only describes what works. Found something else? Repo
 | What doesn't work | Workaround |
 | --- | --- |
 | Connections and universe streams aren't saved with the show | After opening a show or reloading Studio, connect again in **Preferences → Outputs** and set each universe's **Output** and **Stream** again |
-| The **Config** button next to a universe's **Output** does nothing | Use **Preferences → Outputs** (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>O</kbd>) |
 | **SACN**: the current gateway answers "Unsupported protocol" | Use Art-Net; most sACN nodes also accept Art-Net |
 | **DMX512** (USB and serial interfaces), **KINET**, **MODBUS**, **OSC** and **RAW** aren't verified yet | Prefer an Art-Net node |
 | **Baud**, **Serial port**, **Priority** and **TTL** may not reach the gateway; changing **Interface** may not take effect until streaming restarts | Keep the defaults; stop and start streaming after a change |
@@ -19,11 +18,7 @@ it. The rest of the manual only describes what works. Found something else? Repo
 
 | What doesn't work | Workaround |
 | --- | --- |
-| **Trigger Style** is saved but unused: every cue starts and stops on a click; **Temporary** does nothing | Click the cue again to stop it |
 | The group pool's **dimmer** knob, **Isolate** and **Blackout**, and the master column's knob and buttons, don't change the output | Stop a group's cues and chases to darken it; keep a dark scene to click |
-| Effect waveform **PWM** keeps the channel at its lowest | Use **SQUARE** |
-| Effect directions **BOUNCELRT** and **BOUNCERTL** don't spread the fixtures: they all move together | Use **SYM**, **LTR** or **RTL** |
-| Chase **Quantize** **1/8**, **1/4** and **1/2** wait 1, 2 and 3 beats rather than the fraction of a bar their names say | Use **1/1** (next bar) or **None** |
 | In **Scene Fixtures**, <kbd>Ctrl</kbd>+click selecting several fixtures doesn't work in a group's first cue (the top-left slot) | Set that cue's fixtures one at a time |
 | Opening a scene of a group whose fixtures aren't the show's first ones can log an error | The scene panel works anyway |
 
@@ -31,9 +26,7 @@ it. The rest of the manual only describes what works. Found something else? Repo
 
 | What doesn't work | Workaround |
 | --- | --- |
-| **New** does nothing | Patch from a universe's **Fixture Pool**: **Add** |
-| <kbd>Delete</kbd> asks for a confirmation, then doesn't delete | Delete from the universe's **Fixture Pool** |
-| <kbd>Shift</kbd>+click selects nothing | <kbd>Ctrl</kbd>+click each fixture |
+| A universe can't be deleted (deleting in the patch bay removes the selected fixtures only) | Leave the universe empty |
 
 ## Visualizer
 

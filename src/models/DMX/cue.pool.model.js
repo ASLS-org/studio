@@ -83,7 +83,7 @@ class CuePool {
   }
 
   /**
-   * Removes cue from pool
+   * Removes cue from pool, stopping it first if it plays
    *
    * @public
    * @param {Object} cue cue instance handle
@@ -91,6 +91,8 @@ class CuePool {
   delete(cue) {
     const cueIndex = this.cues.findIndex((item) => item.id === cue.id);
     if (cueIndex > -1) {
+      // A playing cue's Live animation would otherwise keep driving its fixtures
+      if (cue.animationId != null) cue.cue(false);
       this.cues.splice(cueIndex, 1);
     } else {
       throw new Error('Could not find cue in cue pool');

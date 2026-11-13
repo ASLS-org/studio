@@ -6,13 +6,13 @@ import './site-root';
  * first time a <LivePreview> comes near the screen (it pulls in the show engine).
  *
  * Each preview is its own small Vue app set up as src/main.js sets up Studio (uikit, $show,
- * $http, $utils, the live ticker, a memory router), so components get the app's environment with
- * no shims. Every preview on a page shares Studio's one Show, loaded from the manual's demo show.
+ * $http, $utils, the live ticker, its own view state and keyboard), so components get the app's
+ * environment with no shims. Every preview on a page shares Studio's one Show, loaded from the
+ * manual's demo show.
  */
 import {
   createApp, h, markRaw, reactive,
 } from 'vue';
-import { createMemoryHistory, createRouter, RouterView } from 'vue-router';
 import { withBase } from 'vitepress';
 import axios from 'axios';
 import uikit from '@/views/components/uikit';
@@ -20,9 +20,8 @@ import utils from '@/views/utils';
 import LiveTicker from '@/plugins/live.ticker';
 import Live from '@/models/DMX/live.model';
 import ShowSingleton from '@/singletons/show.singleton';
-import UniverseModifier from '@/views/activities/app/fragments/modifiers/universe/universe.modifier.fragment.vue';
-import GroupModifier from '@/views/activities/app/fragments/modifiers/group/group.modifier.fragment.vue';
-import ChaseModifier from '@/views/activities/app/fragments/modifiers/chase/chase.modifier.fragment.vue';
+import ViewState from '@/views/view.state';
+import Keyboard from '@/views/keyboard';
 
 /** The demo show every preview runs on */
 const SHOWFILE = '/presets/manual.showfile.json';
@@ -52,18 +51,6 @@ export function visualizerStandIn(preferences = null) {
 if (!ShowSingleton.visualizerHandle) ShowSingleton.visualizerHandle = visualizerStandIn();
 
 const show = reactive(ShowSingleton);
-
-/**
- * Studio's routes for the panels that read the route (the app shell itself is left out)
- * @type {Array<Object>}
- */
-const routes = [
-  { path: '/', component: { render: () => null } },
-  { path: '/universe/:universeId', component: UniverseModifier },
-  { path: '/group/:groupId', component: GroupModifier },
-  { path: '/group/:groupId/cue/:cueId', component: GroupModifier },
-  { path: '/group/:groupId/chase/:chaseId', component: ChaseModifier },
-];
 
 /**
  * Registers every uk-* component, as src/main.js does
@@ -164,15 +151,14 @@ export function setClock(id, needed) {
 export async function mountPreset(el, preset, onError, popupHost) {
   const component = (await preset.component()).default;
   const props = () => (preset.props ? preset.props(show) : {});
-  const inner = preset.panel ? RouterView : component;
   // `stage`: the component next to the visualizer (see StageWrap.vue)
   const StageWrap = preset.stage ? (await import('./StageWrap.vue')).default : null;
   const app = createApp({
     render: () => {
-      if (!StageWrap) return preset.panel ? h(RouterView) : h(component, props());
+      if (!StageWrap) return h(component, props());
       return h(StageWrap, {
-        inner,
-        innerProps: preset.panel ? {} : props(),
+        inner: component,
+        innerProps: props(),
         innerWidth: preset.componentWidth || 0,
         innerHeight: preset.componentHeight || 239,
         popupInBox: Boolean(preset.popupInBox),
@@ -181,19 +167,26 @@ export async function mountPreset(el, preset, onError, popupHost) {
   });
   registerComponents(uikit, app);
   app.config.globalProperties.$show = show;
+  // Each preview has its own view state: what it shows and selects stays its own
+  const view = reactive(new ViewState(show));
+  app.config.globalProperties.$view = view;
+  app.provide('view', view);
+  // Keys reach the preview only while the focus is inside it
+  const keyboard = new Keyboard(view, el);
+  app.config.globalProperties.$keyboard = keyboard;
+  const unmount = app.unmount.bind(app);
+  app.unmount = () => {
+    keyboard.dispose();
+    unmount();
+  };
   app.config.globalProperties.$http = axios;
   app.config.globalProperties.$utils = reactive(utils);
   app.config.globalProperties.$liveTicker = LiveTicker;
   app.config.errorHandler = (err) => onError(err);
   app.provide('popupHost', popupHost);
-  const router = createRouter({ history: createMemoryHistory(), routes });
-  // A preset can stand in for a panel the preview doesn't show, when the component navigates
-  if (preset.onRoute) router.afterEach((to) => preset.onRoute(show, to));
-  app.use(router);
-  await router.push(preset.warmRoute || preset.route || '/');
-  await router.isReady();
+  // What the preview shows and selects: a panel, a group, a chase (as Studio's view state)
+  if (preset.view) preset.view(view, show);
   app.mount(el);
-  if (preset.warmRoute) await router.push(preset.route);
   // Some demos start with the rig already playing (a cue, the chase), as the reader would have it
   if (preset.start) preset.start(show);
   return app;

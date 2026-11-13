@@ -17,12 +17,24 @@
           :gap="8"
           style="width: 120px"
         >
-          <uk-select-input
-            v-model="channel.waveform"
-            :disabled="!channel.type"
-            label="Waveform"
-            :options="channel.waveOptions"
-          />
+          <uk-flex :gap="8">
+            <uk-select-input
+              v-model="channel.waveform"
+              :disabled="!channel.type"
+              label="Waveform"
+              style="flex: 1; min-width: 0"
+              :options="channel.waveOptions"
+            />
+            <uk-num-input
+              v-if="isPWM"
+              v-model="channel.width"
+              :disabled="!channel.type"
+              :min="1"
+              :max="99"
+              label="Width"
+              style="width: 44px; flex: none"
+            />
+          </uk-flex>
           <uk-flex :gap="8">
             <uk-num-input
               v-model="channel.min"
@@ -137,6 +149,7 @@ export default {
           max: 0,
           frequency: 0,
           phase: 0,
+          width: 50,
           waveform: 0,
           waveOptions: ['No Channel Selected'],
           direction: 0,
@@ -185,6 +198,23 @@ export default {
   },
   computed: {
     /**
+     * Whether the channel's waveform is PWM (its width is then shown)
+     *
+     * @type {Boolean}
+     */
+    /**
+     * Whether the channel's direction is a bounce (its time runs back on odd cycles)
+     *
+     * @type {Boolean}
+     */
+    isBounce() {
+      const name = this.channel.directionOptions?.[this.channel.direction];
+      return name === 'BOUNCELRT' || name === 'BOUNCERTL';
+    },
+    isPWM() {
+      return this.channel.waveOptions?.[this.channel.waveform] === 'PWM';
+    },
+    /**
      * Changes only when something that affects the drawn curve's *shape*
      * changes. Used to redraw the canvas without a full deep watch on the
      * whole channel object (which also contains high-frequency fields like
@@ -192,9 +222,9 @@ export default {
      */
     shapeSignature() {
       const {
-        waveform, min, max, frequency, phase, color,
+        waveform, min, max, frequency, phase, color, width, direction,
       } = this.channel;
-      return [waveform, min, max, frequency, phase, color].join('|');
+      return [waveform, min, max, frequency, phase, color, width, direction].join('|');
     },
   },
   watch: {
@@ -283,10 +313,23 @@ export default {
       }
 
       const freq = Math.max(Number(this.channel.frequency) || 0, 0.0001);
-      // Same scaling as the original implementation — this is what produces
-      // visible separation between fixtures across the canvas width.
-      const phaseFraction = ((((Number(fixture.phase) || 0) / freq) * (180 / Math.PI)) / 360);
-      let t = (this.channel.time || 0) + phaseFraction;
+      const time = this.channel.time || 0;
+      let t;
+      if (this.isBounce) {
+        // The curve runs forward on even cycles and backward on odd ones (FXChannel.bounceTime):
+        // place the dot, in the current cycle, where the curve has the fixture's wave position
+        const cycles = freq * time;
+        const k = Math.floor(cycles);
+        const folded = k % 2 === 0 ? cycles - k : 1 - (cycles - k);
+        let q = folded + (Number(fixture.phase) || 0) / (2 * Math.PI);
+        q -= Math.floor(q);
+        t = (k % 2 === 0 ? k + q : k + 1 - q) / freq;
+      } else {
+        // Same scaling as the original implementation — this is what produces
+        // visible separation between fixtures across the canvas width.
+        const phaseFraction = ((((Number(fixture.phase) || 0) / freq) * (180 / Math.PI)) / 360);
+        t = time + phaseFraction;
+      }
       t -= Math.floor(t); // wrap into [0, 1) safely for negative values
 
       const xOffset = t * w;

@@ -36,7 +36,8 @@ The **show's name** in the middle gets a `*` when it has changes you haven't sav
 Lists the universes, each unfolding to its fixtures with their address (`U0 - CH14`: universe 0,
 address 14). Unfold a universe to open it in the modifier strip; click a fixture to select it
 there and outline it in the visualizer. Type in **Search items** to find fixtures across
-universes. More in [Patching fixtures](/programming/patching).
+universes. **New** adds a universe; select fixtures and press <kbd>Delete</kbd> to remove them
+from the show. More in [Patching fixtures](/programming/patching).
 
 <LivePreview preset="patch-bay" />
 
@@ -67,6 +68,11 @@ they don't fit, scroll the strip sideways.
 | A group | Group settings, its fixture pool, its cue pool, and the selected cue's widgets | [Groups](/programming/groups), [Scenes](/programming/scenes), [Effects](/programming/effects) |
 | A chase | Chase settings and its timeline | [Chases](/programming/chases) |
 
+Each universe and each group remembers what you selected in it until you close Studio: go back to
+a group and its cue and fixtures are still selected, go back to a universe and its fixture and
+cells are too. If you deleted what was selected, the first one is selected instead. The patch
+bay, the group pool, the strip and the visualizer always show the same selection.
+
 The demo rig's group view, with *Rig*'s settings, fixtures and cue pool:
 
 <LivePreview preset="group-modifier" />
@@ -74,5 +80,8 @@ The demo rig's group view, with *Rig*'s settings, fixtures and cue pool:
 ### Widgets
 
 Each widget has a title bar with its icon. Lists in widgets work the same everywhere: click to
-select, <kbd>Ctrl</kbd>+click to add to the selection, **Search items** to filter, and
-<kbd>Delete</kbd> or <kbd>Backspace</kbd> to delete the selection (with a confirmation).
+select, <kbd>Ctrl</kbd>+click (<kbd>Cmd</kbd>+click on a Mac) to add to the selection,
+<kbd>Shift</kbd>+click to select a range, **Search items** to filter, <kbd>Delete</kbd> or
+<kbd>Backspace</kbd> to delete (with a confirmation). In lists you can delete from, each item has
+a trash icon at its right. Items you can reorder have a grip at their far right: drag it. The striped area below the last
+item is the list's empty space. All the list keys are in [Shortcuts](/reference/shortcuts#lists).

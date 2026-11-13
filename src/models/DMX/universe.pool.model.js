@@ -30,9 +30,8 @@ class UniversePool {
   }
 
   /**
-   * Pool's listable data
+   * Pool's listable data: each universe unfolds to its fixtures (patch bay, fixture pickers)
    *
-   * @todo remove this ? Am I even using it ?
    * @readonly
    * @type {Array}
    */
@@ -80,7 +79,7 @@ class UniversePool {
    */
   addRaw(universeData = {}) {
     const universe = new Universe(universeData);
-    if (!universe.id) {
+    if (universeData.id == null) {
       universe.id = this.genUniverseId();
     }
     this.universes.push(universe);
@@ -115,20 +114,30 @@ class UniversePool {
   }
 
   /**
+   * Changes a universe's id, refusing one another universe uses. Its fixtures follow.
+   *
+   * @public
+   * @param {Object} universe universe instance
+   * @param {Number} id new id
+   * @returns {Boolean} whether the id changed
+   */
+  changeId(universe, id) {
+    const next = parseInt(id, 10);
+    if (Number.isNaN(next)) return false;
+    if (this.universes.some((u) => u !== universe && Number(u.id) === next)) return false;
+    universe.id = next;
+    EventBus.emit('patch_changed');
+    return true;
+  }
+
+  /**
    * Generates universe unique ID
    *
    * @public
    * @returns {Number} The universe's unique ID
    */
   genUniverseId() {
-    return this.universes.reduce(
-      (prev, current) => (
-        (prev && prev.id > current.id)
-          ? prev.id
-          : current.id
-      ),
-      -1,
-    ) + 1;
+    return this.universes.reduce((max, universe) => Math.max(max, Number(universe.id)), -1) + 1;
   }
 }
 

@@ -8,7 +8,7 @@ right: the universe's settings and **Stream**, its **Fixture Pool**, then the se
 settings, position and controls, each explained below.
 
 A new show comes with four universes (**Universe 0** to **Universe 3**). Each holds 512 DMX
-channels.
+channels. Add more with the patch bay's **New** ([Adding a universe](#adding-a-universe)).
 
 Before you start, have your rig's paperwork at hand: for each light, its model, the DMX mode set
 on its menu, its start address and the universe (the cable or node) it hangs on. Patching is
@@ -69,7 +69,8 @@ doesn't have opens with a **Missing fixtures** prompt first: see
 Click a fixture in the **Fixture Pool** (or the patch bay) to select it: the universe view shows its
 settings and controls, and the visualizer outlines it, so you can tell which light on stage is
 which. Hold <kbd>Ctrl</kbd> and click to select several. Type in **Search items** to show only the
-fixtures whose name matches.
+fixtures whose name matches. The universe keeps its selection while you work elsewhere: open it
+again and the same fixtures are selected.
 
 <LivePreview preset="patch-bay-select" />
 
@@ -79,10 +80,18 @@ big rig.
 
 <LivePreview preset="patch-bay-filter" />
 
+## Adding a Universe
+
+In the patch bay, press **New**. The **New Media** popup asks what to add: **DMX Universe** is the
+only type in this release. Give it a **Name** and a **Color**, then press **OK**: the universe
+appears in the patch bay with the next free number, ready to patch into.
+
+<LivePreview preset="patch-bay-new" />
+
 ## Deleting Fixtures
 
-In the universe view's **Fixture Pool**, select the fixtures, then press <kbd>Delete</kbd> or
-<kbd>Backspace</kbd> and confirm. A deleted fixture is also removed from every group, scene and
+In the universe view's **Fixture Pool**, or in the patch bay, select the fixtures, then press
+<kbd>Delete</kbd> or <kbd>Backspace</kbd> and confirm. A deleted fixture is also removed from every group, scene and
 effect that used it, and its addresses become free. In the preview, *MAC Aura 4* leaves the show,
 and the rig on stage loses its right-hand head.
 
@@ -95,7 +104,7 @@ and the rig on stage loses its right-hand head.
 | Setting | Description |
 | --- | --- |
 | **Name** | The universe's name |
-| **ID** | The universe's number |
+| **ID** | The universe's number, unique in the show (a number another universe uses is refused). Its fixtures follow it |
 | **Output** | The connection this universe is sent through: see [Outputs](/rig/outputs#_3-send-a-universe) |
 | **Color** | The universe's colour in the patch bay |
 

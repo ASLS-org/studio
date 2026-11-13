@@ -72,20 +72,20 @@ export default {
     this.initializeMenus();
   },
   beforeUnmount() {
-    // window.removeEventListener("keydown", shortcuCallback);
+    (this.removeShortcuts || []).forEach((remove) => remove());
   },
   methods: {
     initializeMenus() {
+      // Shortcuts are global shortcuts of the app's keyboard path (views/keyboard.js): they
+      // never fire while a popup is open or a field has focus. Outside the app, none.
+      this.removeShortcuts = [];
       this.mens = this.menus.map((menu) => {
         menu.items = menu.items.map((item) => {
-          if (item.shortcut) {
-            const shortcuCallback = (e) => {
-              if (this.parseAndEvaluateShortcut(e, item.shortcut)) {
-                e.preventDefault();
-                item.callback();
-              }
-            };
-            window.addEventListener('keydown', shortcuCallback);
+          if (item.shortcut && this.$keyboard) {
+            this.removeShortcuts.push(this.$keyboard.addShortcut(
+              (e) => this.parseAndEvaluateShortcut(e, item.shortcut),
+              () => item.callback(),
+            ));
           }
           item.more = item.shortcut ? `(${item.shortcut})` : '';
           return item;
@@ -156,17 +156,12 @@ export default {
      * @param {String} shortcutString The shortcut string to be parsed and evaluated
      */
     parseAndEvaluateShortcut(e, shortcutString) {
-      const keys = shortcutString.split('+');
-      const conditionStr = keys
-        .map((key) => {
-          key = key.toLowerCase();
-          // eslint-disable-next-line no-unused-vars
-          const eKey = e.key.toLowerCase();
-          return `${SHORTCUT_KEYS_STR[key] ? `e.${SHORTCUT_KEYS_STR[key]}` : `"${eKey}" === '${key.toLowerCase()}'`}`;
-        })
-        .join('&&');
-      // eslint-disable-next-line no-eval
-      return eval(conditionStr);
+      const parts = shortcutString.toLowerCase().split('+');
+      const key = parts.filter((part) => !SHORTCUT_KEYS_STR[part]).pop();
+      // The modifiers must match exactly: Ctrl+S isn't Ctrl+Shift+S
+      return !!e.key && e.key.toLowerCase() === key
+        && Object.keys(SHORTCUT_KEYS_STR)
+          .every((modifier) => !!e[SHORTCUT_KEYS_STR[modifier]] === parts.includes(modifier));
     },
   },
 };

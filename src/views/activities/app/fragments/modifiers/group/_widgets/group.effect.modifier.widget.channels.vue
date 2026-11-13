@@ -24,6 +24,7 @@
 </template>
 
 <script>
+import modal from '@/views/mixins/modal.mixin';
 import PopupFxPreset from '../_popups/group.effect.modifier.popup.channels.vue';
 
 const POPUP_DISPLAY_STATES = {
@@ -61,11 +62,13 @@ export default {
       },
       channels: this.effect.listableChannels || [],
       id: this.effect.id || -1,
-      /**
-       * Effect preset popup display state
-       */
-      fxPopupDisplayState: POPUP_DISPLAY_STATES.HIDDEN,
     };
+  },
+  computed: {
+    /**
+     * Effect preset popup display state
+     */
+    fxPopupDisplayState: modal('effect.channels', 'group'),
   },
   watch: {
     effect: {

@@ -38,6 +38,7 @@ playing.
 | Cues / effects / chases | Trigger, stop and retrigger. Change BPM / tap tempo during playback and check it stays in sync. Pause/resume. Delete while running → no leftover animation (channels stop moving). |
 | Patching / fixtures | Patch N fixtures (auto-address) → channel faders move the visualizer → delete → references gone from groups. |
 | UI widget | Interact at speed (drag faders and knobs), resize and dock the widget, check the empty/disabled state. |
+| Panels, selection, popups, keys | `npm run app:check` (`-- --only keys` for one scenario, `-- --url http://localhost:5173` against a running server). It loads the demo show fresh per scenario and drives real clicks and keys. |
 | Visualizer | Orbit, transform a fixture, fog and brightness settings, reload → position kept. |
 | WSC output | See the skill `wsc-output` § Verify. |
 | Electron-only | `npm run electron:start`: static assets load via `static://`, gateway log lines `[wsc stdout]`. |

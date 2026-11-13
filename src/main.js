@@ -7,6 +7,8 @@ import LiveTicker from '@/plugins/live.ticker';
 import '@/assets/styles/global.css';
 import '@/assets/styles/fonts.css';
 import ShowSingleton from '@/singletons/show.singleton';
+import ViewState from '@/views/view.state';
+import Keyboard from '@/views/keyboard';
 import router from './plugins/router';
 import App from './App.vue';
 
@@ -25,6 +27,13 @@ try {
   const app = createApp(App);
   registerComponents(uikit, app);
   app.config.globalProperties.$show = reactive(ShowSingleton);
+  // What's in view, selected and open: one source of truth, reset when a show is loaded
+  const view = reactive(new ViewState(app.config.globalProperties.$show));
+  app.config.globalProperties.$view = view;
+  app.provide('view', view);
+  EventBus.on('show_loaded', () => view.reset());
+  // One keyboard path: top popup, then the focused block, then global shortcuts
+  app.config.globalProperties.$keyboard = new Keyboard(view);
   app.config.globalProperties.$http = axios;
   app.config.globalProperties.$utils = reactive(utils);
   app.config.globalProperties.$liveTicker = LiveTicker;

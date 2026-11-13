@@ -127,6 +127,22 @@ export default {
       autoRotate: false,
     };
   },
+  computed: {
+    /**
+     * What the view highlights, as a comparable key (selection of the panel in view)
+     *
+     * @type {String}
+     */
+    highlightKey() {
+      const highlight = this.$view?.highlight;
+      return highlight ? `${highlight.ids.join(',')}|${highlight.gizmo}` : '';
+    },
+  },
+  watch: {
+    highlightKey() {
+      this.applySelection();
+    },
+  },
 
   async mounted() {
     this.$show.visualizerHandle = markRaw(new Visualizer(this.$refs.visualizer));
@@ -140,18 +156,30 @@ export default {
     this.patchFrame = null;
     EventBus.on('patch_changed', this.schedulePatchUpdate);
     EventBus.on('fixture_pose', this.handleFixturePose);
-    EventBus.on('fixture_highlight', this.handleFixtureHighlight);
     EventBus.on('fixture_transformed', this.handleFixtureTransformed);
     this.$show.visualizerHandle.fixtureRenderer.setPatch(this.$show.patchSnapshot);
+    this.warmed = this.$show.visualizerHandle.warmUp();
+    this.applySelection();
   },
   beforeUnmount() {
     EventBus.off('patch_changed', this.schedulePatchUpdate);
     EventBus.off('fixture_pose', this.handleFixturePose);
-    EventBus.off('fixture_highlight', this.handleFixtureHighlight);
     EventBus.off('fixture_transformed', this.handleFixtureTransformed);
     cancelAnimationFrame(this.patchFrame);
   },
   methods: {
+    /**
+     * Shows the view's selection in the 3D view (highlight and gizmo)
+     *
+     * @public
+     */
+    applySelection() {
+      const renderer = this.$show.visualizerHandle?.fixtureRenderer;
+      const highlight = this.$view?.highlight;
+      if (!renderer || !highlight) return;
+      if (this.patchFrame) this.flushPatchUpdate();
+      renderer.setSelection(highlight.ids, highlight.gizmo);
+    },
     /**
      * Rebuilds the rendered patch once per animation frame, however many patch changes happen
      * (loading a show patches every fixture)
@@ -174,6 +202,8 @@ export default {
       }
       this.patchFrame = null;
       this.$show.visualizerHandle.fixtureRenderer.setPatch(this.$show.patchSnapshot);
+      // Once fixtures are patched, compile what a selection draws (see Visualizer.warmUp)
+      if (!this.warmed) this.warmed = this.$show.visualizerHandle.warmUp();
     },
     /**
      * Makes sure the renderer knows a fixture before an event targets it: flushes a pending
@@ -200,17 +230,6 @@ export default {
     handleFixturePose(pose) {
       if (this.resolvePendingPatch(pose.id)) {
         this.$show.visualizerHandle.fixtureRenderer.setPose(pose);
-      }
-    },
-    /**
-     * Forwards a fixture highlight to the renderer
-     *
-     * @public
-     * @param {Object} highlight fixture_highlight event payload
-     */
-    handleFixtureHighlight(highlight) {
-      if (this.resolvePendingPatch(highlight.id)) {
-        this.$show.visualizerHandle.fixtureRenderer.highlight(highlight);
       }
     },
     /**

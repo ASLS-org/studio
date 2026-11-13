@@ -92,7 +92,8 @@ export default {
       this.updateValue(false);
     },
     background(newVal) {
-      this.$refs.track.style.background = newVal;
+      // May run while the gauge is being removed (the channels widget switching fixtures)
+      if (this.$refs.track) this.$refs.track.style.background = newVal;
     },
   },
   mounted() {

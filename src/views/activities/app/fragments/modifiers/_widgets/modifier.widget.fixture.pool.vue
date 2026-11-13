@@ -11,12 +11,10 @@
       filterable
       deletable
       draggable
-      auto-select-first
-      :auto-select="selected"
       :items="pool.listable"
-      @select="selectFixture"
+      :selection="selection"
+      @selection="emitSelection"
       @delete="deleteFixtures"
-      @highlight="highlightFixtures"
       @focused="setFocus"
       @reorder="reorderFixtures"
     />
@@ -55,14 +53,14 @@ export default {
       default: null,
     },
     /**
-     * Which index of the list should be selected on mount
+     * Selected fixture ids, main one first (the panel's selection, from the view state)
      */
-    autoSelect: {
-      type: Number,
-      default: 0,
+    selection: {
+      type: Array,
+      default: null,
     },
   },
-  emits: ['select', 'delete', 'highlight', 'focused'],
+  emits: ['selection', 'delete', 'focused'],
   data() {
     return {
       /**
@@ -72,34 +70,17 @@ export default {
         title: 'Fixture Pool',
         icon: 'patch',
       },
-      /**
-       * Currently selected fixture
-       */
-      selected: 0,
     };
-  },
-  watch: {
-    '$route.query.fixtureId': function watchFixtureId(fixtureId) {
-      if (fixtureId !== this.selected) {
-        const fixture = this.pool.fixtures.find((f) => f.id === Number(fixtureId));
-        if (fixture) {
-          this.selectFixture(fixture);
-        }
-      }
-    },
   },
   methods: {
     /**
-     * Highlights and forwards fixture selection event to parent
+     * Forwards the selection the operator made: fixture ids, main one first
      *
      * @public
-     * @param {Object} fixture reference to fixture defintion object
+     * @param {Array<Object>} items listable data of the selected rows, selected one first
      */
-    selectFixture(fixture) {
-      this.selected = this.pool.fixtures.findIndex((f) => f.id === fixture.id);
-      fixture = this.pool.getFromId(fixture.id);
-      fixture.highlightSingle(true, true);
-      this.$emit('select', fixture.id);
+    emitSelection(items) {
+      this.$emit('selection', items.map((item) => item.id));
     },
     /**
      * Forwards fixture deletion event
@@ -109,28 +90,6 @@ export default {
      */
     deleteFixtures(fixtures) {
       this.$emit('delete', fixtures);
-    },
-    /**
-     * Highlights and forwards fixture highlighting event
-     *
-       * @public
-     * @param {Array} fixtures Array of references to fixture defintion object
-     */
-    highlightFixtures(fixtures) {
-      if (fixtures.length) {
-        fixtures.forEach((fixtureData, index) => {
-          const fixture = this.pool.getFromId(fixtureData.id);
-          if (index === 0) {
-            fixture.highlightSingle(false, false);
-          }
-          fixture.highlight(true, true);
-        });
-      } else if (this.pool?.fixtures?.length) {
-        // TODO: it's time to have an actual store for UI states
-        // This is clearly a hack mushing all model, view and 3D context together and it's very bad
-        this.pool.fixtures[0].highlightSingle(false, true);
-      }
-      this.$emit('highlight', fixtures);
     },
     /**
      * Forwards list focus event
@@ -144,7 +103,7 @@ export default {
     /**
      * Reorder list items
      *
-     s* @public
+     * @public
      * @param {Object} reorderData list reordering object
      * @param {Number} reorderData.original original item index
      * @param {Number} reorderData.final final item index

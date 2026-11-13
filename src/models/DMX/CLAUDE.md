@@ -69,12 +69,17 @@ Enums live next to their model and are exported: `CUE_TYPES`, `CUE_STATES`,
   (`Uint8Array(512)`) and send it on running streams. Output, and later the visualizer, read
   frames, never channel objects.
 - **Live:** `Live.add(updateFn, quantize = 0, fps = 60, onReady)` returns an id. With `quantize`
-  the callback starts on the next quantized bar boundary. Always pair it with `Live.remove(id)`.
+  (in beats, fractions allowed) the callback starts on the next multiple of that many beats of
+  Live time. Chases store their Quantize as an option index and convert it with
+  `CHASE_QUANTIZE_BEATS`. Always pair it with `Live.remove(id)`.
   Time units: `Live.beatDuration` / `Live.barDuration` in ms, derived from BPM.
 - **Pools:** `addRaw`, `addExisting`, `getFromId` (throws), `delete`, `clearAll`, plus a `listable`
   getter that shapes data for `uk-list`. New pools follow the same API.
-- **Ids:** numeric and unique per pool. Getters coerce with `Number(id)`. `FixturePool.addRaw`
-  renumbers fixtures in load order, so never skip a saved fixture on load (references would shift).
+- **Ids:** numeric and unique per pool. Getters coerce with `Number(id)`. A fixture or universe
+  loaded from a show keeps its saved id (references point to it); new ones get the highest id + 1.
+  A universe's id changes through `UniversePool.changeId()` (unique; its fixtures' `universe`
+  follows). Loading skips universe/group references to missing fixtures and reports the count.
+  `Show.deleteFixture` finds the universe by membership and never stops halfway.
 
 ## Known debt (don't copy these patterns)
 

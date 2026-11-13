@@ -1,8 +1,8 @@
 <template>
   <uk-flex class="modifier">
-    <group-modifier v-show="modifier === 'Group'" />
-    <universe-modifier v-show="modifier === 'Universe'" />
-    <chase-modifier v-show="modifier === 'Chase'" />
+    <group-modifier v-show="$view.panel === 'group'" />
+    <universe-modifier v-show="$view.panel === 'universe'" />
+    <chase-modifier v-show="$view.panel === 'chase'" />
   </uk-flex>
 </template>
 
@@ -13,20 +13,13 @@ import ChaseModifier from '@/views/activities/app/fragments/modifiers/chase/chas
 
 export default {
   name: 'ModifierFragment',
+  compatConfig: {
+    MODE: 3,
+  },
   components: {
     GroupModifier,
     UniverseModifier,
     ChaseModifier,
-  },
-  data() {
-    return {
-      modifier: 'Universe',
-    };
-  },
-  watch: {
-    '$route.name': function routeNameWatcher(name) {
-      this.modifier = name;
-    },
   },
 };
 </script>

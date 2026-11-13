@@ -78,9 +78,6 @@ export default {
     modelValue(value) {
       this.chase = value;
     },
-    '$route.params.chaseId': function routeParamsChaseIdWatcher() {
-      this.selected = this.$route.params.chaseId === this.chase.id;
-    },
   },
   methods: {
     /**

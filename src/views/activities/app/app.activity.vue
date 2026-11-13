@@ -18,7 +18,7 @@
     />
     <missing-fixtures-popup style="z-index: 999" />
     <error-popup
-      v-model="errPopup.state"
+      v-model="errorPopupState"
       style="z-index: 1000"
       :error="errPopup.error"
     />
@@ -26,6 +26,7 @@
 </template>
 
 <script>
+import modal from '@/views/mixins/modal.mixin';
 import EventBus from '@/plugins/eventbus';
 
 import Toolbar from './fragments/toolbar/toolbar.fragment.vue';
@@ -61,7 +62,6 @@ export default {
        */
       errPopup: {
         error: new Error(),
-        state: false,
       },
       /**
        * App readyness state
@@ -77,6 +77,12 @@ export default {
       loader: this.$show.loading,
     };
   },
+  computed: {
+    /**
+     * Error popup display state (stays open across a show load)
+     */
+    errorPopupState: modal('app.error', 'app', true),
+  },
   watch: {
     '$show.loading': {
       deep: true,
@@ -86,12 +92,11 @@ export default {
     },
   },
   async mounted() {
-    this.$router._appReayState = false;
     EventBus.on('visualizer_loaded', this.setup);
     EventBus.on('app_error', (err) => {
       this.loader.message = 'An error occured while loading the app...';
       this.errPopup.error = err;
-      this.errPopup.state = true;
+      this.errorPopupState = true;
     });
   },
   methods: {
@@ -110,7 +115,6 @@ export default {
         await this.$show.loadFromData(showData);
       }
 
-      await this.$router.push('/universe/0');
       this.loader = {
         message: 'Waiting for views to settle',
         percentage: 90,
@@ -119,7 +123,6 @@ export default {
 
       await new Promise((r) => { setTimeout(r, 500); });
       this.loader.state = false;
-      this.$router._appReayState = true;
       this.ready = true;
       EventBus.emit('app_ready');
     },

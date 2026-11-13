@@ -7,7 +7,7 @@
         icon="new"
         style="margin-right: 8px"
         label="new"
-        @click="displayPatchPopup"
+        @click="mediaPopupState = true"
       />
     </div>
     <uk-list
@@ -17,54 +17,89 @@
       class="patch_bay_universe_list"
       filterable
       :items="pool.listable"
+      :selection="selection"
       accordion
       @unfold="displayUniverse"
-      @select="displayFixture"
+      @selection="displayFixtures"
+      @delete="deleteFixtures"
+    />
+    <media-popup
+      v-model="mediaPopupState"
+      @create="displayUniverse"
     />
   </div>
 </template>
 
 <script>
+import modal from '@/views/mixins/modal.mixin';
+import MediaPopup from './_popups/popup.media.vue';
+
 export default {
   name: 'PatchBayFragment',
   compatConfig: {
     // or, for full vue 3 compat in this component:
     MODE: 3,
   },
+  components: {
+    MediaPopup,
+  },
   data() {
     return {
       pool: this.$show.universePool,
     };
   },
+  computed: {
+    /**
+     * New media popup display state
+     */
+    mediaPopupState: modal('media.new', 'app'),
+    /**
+     * Fixtures selected in the universe in view (none while another panel is in view)
+     *
+     * @type {Array<Number>}
+     */
+    selection() {
+      return this.$view.panel === 'universe' ? this.$view.fixtureIds : [];
+    },
+  },
   methods: {
     /**
-     * Displays the modifier of the unfolded universe
+     * Shows an unfolded (or created) universe
      *
      * @public
+     * @param {Object} universeData listable data of the universe
      */
     displayUniverse(universeData) {
-      if (universeData) {
-        this.$router.push(`/universe/${universeData.id}`).catch(() => {});
-      }
+      if (universeData) this.$view.openUniverse(universeData.id);
     },
     /**
-     * Displays the modifier of the unfolded universe
-     * and pre-selects selected fixture within the modifier.
+     * Shows the universe of the selected fixtures, with them selected
      *
      * @public
+     * @param {Array<Object>} items listable data of the selected rows, selected one first
      */
-    displayFixture(fixtureData) {
-      if (fixtureData) {
-        this.$router.push({ path: `/universe/${fixtureData.universe}`, query: { fixtureId: fixtureData.id } }).catch(() => {});
-      }
+    displayFixtures(items) {
+      const fixtures = items.filter((item) => item && item.universe !== undefined
+        && item.unfold === undefined);
+      if (!fixtures.length) return;
+      const { universe } = fixtures[0];
+      this.$view.openUniverse(universe);
+      this.$view.selectFixtures(fixtures.filter((f) => f.universe === universe).map((f) => f.id));
     },
     /**
-     * Displays the patch popup
+     * Deletes the selected fixtures from the show (as the universe view's fixture pool does).
+     * Universes in the selection are left alone
      *
      * @public
-     * @todo implement the patch popup
+     * @param {Array<Object>} items listable data of the selected rows
      */
-    displayPatchPopup() {},
+    deleteFixtures(items) {
+      items
+        .filter((item) => item && item.unfold === undefined && item.universe !== undefined
+          && this.$show.fixturePool.checkIfExists(item.id))
+        .forEach((fixture) => this.$show.deleteFixture(fixture));
+      this.$show.refreshSaveState();
+    },
   },
 };
 </script>

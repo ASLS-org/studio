@@ -18,9 +18,11 @@
             style="width: 100%"
           />
           <uk-num-input
-            v-model="universe.id"
+            :key="idFieldKey"
+            :model-value="universe.id"
             style="width: 60px"
             label="ID"
+            @update:model-value="setUniverseId"
           />
         </uk-flex>
         <uk-flex
@@ -44,6 +46,7 @@
             square
             label="config"
             style="height:25px; min-width: 75px; margin-top:22px"
+            @click="connectionsPopupState = true"
           />
         </uk-flex>
         <uk-select-input
@@ -61,17 +64,23 @@
     >
       No Universe Selected
     </h3>
+    <connections-popup v-model="connectionsPopupState" />
   </uk-widget>
 </template>
 
 <script>
+import modal from '@/views/mixins/modal.mixin';
 import colorMixin from '@/views/mixins/color.mixin';
+import ConnectionsPopup from '@/views/activities/app/fragments/toolbar/_popups/popup.connections.vue';
 
 export default {
   name: 'UniverseModifierSettings',
   compatConfig: {
     // or, for full vue 3 compat in this component:
     MODE: 3,
+  },
+  components: {
+    ConnectionsPopup,
   },
   mixins: [colorMixin],
   props: {
@@ -88,9 +97,17 @@ export default {
       },
       universe: this.modelValue,
       output: null,
+      /**
+       * Re-mounts the ID field, so a refused id shows the current one again
+       */
+      idFieldKey: 0,
     };
   },
   computed: {
+    /**
+     * Connections popup display state (opened by Config)
+     */
+    connectionsPopupState: modal('universe.connections', 'universe'),
     /**
      * Returns an array of HTML-formated strings s to be fed into uikit select inputs
      *
@@ -106,6 +123,23 @@ export default {
     },
   },
   methods: {
+    /**
+     * Changes the universe's id (its fixtures follow), unless another universe uses it. The
+     * view (and its memory of the universe) follows the new id.
+     *
+     * @public
+     * @param {Number} id new id
+     */
+    setUniverseId(id) {
+      const previous = this.universe.id;
+      if (Number(id) === previous) return;
+      if (!this.$show.universePool.changeId(this.universe, id)) {
+        this.idFieldKey += 1;
+        return;
+      }
+      this.$view.moveUniverse(previous, this.universe.id);
+      this.$show.refreshSaveState();
+    },
     setUniverseColor(colorIndex) {
       this.universe.color = this.getColorFromIndex(colorIndex);
     },

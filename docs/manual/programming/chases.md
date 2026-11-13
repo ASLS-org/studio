@@ -27,15 +27,11 @@ Click a chase's name in the group pool to open it later. Below is *Story* in the
 | **Name** | The chase's name |
 | **Duration** | The chase's length, in bars (1–99) |
 | **Color** | The chase's colour in the group pool |
-| **Quantize** | When a chase you start actually begins: **1/1** waits for the start of the next bar, **None** starts at once |
+| **Quantize** | When a chase you start actually begins: on the next **1/8** note (half a beat), **1/4** (beat), **1/2** (2 beats) or **1/1** (bar), or at once with **None** |
 | **Trigger** | **Loop** plays the chase until you stop it; **One Shot** plays it once |
 
 Durations are in bars, so a chase stays in time when the tempo changes: at 120 BPM, a 4-bar chase
 lasts 8 seconds; at 60 BPM, 16 seconds.
-
-> **Note:** In this release, **1/8**, **1/4** and **1/2** wait 1, 2 and 3 beats rather than the
-> fraction of a bar their name says. Use **1/1** or **None**
-> ([Known limitations](/reference/limitations#programming)).
 
 ## The Timeline
 

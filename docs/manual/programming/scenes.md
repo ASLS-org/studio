@@ -52,13 +52,9 @@ These are *Sunset*'s settings: a 1-bar fade, played once, from the current value
 | **Name** | The cue's name |
 | **Color** | The cue's colour in the cue pool and in chases |
 | **Loop Style** | **One Shot** plays the cue once; **Loop** repeats it until you stop it |
-| **Trigger Style** | Saved with the cue; see the note below |
+| **Trigger Style** | **Toggle**: a click starts the cue, the next click stops it. **Temporary**: the cue plays while you hold the mouse button on it, and stops when you release it, as a flash button |
 | **Start** | **Absolute**: a scene fades from 0. **Relative**: it fades from the channels' current values, so it blends from whatever was on stage |
 | **Duration** | How long the cue lasts, in bars (see [Timing and playback](/concepts/timing)). For a scene, this is its fade time |
-
-> **Note:** **Trigger Style** has no effect yet: every cue starts and stops on a click, as
-> **Toggle** describes. **Temporary** (playing only while held) isn't available in this release
-> ([Known limitations](/reference/limitations#programming)).
 
 > **Note:** A scene that has played to its end stays on stage: it stops, but its values remain on
 > the fixtures until something else changes them.

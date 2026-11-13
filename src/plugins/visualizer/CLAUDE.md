@@ -22,7 +22,7 @@ Three.js r170 WebGL renderer for the rig. It is instantiated by
 | `air_beams.js` | beams in the haze: cone cut at the lens (hull widened in the vertex shader), inverse-square falloff from the apex behind the lens, soft knee per beam; closed form (Low, Medium + soft gobo) or raymarch with the gobo (High), uniform haze, 1/2 or full buffer, depth-aware upsample |
 | `bloom.js` | lens glow sprites (Low and up) and bloom from the air buffer and lens glows (Medium, High) |
 | `quality.js` | quality settings in `localStorage` (never in `showData`): level, lighting scale, guides, render scale (pixel ratio, default 0.8); starting level from the device, `QualityGovernor` for Auto |
-| `controls.js` | TransformControls (translate/rotate) for fixture placement |
+| `controls.js` | TransformControls (translate/rotate) for fixture placement. `Visualizer.warmUp()` draws one frame with a fixture selected at boot, so the gizmo and selection box programs never compile mid-show |
 | `instance_highlight.js` | selection outline |
 | `grid.js` | infinite grid helper |
 | `orbitcontrol.zup.patch.js` | vendored OrbitControls patched for Z-up. Don't edit or lint it |
@@ -32,7 +32,8 @@ Three.js r170 WebGL renderer for the rig. It is instantiated by
 - The world is **Z-up**. Fixture `position` / `rotation` are persisted in the fixture's `showData`.
 - The visualizer is driven by data only. `visualizer.fragment.vue` feeds the renderer:
   `patch_changed` → `setPatch(Show.patchSnapshot)` (coalesced per animation frame),
-  `fixture_pose` → `setPose`, `fixture_highlight` → `highlight`. Each rendered frame the renderer
+  `fixture_pose` → `setPose`, and it watches `$view.highlight` → `FixtureRenderer.setSelection(ids,
+  gizmo)` (re-applied when a patch rebuild recreates a selected fixture). Each rendered frame the renderer
   re-decodes fixtures whose bytes changed in their universe `frame`. Models never import this folder.
 - The only write back is the gizmo: `FixtureHandle` setters emit `fixture_transformed`, and the
   fragment applies it to the fixture (`position` / `rotation` setters). Nothing else here writes

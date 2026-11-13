@@ -120,11 +120,19 @@ class FixtureRenderer {
       instance.chStart = entry.chStart;
       instance.force = true;
     });
+    let selectionChanged = false;
     this.instances.forEach((instance, id) => {
       if (!seen.has(id)) {
         this.removeInstance(instance);
       }
     });
+    // A selected fixture was rebuilt (or appeared): show the selection on its new instance
+    const selected = this.selection?.ids || [];
+    selected.forEach((id) => {
+      const instance = this.instances.get(id);
+      if (instance && !instance.model.highlighted) selectionChanged = true;
+    });
+    if (selectionChanged) this.setSelection(this.selection.ids, this.selection.gizmo);
     this.onChange();
   }
 
@@ -236,39 +244,26 @@ class FixtureRenderer {
   }
 
   /**
-   * Highlights a fixture, optionally moving the gizmo with it
+   * Shows a selection: exactly these fixtures are highlighted, and the move/rotate gizmo is
+   * attached to them when asked (else detached). Kept, and re-applied when a patch rebuild
+   * recreates one of them.
    *
    * @public
-   * @param {Object} highlight fixture_highlight event payload
-   * @param {Number} highlight.id Fixture id
-   * @param {Boolean} highlight.state Highlight state
-   * @param {Boolean} highlight.single Whether other fixtures are unhighlighted
-   * @param {Boolean} highlight.center Whether the gizmo follows the highlight
+   * @param {Array<Number>} ids Selected fixture ids
+   * @param {Boolean} gizmo Whether the gizmo follows the selection
    */
-  highlight({
-    id, state, single, center,
-  }) {
-    const instance = this.instances.get(id);
-    if (!instance) return;
-    if (single) {
-      this.instances.forEach((other) => { other.model.highlighted = false; });
-      instance.model.highlighted = state;
-      if (state && center) {
-        Controls.detachAll();
-        Controls.attach(instance.handle);
-      } else if (!state) {
-        Controls.detachAll();
-        Controls.setFocus(false);
-      }
+  setSelection(ids, gizmo) {
+    this.selection = { ids: [...ids], gizmo };
+    const wanted = new Set(ids);
+    this.instances.forEach((instance, id) => {
+      instance.model.highlighted = wanted.has(id);
+    });
+    Controls.detachAll();
+    const attached = gizmo ? ids.map((id) => this.instances.get(id)).filter(Boolean) : [];
+    if (attached.length) {
+      attached.forEach((instance) => Controls.attach(instance.handle));
     } else {
-      instance.model.highlighted = state;
-      if (center) {
-        if (state) {
-          Controls.attach(instance.handle);
-        } else {
-          Controls.detach(instance.handle);
-        }
-      }
+      Controls.setFocus(false);
     }
     this.onChange();
   }

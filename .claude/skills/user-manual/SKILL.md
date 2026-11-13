@@ -42,7 +42,7 @@ change touches: the pages are what the proposal's **Manual** line names, and the
 | `F/toolbar/_popups/popup.connections.vue`, `F/modifiers/universe/_widgets/universe.modifier.widget.connection.vue`, `src/plugins/wsc.connection.js`, `M/DMX/output.pool.model.js`, the bundled gateway (`src/electron/`) | `rig/outputs`, `reference/troubleshooting`, `reference/limitations` | `outputs-popup`, `universe-stream` |
 | `F/toolbar/_popups/popup.visualizer.vue` | `interface/visualizer#settings` | `visualizer-settings` |
 | `F/toolbar/_popups/popup.license.vue`, `popup.credits.vue` | `introduction/license` | none |
-| `F/patch-bay/` | `getting-started/interface#patch-bay`, `programming/patching` | `patch-bay`, `patch-bay-select`, `patch-bay-filter`, `visualizer-modes` |
+| `F/patch-bay/` (fragment, `_popups/popup.media.vue`) | `getting-started/interface#patch-bay`, `programming/patching` | `patch-bay`, `patch-bay-new`, `patch-bay-select`, `patch-bay-filter`, `visualizer-modes` |
 | `F/modifiers/universe/universe.modifier.fragment.vue`, `_popups/universe.modifier.popup.patch.vue` | `programming/patching`, `rig/fixtures` | `patch-add`, `universe-stream` |
 | `F/modifiers/universe/_widgets/universe.modifier.widget.settings.vue` | `programming/patching` | `universe-settings` |
 | `F/modifiers/universe/_widgets/universe.modifier.widget.fixture.settings.vue` | `programming/patching` | `fixture-settings` |
@@ -193,11 +193,10 @@ Flows to watch rather than try are **demos**: a cursor plays them on the real co
   `props(show)` (objects picked by id from the demo show; the ids are listed at the top of the
   file), `width`/`height` (the stage, Studio's size), `componentWidth`/`componentHeight` (when
   the component differs from the stage: a row-filling widget, a demo needing room for its
-  popup), `fit`, `clock` (runs Studio's clock while active), `route` + `panel` (panels that read
-  the route), `warmRoute` (group and chase panels: their route watchers aren't immediate, so the
-  router starts on a sibling route), `stage` (drives the rig: the floating visualizer comes next to it), `start(show)`
-  (e.g. a cue already playing), `onRoute(show, to)` (stands in for a panel the component would
-  open: the patch bay outlines its fixture), `props.onX` (handlers for events the component's
+  popup), `fit`, `clock` (runs Studio's clock while active), `view(view, show)` (sets up the
+  preview's own view state before it mounts: `view.openGroup(0)`, `view.openChase(0, 0)`), `stage`
+  (drives the rig: the floating visualizer comes next to it and highlights that preview's
+  selection), `start(show)` (e.g. a cue already playing), `props.onX` (handlers for events the component's
   parent panel would handle: the fixture pool only asks to delete), `popupInBox` (a stage
   preset whose component is a popup: it opens in the component's own box, via `StageWrap`'s own
   `popupHost`), `demo`, `webgl`. No video
@@ -252,7 +251,8 @@ Flows to watch rather than try are **demos**: a cursor plays them on the real co
 - **Reset** is enabled by a real reader input in a preview of the page, and disabled again after
   a reset. Runtime errors are logged and the component goes on (as Studio's error handler).
 - **Host** (`theme/previews/host.js`, client only, loaded when a preview comes within a screen
-  height): one Vue app per preview with `main.js`'s setup and its own memory router; one shared
+  height): one Vue app per preview with `main.js`'s setup and its own view state and keyboard (keys
+  only while the focus is in the preview); one shared
   `Show` loaded from `public/presets/manual.showfile.json` per page; saving replaced by a no-op
   bookkeeping version; `axios.defaults.baseURL` = site root (the engine fetches page-relative
   URLs); Studio's clock runs only while a visible preview needs it; a visualizer stand-in

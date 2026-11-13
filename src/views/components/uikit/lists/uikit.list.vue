@@ -1,17 +1,16 @@
 <template>
-  <div class="uikit_list">
+  <div
+    class="uikit_list"
+    :class="{ disabled }"
+  >
     <uk-list-item
-      v-if="toggleable && !tree.some(i=>i.value.unfold)"
+      v-if="toggleable && !hasParents"
       toggleable
-      :item="{
-        value: {
-          name: toggledItems.length ? 'Uncheck All' : 'Check All',
-          more: `${toggledItems.length}/${items.length}`,
-        },
-        toggled: toggledItems.length,
-      }"
+      :disabled="disabled"
+      :item="checkAllItem(visibleRows)"
       style="padding: 6px 8px;"
-      @click="checkAll(!toggledItems.length)"
+      @click="checkAll(visibleRows)"
+      @toggle="checkAll(visibleRows)"
     />
     <uk-txt-input
       v-if="filterable"
@@ -23,130 +22,105 @@
       :placeholder="'Search items'"
     />
     <div
-      v-if="filteredItems.length != 0"
+      v-if="visibleRows.length"
       ref="body"
       tabindex="0"
       class="uikit_list_body"
+      :class="{ accordion, expanded: accordion && hasExpanded, dragging: !!drag?.active }"
       @focusin="handleFocusIn"
       @focusout="handleFocusOut"
       @keydown="handleKeydown"
     >
-      <div
-        v-for="(treeItem, index) in filteredItems"
-        :key="index"
-        class="uikit_list_item parent"
-        :style="{
-          flex: treeItem.unfolded ? 1 : 'unset',
-          overflowY: treeItem.unfolded && treeItem.value.unfold && accordion ? 'hidden' : 'visible',
-        }"
+      <template
+        v-for="row in visibleRows"
+        :key="row.key"
       >
         <div
-          v-if="treeItem.value.unfold"
-          class="uikit_list_item_unfoldable"
+          v-if="row.children"
+          class="uikit_list_group"
+          :class="{ open: row.unfolded || closing[row.key], expanded: row.unfolded }"
         >
           <uk-list-item
             :colored="colored"
-            :index="index"
-            :item="treeItem"
+            :item="row"
             :tall="tall"
-            @click="unfold(treeItem)"
+            :disabled="disabled"
+            :data-key="row.key"
+            @click="unfold(row)"
           />
           <Transition
-            name="fadeHeight"
+            name="uikit-unfold"
+            @before-leave="closing = { ...closing, [row.key]: true }"
+            @after-leave="closing = omit(closing, row.key)"
           >
-            <span
-              v-if="treeItem.unfolded"
-              :style="{
-                overflowY: 'auto'
-              }"
+            <div
+              v-if="row.unfolded"
+              class="uikit_list_children"
             >
-              <template v-if="treeItem.value.unfold && treeItem.value.unfold.length">
-                <uk-list-item
-                  v-show="toggleable"
-                  toggleable
-                  :item="{
-                    value: {
-                      name: treeItem.value.unfold.filter(i=>i.toggled).length
-                        ? 'Uncheck All'
-                        : 'Check All',
-                      more: `${treeItem.value.unfold.filter(i=>i.toggled).length}
-                      /${treeItem.value.unfold.length}`,
-                    },
-                    toggled: treeItem.value.unfold.filter(i=>i.toggled).length,
-                  }"
-                  style="padding: 6px 6px 6px 16px;"
-                  @click="checkAll(!treeItem.value.unfold.filter(i=>i.toggled).length, treeItem)"
-                />
-                <uk-list-item
-                  v-for="(subTreeItem, subIndex) in treeItem.value.unfold"
-                  :key="subIndex"
-                  class="uikit_sublist_body"
-                  :item="subTreeItem"
-                  :toggleable="toggleable"
-                  :no-highlight="noHighlight"
-                  :focused="hasFocus"
-                  :tall="tall"
-                  :no-select="noSelect"
-                  @click="(e) => selectItem(e, subTreeItem, treeItem.value.unfold)"
-                  @toggle="toggleItem(subTreeItem)"
-                />
-              </template>
-            </span>
+              <div class="uikit_list_children_inner">
+                <template v-if="row.children.length">
+                  <uk-list-item
+                    v-if="toggleable"
+                    toggleable
+                    :disabled="disabled"
+                    :item="checkAllItem(row.children)"
+                    style="padding: 6px 6px 6px 16px;"
+                    @click="checkAll(row.children)"
+                    @toggle="checkAll(row.children)"
+                  />
+                  <uk-list-item
+                    v-for="child in row.children"
+                    :key="child.key"
+                    class="uikit_sublist_body"
+                    :data-key="child.key"
+                    :item="child"
+                    :toggleable="toggleable"
+                    :no-highlight="noHighlight"
+                    :focused="hasFocus"
+                    :tall="tall"
+                    :no-select="noSelect"
+                    :disabled="disabled"
+                    :deletable="deletable"
+                    @pointerdown="focusBody"
+                    @click="(e) => clickRow(e, child)"
+                    @delete="deleteRow(child)"
+                    @toggle="toggleRow(child)"
+                  />
+                </template>
+                <div
+                  v-else
+                  class="uikit_list_body_empty"
+                >
+                  <h3>Nothing to display</h3>
+                </div>
+              </div>
+            </div>
           </Transition>
-          <div
-            v-if="treeItem.unfolded && !treeItem.value.unfold.length"
-            class="uikit_list_body_empty"
-          >
-            <h3 v-if="!treeItem.value.unfold.length">
-              Nothing to display
-            </h3>
-            <!-- <uk-button
-              label="patch fixture"
-            /> -->
-          </div>
         </div>
         <uk-list-item
           v-else
-          :item="treeItem"
+          :data-key="row.key"
+          :item="row"
+          :class="{ uikit_list_dragged: drag?.active && drag.key === row.key }"
+          :style="dragStyle(row)"
           :colored="colored"
           :toggleable="toggleable"
+          :handle="canReorder"
+          :no-highlight="noHighlight"
           :focused="hasFocus"
           :tall="tall"
           :no-select="noSelect"
-          :draggable="draggable"
-          @dragstart="
-            (e) => {
-              startDrag(e, index);
-            }
-          "
-          @dragend.prevent="
-            (e) => {
-              stopDrag(e, index);
-            }
-          "
-          @dragover.prevent
-          @dragenter.prevent="
-            (e) => {
-              dragEnter(e, index);
-            }
-          "
-          @dragleave.prevent="
-            (e) => {
-              dragOut(e, index);
-            }
-          "
-          @drop.prevent="
-            (e) => {
-              drop(e, index);
-            }
-          "
-          @click="(e) => selectItem(e, treeItem, filteredItems)"
-          @toggle="toggleItem(treeItem)"
+          :disabled="disabled"
+          :deletable="deletable"
+          @pointerdown="focusBody"
+          @handle="(e) => pressHandle(e, row)"
+          @click="(e) => clickRow(e, row)"
+          @delete="deleteRow(row)"
+          @toggle="toggleRow(row)"
         />
-        <div
-          class="uikit_sublist_body_empty"
-        />
-      </div>
+      </template>
+      <!-- the space the rows don't fill -->
+      <div class="uikit_list_filler" />
     </div>
     <div
       v-else
@@ -155,9 +129,6 @@
       <h3>
         Nothing to display
       </h3>
-      <!-- <uk-button
-        label="patch fixture"
-      /> -->
     </div>
     <uk-popup
       ref="popup"
@@ -170,192 +141,433 @@
         col
         style="max-width: 350px;min-width:350px"
       >
-        <p style="padding: 16px; flex-direction: column; align-items: start;gap:10px">
-          <b>
-            Are you sure you want to delete the following
-            {{ highlightedItems.length || '' }}
-            item(s)?
-          </b>
-          <uk-flex col>
-            <p
-              v-for="(item, key) in
-                highlightedItems.length
-                  ? highlightedItems.slice(0,5)
-                  : [selectedItem]
-              "
-              :key="key"
-            >
-              {{ item.value.name }} {{ item.value.more ? `(${item.value.more})` : '' }}
-            </p>
-            <p v-show="highlightedItems.length > 5">
-              ...{{ highlightedItems.length - 5 }} additional items are not shown
-            </p>
-          </uk-flex>
+        <p class="uikit_list_delete_text">
+          Are you sure you want to delete
+          {{ deletionRows.length > 1 ? `these ${deletionRows.length} items` : 'this item' }}?
         </p>
+        <uk-flex
+          col
+          class="uikit_list_delete_items"
+        >
+          <p
+            v-for="row in deletionRows.slice(0, 5)"
+            :key="row.key"
+          >
+            {{ row.value.name }}
+            <span
+              v-if="row.value.more"
+              class="uikit_list_delete_more"
+            >{{ row.value.more }}</span>
+          </p>
+          <p
+            v-if="deletionRows.length > 5"
+            class="uikit_list_delete_more"
+          >
+            and {{ deletionRows.length - 5 }} more
+          </p>
+        </uk-flex>
       </uk-flex>
     </uk-popup>
   </div>
 </template>
+
 <script>
+/** Pointer travel (px) before a press on a row's handle becomes a drag */
+const DRAG_THRESHOLD = 3;
+/** Duration of the rows sliding apart while dragging */
+const DRAG_SLIDE = 'transform 0.15s ease';
+/** Distance (px) from the list's top or bottom edge where a drag scrolls it */
+const DRAG_SCROLL_EDGE = 24;
+
+/**
+ * A row's key: its item's id, else its name
+ *
+ * @param {Object} item list item
+ * @returns {String}
+ */
+const itemKey = (item) => (item?.id !== undefined && item?.id !== null
+  ? `id:${item.id}`
+  : `name:${item?.name}`);
+
+/**
+ * Keys of a list of items, made unique with a `#n` suffix
+ *
+ * @param {Array<Object>} items list items
+ * @param {String} prefix parent key prefix, for sub-rows
+ * @returns {Array<String>}
+ */
+const keysOf = (items, prefix = '') => {
+  const seen = {};
+  return items.map((item) => {
+    const key = `${prefix}${itemKey(item)}`;
+    seen[key] = (seen[key] || 0) + 1;
+    return seen[key] > 1 ? `${key}#${seen[key]}` : key;
+  });
+};
+
+/**
+ * @component List of selectable, checkable, unfoldable, reorderable and deletable rows.
+ * Row state (selection, highlights, checks, unfolded rows) is kept by key (item id, else name),
+ * so it survives item changes and searches. The list never writes to `items`.
+ * @namespace uikit/lists
+ */
 export default {
   name: 'UkList',
   compatConfig: {
     MODE: 3,
   },
   props: {
+    /** Greys the list out and ignores every interaction */
     disabled: Boolean,
+    /** Delete/Backspace and the rows' ✕ ask to delete rows (`delete` event) */
     deletable: Boolean,
+    /** Shows a search box filtering rows (and sub-rows) by name */
     filterable: Boolean,
+    /** Rows have checkboxes (`toggle` event); a click checks instead of selecting */
     toggleable: Boolean,
+    /** Top-level rows can be dragged to reorder (`reorder` event) */
     draggable: Boolean,
+    /** No multi-selection highlights (Ctrl/⌘/Shift+click select a single row) */
     noHighlight: Boolean,
+    /** Selected rows aren't styled as selected */
     noSelect: Boolean,
+    /**
+     * Items: `{ id?, name, icon?, color?, more?, action?, disabled?, active?, unfold? }`.
+     * `unfold` holds sub-items; `active` seeds the row's check. Rows are keyed by `id`, else
+     * `name`, so items need one of them stable and unique.
+     */
     items: {
       type: Array,
       default: () => [],
     },
+    /** Shows each item's colour as a dot */
     colored: Boolean,
+    /** Taller rows */
     tall: Boolean,
+    /**
+     * Selects the first row (or unfolds the first parent) when items first appear. With a
+     * controlled `selection`, only unfolds the parent of the selected row (else the first one)
+     */
     autoSelectFirst: Boolean,
+    /** Selects the top-level row at this index whenever it changes */
     autoSelect: {
       type: Number,
       default: null,
     },
+    /**
+     * Controlled selection: ids of the selected rows (first = the selected row, all of them
+     * highlighted when there are several). Applied whenever it or the items change, without
+     * emitting or taking focus; user changes are reported by the `selection` event.
+     */
+    selection: {
+      type: Array,
+      default: null,
+    },
+    /** Kept for compatibility: focus follows the browser's and needs no exceptions */
     preventUnfocus: {
       type: Array,
       default: () => [],
     },
+    /** Only one parent unfolded at a time; the open one fills the list and scrolls */
     accordion: Boolean,
   },
-  emits: ['unfold', 'focused', 'highlight', 'toggle', 'select', 'reorder', 'delete'],
+  emits: ['unfold', 'focused', 'highlight', 'toggle', 'select', 'selection', 'reorder', 'delete'],
   data() {
     return {
       searchString: '',
-      tree: [],
-      highlightedItems: [],
-      toggledItems: [],
-      selectedItem: null,
-      selectedIndex: null,
+      /** Unfolded parents: key → true */
+      unfolded: {},
+      /** Checked rows: key → true */
+      checked: {},
+      /** Highlighted rows' keys, in the order they were highlighted */
+      highlighted: [],
+      /** Selected row's key */
+      selectedKey: null,
+      /** Keys shown in the delete confirmation */
+      deletionKeys: [],
       deletePopupState: false,
-      unfocusElBlacklist: [...this.preventUnfocus],
       hasFocus: false,
-      dragging: false,
+      /** Drag in progress: { key, from, to, startY, startScroll, rows, dy, active, settling } */
+      drag: null,
+      /** Parents whose sub-rows are folding away (they share the space while animating) */
+      closing: {},
     };
   },
-
   computed: {
     /**
-     * Filters tree items/subitems on their name using the search string.
-     * Pure — never mutates `tree`, so it's safe even when items carry
-     * functions (e.g. `value.action.callback`), unlike a JSON clone would be.
+     * Rows built from the items and the row state; `value` is the caller's item
      */
-    filteredItems() {
-      const query = this.searchString.trim().toLowerCase();
-      if (!query) return this.tree;
-
-      const matches = (name) => name.toLowerCase().replace('-', ' ').includes(query);
-
-      const result = [];
-      this.tree.forEach((treeItem) => {
-        if (treeItem.value.unfold) {
-          const subItems = treeItem.value.unfold.filter((sub) => matches(sub.value.name));
-          if (subItems.length > 0) {
-            result.push({
-              ...treeItem,
-              unfolded: true,
-              value: { ...treeItem.value, unfold: subItems },
-            });
-            return;
-          }
+    rows() {
+      const keys = keysOf(this.items);
+      return this.items.map((item, index) => {
+        const key = keys[index];
+        const row = this.makeRow(key, item);
+        row.index = index;
+        if (Array.isArray(item.unfold)) {
+          const childKeys = keysOf(item.unfold, `${key}/`);
+          row.unfolded = !!this.unfolded[key];
+          row.children = item.unfold.map((sub, subIndex) => {
+            const child = this.makeRow(childKeys[subIndex], sub);
+            child.index = subIndex;
+            child.parentKey = key;
+            return child;
+          });
         }
-        if (matches(treeItem.value.name)) {
-          result.push({ ...treeItem, unfolded: false });
-        }
+        return row;
       });
-      return result;
+    },
+    /**
+     * Rows as shown: filtered by the search string (a parent with matching sub-rows shows open
+     * with only those)
+     */
+    visibleRows() {
+      let { rows } = this;
+      const query = this.searchString.trim().toLowerCase();
+      if (query) {
+        const matches = (name) => String(name ?? '').toLowerCase().replace('-', ' ').includes(query);
+        rows = rows.flatMap((row) => {
+          const children = row.children?.filter((child) => matches(child.value.name));
+          if (children?.length) return [{ ...row, unfolded: true, children }];
+          return matches(row.value.name) ? [row] : [];
+        });
+      }
+      return rows;
+    },
+    /** Every row and sub-row by key */
+    rowsByKey() {
+      const map = {};
+      this.rows.forEach((row) => {
+        map[row.key] = row;
+        row.children?.forEach((child) => { map[child.key] = child; });
+      });
+      return map;
+    },
+    /** Visible rows that can be selected, top to bottom (arrow keys) */
+    selectableRows() {
+      return this.visibleRows.flatMap((row) => {
+        if (!row.children) return [row];
+        return row.unfolded ? row.children : [];
+      }).filter((row) => !row.value.disabled);
+    },
+    /** Whether rows can be reordered now (flat lists, no search typed) */
+    canReorder() {
+      return this.draggable && !this.disabled && !this.hasParents && !this.searchString.trim();
+    },
+    /** Whether any item unfolds */
+    hasParents() {
+      return this.rows.some((row) => row.children);
+    },
+    /** Whether a shown parent is unfolded (accordion: it takes the space left) */
+    hasExpanded() {
+      return this.visibleRows.some((row) => row.children && row.unfolded);
+    },
+    /** The controlled selection as a comparable string */
+    selectionKey() {
+      return this.selection ? this.selection.join(',') : null;
+    },
+    /** Rows the delete confirmation lists */
+    deletionRows() {
+      return this.deletionKeys.map((key) => this.rowsByKey[key]).filter(Boolean);
     },
   },
   watch: {
-    items(items, oldItems) {
-      if (this.updateTree(items) && items && items.length && (!oldItems || !oldItems.length)) {
-        this.maybeAutoSelectFirst();
-      }
+    items: {
+      handler(items, oldItems) {
+        this.reconcile(items, oldItems);
+        if (this.selection) this.applySelection(this.selection);
+        if (items?.length && !oldItems?.length) this.maybeAutoSelectFirst();
+      },
+      flush: 'pre',
     },
-    preventUnfocus() {
-      this.unfocusElBlacklist.push(...this.preventUnfocus);
-    },
-    deletePopupState(value) {
-      if (!value) {
-        this.unfocusElBlacklist.pop();
-        this.handleFocusOut();
-      }
+    selectionKey() {
+      if (this.selection) this.applySelection(this.selection);
     },
     autoSelect(index) {
-      const item = this.tree[index];
-      if (item) {
-        this.selectItem(undefined, item);
-      }
+      const row = this.rows[index];
+      if (row && !row.children) this.selectRow(row);
+    },
+    deletePopupState(state) {
+      if (!state) this.$nextTick(() => this.focusBody());
+    },
+    searchString() {
+      this.cancelDrag();
     },
   },
+  created() {
+    // Last seen keys and `active` values, to carry state over edits (not reactive)
+    this.lastKeys = null;
+    this.lastActive = {};
+    this.reconcile(this.items);
+    if (this.selection) this.applySelection(this.selection);
+  },
   mounted() {
-    if (this.updateTree(this.items)) {
-      this.maybeAutoSelectFirst();
-    }
-    window.addEventListener('keydown', this.handleKeydown);
+    if (this.items?.length) this.maybeAutoSelectFirst();
+  },
+  beforeUnmount() {
+    this.stopDragListeners();
   },
   unmounted() {
-    window.removeEventListener('keydown', this.handleKeydown);
     this.$emit('focused', false);
   },
   methods: {
     /**
-     * Auto-selects (or unfolds) the first tree item, if requested.
-     * Shared by mounted() and the items watcher.
+     * A copy of an object without one key
+     *
+     * @param {Object} object source
+     * @param {String} key key to leave out
+     * @returns {Object}
      */
-    maybeAutoSelectFirst() {
-      if (!this.autoSelectFirst || !this.tree[0]) return;
-      if (this.tree[0].value.unfold) {
-        this.tree[0].unfolded = true;
-      } else {
-        this.selectItem(undefined, this.tree[0]);
-      }
+    omit(object, key) {
+      const copy = { ...object };
+      delete copy[key];
+      return copy;
     },
-    updateTree(items) {
-      const jsonData = JSON.stringify(items);
-      if (this.jsonData === jsonData) return false;
-
-      this.jsonData = jsonData;
-      this._tree = [];
-      items.forEach((item, index) => {
-        if (this._tree[index]) {
-          this._tree[index].value = item;
-        } else {
-          this._tree.push({
-            value: item,
-            unfolded: false,
-            highlighted: this.tree[index] ? this.tree[index].highlighted : false,
-            toggled: item.active,
-            selected: this.tree[index] ? this.tree[index].selected : false,
+    /**
+     * A row's view: the item plus its state
+     *
+     * @param {String} key row key
+     * @param {Object} value the caller's item
+     * @returns {Object}
+     */
+    makeRow(key, value) {
+      return {
+        key,
+        value,
+        selected: this.selectedKey === key,
+        highlighted: this.highlighted.includes(key),
+        toggled: !!this.checked[key],
+      };
+    },
+    /**
+     * Keys of the given items and of their sub-items
+     *
+     * @param {Array<Object>} items list items
+     * @returns {{ top: Array<String>, children: Object<String, Array<String>> }}
+     */
+    collectKeys(items) {
+      const top = keysOf(items || []);
+      const children = {};
+      (items || []).forEach((item, index) => {
+        if (Array.isArray(item.unfold)) children[top[index]] = keysOf(item.unfold, `${top[index]}/`);
+      });
+      return { top, children };
+    },
+    /**
+     * Carries row state over an item change: a row whose id or name changed in place keeps its
+     * state, rows that are gone leave it, and checks follow the items' `active` values
+     *
+     * @param {Array<Object>} items new items
+     */
+    reconcile(items) {
+      const next = this.collectKeys(items);
+      const prev = this.lastKeys;
+      const nextTop = new Set(next.top);
+      const renames = {};
+      if (prev) {
+        const prevTop = new Set(prev.top);
+        next.top.forEach((key, index) => {
+          const old = prev.top[index];
+          if (old && old !== key && !prevTop.has(key) && !nextTop.has(old)) {
+            renames[old] = key;
+          }
+        });
+        // Sub-rows: carried along when their parent is renamed, and renamed in place
+        const parents = {};
+        Object.entries(renames).forEach(([from, to]) => { parents[to] = from; });
+        Object.entries(next.children).forEach(([parent, childKeys]) => {
+          const oldParent = parents[parent] || parent;
+          const original = prev.children[oldParent] || [];
+          const translated = original.map((key) => `${parent}${key.slice(oldParent.length)}`);
+          const oldSet = new Set(translated);
+          const newSet = new Set(childKeys);
+          original.forEach((old, index) => {
+            const key = childKeys[index];
+            if (newSet.has(translated[index])) {
+              if (translated[index] !== old) renames[old] = translated[index];
+            } else if (key !== undefined && !oldSet.has(key)) {
+              renames[old] = key;
+            }
           });
+        });
+      }
+      const valid = new Set(next.top);
+      Object.values(next.children).forEach((keys) => keys.forEach((k) => valid.add(k)));
+      const carry = (key) => {
+        const renamed = renames[key] || key;
+        return valid.has(renamed) ? renamed : null;
+      };
+      const carryMap = (map) => {
+        const out = {};
+        Object.keys(map).forEach((key) => {
+          const target = carry(key);
+          if (target && map[key]) out[target] = true;
+        });
+        return out;
+      };
+      this.unfolded = carryMap(this.unfolded);
+      this.checked = carryMap(this.checked);
+      this.highlighted = this.highlighted.map(carry).filter(Boolean);
+      this.selectedKey = this.selectedKey ? carry(this.selectedKey) : null;
+      // Checks follow `active` when a row first appears or its `active` changes
+      const lastActive = {};
+      const seed = (key, item) => {
+        if (item?.active === undefined) return;
+        lastActive[key] = item.active;
+        if (this.lastActive[key] !== item.active) {
+          if (item.active) this.checked[key] = true;
+          else delete this.checked[key];
         }
-        if (item.unfold) {
-          this._tree[index].value.unfold = this._tree[index].value.unfold.map((subItem) => ({
-            value: subItem,
-            highlighted: false,
-            selected: false,
-            toggled: subItem.active,
-          }));
+      };
+      (items || []).forEach((item, index) => {
+        seed(next.top[index], item);
+        if (Array.isArray(item.unfold)) {
+          const childKeys = next.children[next.top[index]];
+          item.unfold.forEach((sub, subIndex) => seed(childKeys[subIndex], sub));
         }
       });
-      this.tree = this._tree;
-      return true;
+      this.lastActive = lastActive;
+      this.lastKeys = next;
     },
-    unfold(item) {
-      if (this.accordion) {
-        this.tree.forEach((i) => { i.unfolded = false; });
+    /**
+     * Selects the first row, or unfolds the first parent, when asked to
+     */
+    maybeAutoSelectFirst() {
+      if (!this.autoSelectFirst) return;
+      const [first] = this.rows;
+      if (!first) return;
+      // A controlled selection is never changed here: only the parent showing it unfolds (else
+      // the first parent)
+      if (this.selection) {
+        const key = this.selection.length ? this.keyOfId(this.selection[0]) : null;
+        const parent = key ? this.rowsByKey[key]?.parentKey : null;
+        const target = parent || (first.children ? first.key : null);
+        if (target) this.unfolded = { ...this.unfolded, [target]: true };
+        return;
       }
-      item.unfolded = !item.unfolded;
-      this.$emit('unfold', item.value);
+      if (first.children) {
+        this.unfolded = { ...this.unfolded, [first.key]: true };
+      } else if (!this.toggleable) {
+        this.selectRow(first);
+      }
+    },
+    /**
+     * Unfolds or folds a parent row (only one open in accordion lists)
+     *
+     * @param {Object} row parent row
+     */
+    unfold(row) {
+      if (this.disabled) return;
+      const open = !this.unfolded[row.key];
+      this.unfolded = this.accordion ? {} : { ...this.unfolded };
+      if (open) this.unfolded[row.key] = true;
+      else delete this.unfolded[row.key];
+      this.$emit('unfold', row.value);
+    },
+    /** Focuses the rows (so keys reach this list), without scrolling */
+    focusBody() {
+      if (this.$refs.body && document.activeElement !== this.$refs.body) {
+        this.$refs.body.focus({ preventScroll: true });
+      }
     },
     handleFocusIn() {
       if (this.hasFocus) return;
@@ -363,200 +575,382 @@ export default {
       this.$emit('focused', true);
     },
     handleFocusOut(e) {
-      // focus moving between elements inside the list isn't a real focus loss
-      if (e && this.$refs.body?.contains(e.relatedTarget)) return;
+      // focus moving between elements inside the rows isn't a focus loss
+      if (this.$refs.body?.contains(e?.relatedTarget)) return;
+      if (!this.hasFocus) return;
       this.hasFocus = false;
       this.$emit('focused', false);
     },
     handleKeydown(e) {
-      // a popup (ours or someone else's) already consumed this key
-      if (e.defaultPrevented || this.deletePopupState) return;
-
+      if (e.defaultPrevented || this.deletePopupState || this.disabled) return;
       if (e.key === 'Escape') {
-        this.handleEscape();
-      } else if ((e.key === 'Backspace' || e.key === 'Delete') && this.hasFocus) {
+        if (this.drag?.active) {
+          this.cancelDrag();
+        } else {
+          this.clearHighlighted();
+          this.emitSelection();
+          this.$refs.body?.blur();
+        }
+      } else if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault();
         this.displayDeletionPopup();
-      }
-    },
-    handleEscape() {
-      this.clearHighlighted();
-      // release DOM focus only if the list owns it; hasFocus follows via focusout
-      if (this.hasFocus) this.$refs.body?.blur();
-    },
-    clearHighlighted() {
-      if (this.noHighlight) return;
-      this.highlightedItems.forEach((item) => { item.highlighted = false; });
-      this.highlightedItems = [];
-      this.$emit('highlight', []);
-    },
-    async handleDeletion() {
-      this.$emit(
-        'delete',
-        this.highlightedItems.length
-          ? this.highlightedItems.map((i) => i.value)
-          : [this.selectedItem.value],
-      );
-      this.deletePopupState = false;
-      this.clearHighlighted();
-    },
-    displayDeletionPopup() {
-      if (this.hasFocus && (this.selectedItem || this.highlightedItems.length) && this.deletable) {
-        this.deletePopupState = true;
+      } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        this.moveSelection(e.key === 'ArrowDown' ? 1 : -1);
       }
     },
     /**
-     * Recomputes the flat list of toggled items (top-level + nested).
-     * Shared by toggleItem() and checkAll() — was duplicated before.
+     * Selects the next or previous visible row
+     *
+     * @param {Number} step 1 (down) or -1 (up)
      */
-    computeToggledItems() {
-      return this.tree.flatMap((i) => {
-        if (i.toggled) return i;
-        if (i.value.unfold) return i.value.unfold.filter((sub) => sub.toggled);
-        return [];
+    moveSelection(step) {
+      if (this.toggleable) return;
+      const rows = this.selectableRows;
+      if (!rows.length) return;
+      const index = rows.findIndex((row) => row.key === this.selectedKey);
+      const firstIndex = step > 0 ? 0 : rows.length - 1;
+      const nextIndex = index < 0
+        ? firstIndex
+        : Math.min(rows.length - 1, Math.max(0, index + step));
+      if (nextIndex === index) return;
+      const row = rows[nextIndex];
+      this.selectRow(row);
+      this.$nextTick(() => {
+        this.$refs.body?.querySelector(`[data-key="${CSS.escape(row.key)}"]`)
+          ?.scrollIntoView({ block: 'nearest' });
       });
     },
-    toggleItem(item) {
-      if (item.value.disabled || this.dragging) return;
-      item.toggled = !item.toggled;
-      this.toggledItems = this.computeToggledItems();
-      this.$emit('toggle', this.toggledItems.map((i) => i.value));
+    /** Values of the highlighted rows, in order */
+    highlightedValues() {
+      return this.highlighted.map((key) => this.rowsByKey[key]?.value).filter(Boolean);
     },
-    checkAll(state, item) {
-      if (item) {
-        item.value.unfold?.forEach((i) => { i.toggled = state; });
-      } else {
-        this.tree.forEach((i) => { i.toggled = state; });
+    /**
+     * Finds the row of an item id: a top-level row without sub-rows, else a sub-row
+     *
+     * @param {*} id item id
+     * @returns {?String} the row's key
+     */
+    keyOfId(id) {
+      const match = (row) => row.value.id !== undefined && row.value.id !== null
+        && String(row.value.id) === String(id);
+      const top = this.rows.find((row) => !row.children && match(row));
+      if (top) return top.key;
+      const child = this.rows.flatMap((row) => row.children || []).find(match);
+      return child ? child.key : null;
+    },
+    /**
+     * Shows a selection set from outside (the `selection` prop): no event, no focus change
+     *
+     * @param {Array} ids ids of the selected rows, first = the selected one
+     */
+    applySelection(ids) {
+      const keys = ids.map((id) => this.keyOfId(id)).filter(Boolean);
+      const selectedKey = keys[0] || null;
+      const highlighted = keys.length > 1 && !this.noHighlight ? keys : [];
+      if (this.selectedKey !== selectedKey) this.selectedKey = selectedKey;
+      if (highlighted.join('|') !== this.highlighted.join('|')) this.highlighted = highlighted;
+    },
+    /**
+     * Reports the selection after a user change: the selected row first, then the other
+     * highlighted rows
+     */
+    emitSelection() {
+      const keys = [this.selectedKey, ...this.highlighted.filter((k) => k !== this.selectedKey)];
+      const values = keys.map((key) => this.rowsByKey[key]?.value).filter(Boolean);
+      this.$emit('selection', values);
+    },
+    clearHighlighted() {
+      if (this.noHighlight) return;
+      this.highlighted = [];
+      this.$emit('highlight', []);
+    },
+    /**
+     * Selects one row, clearing highlights
+     *
+     * @param {Object} row row to select
+     */
+    selectRow(row) {
+      if (!this.noHighlight) this.clearHighlighted();
+      this.selectedKey = row.key;
+      this.$emit('select', row.value);
+      this.emitSelection();
+    },
+    /**
+     * Adds a row to the highlights, or takes it out (Ctrl/⌘+click)
+     *
+     * @param {Object} row clicked row
+     */
+    toggleHighlight(row) {
+      let highlighted = [...this.highlighted];
+      if (!highlighted.length && this.selectedKey && this.selectedKey !== row.key) {
+        highlighted.push(this.selectedKey);
       }
-      this.toggledItems = this.computeToggledItems();
-      this.$emit('toggle', this.toggledItems.map((i) => i.value));
+      if (highlighted.includes(row.key)) {
+        highlighted = highlighted.filter((key) => key !== row.key);
+        if (this.selectedKey === row.key) [this.selectedKey = null] = highlighted;
+      } else {
+        highlighted.push(row.key);
+      }
+      if (!this.selectedKey && highlighted.length) [this.selectedKey] = highlighted;
+      this.highlighted = highlighted;
+      const selected = this.rowsByKey[this.selectedKey];
+      if (selected) this.$emit('select', selected.value);
+      this.$emit('highlight', this.highlightedValues());
+      this.emitSelection();
     },
-    handleSingleSelection(item, clearHighlighted = false) {
-      this.tree.forEach((treeItem) => {
-        treeItem.selected = false;
-        if (clearHighlighted) treeItem.highlighted = false;
-        treeItem.value.unfold?.forEach((subTreeItem) => {
-          if (clearHighlighted) subTreeItem.highlighted = false;
-          subTreeItem.selected = false;
-        });
+    /**
+     * Highlights the rows between the selected row and this one (Shift+click), when both are at
+     * the same level; else selects this row
+     *
+     * @param {Object} row clicked row
+     */
+    highlightRange(row) {
+      const selected = this.rowsByKey[this.selectedKey];
+      const siblings = row.parentKey
+        ? this.visibleRows.find((r) => r.key === row.parentKey)?.children || []
+        : this.visibleRows.filter((r) => !r.children);
+      const from = siblings.findIndex((r) => r.key === selected?.key);
+      const to = siblings.findIndex((r) => r.key === row.key);
+      if (!selected || from < 0 || to < 0 || selected.parentKey !== row.parentKey) {
+        this.selectRow(row);
+        return;
+      }
+      this.highlighted = siblings
+        .slice(Math.min(from, to), Math.max(from, to) + 1)
+        .filter((r) => !r.value.disabled)
+        .map((r) => r.key);
+      this.$emit('highlight', this.highlightedValues());
+      this.emitSelection();
+    },
+    /**
+     * Row click: check (checkable lists), add (Ctrl/⌘), range (Shift) or select
+     *
+     * @param {MouseEvent} e click event
+     * @param {Object} row clicked row
+     */
+    clickRow(e, row) {
+      if (this.disabled || row.value.disabled) return;
+      if (this.suppressClick) {
+        this.suppressClick = false;
+        return;
+      }
+      this.focusBody();
+      if (this.toggleable) {
+        this.toggleRow(row);
+      } else if ((e?.ctrlKey || e?.metaKey) && !this.noHighlight) {
+        this.toggleHighlight(row);
+      } else if (e?.shiftKey && !this.noHighlight) {
+        this.highlightRange(row);
+      } else {
+        this.selectRow(row);
+      }
+    },
+    /** Values of the checked rows: checked parents, else their checked sub-rows */
+    checkedValues() {
+      return this.rows.flatMap((row) => {
+        if (this.checked[row.key]) return [row.value];
+        return (row.children || []).filter((child) => this.checked[child.key])
+          .map((child) => child.value);
       });
-      this.selectedItem = item;
-      this.selectedIndex = this.tree.indexOf(item);
-      item.selected = true;
-      if (!this.noHighlight && clearHighlighted) {
-        this.clearHighlighted();
-      }
-      this.$emit('select', this.selectedItem.value);
     },
-    handleMultiSelection(item) {
-      item.highlighted = !item.highlighted;
-      if (item.highlighted) {
-        this.highlightedItems.push(item);
-      } else {
-        const index = this.highlightedItems.findIndex((h) => h.value === item.value);
-        this.highlightedItems.splice(index, 1);
-      }
-      if (!this.selectedItem && this.highlightedItems.length) {
-        [this.selectedItem] = this.highlightedItems;
-      }
-      if (this.selectedItem && this.highlightedItems.length === 1) {
-        this.selectedItem.highlighted = true;
-        this.highlightedItems.push(this.selectedItem);
-      }
-      this.$emit('select', this.selectedItem.value);
-      this.$emit('highlight', this.highlightedItems.map((i) => i.value));
+    /**
+     * Flips a row's check
+     *
+     * @param {Object} row row to check or uncheck
+     */
+    toggleRow(row) {
+      if (this.disabled || row.value.disabled) return;
+      const checked = { ...this.checked };
+      if (checked[row.key]) delete checked[row.key];
+      else checked[row.key] = true;
+      this.checked = checked;
+      this.$emit('toggle', this.checkedValues());
     },
-    handleGroupedSelection(item, childs) {
-      if (!this.selectedItem) {
-        this.handleSingleSelection(item, true);
-      } else if (childs.some((c) => c === item) && item !== this.selectedItem) {
-        const index = childs.findIndex((c) => c === item);
-        const start = Math.min(index, this.selectedIndex);
-        const stop = Math.max(index, this.selectedIndex);
-        this.clearHighlighted();
-        for (let i = start; i <= stop; i++) {
-          const _item = childs[i];
-          _item.highlighted = true;
-          this.highlightedItems.push(_item);
-        }
-        this.$emit('highlight', this.highlightedItems.map((i) => i.value));
-      }
+    /**
+     * The **Check All** row for these rows
+     *
+     * @param {Array<Object>} rows rows it covers
+     * @returns {Object}
+     */
+    checkAllItem(rows) {
+      const count = rows.filter((row) => this.checked[row.key]).length;
+      return {
+        value: {
+          name: count ? 'Uncheck All' : 'Check All',
+          more: `${count}/${rows.length}`,
+        },
+        toggled: count > 0,
+      };
     },
-    // eslint-disable-next-line default-param-last
-    selectItem(e = {}, item, childs) {
-      if (item.value.disabled || this.dragging) return;
-      if (e.shiftKey && !this.noHighlight && !this.toggleable) {
-        this.handleGroupedSelection(item, childs);
-      } else if (e.ctrlKey && !this.noHighlight && !this.toggleable) {
-        this.handleMultiSelection(item);
-      } else if (!this.toggleable) {
-        this.handleSingleSelection(item, true);
-      } else {
-        this.toggleItem(item);
-      }
+    /**
+     * Unchecks the rows if any is checked, else checks them all (disabled rows don't change)
+     *
+     * @param {Array<Object>} rows rows the Check All row covers
+     */
+    checkAll(rows) {
+      if (this.disabled) return;
+      const state = !rows.some((row) => this.checked[row.key]);
+      const checked = { ...this.checked };
+      rows.filter((row) => !row.value.disabled).forEach((row) => {
+        if (state) checked[row.key] = true;
+        else delete checked[row.key];
+      });
+      this.checked = checked;
+      this.$emit('toggle', this.checkedValues());
     },
-    startDrag(e, index) {
+    /**
+     * Opens the delete confirmation for the highlighted rows, else the selected one
+     */
+    displayDeletionPopup() {
+      if (!this.deletable || this.disabled) return;
+      const keys = this.highlighted.length
+        ? [...this.highlighted]
+        : [this.selectedKey].filter(Boolean);
+      const deletable = keys.filter((key) => this.rowsByKey[key]);
+      if (!deletable.length) return;
+      this.deletionKeys = deletable;
+      this.deletePopupState = true;
+    },
+    handleDeletion() {
+      const values = this.deletionRows.map((row) => row.value);
+      this.deletePopupState = false;
+      this.deletionKeys = [];
+      if (values.length) this.$emit('delete', values);
       this.clearHighlighted();
-      this.itms_cpy = JSON.parse(JSON.stringify(this.items));
-      this.dragging = true;
-      if (this.selectedIndex && this.tree[this.selectedIndex]) {
-        this.tree[this.selectedIndex].selected = false;
-        this.selectedItem = null;
-      }
-      this.originalDragItemIndex = index;
-      this.dragItemIndex = this.originalDragItemIndex;
-      e.dataTransfer.effectAllowed = 'move';
-      e.target.style.setProperty('background-color', 'transparent', 'important');
     },
-    dragEnter(e, index) {
+    /**
+     * Trash icon clicked on a row: deletes the highlighted rows when the row is one of them,
+     * else this row alone, after confirmation
+     *
+     * @param {Object} row the row
+     */
+    deleteRow(row) {
+      if (!this.deletable || this.disabled || row.value.disabled || this.drag) return;
+      this.focusBody();
+      if (this.highlighted.includes(row.key) && this.highlighted.length > 1) {
+        this.displayDeletionPopup();
+        return;
+      }
+      this.deletionKeys = [row.key];
+      this.deletePopupState = true;
+    },
+    /**
+     * Press on a row's handle: starts a drag once the pointer moves
+     *
+     * @param {PointerEvent} e pointerdown event
+     * @param {Object} row the row
+     */
+    pressHandle(e, row) {
+      if (!this.canReorder || e.button !== 0) return;
       e.preventDefault();
-      if (e.target.classList && this.dragging) {
-        this.items.splice(index, 0, this.items.splice(this.dragItemIndex, 1)[0]);
-        this.dragItemIndex = index;
-        const childs = e.target.children;
-        e.target.classList.add('dragged_over');
-        e.target.style.setProperty('background-color', 'var(--secondary-darker)', 'important');
-        e.dataTransfer.dropEffect = 'move';
-        for (let i = 0; i < childs.length; i++) {
-          childs[i].style.visibility = 'hidden';
-        }
-      }
+      this.focusBody();
+      const { body } = this.$refs;
+      // Top-level rows as laid out now: the drag works on these positions
+      const rows = [...body.children]
+        .filter((el) => el.dataset.key)
+        .map((el) => ({ key: el.dataset.key, top: el.offsetTop, height: el.offsetHeight }));
+      const from = rows.findIndex((r) => r.key === row.key);
+      if (from < 0) return;
+      this.drag = {
+        key: row.key,
+        from,
+        to: from,
+        startY: e.clientY,
+        startScroll: body.scrollTop,
+        rows,
+        dy: 0,
+        active: false,
+        settling: false,
+      };
+      window.addEventListener('pointermove', this.moveDrag);
+      window.addEventListener('pointerup', this.endDrag);
+      window.addEventListener('pointercancel', this.cancelDrag);
     },
-    dragOut(e) {
-      if (e.target.classList) {
-        e.target.classList.remove('dragged_over');
-        e.target.style.setProperty('background-color', '', 'important');
-        const childs = e.target.children;
-        for (let i = 0; i < childs.length; i++) {
-          childs[i].style.visibility = 'visible';
-        }
+    moveDrag(e) {
+      const { drag } = this;
+      const { body } = this.$refs;
+      if (!drag || drag.settling || !body) return;
+      if (!drag.active) {
+        if (Math.abs(e.clientY - drag.startY) < DRAG_THRESHOLD) return;
+        drag.active = true;
       }
-    },
-    drop(e) {
       e.preventDefault();
-      const draggedOverEls = this.$el.getElementsByClassName('dragged_over');
-      // eslint-disable-next-line no-restricted-syntax
-      for (const el of draggedOverEls) {
-        el.classList.remove('dragged_over');
-        el.style.setProperty('background-color', '', 'important');
-        const childs = el.children;
-        for (let i = 0; i < childs.length; i++) {
-          childs[i].style.visibility = 'visible';
-        }
-      }
-      e.target.style.setProperty('background-color', '', 'important');
-      this.selectItem(undefined, this.tree[this.dragItemIndex]);
-      this.$emit('reorder', {
-        original: this.originalDragItemIndex,
-        final: this.dragItemIndex,
-      });
+      const bounds = body.getBoundingClientRect();
+      if (e.clientY < bounds.top + DRAG_SCROLL_EDGE) body.scrollTop -= 8;
+      else if (e.clientY > bounds.bottom - DRAG_SCROLL_EDGE) body.scrollTop += 8;
+      const dragged = drag.rows[drag.from];
+      const first = drag.rows[0];
+      const last = drag.rows[drag.rows.length - 1];
+      // The row follows the pointer, kept between the first and last rows
+      const dy = e.clientY - drag.startY + (body.scrollTop - drag.startScroll);
+      drag.dy = Math.max(first.top - dragged.top, Math.min(last.top + last.height
+        - dragged.top - dragged.height, dy));
+      // Target: how many other rows have their middle above the dragged row's middle
+      const middle = dragged.top + drag.dy + dragged.height / 2;
+      drag.to = drag.rows.filter((r, index) => index !== drag.from
+        && r.top + r.height / 2 < middle).length;
     },
-    stopDrag(e) {
-      e.preventDefault();
-      if (e.dataTransfer.dropEffect !== 'move') {
-        this.updateTree(this.itms_cpy);
+    /**
+     * Where a row is drawn while dragging: the dragged row at the pointer, the rows it passed
+     * moved by its height to open the gap where it will land
+     *
+     * @param {Object} row a top-level row
+     * @returns {Object} inline style
+     */
+    dragStyle(row) {
+      const { drag } = this;
+      if (!drag?.active) return null;
+      const index = drag.rows.findIndex((r) => r.key === row.key);
+      if (index === drag.from) {
+        return {
+          transform: `translateY(${drag.dy}px)`,
+          transition: drag.settling ? DRAG_SLIDE : 'none',
+        };
       }
-      this.dragging = false;
-      e.target.style.setProperty('background-color', '', 'important');
+      const { height } = drag.rows[drag.from];
+      let shift = 0;
+      if (drag.from < drag.to && index > drag.from && index <= drag.to) shift = -height;
+      else if (drag.to < drag.from && index >= drag.to && index < drag.from) shift = height;
+      return { transform: `translateY(${shift}px)`, transition: DRAG_SLIDE };
+    },
+    endDrag() {
+      const { drag } = this;
+      this.stopDragListeners();
+      if (!drag || drag.settling) return;
+      this.drag = null;
+      if (!drag.active) return;
+      // the click that ends a drag isn't a selection
+      this.suppressClick = true;
+      setTimeout(() => { this.suppressClick = false; });
+      if (drag.to !== drag.from) {
+        this.$emit('reorder', { original: drag.from, final: drag.to });
+      }
+      // the moved row is selected (checkable lists have no selection)
+      const row = this.rowsByKey[drag.key];
+      if (row && !this.toggleable) this.selectRow(row);
+    },
+    /**
+     * Cancels a drag: the rows slide back to where they were
+     */
+    cancelDrag() {
+      this.stopDragListeners();
+      const { drag } = this;
+      if (!drag?.active || drag.settling) {
+        this.drag = null;
+        return;
+      }
+      drag.settling = true;
+      drag.dy = 0;
+      drag.to = drag.from;
+      setTimeout(() => {
+        if (this.drag === drag) this.drag = null;
+      }, 160);
+    },
+    stopDragListeners() {
+      window.removeEventListener('pointermove', this.moveDrag);
+      window.removeEventListener('pointerup', this.endDrag);
+      window.removeEventListener('pointercancel', this.cancelDrag);
     },
   },
 };
@@ -566,30 +960,104 @@ export default {
 .uikit_list {
   display: flex;
   flex-direction: column;
-  width: fit-content;
   background: var(--primary-light);
   height: 100%;
   width: 100%;
+  min-height: 0;
   user-select: none;
+}
+.uikit_list.disabled {
+  opacity: 0.6;
 }
 .uikit_list_body {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
   width: 100%;
-  height: 100%;
-  align-items: center;
-  overflow: hidden;
+  overflow-x: hidden;
   overflow-y: auto;
   outline: none !important;
+  background: var(--primary-light);
 }
-.uikit_list_item {
+.uikit_list_filler {
+  flex: 1 0 0 !important;
+  min-height: 0;
+  background: var(--primary-light) var(--idle-stripes);
+}
+.uikit_list_body > * {
+  flex-shrink: 0;
+}
+.uikit_list_body.dragging {
+  cursor: grabbing;
+}
+.uikit_list_group {
+  display: flex;
+  flex-direction: column;
   width: 100%;
+  min-height: 0;
+}
+/*
+ * Accordion: the open parent takes the space left, pushing the closed parents after it to the
+ * bottom, and scrolls its sub-rows when they don't fit
+ */
+.uikit_list_body.accordion > .uikit_list_group,
+.uikit_list_body.accordion > .uikit_list_filler {
+  transition: flex-grow 0.15s ease;
+}
+.uikit_list_body.accordion > .uikit_list_group.open {
+  flex-shrink: 1;
+}
+.uikit_list_body.accordion > .uikit_list_group.expanded {
+  flex-grow: 1;
+}
+.uikit_list_body.accordion.expanded > .uikit_list_filler {
+  flex-grow: 0 !important;
+}
+.uikit_list_children {
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-rows: 1fr;
+  min-height: 0;
+}
+.uikit_list_children_inner {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--primary-light) var(--idle-stripes);
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+.uikit_list_children_inner > * {
+  flex-shrink: 0;
+}
+.uikit-unfold-enter-active,
+.uikit-unfold-leave-active {
+  transition: grid-template-rows 0.15s ease, opacity 0.15s ease;
+}
+.uikit-unfold-enter-active .uikit_list_children_inner,
+.uikit-unfold-leave-active .uikit_list_children_inner {
+  overflow-y: hidden;
+}
+.uikit-unfold-enter-from,
+.uikit-unfold-leave-to {
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .uikit_list_body.accordion > .uikit_list_group,
+  .uikit_list_body.accordion > .uikit_list_filler,
+  .uikit-unfold-enter-active,
+  .uikit-unfold-leave-active {
+    transition: none;
+  }
 }
 .uikit_list_body_empty {
   display: flex;
   flex: 1;
   flex-direction: column;
   gap: 8px;
+  min-height: 60px;
   align-items: center;
   justify-content: center;
   color: var(--secondary-light);
@@ -603,39 +1071,32 @@ export default {
   text-transform: uppercase;
   font-family: roboto-regular;
 }
-.uikit_list_header_button {
-  cursor: pointer;
-}
-.uikit_list_item_unfoldable {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100%;
-}
 .uikit_sublist_body {
   padding-left: 16px !important;
 }
-.uikit_sublist_body_empty {
-  flex:1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+.uikit_list_dragged {
+  position: relative;
+  z-index: 2;
+  opacity: 1 !important;
+  outline: 1px solid var(--accent-blue);
+  outline-offset: -1px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
 }
-.delete_popup_buttons {
-  display: flex;
-  gap: 8x;
-  padding: 8px 0px;
-  padding-right: 8px;
-  border-top: 1px solid var(--primary-dark);
-  align-items: center;
-  justify-content: center;
+.uikit_list_body.dragging :deep(.uikit_list_item_handle) {
+  cursor: grabbing;
 }
-.dragged {
-  border: 1px dashed var(--secondary-light) !important;
+.uikit_list_delete_text {
+  padding: 16px 16px 8px;
 }
-.dragged_over {
-  background: transparent !important;
-  border: 1px dashed var(--secondary-light) !important;
+.uikit_list_delete_items {
+  padding: 0 16px 16px;
+  gap: 4px;
+}
+.uikit_list_delete_items > p {
+  gap: 8px;
+}
+.uikit_list_delete_more {
+  color: var(--secondary-light-alt);
+  font-family: Roboto-Regular;
 }
 </style>

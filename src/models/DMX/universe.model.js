@@ -95,12 +95,14 @@ class Universe {
   }
 
   /**
-   * Universe ID
+   * Universe ID. Its fixtures follow it (their `universe` number). Use
+   * `UniversePool.changeId()` to change it: it keeps ids unique.
    *
    * @memberof Universe
    */
   set id(id) {
     this._id = Math.min(Math.max(parseInt(id, 10), MIN_UNIVERSE_ID), MAX_UNIVERSE_ID);
+    this.fixturePool?.fixtures.forEach((fixture) => { fixture.universe = this._id; });
   }
 
   get id() {

@@ -86,27 +86,16 @@ All five units are archived (2026-11-12): the epic branch is ready for its PR in
 
 - **Studio bugs found while documenting (2026-11-06; checked in the running app).** The manual
   doesn't present these as working:
-  - Cue **Trigger Style** is saved but never used: every cue toggles on click; **Temporary**
-    does nothing.
   - The group pool's **dimmer knob**, **Isolate** and **Blackout** are saved but don't affect
     output. The master column's knob and buttons aren't bound to anything.
-  - Effect waveform **PWM** outputs a constant 1 (dark): no case in `FXChannel.getValue`.
-  - Effect directions **BOUNCELRT** / **BOUNCERTL** give every fixture the same phase: no case in
-    `slotPhase`.
-  - Chase **Quantize** stores the option's index as beats, so **1/8**, **1/4** and **1/2** wait
-    1, 2 and 3 beats. Only **None** and **1/1** (one bar) match their labels.
   - Patch bay **Shift+click** range selection selects nothing (`handleGroupedSelection`).
   - The scene panel throws on opening a scene of a group whose fixtures aren't the show's first
     (`selectionKey`); the panel goes on.
   - <kbd>Ctrl</kbd> multi-selection in **Scene Fixtures** is ignored for a group's first cue
     (`selectMultipleFixtures` checks `scene.id`, which is 0), and it starts from fixture id 0
     (`getFixtureValueFromId(0)`): the same root as the error above.
-  - The patch bay's **New** button does nothing (`displayPatchPopup() {}`).
   - `CuePool.genCueId()` reduces over `this.chases` and throws when a cue is added without an
     id (the UI always passes one).
-  - (2026-11-11) The patch bay's list asks to delete (popup, OK) but the patch bay fragment has no
-    `@delete` handler: deleting from the patch bay does nothing. The universe view's fixture pool
-    deletes.
   - (2026-11-11) The visualizer's scene is a module singleton (`SceneManager`) and `Controls` keeps
     the last camera: a second `Visualizer` adds its floor and lights to the first's, and its
     constructor's `autoFocus = true` starts a focus flight on the old camera that lands on the new
@@ -114,19 +103,13 @@ All five units are archived (2026-11-12): the epic branch is ready for its PR in
     previews hit it (handled there); a `Visualizer.dispose()` would fix it at the source.
   - (2026-11-11) With auto-focus on, deselecting doesn't fly the camera back out
     (`setFocus(false)` is commented out in `Controls.handleKeydown`).
-  - (2026-11-11, unit 4) The universe settings' **Config** button has no handler. Connections
+  - (2026-11-11, unit 4) Connections
     (outputs) and universe streams aren't restored after a reload (worse than the WSC known issue
     6, which only names streams). The bundled gateway (WSC 2.2.0-rc.6) forwards Art-Net; sACN
     gets "Unsupported protocol: 0x3". The visualizer's `popout()` (second-screen window) is never
-    called, and with the memory-history router `/visualizer` would open the app anyway. About →
-    Manual opens a hard-coded URL. Menu shortcuts match Ctrl only (not Cmd on macOS). Open Fixture
-    Library entries are listed by file key (`mac-aura.json`).
-
-  - (2026-11-12, unit 5, from the code and the manual's preview check) `CuePool.delete` and
-    `clearAll` don't stop a playing cue: its `Live` animation stays. Deleting a cue while it plays
-    leaves it driving the lights; opening or creating a show while a cue plays leaves the old cue
-    running on the old (emptied) fixtures, throwing on every tick (forever for a looping cue).
-    Not yet reproduced in the running app.
+    called, and with the memory-history router `/visualizer` would open the app anyway. Menu
+    shortcuts match Ctrl only (not Cmd on macOS). Open Fixture Library entries are listed by file
+    key (`mac-aura.json`).
 
 - CI drift check (fail a PR that changes user-facing code without a manual change), generated
   reference pages, and a scheduled AI routine that proposes manual updates. All three were

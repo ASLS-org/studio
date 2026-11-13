@@ -235,9 +235,6 @@ export default {
     };
   },
   watch: {
-    '$route.params.chaseId': function forceRerender() {
-      this.forceReRender();
-    },
     'pool.duration': function poolDurationWatcher() {
       this.resetZoom();
       this.computeRowStyle();
@@ -291,16 +288,19 @@ export default {
      */
     beginPointerSession(onMove, onEnd) {
       const move = (e) => onMove(e);
+      // `up` and `cleanup` refer to each other: declare both before either runs
+      const listeners = {};
       const cleanup = () => {
         window.removeEventListener('mousemove', move);
-        window.removeEventListener('mouseup', up);
+        window.removeEventListener('mouseup', listeners.up);
         const idx = this.activeSessions.indexOf(cleanup);
         if (idx !== -1) this.activeSessions.splice(idx, 1);
       };
-      const up = (e) => {
+      listeners.up = (e) => {
         cleanup();
         if (onEnd) onEnd(e);
       };
+      const { up } = listeners;
       window.addEventListener('mousemove', move);
       window.addEventListener('mouseup', up);
       this.activeSessions.push(cleanup);

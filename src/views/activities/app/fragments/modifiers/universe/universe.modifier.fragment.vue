@@ -1,9 +1,9 @@
 <template>
   <uk-flex class="universe_modifier">
-    <universe-settings-widget v-model="universe" />
+    <universe-settings-widget :model-value="universe" />
     <universe-connection-widget
       v-show="universe.stream"
-      v-model="universe"
+      :model-value="universe"
     />
     <fixture-pool-widget
       :pool="universe.fixturePool"
@@ -12,8 +12,8 @@
         text: 'add',
         callback: displayPatchPopup,
       }"
-      :auto-select="selectedFixtureIndex"
-      @select="selectFixture"
+      :selection="selectedIds"
+      @selection="selectFixtures"
       @delete="deleteFixtures"
     />
     <fixture-settings-widget
@@ -30,7 +30,8 @@
       v-if="selectedFixture && selectedFixture.cells.length"
       :key="selectedFixture.id"
       :cells="selectedFixture.cells.map((cell) => cell.name)"
-      @change="selectedCells = $event"
+      :model-value="selectedCells"
+      @change="selectCells"
     />
     <fixture-channels-widget
       v-show="selectedFixture"
@@ -62,6 +63,7 @@
 </template>
 
 <script>
+import modal from '@/views/mixins/modal.mixin';
 import LiveMixin from '@/views/mixins/live.mixin';
 import FixturePoolWidget from '../_widgets/modifier.widget.fixture.pool.vue';
 import FixtureChannelsWidget from '../_widgets/modifier.widget.fixture.channels.vue';
@@ -94,31 +96,44 @@ export default {
     PatchPopup,
   },
   mixins: [LiveMixin],
-  data() {
-    return {
-      /**
-       * Handle to universe instance
-       */
-      universe: {},
-      /**
-       * Currently selected fixture
-       */
-      selectedFixture: null,
-      /**
-       * Patch popup display state
-       */
-      patchPopupDisplayState: false,
-      /**
-       * Index of the currently selected fixture in the universe's fixture pool.
-       */
-      selectedFixtureIndex: 0,
-      /**
-       * Cells of the selected fixture the controls apply to, null for all (view state only)
-       */
-      selectedCells: null,
-    };
-  },
   computed: {
+    /**
+     * Patch popup display state
+     */
+    patchPopupDisplayState: modal('universe.patch', 'universe'),
+    /**
+     * Universe in view (the last one, while another panel is in view)
+     *
+     * @type {Object}
+     */
+    universe() {
+      return this.$view.universe || {};
+    },
+    /**
+     * Selected fixture ids of the universe. They stay as they are while another panel is in
+     * view, so a hidden panel has nothing to update
+     *
+     * @type {Array<Number>}
+     */
+    selectedIds() {
+      return this.$view.universeFixtures.map((fixture) => fixture.id);
+    },
+    /**
+     * Fixture whose controls are shown: the main selected one
+     *
+     * @type {?Object}
+     */
+    selectedFixture() {
+      return this.$view.universeFixtures[0] || null;
+    },
+    /**
+     * Cells of the selected fixture the controls apply to, null for all
+     *
+     * @type {?Array<String>}
+     */
+    selectedCells() {
+      return this.$view.universeCells;
+    },
     /**
      * Selected fixture's channels, refreshed by the live ticker (playback writes bypass Vue)
      */
@@ -144,57 +159,26 @@ export default {
         ? this.selectedFixture.getPanTilt(this.selectedCells) : undefined);
     },
   },
-  watch: {
-    selectedFixture() {
-      this.selectedCells = null;
-    },
-    '$route.query.fixtureId': function routeQueryFixtureIdWatcher(fixtureId) {
-      this.selectFixture(fixtureId);
-    },
-    // TODO: feed method straight into watcher
-    '$route.params.universeId': function routeParamsUniverseIdWatcher(universeId) {
-      this.fetchUniverseData(universeId);
-      this.selectedFixtureIndex = 0;
-    },
-  },
-  mounted() {
-    this.fetchUniverseData(0);
-  },
-  beforeUnmount() {
-    if (this.selectedFixture && this.selectedFixture.id) {
-      this.selectedFixture.highlightSingle(false);
-    }
-  },
   methods: {
     /**
-     * Fetches universe data
+     * Selects fixtures of the universe (a new main fixture shows all its cells again)
      *
      * @public
+     * @param {Array<Number>} ids fixture ids, main one first
      */
-    fetchUniverseData(id) {
-      if (id !== undefined) {
-        try {
-          this.universe = this.$show.universePool.getFromId(id);
-          this.selectFixture(0);
-        } catch (err) {
-          this.universe = {};
-          this.selectedFixture = null;
-        }
-      }
+    selectFixtures(ids) {
+      const main = this.$view.fixture?.id;
+      this.$view.selectFixtures(ids);
+      if (this.$view.fixture?.id !== main) this.$view.selectCells(null);
     },
     /**
-     * Fetches selected fixture data
+     * Selects the cells the controls apply to
      *
      * @public
+     * @param {?Array<String>} cells cell names, null for all
      */
-    selectFixture(id) {
-      if (id !== undefined) {
-        try {
-          this.selectedFixture = this.universe.fixturePool.getFromId(id || 0);
-        } catch (err) {
-          this.selectedFixture = null;
-        }
-      }
+    selectCells(cells) {
+      this.$view.selectCells(cells);
     },
     /**
      * Display the patch popup
@@ -203,13 +187,6 @@ export default {
      */
     displayPatchPopup() {
       this.patchPopupDisplayState = true;
-    },
-    handleFocus(state) {
-      if (!state) {
-        if (this.selectedFixture) {
-          this.selectedFixture.highlightSingle(false, true);
-        }
-      }
     },
     /**
      * Sets the selected fixture channel value
@@ -256,16 +233,10 @@ export default {
      * @param {Array} selectedFixtures Array of universe fixture objetcs to be deleted.
      */
     deleteFixtures(selectedFixtures) {
+      // The view falls back to the universe's first remaining fixture
       selectedFixtures.forEach((fixture) => {
         this.$show.deleteFixture(fixture);
       });
-      if (this.universe.fixturePool.fixtures.length) {
-        // eslint-disable-next-line prefer-destructuring
-        this.selectedFixture = this.universe.fixturePool.fixtures[0];
-      } else {
-        this.selectedFixture = null;
-      }
-      this.selectedFixtureIndex = 0;
     },
   },
 };

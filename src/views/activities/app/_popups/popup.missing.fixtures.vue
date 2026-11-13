@@ -68,6 +68,7 @@
 </template>
 
 <script>
+import modal from '@/views/mixins/modal.mixin';
 import EventBus from '@/plugins/eventbus';
 import FixtureLibrary from '@/models/fixtures/fixture.library';
 import { PROFILE_SOURCES } from '@/models/fixtures/fixture.profile';
@@ -85,10 +86,6 @@ export default {
   },
   data() {
     return {
-      /**
-       * Popup display state
-       */
-      state: false,
       /**
        * Popup header definition
        */
@@ -112,6 +109,10 @@ export default {
     };
   },
   computed: {
+    /**
+     * Popup display state
+     */
+    state: modal('app.missing-fixtures', 'app', true),
     /**
      * Number of fixture types still missing
      *

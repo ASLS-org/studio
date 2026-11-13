@@ -6,11 +6,10 @@
   >
     <uk-list
       class="cells_widget_list"
-      auto-select-first
       filterable
       :items="items"
-      @select="select"
-      @highlight="highlight"
+      :selection="selection"
+      @selection="emitSelection"
     />
   </uk-widget>
 </template>
@@ -40,6 +39,13 @@ export default {
       type: Array,
       default: () => [],
     },
+    /**
+     * Selected cells (names), null for all of them
+     */
+    modelValue: {
+      type: Array,
+      default: null,
+    },
   },
   emits: ['change'],
   computed: {
@@ -53,6 +59,17 @@ export default {
         icon: id ? 'grid' : 'fixture',
       }));
     },
+    /**
+     * Rows to show selected: the selected cells, else All cells
+     *
+     * @type {Array<Number>}
+     */
+    selection() {
+      const ids = (this.modelValue || [])
+        .map((name) => this.cells.indexOf(name) + 1)
+        .filter((id) => id > 0);
+      return ids.length ? ids : [0];
+    },
   },
   methods: {
     /**
@@ -64,24 +81,6 @@ export default {
     emitSelection(items) {
       const cells = items.filter((item) => item.id > 0).map((item) => item.name);
       this.$emit('change', !cells.length || items.some((item) => item.id === 0) ? null : cells);
-    },
-    /**
-     * Single selection
-     *
-     * @public
-     * @param {Object} item Selected item
-     */
-    select(item) {
-      this.emitSelection([item]);
-    },
-    /**
-     * Multiple selection (Ctrl/Shift)
-     *
-     * @public
-     * @param {Array<Object>} items Highlighted items
-     */
-    highlight(items) {
-      if (items.length) this.emitSelection(items);
     },
   },
 };

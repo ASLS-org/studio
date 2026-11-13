@@ -57,7 +57,9 @@ cue's widgets on the right: see [Scenes](/programming/scenes) and [Effects](/pro
 ### Fixture Pool
 
 Lists the group's fixtures. Click one to select it, hold <kbd>Ctrl</kbd> to select several, and
-type in **Search items** to filter the list.
+type in **Search items** to filter the list. A scene's **Scene Fixtures** list shares this
+selection: select fixtures in either list and they are selected in both. The list you clicked in
+shows them in blue; the other shows them as selected, without the blue.
 
 To add fixtures, press **Add** and tick them in the popup, as when you created the group. A new
 fixture joins the group's cues with no values: scenes leave it alone until you give it some, and

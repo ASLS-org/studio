@@ -60,6 +60,7 @@ const DEFAULT_FXCHANNEL_DATA = {
   MAX: 255,
   FREQUENCY: 1,
   PHASE: 0,
+  WIDTH: 50,
   FIXTURE_PHASE: {
     START: 0,
     STOP: 360,
@@ -400,6 +401,7 @@ class FXChannel {
    * @param {Number} channel.min FXChannel min value
    * @param {Number} channel.frequency FXChannel frequency in Hertz
    * @param {Number} channel.phase FXChannel phasing in degrees
+   * @param {Number} [channel.width=50] PWM width: share of each cycle at max, in percent (1-99)
    * @param {Number} channel.fixturePhaseStart FXChannel fixtures phasing start interval in degrees
    * @param {Number} channel.fixturePhaseStop FXChannel fixtures phasing stop interval in degrees
    * @param {Boolean} [channel.cellPhase=false] Whether the phase spreads over every cell of the
@@ -410,6 +412,7 @@ class FXChannel {
   constructor(channel, fixtures, duration) {
     this.type = channel.type;
     this._cellPhase = channel.cellPhase === true;
+    this.width = channel.width;
     this.fixtures = fixtures;
     this.direction = channel.direction;
     this.waveform = channel.waveform;
@@ -421,7 +424,6 @@ class FXChannel {
     this.fixturePhaseStop = channel.fixturePhaseStop;
     this.time = 0;
     this.duration = duration;
-    this.directionFlag = 0;
     this.update(0);
     this.DMXData = 0;
   }
@@ -493,6 +495,23 @@ class FXChannel {
 
   get waveform() {
     return this._waveform;
+  }
+
+  /**
+   * FXChannel PWM width: share of each cycle spent at max, in percent (1-99)
+   *
+   * @type {Number}
+   */
+  set width(width) {
+    const value = Number(width);
+    this._width = Number.isFinite(value)
+      ? Math.min(99, Math.max(1, value))
+      : DEFAULT_FXCHANNEL_DATA.WIDTH;
+    if (this._fixtures) this.update(this.time);
+  }
+
+  get width() {
+    return this._width;
   }
 
   /**
@@ -732,6 +751,7 @@ class FXChannel {
       min: this.min,
       frequency: this.frequency,
       phase: this.phase,
+      width: this.width,
       fixturePhaseStart: this.fixturePhaseStart,
       fixturePhaseStop: this.fixturePhaseStop,
       cellPhase: this.cellPhase,
@@ -797,8 +817,10 @@ class FXChannel {
   slotPhase(index, len, startRad, spanRad) {
     switch (this.direction) {
       case FX_CHANNEL_DIRECTIONS.LTR:
+      case FX_CHANNEL_DIRECTIONS.BOUNCELRT:
         return spanRad * (index / len) + startRad;
       case FX_CHANNEL_DIRECTIONS.RTL:
+      case FX_CHANNEL_DIRECTIONS.BOUNCERTL:
         return -spanRad * (index / len) + startRad;
       case FX_CHANNEL_DIRECTIONS.SYM: {
         const normalizedIndex = index / (len - 1);
@@ -923,17 +945,54 @@ class FXChannel {
    * @param {Number} [phaseOffset=0]
    * @return {Number} Channel value
    */
-  getValue(t, phaseOffset) {
+  getValue(t, phaseOffset = 0) {
+    const time = this.bounceTime(t);
     switch (this.waveform) {
       case FX_CHANNEL_WAVEFORMS.SINE:
-        return this.genSine(t, phaseOffset);
+        return this.genSine(time, phaseOffset);
       case FX_CHANNEL_WAVEFORMS.TRIANGLE:
-        return this.genTriangle(t, phaseOffset);
+        return this.genTriangle(time, phaseOffset);
       case FX_CHANNEL_WAVEFORMS.SQUARE:
-        return this.genSine(t, phaseOffset) >= this.average ? this.max : this.min;
+        return this.genSine(time, phaseOffset) >= this.average ? this.max : this.min;
+      case FX_CHANNEL_WAVEFORMS.PWM:
+        return this.genPWM(time, phaseOffset);
       default:
-        return 1;
+        return this.min;
     }
+  }
+
+  /**
+   * Effect time to evaluate the wave at: with a bounce direction, time runs forward on even
+   * cycles and backward on odd ones, so the wave travels across the fixtures one way, then back,
+   * without jumping
+   *
+   * @private
+   * @param {Number} t effect progress (0-1 over the effect's duration)
+   * @returns {Number} time to evaluate the wave at
+   */
+  bounceTime(t) {
+    if (this.direction !== FX_CHANNEL_DIRECTIONS.BOUNCELRT
+      && this.direction !== FX_CHANNEL_DIRECTIONS.BOUNCERTL) return t;
+    const cycles = this.frequency * t;
+    const k = Math.floor(cycles);
+    const f = cycles - k;
+    const position = k % 2 === 0 ? f : 1 - f;
+    return position / this.frequency;
+  }
+
+  /**
+   * Returns PWM wave value at any given time: max for the first `width` percent of each cycle,
+   * min for the rest
+   *
+   * @public
+   * @param {Number} t effect progress (0-1 over the effect's duration)
+   * @param {Number} [phaseOffset=0] phase offset in radians
+   * @return {Number} PWM wave value
+   */
+  genPWM(t, phaseOffset = 0) {
+    const cycles = this.frequency * t + (this.phaseRad + phaseOffset) / (2 * Math.PI);
+    const position = cycles - Math.floor(cycles);
+    return position < this.width / 100 ? this.max : this.min;
   }
 
   /**
