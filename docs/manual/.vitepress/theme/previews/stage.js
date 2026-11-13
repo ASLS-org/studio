@@ -11,12 +11,14 @@ import { reactive } from 'vue';
  * - frame: the running stage preview's frame, or null
  * - title: its title (the component it shows)
  * - demo: whether a scripted demo plays in it
+ * - view: its view state ($view): what the card highlights is that preview's selection
  */
 const stage = reactive({
   count: 0,
   frame: null,
   title: '',
   demo: false,
+  view: null,
 });
 
 export default stage;

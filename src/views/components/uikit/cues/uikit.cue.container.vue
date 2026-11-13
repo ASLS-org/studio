@@ -283,8 +283,7 @@ export default {
     selectChase(chase) {
       if (chase) {
         this.$emit('select-chase', this.group, chase);
-      } // this.selectedChaseId = chase.id;
-      // this.$router.push(`/group/${this.group.id}/chase/${chase.id}`).catch(() => {});
+      }
     },
     /**
      * Handles chase creation
@@ -293,7 +292,7 @@ export default {
      */
     addChase(gridIndex) {
       if (!this.master) {
-        this.group.addChase({
+        const chase = this.group.addChase({
           color: this.group.color,
           id: gridIndex,
         });
@@ -304,7 +303,7 @@ export default {
          * @property {Number} poolsize the group's new pool size
          */
         this.$emit('poolsize');
-        this.$router.push(`/group/${this.group.id}/chase/${gridIndex}`);
+        this.selectChase(chase);
       }
     },
     /**

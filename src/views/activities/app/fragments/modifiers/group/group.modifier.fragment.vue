@@ -1,20 +1,17 @@
 <template>
   <div
-    v-show="group"
+    v-if="group"
     class="group_modifier"
   >
     <group-settings-widget :group="group" />
     <fixture-pool-widget
-      v-show="group"
-      :pool="group ? group.fixturePool : {}"
+      :pool="group.fixturePool"
       :action="{ icon: 'new', text: 'add', callback: displayFixturePopup }"
+      :selection="selectedIds"
+      @selection="selectFixtures"
       @delete="deleteFixtures"
     />
-    <widget-cuepool
-      v-show="group"
-      :group="group"
-      @select="selectCue"
-    />
+    <widget-cuepool :group="group" />
     <cue-settings-widget
       v-show="cue"
       :cue="cue"
@@ -32,7 +29,6 @@
       />
     </keep-alive>
     <popup-group-patch
-      v-show="group"
       v-model="fixturePopupDisplayState"
       :group="group"
     />
@@ -40,10 +36,8 @@
 </template>
 
 <script>
+import modal from '@/views/mixins/modal.mixin';
 import colorMixin from '@/views/mixins/color.mixin';
-import Group from '@/models/DMX/group.model';
-import Cue from '@/models/DMX/cue.model';
-import Fixture from '@/models/DMX/fixture.model';
 import FixturePoolWidget from '../_widgets/modifier.widget.fixture.pool.vue';
 
 import SceneModifier from './group.scene.modifier.fragment.vue';
@@ -70,63 +64,54 @@ export default {
     EffectModifier,
   },
   mixins: [colorMixin],
-  data() {
-    return {
-      /**
-       * Handle to the group instance to be displayed
-       */
-      group: new Group(), // this.$show.groupPool.getFromId(this.$route.params.groupId),
-      /**
-       * Handle to currently selected fixture instance
-       */
-      fixture: null,
-      /**
-       * Handle to currently selected cue instance
-       */
-      cue: null,
-      /**
-       * Group fixture patching popup display state
-       */
-      fixturePopupDisplayState: false,
-    };
-  },
-  watch: {
-    // TODO: feed method straight into watcher (idealy get read of watchers as much as possible)
-    '$route.params.groupId': function routeParamsGroupIdWatcher(id) {
-      if (id !== undefined) {
-        this.fetchGroupData(id);
-      }
+  computed: {
+    /**
+     * Group fixture patching popup display state
+     */
+    fixturePopupDisplayState: modal('group.patch', 'group'),
+    /**
+     * Group in view (the last one, while another panel is in view)
+     *
+     * @type {?Object}
+     */
+    group() {
+      return this.$view.group;
+    },
+    /**
+     * Group's selected cue
+     *
+     * @type {?Object}
+     */
+    cue() {
+      return this.$view.cue;
+    },
+    /**
+     * Selected fixture ids of the group, shared by its fixture pool and the scene's list. They
+     * stay as they are while another panel is in view
+     *
+     * @type {Array<Number>}
+     */
+    selectedIds() {
+      return this.$view.groupFixtures.map((fixture) => fixture.id);
     },
   },
   methods: {
     /**
-     * Fetches group data from route's groupId param
+     * Selects fixtures of the group (a new main fixture shows all its cells again)
      *
-       * @public
+     * @public
+     * @param {Array<Number>} ids fixture ids, main one first
      */
-    fetchGroupData(id) {
-      if (id !== undefined) {
-        try {
-          this.group = this.$show.groupPool.getFromId(id);
-          this.fixture = null;
-          this.fixturePopupDisplayState = false;
-          if (this.group.cuePool.cues.length) {
-            this.selectCue(this.group.cuePool.cues[0], false);
-          } else {
-            this.cue = null;
-          }
-        } catch (err) {
-          this.group = new Group();
-          this.fixture = new Fixture({ isStub: true });
-          this.cue = new Cue({ isStub: true });
-        }
-      }
+    selectFixtures(ids) {
+      const main = this.$view.fixture?.id;
+      this.$view.selectFixtures(ids);
+      if (this.$view.fixture?.id !== main) this.$view.selectCells(null);
     },
     /**
-     * Deletes one or multiple fixtures from the group's fixture list
+     * Removes one or more fixtures from the group (not from the show)
      *
-       * @public
-     * @param {Array} fixtures array of group fixture objects
+     * @public
+     * @param {Array} fixtures listable data of the group's fixtures
      */
     deleteFixtures(fixtures) {
       fixtures.forEach((fixture) => {
@@ -134,36 +119,11 @@ export default {
       });
     },
     /**
-     * Selects a cue to be displayed within the group's cue sub-fragment
+     * Displays the group fixture patching popup
      *
-       * @public
-     * @param {Object} cuehandle to the group's cue instance to be displayed
-     */
-    selectCue(cue) {
-      if (cue) {
-        this.cue = cue;
-        if (this.$route.name === 'Group') {
-          // eslint-disable-next-line no-restricted-globals
-          // history.pushState({}, null, `${this.$route.path}/cue/${encodeURIComponent(cue.id)}`);
-        }
-      } else {
-        this.cue = null;
-      }
-    },
-    /**
-     * Prepares the list of available fixtures and displays group fixture patching popup.
-     *
-       * @public
+     * @public
      */
     displayFixturePopup() {
-      this.availableFixtures = this.$show.fixturePool.fixtures.filter((fixture) => {
-        try {
-          this.group.fixturePool.getFromId(fixture.id);
-          return false;
-        } catch (err) {
-          return true;
-        }
-      });
       this.fixturePopupDisplayState = true;
     },
   },

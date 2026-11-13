@@ -101,9 +101,7 @@ export default {
      * @public
      */
     deinit() {
-      if (this.selectedFixtures.length) {
-        this.selectedFixtures[0].highlightSingle(false, true);
-      }
+      this.$view.previewFixtures(null);
     },
     /**
      * Select fixture instances to be added into the group
@@ -112,21 +110,11 @@ export default {
      * @param {Array} fixtures array of fixture definition objects
      */
     selectFixtures(fixtures) {
-      /**
-       * Force clearing selected fixtures appearance on toggled data change
-       */
-      if (this.selectedFixtures.length) {
-        this.selectedFixtures[0].highlightSingle(false, true);
-      }
-      this.selectedFixtures = fixtures.map((fixture, index) => {
-        const fxt = this.$show.fixturePool.getFromId(fixture.id);
-        if (index) {
-          fxt.highlight(true, true);
-        } else {
-          fxt.highlightSingle(true, true);
-        }
-        return fxt;
-      });
+      this.selectedFixtures = fixtures
+        .map((fixture) => this.$show.fixturePool.fixtures.find((f) => f.id === fixture.id))
+        .filter(Boolean);
+      // The 3D view shows the fixtures being picked while the popup is open
+      this.$view.previewFixtures(this.selectedFixtures.map((fixture) => fixture.id));
     },
     /**
      * Add selected fixtures to the group

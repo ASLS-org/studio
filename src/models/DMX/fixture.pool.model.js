@@ -109,7 +109,6 @@ class FixturePool {
   delete(fixture, destroy = false) {
     const index = this.fixtures.findIndex((item) => item.id === fixture.id);
     if (index > -1) {
-      this.fixtures[index].highlight(false, true);
       this.fixtures.splice(index, 1);
       if (destroy) {
         Fixture.deleteInstance(fixture);

@@ -4,7 +4,9 @@ Use skill `vue-ui-change` for any UI work. This file is the map.
 
 ```
 views/
-  activities/            top-level screens (router targets)
+  view.state.js          ViewState ($view): panel in view, selection by id, memory, popups
+  keyboard.js            Keyboard ($keyboard): top popup → focused block → global shortcuts
+  activities/            top-level screens
     app/app.activity.vue   main shell: loads localStorage or demo showfile, lays out fragments
     app/_popups/           app-level popups (splash, error)
     app/fragments/<area>/  toolbar, patch-bay, group-pool, visualizer, modifiers/{universe,group,chase}
@@ -13,7 +15,8 @@ views/
       _popups/             popups scoped to that fragment
     visualizer/            standalone visualizer route (/visualizer)
   components/uikit/      `uk-*` design system, registered globally in main.js
-  mixins/                popup.mixin.js (v-model open/close), color.mixin.js
+  mixins/                popup.mixin.js (v-model open/close), modal.mixin.js (named popup
+                         state in $view), keys.mixin.js (keyboard block), color.mixin.js
   utils/                 palette, setCapture (exposed as this.$utils)
 ```
 
@@ -26,7 +29,24 @@ views/
 - Live values (channel values, cue state/progress, chase playheads, DMX activity) are written by
   playback outside Vue: read them through `views/mixins/live.mixin.js` (`live(value)`), which
   refreshes with `$liveTicker` (25 Hz while playing; `$liveTicker.bump()` after edits).
-- Navigation: `this.$router.push(path).catch(() => {})`. Routes are in `plugins/router.js`.
+- **What's in view is `$view`'s** (`views/view.state.js`), the single source of truth for the
+  panel (universe, group, chase), the selected cue, fixtures and cells, and the open popups.
+  Navigate with its actions (`openUniverse`, `openGroup`, `openChase`, `openFixture`), select
+  with `selectCue` / `selectFixtures` / `selectCells`, read its getters (`universe`, `group`,
+  `cue`, `chase`, `fixtures`; per context `universeFixtures`, `groupFixtures`). It holds ids and
+  resolves them on read, so deletes fall back to the first item without repair code: never copy
+  its objects into `data`, never write a "selected" flag of your own. Each group and universe
+  remembers its selection for the session (never saved). The router only has activities.
+- **Lists bound to a selection** use `uk-list`'s `selection` prop (ids) and `selection` event,
+  not `auto-select-first`. The 3D highlight follows `$view.highlight` (visualizer fragment):
+  don't call the visualizer to highlight; a popup choosing fixtures uses `previewFixtures(ids)`.
+- **Popups:** give each one a name with `modal(name, owner)` from `mixins/modal.mixin.js` as a
+  computed `v-model`; owner = the panel it belongs to (closed on any panel change) or `'app'`.
+  `uk-popup` registers itself as a layer of `$view`: Escape and Enter go to the top one only.
+- **Keys:** never add a `window` keydown listener. A block that reacts to keys while focused uses
+  `mixins/keys.mixin.js` (`handleKeys(e)` returns true when handled; give it a focusable
+  element); app-wide shortcuts use `$keyboard.addShortcut(match, handler)`. Fields keep their
+  keys, and nothing behind an open popup gets any.
 - Styling: `<style scoped>` plain CSS using the design tokens in `src/assets/styles/tokens.css`
   (`--primary-*`, `--secondary-*`, `--accent-*`; shared with the user manual). No new hard-coded
   colours; palette lives in `uikit/colors/uikit.colors.js` and `views/utils/palette.js`.

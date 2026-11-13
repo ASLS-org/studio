@@ -12,11 +12,10 @@
         class="body"
       >
         <uk-flex
+          ref="keys"
           tabindex="0"
           col
           class="body"
-          @focus="handleFocus(true)"
-          @focusout="handleFocus(false)"
         >
           <div
             ref="grid"
@@ -122,7 +121,7 @@
     </uk-flex>
     <popup-cue-pool
       v-model="cuePopupDisplayState"
-      :cue-id="selectedCue"
+      :cue-id="newCueId"
       :group="group"
       @add="addCue"
     />
@@ -130,7 +129,9 @@
 </template>
 
 <script>
+import modal from '@/views/mixins/modal.mixin';
 import LiveMixin from '@/views/mixins/live.mixin';
+import KeysMixin from '@/views/mixins/keys.mixin';
 import { CUE_TRIGGER_STYLES } from '@/models/DMX/cue.model';
 import popupCuePool from '../_popups/group.modifier.popup.cuepool.vue';
 
@@ -143,7 +144,7 @@ export default {
   components: {
     popupCuePool,
   },
-  mixins: [LiveMixin],
+  mixins: [LiveMixin, KeysMixin],
   props: {
     /**
      * Handle to group instance
@@ -157,7 +158,7 @@ export default {
       }),
     },
   },
-  emits: ['select', 'add'],
+  emits: ['add'],
   data() {
     return {
       /**
@@ -172,17 +173,9 @@ export default {
         icon: 'grid',
       },
       /**
-       * Cue creation popup display state
+       * Cue pool slot a new cue is being created in
        */
-      cuePopupDisplayState: false,
-      /**
-       * Handle to group's cue list
-       */
-      cues: this.group.cuePool.cues,
-      /**
-       * Selected cue index
-       */
-      selectedCue: null,
+      newCueId: null,
       /**
        * Whether cue's body (player) is seleted
        */
@@ -191,23 +184,33 @@ export default {
        * Whether cue's footer (selector) is seleted
        */
       hoveredCueSelector: -1,
-      /**
-       * Cue deletion popup state
-       */
-      deletePopupState: false,
     };
   },
-  watch: {
+  computed: {
     /**
-     * @todo maybe avoid watching whole groups, evern though watching routine isn't deep ?
+     * Cue creation popup display state
      */
-    group() {
-      this.cues = this.group ? this.group.cuePool.cues : [];
-      this.selectCue(this.cues[0] || null);
+    cuePopupDisplayState: modal('cuepool.add', 'group'),
+    /**
+     * The group's cues
+     *
+     * @type {Array<Object>}
+     */
+    cues() {
+      return this.group ? this.group.cuePool.cues : [];
+    },
+    /**
+     * Id of the group's selected cue (from the view state)
+     *
+     * @type {?Number}
+     */
+    selectedCue() {
+      // Outside the app (the manual's home story) there is no view state: no selection
+      if (!this.$view || !this.group || this.$view.group?.id !== this.group.id) return null;
+      return this.$view.cue?.id ?? null;
     },
   },
   beforeUnmount() {
-    window.removeEventListener('keydown', this.keydownHandler);
     this.releaseHeldCue();
   },
   methods: {
@@ -273,13 +276,9 @@ export default {
      * @param {Object} cue handle to cue instance
      */
     selectCue(cue) {
-      if (cue) {
-        this.selectedCue = cue.id;
-        this.$emit('select', cue);
-      } else {
-        this.selectedCue = null;
-        this.$emit('select', null);
-      }
+      if (!this.$view) return;
+      if (this.group && this.$view.group?.id !== this.group.id) this.$view.openGroup(this.group.id);
+      this.$view.selectCue(cue ? cue.id : null);
     },
     /**
      * Plays a cue from the pool
@@ -329,7 +328,7 @@ export default {
      * @param {Number} cueId index of the cue to be created
      */
     displayCuepoolPopup(cueId) {
-      this.selectedCue = cueId;
+      this.newCueId = cueId;
       this.cuePopupDisplayState = true;
     },
     /**
@@ -340,7 +339,6 @@ export default {
      */
     addCue(cue) {
       this.selectCue(cue);
-      this.cues = this.group.cuePool.cues;
       this.$emit('add', cue);
     },
     /**
@@ -349,11 +347,9 @@ export default {
        * @public
      */
     deleteCue() {
-      this.deletePopupState = false;
-      const cue = this.group.cuePool.getFromId(this.selectedCue);
-      this.group.deleteCue(cue);
-      this.cues = this.group.cuePool.cues;
-      this.selectCue(this.cues[0] || null);
+      // The selected cue: once it's gone, the view falls back to the group's first cue
+      const cue = this.cues.find((c) => c.id === this.selectedCue);
+      if (cue) this.group.deleteCue(cue);
     },
     /**
      * Initiates cue dragging procedure
@@ -391,28 +387,27 @@ export default {
       this.$refs.scroller.style.marginTop = `${(e.target.clientHeight - 25) * scrollingPerc}px`;
     },
     /**
-     * Handle component focus event
+     * Element whose focus makes the cue pool the focused block
      *
-       * @public
-     * @param {Bool} state focus state
+     * @public
+     * @returns {?Element}
      */
-    handleFocus(state) {
-      window.removeEventListener('keydown', this.keydownHandler);
-      if (state) {
-        window.addEventListener('keydown', this.keydownHandler);
-      }
+    keysElement() {
+      return this.$refs.keys?.$el || null;
     },
     /**
-     * Keydown handler
+     * Keys while the cue pool has focus: Delete or Backspace deletes the selected cue
      *
-       * @public
-     * @param {Object} e keydown event
+     * @public
+     * @param {KeyboardEvent} e keydown event
+     * @returns {Boolean} whether the key was handled
      */
-    keydownHandler(e) {
-      const { key } = e;
-      if (key === 'Backspace' || key === 'Delete') {
+    handleKeys(e) {
+      if (e.key === 'Backspace' || e.key === 'Delete') {
         this.deleteCue();
+        return true;
       }
+      return false;
     },
   },
 };

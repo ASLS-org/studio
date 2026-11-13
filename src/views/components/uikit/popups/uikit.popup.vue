@@ -167,12 +167,30 @@ export default {
       this.update();
     },
   },
+  created() {
+    const vm = this;
+    /**
+     * This popup as a layer of the view state: where Escape and Enter go while it's on top
+     * (views/keyboard.js). Popups without validation (the splash) ignore both.
+     */
+    this.layer = {
+      get el() {
+        return vm.$el && vm.$el.nodeType === 1 ? vm.$el : null;
+      },
+      close() {
+        if (!vm.noValidation) vm.close();
+      },
+      submit() {
+        if (!vm.noValidation && vm.valid) vm.submit();
+      },
+    };
+  },
   mounted() {
     this.host().appendChild(this.$el);
     this.update();
   },
   beforeUnmount() {
-    window.removeEventListener('keydown', this.handleKeydown);
+    this.setLayer(false);
     if (this.backdrop && this.backdropEl) {
       this.backdropEl.remove();
     }
@@ -189,11 +207,8 @@ export default {
      *
      */
     update() {
-      window.removeEventListener('keydown', this.handleKeydown);
       this.displayed = this.modelValue;
-      if (this.displayed) {
-        window.addEventListener('keydown', this.handleKeydown);
-      }
+      this.setLayer(this.displayed);
       if (this.displayed && this.backdrop) {
         this.backdropEl = document.createElement('div');
         this.backdropEl.className = `backdrop${this.opaque ? ' opaque' : ''}`;
@@ -243,7 +258,22 @@ export default {
        */
       this.$emit('update:modelValue', this.displayed);
       this.$emit('input', this.displayed);
+      this.setLayer(false);
+    },
+    /**
+     * Puts the popup on top of the view state's layers while it shows, or takes it off. Without
+     * a view state (a page outside the app), it listens to Escape and Enter itself
+     *
+     * @param {Boolean} shown whether the popup shows
+     */
+    setLayer(shown) {
+      if (this.$view) {
+        if (shown) this.$view.pushLayer(this.layer);
+        else this.$view.removeLayer(this.layer);
+        return;
+      }
       window.removeEventListener('keydown', this.handleKeydown);
+      if (shown) window.addEventListener('keydown', this.handleKeydown);
     },
     cancel() {
       if (!this.onCancel) {

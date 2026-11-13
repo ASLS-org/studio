@@ -18,11 +18,10 @@
       resizable
     >
       <div
+        ref="groups"
         tabindex="0"
         :class="{ expand }"
         class="group_pool_groups"
-        @focus="handleFocus(true)"
-        @focusout="handleFocus(false)"
       >
         <uk-cue-container
           v-for="(group, index) in groups"
@@ -30,14 +29,9 @@
           :scroll-to="scrollValue"
           :poolsize="poolsize"
           :group="group"
-          :selected="
-            Number($route.params?.groupId) === group.id
-              && $route.params?.chaseId === undefined
-          "
+          :selected="$view.panel === 'group' && $view.group?.id === group.id"
           :selected-chase-id="
-            Number($route.params?.groupId) === group.id
-              ? Number($route.params?.chaseId)
-              : null
+            $view.panel === 'chase' && $view.group?.id === group.id ? $view.chase.id : null
           "
           @poolsize="updatePoolSize"
           @scrolled="updateScroll"
@@ -73,7 +67,9 @@
 </template>
 
 <script>
+import modal from '@/views/mixins/modal.mixin';
 import EventBus from '@/plugins/eventbus';
+import KeysMixin from '@/views/mixins/keys.mixin';
 import GroupPopup from './_popups/popup.group.vue';
 // Dirty trick but it should do for now.
 
@@ -88,6 +84,7 @@ export default {
   components: {
     GroupPopup,
   },
+  mixins: [KeysMixin],
   data() {
     return {
       /**
@@ -111,30 +108,20 @@ export default {
        */
       selIndex: 0,
       /**
-       * Handle to selected group
-       */
-      selectedGroup: null,
-      /**
-       * Group creation popup display state
-       */
-      groupPopupDisplayState: false,
-      /**
-       * Group deletion popup display state
-       */
-      deletePopupDsiplayState: false,
-      /**
        * Group pool container expansion styling states
        */
       expand: false,
-      /**
-       * Id of the currently selected group
-       */
-      // selectedGroup: {
-      //   type: Number,
-      //   default: null,
-      // },
-      selectedChase: null,
     };
+  },
+  computed: {
+    /**
+     * Group creation popup display state
+     */
+    groupPopupDisplayState: modal('group.new', 'app'),
+    /**
+     * Group deletion popup display state
+     */
+    deletePopupDsiplayState: modal('group.delete', 'app'),
   },
   mounted() {
     this.groups = this.$show.groupPool.groups;
@@ -151,15 +138,20 @@ export default {
      * Selects a group from the pool
      *
      * @public
-     * @param {Number} index index of the pool's group to be selected in the group modifier.
+     * @param {Object} group the group to show
      */
     select(group) {
-      this.selectedGroup = group;
-      this.$router.push(`/group/${group.id}`).catch(() => {});
+      this.$view.openGroup(group.id);
     },
+    /**
+     * Shows a group's chase
+     *
+     * @public
+     * @param {Object} group the chase's group
+     * @param {Object} chase the chase to show
+     */
     selectChase(group, chase) {
-      this.selectedChase = chase;
-      this.$router.push(`/group/${group.id}/chase/${chase.id}`).catch(console.log);
+      this.$view.openChase(group.id, chase.id);
     },
     /**
      * Displays the group creation popup
@@ -174,11 +166,12 @@ export default {
      *
      * @public
      */
-    async deleteGroup() {
+    deleteGroup() {
       this.deletePopupDsiplayState = false;
-      if (this.selectedGroup) {
-        await this.$router.push(`/group/${this.groups[0].id}`);
-        this.pool.delete(this.selectedGroup);
+      // The group in view: once it's gone, the view falls back to the first group
+      const group = this.$view.panel === 'group' ? this.$view.group : null;
+      if (group) {
+        this.pool.delete(group);
         // Forcing pool update. It's a bit sparse but it works
         this.groups = [];
         this.groups.splice();
@@ -211,30 +204,28 @@ export default {
       this.scrollValue = scroll;
     },
     /**
-     * Handle component focus event
+     * Element whose focus makes the group pool the focused block
      *
      * @public
-     * @param {Bool} state focus state
+     * @returns {?Element}
      */
-    handleFocus(state) {
-      window.removeEventListener('keydown', this.keydownHandler);
-      if (state) {
-        window.addEventListener('keydown', this.keydownHandler);
-      }
+    keysElement() {
+      return this.$refs.groups;
     },
     /**
-     * Keydown handler
+     * Keys while the group pool has focus: Delete or Backspace asks to delete the group in view
      *
      * @public
-     * @param {Object} e keydown event
+     * @param {KeyboardEvent} e keydown event
+     * @returns {Boolean} whether the key was handled
      */
-    keydownHandler(e) {
-      const { key } = e;
-      if (key === 'Backspace' || key === 'Delete') {
-        if (this.selectedGroup && this.$route.params.chaseId == null) {
-          this.deletePopupDsiplayState = true;
-        }
+    handleKeys(e) {
+      if ((e.key === 'Backspace' || e.key === 'Delete') && this.$view.panel === 'group'
+        && this.$view.group) {
+        this.deletePopupDsiplayState = true;
+        return true;
       }
+      return false;
     },
   },
 };

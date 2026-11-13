@@ -56,6 +56,7 @@
 </template>
 
 <script>
+import modal from '@/views/mixins/modal.mixin';
 import EventBus from '@/plugins/eventbus';
 import VisualizerPopup from './_popups/popup.visualizer.vue';
 import LicensePopup from './_popups/popup.license.vue';
@@ -110,34 +111,6 @@ export default {
        * Current show state
        */
       state: this.$show.state,
-      /**
-       * Connection popup state
-       */
-      connectionsPopupState: false,
-      /**
-       * New project popup state
-       */
-      newProjectPopupState: false,
-      /**
-       * Visualizer popup state
-       */
-      visualizerPopupState: false,
-      /**
-       * License popup state
-       */
-      licensePopupState: false,
-      /**
-       * Credits popup state
-       */
-      creditsPopupState: false,
-      /**
-       * Save as popup state
-       */
-      saveasPopupState: false,
-      /**
-       * I/O popup state
-       */
-      bpmPopupState: false,
       /**
        * Toolbarmenu configuration object
        */
@@ -240,6 +213,34 @@ export default {
     };
   },
   computed: {
+    /**
+     * I/O popup state
+     */
+    bpmPopupState: modal('toolbar.bpm', 'app'),
+    /**
+     * Connection popup state
+     */
+    connectionsPopupState: modal('toolbar.connections', 'app'),
+    /**
+     * Credits popup state
+     */
+    creditsPopupState: modal('toolbar.credits', 'app'),
+    /**
+     * License popup state
+     */
+    licensePopupState: modal('toolbar.license', 'app'),
+    /**
+     * New project popup state
+     */
+    newProjectPopupState: modal('toolbar.newshow', 'app'),
+    /**
+     * Save as popup state
+     */
+    saveasPopupState: modal('toolbar.saveas', 'app'),
+    /**
+     * Visualizer popup state
+     */
+    visualizerPopupState: modal('toolbar.visualizer', 'app'),
     liveState() {
       switch (this.state) {
         case 0:
@@ -271,15 +272,19 @@ export default {
     });
     EventBus.on('app_ready', () => {
       this.project = this.$show.name;
-      window.removeEventListener('keydown', this.handleKeydownEvent);
-      window.addEventListener('keydown', this.handleKeydownEvent);
     });
+    // Space plays or pauses the show: a global shortcut (never while typing or in a popup)
+    this.removePlayShortcut = this.$keyboard?.addShortcut(
+      (e) => e.code === 'Space' && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey,
+      () => this.playPauseShow(),
+    );
     this.saveStateTimer = null;
     SAVE_STATE_EVENTS.forEach((event) => {
       window.addEventListener(event, this.scheduleSaveStateRefresh, true);
     });
   },
   beforeUnmount() {
+    if (this.removePlayShortcut) this.removePlayShortcut();
     clearTimeout(this.saveStateTimer);
     SAVE_STATE_EVENTS.forEach((event) => {
       window.removeEventListener(event, this.scheduleSaveStateRefresh, true);
@@ -329,7 +334,6 @@ export default {
       el.addEventListener('change', async () => {
         if (el.files) {
           try {
-            this.$router.push('/');
             await this.$show.loadFromFile(el.files[0]);
             // Yeah it sucks... But cleaning up everything from the view was a nightmare so for now:
             window.location.reload();
@@ -349,20 +353,6 @@ export default {
      */
     saveLocal() {
       this.$show.persistLocally();
-    },
-    /**
-     * Keydown event handler
-     *
-     * @public
-     * @param {Object} e keydown event
-     */
-    handleKeydownEvent(e) {
-      switch (e.code) {
-        case 'Space':
-          this.playPauseShow();
-          break;
-        default: break;
-      }
     },
     /**
      * Display visualizer popup

@@ -624,6 +624,28 @@ class Visualizer {
   }
 
   /**
+   * Compiles the programs that are otherwise first needed when something gets selected (the
+   * move/rotate gizmo and the selection box): one frame is drawn with the first fixture
+   * selected, then the selection is put back. Run once, at boot, behind the splash, so the
+   * first selection during a show doesn't stall the main thread (and DMX output with it).
+   *
+   * @public
+   * @returns {Boolean} Whether it ran (false while no fixture is patched)
+   */
+  warmUp() {
+    const renderer = this.fixtureRenderer;
+    const [firstId] = renderer ? renderer.instances.keys() : [];
+    if (firstId === undefined) return false;
+    const previous = renderer.selection || { ids: [], gizmo: false };
+    renderer.setSelection([firstId], true);
+    this.camera.updateMatrixWorld();
+    this.lighting.render();
+    renderer.setSelection(previous.ids, previous.gizmo);
+    this.invalidate();
+    return true;
+  }
+
+  /**
    * Render function: decodes changed fixtures, then draws a frame only when something changed
    * (DMX, camera, gizmo, settings, a running beam animation)
    *

@@ -23,10 +23,8 @@
  *   size (a demo with popups gets room for them); popupInBox: its popups open in its own box (a
  *   component that is a popup, e.g. the visualizer settings, next to the card)
  * - fit: 'scale' (default: whole, scaled down to fit) or 'scroll' (panels wider than the page)
- * - route: initial path of the preview's router; with `panel`, the router view is the preview
- *   (Studio panels that read the route)
- * - warmRoute: where the router starts before going to `route`, for panels that read their route
- *   only when it changes (the group and chase panels: their route watchers aren't immediate)
+ * - view(view, show): sets up the preview's own view state (src/views/view.state.js) before it
+ *   mounts: the panel, group or chase it shows (the selection follows, as in Studio)
  * - clock: true when it shows anything moving (Studio's clock runs while it's the active preview)
  * - demo: steps a fake cursor plays on the component (previews/demo.js); the reader watches. A
  *   demo plays its flow to the end; each loop starts again from the demo show
@@ -64,17 +62,6 @@ const VisualizerSettings = () => import('@/views/activities/app/fragments/toolba
 
 /** A fixture row in the patch bay (under its universe) */
 const patchRow = (has) => ({ click: '.uikit_list_item.uikit_sublist_body', has });
-/**
- * The patch bay opens a fixture in the universe panel, whose fixture pool outlines it in the
- * visualizer (with the move/rotate controls): without that panel, outline it here
- * @param {Show} show
- * @param {Object} to route
- */
-const outlineFixture = (show, to) => {
-  const id = Number(to.query.fixtureId);
-  if (Number.isNaN(id) || !show.fixturePool.checkIfExists(id)) return;
-  show.fixturePool.getFromId(id).highlightSingle(true, true);
-};
 /** A row in a widget's list */
 const row = (has) => ({ click: '.uikit_list_item', has });
 /** A cue's body in the cue pool (plays or stops it), by slot */
@@ -237,7 +224,6 @@ const PRESETS = {
     componentHeight: 620,
     stage: true,
     component: PatchBay,
-    onRoute: outlineFixture,
     clock: true,
   },
   'group-pool': {
@@ -255,9 +241,7 @@ const PRESETS = {
     height: STRIP,
     fit: 'scroll',
     component: () => import('@/views/activities/app/fragments/modifiers/group/group.modifier.fragment.vue'),
-    route: '/group/0',
-    warmRoute: '/group/1',
-    panel: true,
+    view: (view) => view.openGroup(0),
     clock: true,
   },
   'scene-modifier': {
@@ -275,9 +259,7 @@ const PRESETS = {
     height: STRIP,
     fit: 'scroll',
     component: () => import('@/views/activities/app/fragments/modifiers/chase/chase.modifier.fragment.vue'),
-    route: '/group/0/chase/0',
-    warmRoute: '/group/1/chase/0',
-    panel: true,
+    view: (view) => view.openChase(0, 0),
     clock: true,
   },
   /* ── Visualizer ── */
@@ -290,7 +272,6 @@ const PRESETS = {
     componentHeight: 520,
     stage: true,
     component: PatchBay,
-    onRoute: outlineFixture,
     demo: [
       { caption: 'Select a fixture' },
       patchRow('MAC Aura 2'),
@@ -366,7 +347,6 @@ const PRESETS = {
     componentHeight: 520,
     stage: true,
     component: PatchBay,
-    onRoute: outlineFixture,
     demo: [
       { caption: 'Click: one fixture' },
       patchRow('MAC Aura 1'),
@@ -458,8 +438,7 @@ const PRESETS = {
     componentHeight: STRIP,
     stage: true,
     component: UniverseModifier,
-    route: '/universe/0',
-    panel: true,
+    view: (view) => view.openUniverse(0),
     clock: true,
     demo: [
       { caption: 'Add opens the patch popup' },
@@ -632,7 +611,7 @@ const PRESETS = {
     height: STRIP,
     component: Timeline,
     props: (show) => ({ pool: chase(show) }),
-    route: '/group/0/chase/0',
+    view: (view) => view.openChase(0, 0),
     demo: [
       { caption: 'Double click a lane: a cue item (here Sunset, in bar 1)' },
       { dblclick: '.widget_pool_timeline_grid_row', nth: 3, x: 90 },
@@ -715,8 +694,7 @@ const PRESETS = {
     componentWidth: 560,
     componentHeight: STRIP,
     component: UniverseModifier,
-    route: '/universe/0',
-    panel: true,
+    view: (view) => view.openUniverse(0),
     start: (show) => {
       if (!show.outputPool.outputs.length) {
         show.outputPool.addRaw({ name: 'Gateway', remote: '127.0.0.1', port: 4515 });

@@ -1,5 +1,9 @@
 <template>
-  <uk-flex class="chase_modifier">
+  <uk-flex
+    v-if="chase"
+    tabindex="0"
+    class="chase_modifier"
+  >
     <uk-widget :header="{ title: 'Chase' }">
       <uk-flex
         :gap="8"
@@ -49,8 +53,7 @@
 
 <script>
 import colorMixin from '@/views/mixins/color.mixin';
-import Group from '@/models/DMX/group.model';
-import Chase from '@/models/DMX/chase.model';
+import KeysMixin from '@/views/mixins/keys.mixin';
 import WidgetPoolTimeline from './_widgets/chase.modifier.widget.timeline.vue';
 
 export default {
@@ -62,71 +65,53 @@ export default {
   components: {
     WidgetPoolTimeline,
   },
-  mixins: [colorMixin],
+  mixins: [colorMixin, KeysMixin],
   data() {
     return {
-      /**
-       * Handle to the selected group instance
-       */
-      group: new Group(), // this.$show.groupPool.getFromId(this.$route.params.groupId),
-      /**
-       * Handle to the group's selected chase instance
-       */
-      // eslint-disable-next-line max-len
-      chase: new Chase(), // this.$show.groupPool.getFromId(this.$route.params.groupId).chasePool.getFromId(this.$route.params.chaseId),
-      /**
-       * Chase trigger options
-       * @todo this should be static/hardcoded
-       */
       triggerOptions: ['Loop', 'One Shot'],
-      /**
-       * Chase triquantization options
-       * @todo this should be static/hardcoded
-       */
       quantizeOptions: ['None', '1/8', '1/4', '1/2', '1/1'],
     };
   },
-  watch: {
-    '$route.params': function routeParamsChaseIdWatcher({ groupId, chaseId }) {
-      if (groupId) this.fetchGroupData(groupId);
-      if (chaseId) this.fetchChaseData(chaseId);
+  computed: {
+    /**
+     * Group of the chase in view
+     *
+     * @type {?Object}
+     */
+    group() {
+      return this.$view.group;
     },
-  },
-  beforeUnmount() {
-    window.removeEventListener('keydown', this.keydownHandler);
+    /**
+     * Chase in view, or null
+     *
+     * @type {?Object}
+     */
+    chase() {
+      return this.$view.chase;
+    },
   },
   methods: {
     /**
-     * Fetch group and chase data from route groupId and chaseId parameters
-     *
-       * @public
-     */
-    fetchChaseData(id) {
-      if (id !== undefined) {
-        window.removeEventListener('keydown', this.keydownHandler);
-        // eslint-disable-next-line max-len
-        this.chase = this.group.chasePool.getFromId(id);
-        window.addEventListener('keydown', this.keydownHandler);
-      }
-    },
-    fetchGroupData(id) {
-      if (id !== undefined) {
-        window.removeEventListener('keydown', this.keydownHandler);
-        this.group = this.$show.groupPool.getFromId(id);
-      }
-    },
-    /**
-     * Keydown handler used to handle chase deletion on del/backspace hit
+     * Keys while the chase panel has focus: Delete or Backspace deletes the chase in view (the
+     * view falls back to its group). Typing in its fields never gets here
      *
      * @public
-     * @param {Object} e keydown event
+     * @param {KeyboardEvent} e keydown event
+     * @returns {Boolean} whether the key was handled
      */
-    keydownHandler(e) {
-      if (e.key === 'Backspace' || e.key === 'Delete') {
+    handleKeys(e) {
+      if ((e.key === 'Backspace' || e.key === 'Delete') && this.chase) {
         this.group.chasePool.delete(this.chase);
-        this.$router.push(`/group/${this.$route.params.groupId}`).catch(() => {});
+        return true;
       }
+      return false;
     },
+    /**
+     * Sets the chase's colour
+     *
+     * @public
+     * @param {Number} colorIndex palette index
+     */
     setChaseColor(colorIndex) {
       this.chase.color = this.getColorFromIndex(colorIndex);
     },

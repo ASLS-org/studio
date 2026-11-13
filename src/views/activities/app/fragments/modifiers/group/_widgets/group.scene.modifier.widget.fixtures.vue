@@ -7,12 +7,11 @@
   >
     <uk-list
       :key="scene.id"
-      auto-select-first
       class="scene_fixtures_list"
       :items="scene.listableFixtures ? scene.listableFixtures : []"
+      :selection="selection"
       filterable
-      @highlight="selectMultipleFixtures"
-      @select="selectFixture"
+      @selection="emitSelection"
     />
   </uk-widget>
 </template>
@@ -34,48 +33,24 @@ export default {
         name: '',
       }),
     },
+    /**
+     * Selected fixture ids, main one first (the group's selection, from the view state)
+     */
+    selection: {
+      type: Array,
+      default: null,
+    },
   },
-  emits: ['select', 'focused'],
+  emits: ['selection'],
   methods: {
     /**
-     * Selects a fixture from the scene fixture list
+     * Forwards the selection the operator made: fixture ids, main one first
      *
      * @public
-     * @param {Object} fixtureData fixture data object
+     * @param {Array<Object>} items listable data of the selected rows, selected one first
      */
-    selectFixture(fixtureData) {
-      this.selectedFixtureValues = [];
-      if (fixtureData) {
-        this.selectedFixtureValues.push(this.scene.getFixtureValueFromId(fixtureData.id));
-        if (this.selectedFixtureValues.length) {
-          this.selectedFixtureValues[0].fixture.highlightSingle(true, true);
-          this.$emit('select', this.selectedFixtureValues);
-        }
-      }
-    },
-    /**
-     * Selects multiple fixtures from the scene fixture list
-     *
-     * @public
-     * @param {Array} fixtureList list of fixture data object
-     */
-    selectMultipleFixtures(fixtureList) {
-      if (this.scene && this.scene.id) {
-        this.selectedFixtureValues = [this.scene.getFixtureValueFromId(0)];
-        if (fixtureList.length > 1) {
-          this.scene.getFixtureValueFromId(fixtureList[0].id).fixture.highlightSingle(false, true);
-          this.selectedFixtureValues = fixtureList.map((fixtureData, index) => {
-            const fixtureValue = this.scene.getFixtureValueFromId(fixtureData.id);
-            if (index) {
-              fixtureValue.fixture.highlight(true, true);
-            } else {
-              fixtureValue.fixture.highlightSingle(true, true);
-            }
-            return fixtureValue;
-          });
-        }
-        this.$emit('select', this.selectedFixtureValues);
-      }
+    emitSelection(items) {
+      this.$emit('selection', items.map((item) => item.id));
     },
   },
 };

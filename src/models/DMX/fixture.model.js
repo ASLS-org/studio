@@ -87,7 +87,6 @@ class Fixture {
       this.savedChannelCount = Number.isInteger(data.channelCount) ? data.channelCount : null;
       this.channels = [];
       this.quickChannelsAccessors = {};
-      this._highlighted = false;
       this._rotation = {
         x: 0,
         y: 0,
@@ -581,16 +580,6 @@ class Fixture {
     return this.channels.length;
   }
 
-  /**
-   * Whether the fixture is highlighted in the visualizer
-   *
-   * @readonly
-   * @type {Boolean}
-   */
-  get highlighted() {
-    return this._highlighted;
-  }
-
   setQuickAccessor(channel, value) {
     if (this.hasQuickAccessor(channel)) {
       this.setChannel(this.getQuickAccessor(channel).id - 1, value);
@@ -690,32 +679,6 @@ class Fixture {
   setupFineChannels() {
     this.channels.forEach((channel) => {
       channel.fineChannels = channel.fineIndexes.map((index) => this.channels[index]);
-    });
-  }
-
-  /**
-   * Highlights the fixture in the visualizer
-   *
-   * @param {Boolean} state wheter the fixture should be highlighted or not
-   * @param {Boolean} [centerControls=false] whether the move/rotate gizmo follows the highlight
-   */
-  highlight(state, centerControls = false) {
-    this._highlighted = state;
-    EventBus.emit('fixture_highlight', {
-      id: this.id, state, single: false, center: centerControls,
-    });
-  }
-
-  /**
-   * Highlights the fixture in the visualizer while unhighlighting any other highlighted fixture
-   *
-   * @param {Boolean} state wheter the fixture should be highlighted or not
-   * @param {Boolean} [centerControls=false] whether the move/rotate gizmo follows the highlight
-   */
-  highlightSingle(state, centerControls = false) {
-    this._highlighted = state;
-    EventBus.emit('fixture_highlight', {
-      id: this.id, state, single: true, center: centerControls,
     });
   }
 

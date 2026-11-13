@@ -465,6 +465,7 @@ class Show extends EventEmitter {
     this.isSaved = true;
 
     this.persistLocally();
+    EventBus.emit('show_loaded');
   }
 
   /**

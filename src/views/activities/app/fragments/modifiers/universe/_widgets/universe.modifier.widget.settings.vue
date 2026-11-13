@@ -69,6 +69,7 @@
 </template>
 
 <script>
+import modal from '@/views/mixins/modal.mixin';
 import colorMixin from '@/views/mixins/color.mixin';
 import ConnectionsPopup from '@/views/activities/app/fragments/toolbar/_popups/popup.connections.vue';
 
@@ -97,16 +98,16 @@ export default {
       universe: this.modelValue,
       output: null,
       /**
-       * Connections popup display state (opened by Config)
-       */
-      connectionsPopupState: false,
-      /**
        * Re-mounts the ID field, so a refused id shows the current one again
        */
       idFieldKey: 0,
     };
   },
   computed: {
+    /**
+     * Connections popup display state (opened by Config)
+     */
+    connectionsPopupState: modal('universe.connections', 'universe'),
     /**
      * Returns an array of HTML-formated strings s to be fed into uikit select inputs
      *
@@ -124,7 +125,7 @@ export default {
   methods: {
     /**
      * Changes the universe's id (its fixtures follow), unless another universe uses it. The
-     * universe view's route follows the new id.
+     * view (and its memory of the universe) follows the new id.
      *
      * @public
      * @param {Number} id new id
@@ -136,11 +137,7 @@ export default {
         this.idFieldKey += 1;
         return;
       }
-      const route = this.$route;
-      if (route?.params?.universeId !== undefined && Number(route.params.universeId) === previous) {
-        this.$router.replace({ path: `/universe/${this.universe.id}`, query: route.query })
-          .catch(() => {});
-      }
+      this.$view.moveUniverse(previous, this.universe.id);
       this.$show.refreshSaveState();
     },
     setUniverseColor(colorIndex) {

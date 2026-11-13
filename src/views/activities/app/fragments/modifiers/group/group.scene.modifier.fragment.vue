@@ -11,13 +11,15 @@
     <widget-scene-fixtures
       v-show="fixtureValue"
       :scene="scene ? scene : undefined"
-      @select="selectFixtures"
+      :selection="selectedIds"
+      @selection="selectFixtures"
     />
     <modifier-widget-cells
       v-if="fixtureValue && sceneCells.length"
       :key="selectionKey"
       :cells="sceneCells"
-      @change="selectedCells = $event"
+      :model-value="selectedCells"
+      @change="selectCells"
     />
     <widget-fixture-channels
       v-show="fixtureValue"
@@ -77,31 +79,60 @@ export default {
       default: () => ({}),
     },
   },
-  data() {
-    return {
-      /**
-       * List of handles to the currently selected fixture scene values
-       */
-      selectedFixtureValues: [],
-      /**
-       * Handle to currently selected fixture scene value
-       */
-      fixtureValue: null,
-      /**
-       * Scene color picker display state
-       */
-      colorPickerState: false,
-      /**
-       * Scene pan & tilt picker display state
-       */
-      panTiltPickerState: false,
-      /**
-       * Cells the controls apply to, null for all (view state only)
-       */
-      selectedCells: null,
-    };
-  },
   computed: {
+    /**
+     * Fixture ids selected in the group (shared with its fixture pool)
+     *
+     * @type {Array<Number>}
+     */
+    selectedIds() {
+      return this.$view.groupFixtures.map((fixture) => fixture.id);
+    },
+    /**
+     * The scene's values of the selected fixtures, else of its first fixture
+     *
+     * @type {Array<Object>}
+     */
+    selectedFixtureValues() {
+      const values = this.scene?.fixtureValues || [];
+      const found = this.selectedIds
+        .map((id) => values.find((fixtureValue) => fixtureValue.fixture.id === id))
+        .filter(Boolean);
+      if (found.length) return found;
+      return values.length ? [values[0]] : [];
+    },
+    /**
+     * Value whose fixture the colour and pan/tilt pickers show (the last selected)
+     *
+     * @type {?Object}
+     */
+    fixtureValue() {
+      return this.selectedFixtureValues[this.selectedFixtureValues.length - 1] || null;
+    },
+    /**
+     * Whether a selected fixture has colour
+     *
+     * @type {Boolean}
+     */
+    colorPickerState() {
+      return this.selectedFixtureValues.some((f) => f.fixture.hasColor);
+    },
+    /**
+     * Whether a selected fixture has pan or tilt
+     *
+     * @type {Boolean}
+     */
+    panTiltPickerState() {
+      return this.selectedFixtureValues.some((f) => f.fixture.hasPan || f.fixture.hasTilt);
+    },
+    /**
+     * Cells the controls apply to, null for all (remembered with the group)
+     *
+     * @type {?Array<String>}
+     */
+    selectedCells() {
+      return this.$view.groupCells;
+    },
     /**
      * Fader rows: each whole-fixture channel, then one row per channel kind and colour for the
      * selected cells. A row writes every matching channel of the selected fixtures (its targets)
@@ -162,68 +193,32 @@ export default {
       return this.selectedFixtureValues.map((fixtureValue) => fixtureValue.fixture.id).join(',');
     },
   },
-  watch: {
-    selectionKey() {
-      this.selectedCells = null;
-    },
-    scene() {
-      this.initSceneValues();
-    },
-  },
-  mounted() {
-    this.$nextTick(() => {
-      this.initSceneValues();
-    });
-  },
   methods: {
     /**
-     * Initialize component's data
-     * @todo that's not readable
+     * Selects fixtures of the group (a new main fixture shows all its cells again)
      *
      * @public
+     * @param {Array<Number>} ids fixture ids, main one first
      */
-    initSceneValues() {
-      this.selectedFixtureValues = [];
-      if (this.scene && this.scene.fixtureValues && this.scene.fixtureValues.length) {
-        this.selectedFixtureValues.push(this.scene.fixtureValues[0]);
-        this.fixtureValue = this.selectedFixtureValues[this.selectedFixtureValues.length - 1];
-        this.colorPickerState = this.selectedFixtureValues.some(
-          (f) => f.fixture.hasColor,
-        );
-        this.panTiltPickerState = this.selectedFixtureValues.some(
-          (f) => f.fixture.hasPan || f.fixture.hasTilt,
-        );
-      }
+    selectFixtures(ids) {
+      const main = this.$view.groupFixtures[0]?.id;
+      this.$view.selectFixtures(ids);
+      if (this.$view.groupFixtures[0]?.id !== main) this.$view.selectCells(null);
     },
     /**
-     * Selects one or multiple fixtures
-     * @todo that's not readable
+     * Selects the cells the controls apply to
      *
      * @public
-     * @param {Array} fixtureValues list of scene fixtures ro be selected
+     * @param {?Array<String>} cells cell names, null for all
      */
-    selectFixtures(fixtureValues) {
-      if (fixtureValues && fixtureValues.length) {
-        this.selectedFixtureValues = fixtureValues;
-        this.fixtureValue = this.selectedFixtureValues[this.selectedFixtureValues.length - 1];
-        this.colorPickerState = this.selectedFixtureValues.some(
-          (f) => f.fixture.hasColor,
-        );
-        this.panTiltPickerState = this.selectedFixtureValues.some(
-          (f) => f.fixture.hasPan || f.fixture.hasTilt,
-        );
-      } else {
-        this.selectedFixtureValues = [];
-        this.fixtureValue = null;
-        this.colorPickerState = false;
-        this.panTiltPickerState = false;
-      }
+    selectCells(cells) {
+      this.$view.selectCells(cells);
     },
     /**
-     * Updates every selected fixture's channel with a new value
+     * Sets the selected fixtures' channel values
      *
      * @public
-     * @param {Object} channel channel object
+     * @param {Object} channel the channel row that changed
      */
     updateFixtureChannels(channel) {
       channel.targets.forEach((target) => {

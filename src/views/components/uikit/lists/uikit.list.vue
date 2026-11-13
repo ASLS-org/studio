@@ -80,8 +80,8 @@
                     :tall="tall"
                     :no-select="noSelect"
                     :disabled="disabled"
-                    @pointerdown="focusBody"
                     :deletable="deletable"
+                    @pointerdown="focusBody"
                     @click="(e) => clickRow(e, child)"
                     @delete="deleteRow(child)"
                     @toggle="toggleRow(child)"
@@ -111,9 +111,9 @@
           :tall="tall"
           :no-select="noSelect"
           :disabled="disabled"
+          :deletable="deletable"
           @pointerdown="focusBody"
           @handle="(e) => pressHandle(e, row)"
-          :deletable="deletable"
           @click="(e) => clickRow(e, row)"
           @delete="deleteRow(row)"
           @toggle="toggleRow(row)"
@@ -244,11 +244,23 @@ export default {
     colored: Boolean,
     /** Taller rows */
     tall: Boolean,
-    /** Selects the first row (or unfolds the first parent) when items first appear */
+    /**
+     * Selects the first row (or unfolds the first parent) when items first appear. With a
+     * controlled `selection`, only unfolds the parent of the selected row (else the first one)
+     */
     autoSelectFirst: Boolean,
     /** Selects the top-level row at this index whenever it changes */
     autoSelect: {
       type: Number,
+      default: null,
+    },
+    /**
+     * Controlled selection: ids of the selected rows (first = the selected row, all of them
+     * highlighted when there are several). Applied whenever it or the items change, without
+     * emitting or taking focus; user changes are reported by the `selection` event.
+     */
+    selection: {
+      type: Array,
       default: null,
     },
     /** Kept for compatibility: focus follows the browser's and needs no exceptions */
@@ -259,7 +271,7 @@ export default {
     /** Only one parent unfolded at a time; the open one fills the list and scrolls */
     accordion: Boolean,
   },
-  emits: ['unfold', 'focused', 'highlight', 'toggle', 'select', 'reorder', 'delete'],
+  emits: ['unfold', 'focused', 'highlight', 'toggle', 'select', 'selection', 'reorder', 'delete'],
   data() {
     return {
       searchString: '',
@@ -349,6 +361,10 @@ export default {
     hasExpanded() {
       return this.visibleRows.some((row) => row.children && row.unfolded);
     },
+    /** The controlled selection as a comparable string */
+    selectionKey() {
+      return this.selection ? this.selection.join(',') : null;
+    },
     /** Rows the delete confirmation lists */
     deletionRows() {
       return this.deletionKeys.map((key) => this.rowsByKey[key]).filter(Boolean);
@@ -358,9 +374,13 @@ export default {
     items: {
       handler(items, oldItems) {
         this.reconcile(items, oldItems);
+        if (this.selection) this.applySelection(this.selection);
         if (items?.length && !oldItems?.length) this.maybeAutoSelectFirst();
       },
       flush: 'pre',
+    },
+    selectionKey() {
+      if (this.selection) this.applySelection(this.selection);
     },
     autoSelect(index) {
       const row = this.rows[index];
@@ -378,6 +398,7 @@ export default {
     this.lastKeys = null;
     this.lastActive = {};
     this.reconcile(this.items);
+    if (this.selection) this.applySelection(this.selection);
   },
   mounted() {
     if (this.items?.length) this.maybeAutoSelectFirst();
@@ -514,6 +535,15 @@ export default {
       if (!this.autoSelectFirst) return;
       const [first] = this.rows;
       if (!first) return;
+      // A controlled selection is never changed here: only the parent showing it unfolds (else
+      // the first parent)
+      if (this.selection) {
+        const key = this.selection.length ? this.keyOfId(this.selection[0]) : null;
+        const parent = key ? this.rowsByKey[key]?.parentKey : null;
+        const target = parent || (first.children ? first.key : null);
+        if (target) this.unfolded = { ...this.unfolded, [target]: true };
+        return;
+      }
       if (first.children) {
         this.unfolded = { ...this.unfolded, [first.key]: true };
       } else if (!this.toggleable) {
@@ -558,6 +588,7 @@ export default {
           this.cancelDrag();
         } else {
           this.clearHighlighted();
+          this.emitSelection();
           this.$refs.body?.blur();
         }
       } else if (e.key === 'Delete' || e.key === 'Backspace') {
@@ -594,6 +625,41 @@ export default {
     highlightedValues() {
       return this.highlighted.map((key) => this.rowsByKey[key]?.value).filter(Boolean);
     },
+    /**
+     * Finds the row of an item id: a top-level row without sub-rows, else a sub-row
+     *
+     * @param {*} id item id
+     * @returns {?String} the row's key
+     */
+    keyOfId(id) {
+      const match = (row) => row.value.id !== undefined && row.value.id !== null
+        && String(row.value.id) === String(id);
+      const top = this.rows.find((row) => !row.children && match(row));
+      if (top) return top.key;
+      const child = this.rows.flatMap((row) => row.children || []).find(match);
+      return child ? child.key : null;
+    },
+    /**
+     * Shows a selection set from outside (the `selection` prop): no event, no focus change
+     *
+     * @param {Array} ids ids of the selected rows, first = the selected one
+     */
+    applySelection(ids) {
+      const keys = ids.map((id) => this.keyOfId(id)).filter(Boolean);
+      const selectedKey = keys[0] || null;
+      const highlighted = keys.length > 1 && !this.noHighlight ? keys : [];
+      if (this.selectedKey !== selectedKey) this.selectedKey = selectedKey;
+      if (highlighted.join('|') !== this.highlighted.join('|')) this.highlighted = highlighted;
+    },
+    /**
+     * Reports the selection after a user change: the selected row first, then the other
+     * highlighted rows
+     */
+    emitSelection() {
+      const keys = [this.selectedKey, ...this.highlighted.filter((k) => k !== this.selectedKey)];
+      const values = keys.map((key) => this.rowsByKey[key]?.value).filter(Boolean);
+      this.$emit('selection', values);
+    },
     clearHighlighted() {
       if (this.noHighlight) return;
       this.highlighted = [];
@@ -608,6 +674,7 @@ export default {
       if (!this.noHighlight) this.clearHighlighted();
       this.selectedKey = row.key;
       this.$emit('select', row.value);
+      this.emitSelection();
     },
     /**
      * Adds a row to the highlights, or takes it out (Ctrl/⌘+click)
@@ -630,6 +697,7 @@ export default {
       const selected = this.rowsByKey[this.selectedKey];
       if (selected) this.$emit('select', selected.value);
       this.$emit('highlight', this.highlightedValues());
+      this.emitSelection();
     },
     /**
      * Highlights the rows between the selected row and this one (Shift+click), when both are at
@@ -653,6 +721,7 @@ export default {
         .filter((r) => !r.value.disabled)
         .map((r) => r.key);
       this.$emit('highlight', this.highlightedValues());
+      this.emitSelection();
     },
     /**
      * Row click: check (checkable lists), add (Ctrl/⌘), range (Shift) or select
