@@ -1,4 +1,5 @@
 import ukColors from '@/views/components/uikit/colors/uikit.colors';
+import EventBus from '../../plugins/eventbus';
 import CuePool from './cue.pool.model';
 import ChasePool from './chase.pool.model';
 import Modifier from './modifier.model';
@@ -137,14 +138,16 @@ class Group {
    * @param {Object} fixture
    */
   deleteFixture(fixture) {
-    try {
-      this.cuePool.cues.forEach((cue) => {
+    // The fixture leaves the group first: a cue failing to drop it can't keep it here
+    if (this.fixturePool.checkIfExists(fixture.id)) this.fixturePool.delete(fixture);
+    this.cuePool.cues.forEach((cue) => {
+      try {
         cue.deleteFixture(fixture);
-      });
-      this.fixturePool.delete(fixture);
-    } catch (err) {
-      console.log(err);
-    }
+      } catch (err) {
+        EventBus.emit('app_error', new Error(`Cue "${cue.name}" could not drop fixture `
+          + `${fixture.id}: ${err.message}`));
+      }
+    });
   }
 
   addModifiers(fixture) {

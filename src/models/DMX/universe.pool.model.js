@@ -114,6 +114,23 @@ class UniversePool {
   }
 
   /**
+   * Changes a universe's id, refusing one another universe uses. Its fixtures follow.
+   *
+   * @public
+   * @param {Object} universe universe instance
+   * @param {Number} id new id
+   * @returns {Boolean} whether the id changed
+   */
+  changeId(universe, id) {
+    const next = parseInt(id, 10);
+    if (Number.isNaN(next)) return false;
+    if (this.universes.some((u) => u !== universe && Number(u.id) === next)) return false;
+    universe.id = next;
+    EventBus.emit('patch_changed');
+    return true;
+  }
+
+  /**
    * Generates universe unique ID
    *
    * @public

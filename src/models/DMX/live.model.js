@@ -256,9 +256,11 @@ class Live {
       const animation = new Animation(((t) => {
         const step = quantize * this.beatDuration;
         const boundary = Math.floor(t / step);
+        // Starts when Live time enters another quantize interval: the next boundary, or any jump
+        // (transport stopped or reset, tempo changed), so a waiting animation never stays stuck
         if (first === null) {
           first = boundary;
-        } else if (boundary > first) {
+        } else if (boundary !== first) {
           animation._updateFunction = updateFunction;
           quantizeReadyCallback();
           updateFunction(t);
