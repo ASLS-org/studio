@@ -35,6 +35,8 @@ views/
   its props, breaks them: update the preset (`npm run docs:manual:check` mounts all of them).
   `previews/FixtureControl.vue` copies the universe fragment's wiring of the channels, colour,
   pan/tilt and cells widgets.
+- `uk-list` keys rows by item `id`, else `name` (row state survives item changes, the list never
+  writes to `items`): see skill `vue-ui-change` § Lists.
 - The patch bay lists top-level media items (DMX universes; other media types later, added
   through its **New** popup, `popup.media.vue`), each unfolding to its fixtures.
 - `uk-popup` opens in the injected `popupHost` element when one is provided (the manual's

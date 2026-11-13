@@ -111,6 +111,15 @@ export default {
   16px icons) are opt-in modes; defaults stay as in the app. `large` is for lists people read
   (the user manual's navigation). Extend components with opt-in props like these rather than
   restyling them from outside.
+- **Lists** (`uk-list`): rows are keyed by item `id`, else `name`, and their selection, checks
+  and unfolded state follow that key across item changes. So give items a stable `id` (or a
+  unique `name`), and rebuild `items` freely (a getter like `pool.listable` is fine): the list
+  never writes to them. Events send the caller's own item objects. Keys reach only the focused
+  list; `draggable` rows get a grip handle (drag from it only) and emit
+  `reorder({ original, final })`. `deletable` rows show a trash icon at their right (before the
+  grip); clicking it confirms and deletes the row, or the highlighted rows when it's one of them.
+- **Icons in `icons/images/`** need a `viewBox` and no `width`/`height` attributes (the SVG loader
+  drops the `viewBox` when both are there, so the icon is clipped when scaled).
 - **Icons.** `<uk-icon name="...">` maps to `components/uikit/icons/images/*.svg`. Add new SVGs
   there.
 - **Keyboard.** Reuse the existing patterns: Ctrl/Shift multi-select in lists, Del/Backspace

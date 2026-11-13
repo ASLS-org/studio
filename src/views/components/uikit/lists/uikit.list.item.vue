@@ -16,11 +16,17 @@
     }"
     @click="(e)=>$emit('click',e)"
   >
-    <uk-checkbox
+    <!-- The checkbox only shows the state: one toggle path, so a click flips it once -->
+    <span
       v-if="toggleable"
-      v-model="item.toggled"
-      :disabled="item.value.disabled"
-    />
+      class="uikit_list_item_check"
+      @click.stop="toggle"
+    >
+      <uk-checkbox
+        :model-value="!!item.toggled"
+        :disabled="item.value.disabled || disabled"
+      />
+    </span>
     <span
       v-if="!item.value.icon && colored && item.value.color"
       class="uikit_list_item_colored_dot"
@@ -42,28 +48,43 @@
     >
       {{ item.value.more }}
     </h4>
-    <uk-button
+    <span
       v-if="item.value.action"
-      :icon="item.value.action.icon"
-      :label="item.value.action.label"
-      @click="item.value.action.callback"
-    />
+      @click.stop
+      @pointerdown.stop
+    >
+      <uk-button
+        :icon="item.value.action.icon"
+        :label="item.value.action.label"
+        @click="item.value.action.callback"
+      />
+    </span>
     <uk-icon
-      v-if="item.value.unfold && !item.unfolded"
-      class="uikit_list_item_icon_small"
+      v-if="item.value.unfold"
+      class="uikit_list_item_icon_small uikit_list_item_arrow"
+      :class="{ open: item.unfolded }"
       name="arrow_down"
     />
-    <uk-icon
-      v-if="item.value.unfold && item.unfolded"
-      class="uikit_list_item_icon_small"
-      style="opacity: .5"
-      name="arrow_up"
-    />
-    <uk-icon
+    <!-- Deletes the row (deletable lists) -->
+    <span
       v-if="deletable"
-      class="uikit_list_item_icon_small"
-      name="cross"
-    />
+      class="uikit_list_item_tool uikit_list_item_delete"
+      title="Delete"
+      @pointerdown.stop
+      @click.stop="remove"
+    >
+      <uk-icon name="trash" />
+    </span>
+    <!-- Grip to drag the row (reorderable lists) -->
+    <span
+      v-if="handle"
+      class="uikit_list_item_tool uikit_list_item_handle"
+      title="Drag to reorder"
+      @pointerdown.stop="$emit('handle', $event)"
+      @click.stop
+    >
+      <uk-icon name="drag" />
+    </span>
   </div>
 </template>
 
@@ -75,10 +96,9 @@ export default {
   },
   props: {
     /**
-     * Handle to the list item. This is a reactive object owned by the
-     * parent UkList — we read and write its fields directly rather than
-     * mirroring them into local state, so the parent's tree stays the
-     * single source of truth (no sync watcher needed).
+     * The row to display: `{ value, selected, highlighted, toggled, unfolded }`, where `value` is
+     * the caller's item (`name`, `icon`, `color`, `more`, `action`, `unfold`, `disabled`).
+     * Read only: the row reports clicks, checks and handle presses through its events.
      */
     item: {
       type: Object,
@@ -87,6 +107,7 @@ export default {
     toggleable: Boolean,
     noHighlight: Boolean,
     colored: Boolean,
+    /** Shows a trash icon at the right of the row; clicking it emits `delete` */
     deletable: Boolean,
     focused: Boolean,
     disabled: Boolean,
@@ -98,14 +119,42 @@ export default {
     large: Boolean,
     noSelect: Boolean,
     empty: Boolean,
+    /** Shows a grip at the right of the row; pressing it emits `handle` (drag to reorder) */
+    handle: Boolean,
   },
-  emits: ['click'],
+  emits: ['click', 'toggle', 'handle', 'delete'],
+  methods: {
+    /**
+     * Reports a click on the checkbox, unless the row is disabled
+     *
+     * @public
+     */
+    toggle() {
+      if (this.item.value.disabled || this.disabled) return;
+      /**
+       * The row's checkbox was clicked
+       */
+      this.$emit('toggle');
+    },
+    /**
+     * Reports a click on the trash icon, unless the row is disabled
+     *
+     * @public
+     */
+    remove() {
+      if (this.item.value.disabled || this.disabled) return;
+      /**
+       * The row's trash icon was clicked
+       */
+      this.$emit('delete');
+    },
+  },
 };
 </script>
 
 <style scoped>
-/* unchanged */
 .uikit_list_item {
+  position: relative;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -114,7 +163,8 @@ export default {
   border-bottom: 1px solid var(--primary-dark);
   padding: 0 8px;
   width: 100%;
-  background: var(--primary-light);
+  --row-bg: var(--primary-light);
+  background: var(--row-bg);
   opacity: 0.9;
   transition: background-color 0.1s;
   gap: 10px;
@@ -148,35 +198,92 @@ export default {
   height: 100%;
 }
 .uikit_list_item:hover {
-  background: var(--secondary-darker);
+  --row-bg: var(--secondary-darker);
+  background: var(--row-bg);
   cursor: pointer;
 }
-.deletable .uikit_list_item_icon_small {
-  display: none !important;
+.uikit_list_item_check {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
 }
-.deletable:hover .uikit_list_item_icon_small,
-.deletable.selected .uikit_list_item_icon_small {
-  display: initial !important;
+.uikit_list_item_check :deep(.uikit_checkbox) {
+  pointer-events: none;
+}
+.disabled .uikit_list_item_check {
+  cursor: not-allowed;
+}
+.uikit_list_item_arrow {
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.uikit_list_item_arrow.open {
+  transform: rotate(180deg);
+  opacity: 0.5;
+}
+.uikit_list_item_tool {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 100%;
+  cursor: pointer;
+}
+.uikit_list_item_tool + .uikit_list_item_tool {
+  margin-left: -4px;
+}
+.uikit_list_item_handle {
+  cursor: grab;
+  touch-action: none;
+}
+.uikit_list_item_tool :deep(svg) {
+  width: 14px;
+  height: 14px;
+  fill: var(--secondary-light);
+  transition: fill 0.1s;
+}
+/* Same colour as the row's label when the row is selected or hovered */
+.uikit_list_item:hover .uikit_list_item_tool :deep(svg),
+.selected:not(.noSelect) .uikit_list_item_tool :deep(svg),
+.highlighted:not(.noSelect) .uikit_list_item_tool :deep(svg),
+.uikit_list_item_tool:active :deep(svg) {
+  fill: var(--secondary-lighter);
+}
+.disabled .uikit_list_item_tool {
+  cursor: not-allowed;
+}
+.disabled .uikit_list_item_tool :deep(svg) {
+  fill: var(--secondary-light) !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .uikit_list_item_arrow {
+    transition: none;
+  }
 }
 .selected:not(.noSelect){
-  background: var(--secondary-dark) !important ;
+  --row-bg: var(--secondary-dark) !important;
+  background: var(--row-bg) !important;
   opacity: 1;
 }
 .selected.highlighted:not(.noSelect) {
-  background: var(--secondary-dark) !important ;
+  --row-bg: var(--secondary-dark) !important;
+  background: var(--row-bg) !important;
   opacity: 1;
 }
 .selected.focused:not(.noSelect) {
-  background-color: var(--accent-blue)!important;
+  --row-bg: var(--accent-blue) !important;
+  background: var(--row-bg) !important;
   border-color: var(--accent-blue)!important;
   opacity: 1;
 }
 .highlighted:not(.noSelect){
-  background: var(--secondary-darker) !important ;
+  --row-bg: var(--secondary-darker) !important;
+  background: var(--row-bg) !important;
 }
 .highlighted.focused:not(.noSelect)  {
   border-color: var(--accent-blue)!important;
-  background: var(--accent-blue)!important;
+  --row-bg: var(--accent-blue) !important;
+  background: var(--row-bg) !important;
 }
 .unfold:active {
   background: var(--secondary-dark) !important;

@@ -15,7 +15,6 @@
           filterable
           no-highlight
           auto-select-first
-          accordion
           @toggle="setFixtureList"
         />
       </uk-flex>

@@ -1,7 +1,8 @@
 # Shortcuts
 
 Every key and mouse action Studio responds to, by where it works. Keys use <kbd>Ctrl</kbd> on
-every system, Mac included (not <kbd>Cmd</kbd>). They don't fire while you type in a field.
+every system, Mac included (not <kbd>Cmd</kbd>), except where a row says otherwise. They don't
+fire while you type in a field.
 
 ## Anywhere
 
@@ -29,9 +30,14 @@ Fixture pools, the patch bay, a popup's lists, an effect's channels.
 | Action | Result |
 | --- | --- |
 | Click | Select an item |
-| <kbd>Ctrl</kbd>+click | Add an item to the selection, or take it out |
+| <kbd>Ctrl</kbd>+click (<kbd>Cmd</kbd>+click on a Mac) | Add an item to the selection, or take it out |
+| <kbd>Shift</kbd>+click | Select every item from the selected one to this one (within one universe) |
+| <kbd>↑</kbd> / <kbd>↓</kbd> | Select the item above or below |
 | <kbd>Delete</kbd> or <kbd>Backspace</kbd> | Delete the selection, after a confirmation (the list must have focus: click in it first) |
+| Click an item's trash icon | Delete it, after a confirmation (with the whole selection when the item is part of it) |
 | <kbd>Escape</kbd> | Clear the selection |
+| Click an item's box, or the item, in a list with boxes | Tick or untick it; **Check All** ticks or unticks every item shown |
+| Drag an item by its grip (the dots at its far right: fixture pools, an effect's fixtures) | Move it; the other items slide apart where it will land. <kbd>Escape</kbd> cancels. Not while a search is typed |
 | Type in **Search items** | Show only the items whose name matches |
 
 ## Fields
