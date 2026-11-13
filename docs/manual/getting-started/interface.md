@@ -68,6 +68,11 @@ they don't fit, scroll the strip sideways.
 | A group | Group settings, its fixture pool, its cue pool, and the selected cue's widgets | [Groups](/programming/groups), [Scenes](/programming/scenes), [Effects](/programming/effects) |
 | A chase | Chase settings and its timeline | [Chases](/programming/chases) |
 
+Each universe and each group remembers what you selected in it until you close Studio: go back to
+a group and its cue and fixtures are still selected, go back to a universe and its fixture and
+cells are too. If you deleted what was selected, the first one is selected instead. The patch
+bay, the group pool, the strip and the visualizer always show the same selection.
+
 The demo rig's group view, with *Rig*'s settings, fixtures and cue pool:
 
 <LivePreview preset="group-modifier" />

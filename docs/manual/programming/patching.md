@@ -69,7 +69,8 @@ doesn't have opens with a **Missing fixtures** prompt first: see
 Click a fixture in the **Fixture Pool** (or the patch bay) to select it: the universe view shows its
 settings and controls, and the visualizer outlines it, so you can tell which light on stage is
 which. Hold <kbd>Ctrl</kbd> and click to select several. Type in **Search items** to show only the
-fixtures whose name matches.
+fixtures whose name matches. The universe keeps its selection while you work elsewhere: open it
+again and the same fixtures are selected.
 
 <LivePreview preset="patch-bay-select" />
 
