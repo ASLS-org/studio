@@ -102,9 +102,16 @@ Studio's popup text style.
 
 ### Requirement: List unfolding and empty space
 Unfolding a row SHALL reveal its sub-rows with a short height and fade animation of at most
-200 ms. Space below the last row SHALL show the idle stripes background.
+200 ms. Space below the last row SHALL show the idle stripes background. In an accordion list,
+the unfolded row SHALL take the space left, with the rows after it at the bottom of the list.
 
 #### Scenario: Short list
 - **GIVEN** a list with three rows in a tall widget
 - **WHEN** the operator looks at it
 - **THEN** the area below the third row is striped
+
+#### Scenario: Open a universe in the patch bay
+- **GIVEN** four universes in the patch bay, the second holding one fixture
+- **WHEN** the operator unfolds the second universe
+- **THEN** the third and fourth universes sit at the bottom of the patch bay, with stripes
+  between the fixture and them
