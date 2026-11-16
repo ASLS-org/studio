@@ -77,8 +77,8 @@ Enums live next to their model and are exported: `CUE_TYPES`, `CUE_STATES`,
   getter that shapes data for `uk-list`. New pools follow the same API.
 - **Ids:** numeric and unique per pool. Getters coerce with `Number(id)`. A fixture or universe
   loaded from a show keeps its saved id (references point to it); new ones get the highest id + 1.
-  A universe's id changes through `UniversePool.changeId()` (unique; its fixtures' `universe`
-  follows). Loading skips universe/group references to missing fixtures and reports the count.
+  A universe's id never changes after that (it is also its output's universe number). Loading
+  skips universe/group references to missing fixtures and reports the count.
   `Show.deleteFixture` finds the universe by membership and never stops halfway.
 
 ## Known debt (don't copy these patterns)

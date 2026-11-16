@@ -95,8 +95,9 @@ class Universe {
   }
 
   /**
-   * Universe ID. Its fixtures follow it (their `universe` number). Use
-   * `UniversePool.changeId()` to change it: it keeps ids unique.
+   * Universe ID, set once when the universe is created or loaded (unique in the show; it is
+   * also the universe number its output sends to). Its fixtures follow it (their `universe`
+   * number).
    *
    * @memberof Universe
    */
