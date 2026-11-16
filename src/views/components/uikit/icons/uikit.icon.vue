@@ -57,7 +57,7 @@ export default {
 <style scoped>
 
 .icon {
-  width: 16px;
-  height: 16px;
+  width: var(--icon-md);
+  height: var(--icon-md);
 }
 </style>

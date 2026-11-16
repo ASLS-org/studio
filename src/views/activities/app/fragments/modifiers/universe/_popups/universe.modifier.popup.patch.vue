@@ -27,7 +27,7 @@
             icon="library"
             label="Import GDTF…"
             :disabled="importing"
-            style="width: 100%; height: 25px"
+            style="width: 100%; height: var(--control-height)"
             @click="$refs.gdtfFiles.click()"
           />
           <input
@@ -44,7 +44,7 @@
         col
         class="patch_form"
       >
-        <div style="padding: 10px">
+        <div style="padding: var(--space-5)">
           <uk-flex
             :gap="8"
             class="patch_form_section"
@@ -116,7 +116,7 @@
             :gap="8"
             class="patch_form_section"
           >
-            <div style="margin-right: 16px">
+            <div style="margin-right: var(--space-7)">
               <uk-flex
                 :gap="8"
                 class="patch_form_subsection"
@@ -183,7 +183,7 @@
             :gap="8"
             class="patch_form_section"
           >
-            <div style="margin-right: 16px">
+            <div style="margin-right: var(--space-7)">
               <uk-flex
                 :gap="8"
                 class="patch_form_subsection"
@@ -542,45 +542,45 @@ export default {
   margin-bottom: unset;
 }
 .fixture_sources {
-  width: 300px;
-  border-right: 1px solid var(--primary-dark);
+  width: var(--widget-width-md);
+  border-right: var(--border-width) solid var(--primary-dark);
 }
 .fixture_sources.dragging {
-  outline: 1px dashed var(--accent-blue);
+  outline: var(--border-width) dashed var(--accent-blue);
   outline-offset: -2px;
 }
 .fixture_list {
   height: 350px;
-  width: 300px;
+  width: var(--widget-width-md);
   max-height: 350px;
   overflow: hidden;
 }
 .import_bar {
-  padding: 8px;
-  border-top: 1px solid var(--primary-dark);
+  padding: var(--space-4);
+  border-top: var(--border-width) solid var(--primary-dark);
 }
 .field {
   display: flex;
   flex-direction: column;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-4);
   width: 55px;
 }
 .field_label {
-  margin-bottom: 8px;
+  margin-bottom: var(--space-4);
 }
 .patch_button {
-  margin-left: 8px;
+  margin-left: var(--space-4);
 }
 .patch_error {
-  color: #ce3d3db3;
+  color: var(--accent-red);
 }
 h4 {
-  margin-bottom: 8px;
+  margin-bottom: var(--space-4);
 }
 .form_validation {
   display: flex;
-  border-top: 1px solid var(--primary-dark);
-  padding: 8px;
+  border-top: var(--border-width) solid var(--primary-dark);
+  padding: var(--space-4);
   width: 100%;
 }
 </style>

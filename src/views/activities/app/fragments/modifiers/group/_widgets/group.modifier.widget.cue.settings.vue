@@ -107,7 +107,7 @@ export default {
   max-width: 220px;
 }
 .modifier_widget_cue_settings_body {
-  padding: 10px;
+  padding: var(--space-5);
   height: 100%;
 }
 </style>

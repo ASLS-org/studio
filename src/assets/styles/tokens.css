@@ -11,11 +11,7 @@
   --primary-light-alt: #181B16;
   --primary-lighter: #2C2E2B;
   --primary-lighter-alt: #1F221D;
-  
-  --test: #343434;
 
-  --some: #0b0b0b52;
-  
   --secondary-lighter: #FFFFFFB3;
   --secondary-lighter-alt: #FFFFFFA3;
   --secondary-light-alt: #FFFFFF63;
@@ -38,6 +34,13 @@
   --accent-orange: #E76D58;
   --accent-red: #E25D6A;
 
+  /* Content on a coloured surface (cue tiles, chase cells): the same in both themes, since the
+     colour under it is the cue's or the chase's own */
+  --on-color-text: #FFFFFFB3;
+  --on-color-surface: #FFFFFF33;
+  /* Curve editors' control points (scene fades, effect curves) */
+  --curve-handle: #B6B7B5;
+
   /* "Idle" surface: diagonal stripes over the panel shade, behind empty or resting areas
      (empty lists, the modifier strip, the group pool) */
   --idle-stripes: repeating-linear-gradient(
@@ -57,11 +60,65 @@
   --primary-lighter: #d1cfd44d;
   --primary-lighter-alt: var(--primary-light);
 
-  
-  --some: #f4f4f452;
-  
+
   --secondary-lighter: #000000B3;
   --secondary-light: #00000033;
   --secondary-dark: #0000001A;
   --secondary-darker: #0000001D;
+}
+
+/** Design scale: spacing, type, sizes, radii, borders. Steps, not pixel values: a step's value can
+    change without renaming its uses. Values snap to the nearest step (ties go down). **/
+:root {
+  --space-0: 0;
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 6px;
+  --space-4: 8px;
+  --space-5: 10px;
+  --space-6: 12px;
+  --space-7: 16px;
+  --space-8: 20px;
+  --space-9: 24px;
+  --space-10: 32px;
+
+  --font-xs: 10px;
+  --font-sm: 12px;
+  --font-md: 14px;
+  --font-lg: 16px;
+  --font-xl: 24px;
+
+  --icon-xs: 10px;
+  --icon-sm: 14px;
+  --icon-md: 16px;
+  --icon-lg: 24px;
+
+  /* Heights of the shared control roles */
+  --control-height: 24px; /* text and number fields, selects */
+  --button-height: 20px; /* buttons (compact, pill-shaped) */
+  --row-height: 30px; /* list rows */
+  --row-height-tall: 40px; /* tall and large list rows */
+  --header-height: 40px; /* toolbar and panel headers (patch bay, group pool, visualizer) */
+  --widget-header-height: 30px; /* widget and popup headers */
+
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+  --radius-round: 50%; /* circles */
+  --radius-pill: 9999px; /* fully rounded ends, whatever the height */
+
+  --border-width: 1px;
+
+  --widget-width-sm: 250px;
+  --widget-width-md: 300px;
+  --widget-width-lg: 350px;
+}
+
+/** Fixed geometry: sizes the code computes with. Never part of the scale, never snapped. Each is
+    also exported by src/views/utils/geometry.js, which the code reads: change both together. **/
+:root {
+  --cue-tile-width: 100px; /* cue pool grid: group.modifier.widget.cuepool.vue computeCueStyle */
+  --cue-tile-height: 81px;
+  --chase-row-height: 26px; /* group pool chase rows: uikit.cue.container.vue, uikit.cue.vue */
+  --select-option-height: 25px; /* uk-select options: computeOptionListStyle */
 }

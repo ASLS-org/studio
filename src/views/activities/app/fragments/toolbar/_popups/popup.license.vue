@@ -46,7 +46,7 @@ export default {
 
 .body {
   white-space: pre;
-  padding: 10px;
+  padding: var(--space-5);
   overflow: scroll;
   overflow-x: hidden;
   height: 400px;

@@ -154,15 +154,15 @@ export default {
   height: 100%;
   position: relative;
   overflow: hidden;
-  padding-top: 8px;
-  padding-bottom: 8px;
+  padding-top: var(--space-4);
+  padding-bottom: var(--space-4);
 }
 .uikit_fader_wrapper {
   display: flex;
   flex-direction: row;
   align-items: center;
   height: 100%;
-  padding: 8px 0;
+  padding: var(--space-4) 0;
 }
 .uikit_fader_slider {
   -webkit-appearance: none;

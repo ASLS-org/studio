@@ -35,7 +35,7 @@
             >{{ versionData.version || 'no-version-data' }}</a>
           </p>
           <p>Build date: {{ versionData.date || 'no-build-date' }}</p>
-          <p style="margin-bottom:16px">
+          <p style="margin-bottom:var(--space-7)">
             Branch:&nbsp;<a
               traget="_blank"
               :href="
@@ -191,7 +191,7 @@ export default {
 .build_info p{
   font-family: roboto-regular;
   opacity: .9;
-  font-size: 12px;
+  font-size: var(--font-sm);
 }
 a{
   color: inherit!important;

@@ -51,7 +51,7 @@ export default {
     rgba(43, 43, 189, 0.774) 50%,
     rgba(43, 43, 189, 0.774) 100%
     );
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   box-shadow: inset 2px 2px 2px black;
 }
 </style>

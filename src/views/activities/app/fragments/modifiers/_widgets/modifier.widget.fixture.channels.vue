@@ -139,7 +139,7 @@ export default {
   align-items: center;
   flex: 1;
   height: 100%;
-  border-right: 1px solid var(--primary-dark);
+  border-right: var(--border-width) solid var(--primary-dark);
   overflow: hidden;
   box-sizing: content-box;
   background: var(--primary-light);
@@ -151,18 +151,18 @@ export default {
   width: 100%;
 }
 .channel_icon {
-  margin-top: 8px;
+  margin-top: var(--space-4);
   height: 20px !important;
   width: 20px !important;
-  min-height: 14px !important;
-  min-width: 14px !important;
+  min-height: var(--icon-sm) !important;
+  min-width: var(--icon-sm) !important;
   fill: var(--secondary-lighter);
 }
 .channel_icon.disabled {
   fill: var(--secondary-light) !important;
 }
 .channel_activity {
-  margin-top: 8px;
-  margin-bottom: 8px;
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-4);
 }
 </style>

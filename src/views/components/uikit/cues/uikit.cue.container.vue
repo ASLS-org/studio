@@ -39,7 +39,7 @@
             v-if="master"
             :key="'A' + chaseIndex"
             class="uikit_chase master"
-            :style="{ top: `${chaseIndex * 26}px` }"
+            :style="{ top: `${chaseIndex * rowHeight}px` }"
             :class="{ playing: masterPlayingRow == chaseIndex }"
           >
             <p class="uikit_chase_title">
@@ -94,7 +94,7 @@
             v-for="(chase, chaseIndex) in chases"
             :key="'B' + chaseIndex"
             class="uikit_chase"
-            :style="{ background: chase.color, top: `${chase.id * 26}px` }"
+            :style="{ background: chase.color, top: `${chase.id * rowHeight}px` }"
             :class="{ playing: live(chase.state), selected: selectedChaseId === chase.id }"
             @mousedown="(e) => startDragChase(e, chase)"
             @mouseup="(e) => stopDragChase(e, chase)"
@@ -151,7 +151,7 @@
             style="
               height: 10px;
               width: 10px;
-              border-radius: 50%;
+              border-radius: var(--radius-round);
               box-shadow: inset 1px 1px 2px var(--primary-dark);
               transition: all .2s;
             "
@@ -186,6 +186,7 @@
 
 <script>
 import LiveMixin from '@/views/mixins/live.mixin';
+import { CHASE_ROW_HEIGHT } from '@/views/utils/geometry';
 
 export default {
   name: 'UkCueContainer',
@@ -233,6 +234,10 @@ export default {
   emits: ['scrolled', 'poolsize', 'select-chase'],
   data() {
     return {
+      /**
+       * A chase row's height (fixed geometry, px)
+       */
+      rowHeight: CHASE_ROW_HEIGHT,
       poolsize: 100,
       /**
        * List of chases contained within the group
@@ -385,13 +390,13 @@ export default {
     dragChase(e, ctx) {
       let tick = Math.min(
         Math.max(
-          Math.floor((e.clientY - ctx.startY + 13) / 26),
+          Math.floor((e.clientY - ctx.startY + CHASE_ROW_HEIGHT / 2) / CHASE_ROW_HEIGHT),
           0,
         ),
         this.poolsize - 1,
       );
       tick = this.chases.find((chase) => chase.id === tick) ? ctx.chase.id : tick;
-      ctx.chaseEl.style.top = `${tick * 26}px`;
+      ctx.chaseEl.style.top = `${tick * CHASE_ROW_HEIGHT}px`;
       ctx.chase.id = tick;
       this.selectChase(ctx.chase);
     },
@@ -413,7 +418,7 @@ export default {
   min-width: 120px;
   max-width: 120px;
   width: 100%;
-  border-right: 1px solid var(--primary-dark);
+  border-right: var(--border-width) solid var(--primary-dark);
   background: var(--primary-light);
   flex-direction: column;
 }
@@ -422,7 +427,7 @@ export default {
 }
 .uikit_cue_container.master {
   border-right: none !important;
-  border-left: 1px solid var(--primary-dark) !important;
+  border-left: var(--border-width) solid var(--primary-dark) !important;
 }
 .uikit_cue_container_header {
   display: flex;
@@ -431,16 +436,16 @@ export default {
   min-height: 30px;
   max-height: 30px;
   align-items: center;
-  padding: 0 8px;
-  border-bottom: 1px solid var(--primary-dark);
+  padding: 0 var(--space-4);
+  border-bottom: var(--border-width) solid var(--primary-dark);
   border-top: 3px solid rebeccapurple;
 }
 .uikit_cue_container_header_dot{
   min-height: 8px;
   min-width: 8px;
-  border: 1px solid transparent;
-  border-radius: 50%;
-  margin-right: 8px;
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-round);
+  margin-right: var(--space-4);
 }
 .uikit_cue_container_body {
   position: relative;
@@ -461,20 +466,22 @@ export default {
 }
 .uikit_cue_container_empty_cue {
   display: flex;
-  height: 25px;
-  min-height: 25px;
+  /* the row pitch minus its bottom border (fixed geometry) */
+  height: calc(var(--chase-row-height) - 1px);
+  min-height: calc(var(--chase-row-height) - 1px);
   background: var(--primary-lighter-alt);
+  /* part of the row pitch: stays 1px whatever --border-width is */
   border-bottom: 1px solid var(--primary-dark);
   box-sizing: content-box;
 }
 .uikit_cue_container_empty_cue:nth-child(even) {
-  background: var(--primary-light-alt); /*#1c1f18;*/
+  background: var(--primary-light-alt);
 }
 .selected .uikit_cue_container_empty_cue {
-  background: #232620;
+  background: var(--primary-lighter-alt);
 }
 .selected .uikit_cue_container_empty_cue:nth-child(even) {
-  background: #1f221a;
+  background: var(--primary-lighter-alt);
 }
 .uikit_cue_container_empty_cue_btn {
   display: flex;
@@ -491,10 +498,10 @@ export default {
   height: 12px;
   width: 12px;
   fill: var(--secondary-darker);
-  border: 1px solid var(--primary-light);
+  border: var(--border-width) solid var(--primary-light);
 }
 .uikit_cue_container_body_modifiers {
-  padding: 16px 0px;
+  padding: var(--space-7) 0px;
   display: flex;
   overflow: hidden;
   align-items: center;
@@ -509,8 +516,9 @@ export default {
 .uikit_chase {
   position: absolute;
   display: flex;
-  height: 25px;
+  height: calc(var(--chase-row-height) - 1px);
   width: 100%;
+  /* part of the row pitch: stays 1px whatever --border-width is */
   border: 1px solid var(--secondary-light);
   background: var(--secondary-darker);
   opacity: 0.8;
@@ -551,31 +559,31 @@ export default {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  background: #ffffff33; /* Since cues are colored, we're enforcing dark theme font color */
+  background: var(--on-color-surface);
 }
 .selected > .uikit_chase_btn {
   background: rgba(255, 255, 255, 0.4);
 }
 .uikit_chase_icon {
-  height: 14px !important;
-  width: 14px !important;
-  fill: #ffffffb3; /* Since cues are colored, we're enforcing dark theme font color policies */
+  height: var(--icon-sm) !important;
+  width: var(--icon-sm) !important;
+  fill: var(--on-color-text);
 }
 .playing .uikit_chase_icon {
-  height: 10px !important;
-  width: 10px !important;
+  height: var(--icon-xs) !important;
+  width: var(--icon-xs) !important;
   animation: load linear 0.8s infinite alternate !important;
 }
 .uikit_chase_title {
   display: flex;
   align-items: center;
-  padding: 0 8px;
+  padding: 0 var(--space-4);
   width: 100%;
   height: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #ffffffb3 !important; /* Since cues are colored, we're enforcing dark theme font color */
+  color: var(--on-color-text) !important;
   font-family: roboto-medium;
 }
 .uikit_chase_loader {

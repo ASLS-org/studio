@@ -74,13 +74,13 @@ export default {
 
 <style scoped>
 .preset_list {
-  width: 300px;
+  width: var(--widget-width-md);
   max-height: 250px;
   min-height: 250px;
-  border-right: 1px solid var(--primary-dark);
+  border-right: var(--border-width) solid var(--primary-dark);
 }
 .function_button {
-  margin-top: 8px;
-  margin-left: 8px;
+  margin-top: var(--space-4);
+  margin-left: var(--space-4);
 }
 </style>

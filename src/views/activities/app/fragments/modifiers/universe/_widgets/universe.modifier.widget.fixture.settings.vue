@@ -101,7 +101,7 @@ export default {
 .fixture_settings_body {
   height: 100%;
   width: 100%;
-  padding: 10px;
+  padding: var(--space-5);
   max-width: 200px;
   min-width: 200px;
 }

@@ -122,7 +122,7 @@ export default {
 
 <style scoped>
 .effect_fixtures {
-  min-width: 250px;
+  min-width: var(--widget-width-sm);
 }
 .effect_fixtures_list {
   height: 100%;

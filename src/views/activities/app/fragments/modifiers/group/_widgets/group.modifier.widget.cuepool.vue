@@ -132,6 +132,7 @@
 import modal from '@/views/mixins/modal.mixin';
 import LiveMixin from '@/views/mixins/live.mixin';
 import KeysMixin from '@/views/mixins/keys.mixin';
+import { CUE_TILE_WIDTH, CUE_TILE_HEIGHT, CUE_TILES_PER_ROW } from '@/views/utils/geometry';
 import { CUE_TRIGGER_STYLES } from '@/models/DMX/cue.model';
 import popupCuePool from '../_popups/group.modifier.popup.cuepool.vue';
 
@@ -249,8 +250,8 @@ export default {
      */
     computeCueStyle(cue) {
       const style = {
-        left: `${parseInt(cue.id % 4, 10) * 100}px`,
-        top: `${Math.floor(parseInt(cue.id, 10) / 4) * 81}px`,
+        left: `${(parseInt(cue.id, 10) % CUE_TILES_PER_ROW) * CUE_TILE_WIDTH}px`,
+        top: `${Math.floor(parseInt(cue.id, 10) / CUE_TILES_PER_ROW) * CUE_TILE_HEIGHT}px`,
       };
       return style;
     },
@@ -263,8 +264,8 @@ export default {
      */
     computeCuePreviewStyle(cue) {
       const style = {
-        left: `${parseInt(cue.id % 4, 10) * 6.9}px`,
-        top: `${Math.floor(parseInt(cue.id, 10) / 4) * 6.11}px`,
+        left: `${(parseInt(cue.id, 10) % CUE_TILES_PER_ROW) * 6.9}px`,
+        top: `${Math.floor(parseInt(cue.id, 10) / CUE_TILES_PER_ROW) * 6.11}px`,
         background: cue.color,
       };
       return style;
@@ -443,26 +444,27 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 99px;
-  height: 80px;
+  /* the grid pitch minus the 1px between tiles (fixed geometry) */
+  width: calc(var(--cue-tile-width) - 1px);
+  height: calc(var(--cue-tile-height) - 1px);
   cursor: pointer;
-  background: #161913;
+  background: var(--primary-light);
   opacity: 1;
   z-index: 1;
 }
 .grid_item_overlay {
-  border: 1px solid var(--secondary-dark);
+  border: var(--border-width) solid var(--secondary-dark);
   width: 100%;
   height: 100%;
   display: flex;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   flex-direction: column;
   opacity: 0.8;
   transition: opacity 0.15s;
 }
 .selected .grid_item_overlay {
   opacity: 1;
-  border: 1px solid var(--secondary-light);
+  border: var(--border-width) solid var(--secondary-light);
 }
 .grid_item:not(.empty):active {
   cursor: move;
@@ -482,7 +484,7 @@ export default {
   justify-content: center;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding: 8px;
+  padding: var(--space-4);
   white-space: initial;
   border-color: transparent;
 }
@@ -495,7 +497,7 @@ export default {
 .grid_item_body_icon {
   height: 28px !important;
   width: 18px !important;
-  fill: #ffffffb3; /* Since cues are colored, we're enforcing dark theme font color policies */
+  fill: var(--on-color-text);
 }
 .grid_item_body_icon.playing {
   height: 12px !important;
@@ -510,7 +512,7 @@ export default {
   align-items: center;
   text-align: center;
   justify-content: center;
-  padding: 0 8px;
+  padding: 0 var(--space-4);
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
@@ -529,7 +531,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 4px 4px;
+  padding: var(--space-2) var(--space-2);
   width: 100%;
   text-align: center;
   overflow: hidden;
@@ -567,7 +569,7 @@ export default {
   width: 100%;
   background: var(--secondary-light);
   opacity: 0.5;
-  border: 1px solid var(--secondary-light);
+  border: var(--border-width) solid var(--secondary-light);
 }
 .cue_preview {
   position: absolute;
@@ -577,7 +579,7 @@ export default {
 }
 .cue_preview.selected {
   opacity: 1;
-  border: 1px solid var(--secondary-light);
+  border: var(--border-width) solid var(--secondary-light);
 }
 .cue_preview.playing {
   animation: playing_animation 0.5s infinite alternate;

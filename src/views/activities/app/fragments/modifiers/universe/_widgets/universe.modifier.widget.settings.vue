@@ -28,7 +28,7 @@
         <uk-flex
           gap="10"
           center-both
-          style="width:100%;"
+          style="width:100%"
         >
           <uk-select-input
             :model-value="universe?.stream?.client?.name ?? null"
@@ -45,7 +45,7 @@
           <uk-button
             square
             label="config"
-            style="height:25px; min-width: 75px; margin-top:22px"
+            style="height: var(--control-height); min-width: 75px; margin-top: 22px"
             @click="connectionsPopupState = true"
           />
         </uk-flex>
@@ -153,12 +153,12 @@ export default {
 
 <style scoped>
 .universe_settings_wrapper{
-  min-width: 250px;
+  min-width: var(--widget-width-sm);
 }
 .universe_settings {
   height: 100%;
-  padding: 10px;
-  min-width: 250px;
+  padding: var(--space-5);
+  min-width: var(--widget-width-sm);
 }
 .empty_text {
   display: flex;

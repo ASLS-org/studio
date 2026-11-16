@@ -30,7 +30,7 @@ export default {
   flex: 1;
   width: 100%;
   background: var(--primary-light) var(--idle-stripes);
-  border-top: 1px solid var(--primary-dark);
+  border-top: var(--border-width) solid var(--primary-dark);
   overflow: hidden;
   overflow-x: auto;
   z-index: 20;

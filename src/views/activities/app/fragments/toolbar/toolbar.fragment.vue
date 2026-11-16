@@ -17,7 +17,7 @@
       <h3>BPM: </h3>
       <uk-num-input
         v-model="$show.bpm"
-        style="margin-left:8px;width:60px;"
+        style="margin-left:var(--space-4);width:60px"
         @input="bpm=$show.bpm"
       />
       <div
@@ -400,10 +400,10 @@ export default {
 
 <style scoped>
 .navigation_header {
-  min-height: 40px;
+  min-height: var(--header-height);
   width: 100%;
   background: var(--primary-light);
-  border-bottom: 1px solid var(--primary-dark);
+  border-bottom: var(--border-width) solid var(--primary-dark);
   z-index: 20;
 }
 .header_menu,
@@ -411,8 +411,8 @@ export default {
 .tap_container,
 .state_container {
   height: 100%;
-  padding: 0 16px;
-  border-left: 1px solid var(--primary-dark);
+  padding: 0 var(--space-7);
+  border-left: var(--border-width) solid var(--primary-dark);
 }
 .state_container{
   width: 100px;
@@ -429,16 +429,16 @@ export default {
 .colored_dot {
   height: 10px;
   width: 10px;
-  border-radius: 50%;
-  margin-left: 16px;
+  border-radius: var(--radius-round);
+  margin-left: var(--space-7);
   animation-name: softblink;
   animation-iteration-count: infinite;
   animation-direction: alternate;
 }
 .play_state_icon {
-  height: 10px;
-  width: 10px;
-  margin-right: 8px;
+  height: var(--icon-xs);
+  width: var(--icon-xs);
+  margin-right: var(--space-4);
 }
 .play_state_icon.playing {
   background: transparent;
@@ -447,8 +447,8 @@ export default {
   border-left: 10px solid var(--accent-sea-green);
 }
 .play_state_icon.stopped {
-  background: #ce2d5e;
-  border-radius: 2px;
+  background: var(--accent-red);
+  border-radius: var(--radius-sm);
 }
 .play_state_icon.paused {
   background-size: 10px;

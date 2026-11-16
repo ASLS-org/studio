@@ -139,7 +139,7 @@ export default {
   flex-direction: row;
 }
 .group_fixtures {
-  min-width: 250px !important;
+  min-width: var(--widget-width-sm) !important;
 }
 .modifier_widget {
   display: flex;
@@ -159,10 +159,10 @@ export default {
   flex-direction: column;
   align-items: center;
   height: 100%;
-  border-right: 1px solid var(--primary-dark);
+  border-right: var(--border-width) solid var(--primary-dark);
 }
 .modifier_input {
   width: 100px;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-4);
 }
 </style>
