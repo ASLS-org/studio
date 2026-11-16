@@ -15,7 +15,9 @@
       class="uikit_select_box"
       tabindex="0"
       :class="{ disabled: disabled }"
+      :data-own-keys="displayed || null"
       @focusout="hide"
+      @keydown="onKeydown"
     >
       <uk-flex
         class="uikit_select_textbox_wrapper"
@@ -49,8 +51,11 @@
           <h4
             v-for="(option, index) in options"
             :key="index"
+            :ref="(el) => { optionEls[index] = el; }"
             class="uikit_select_option"
+            :class="{ current: index === selected, marked: index === marked }"
             @click="select(index)"
+            @mouseenter="marked = index"
             v-html="option"
           />
           <!--eslint-enable vue/no-v-html-->
@@ -61,6 +66,8 @@
 </template>
 
 <script>
+import { SELECT_OPTION_HEIGHT, SELECT_VISIBLE_OPTIONS } from '@/views/utils/geometry';
+
 /**
   * @component Select A multiple-choices input with customisable option list.
   * @namespace uikit/inputs/selects
@@ -130,6 +137,10 @@ export default {
        * Convey optionList styling properties
        */
       optionListStyle: {},
+      /**
+       * Option the keys (or the pointer) point at in the open list
+       */
+      marked: -1,
     };
   },
   computed: {
@@ -163,6 +174,10 @@ export default {
         this.removeListeners();
       }
     },
+  },
+  created() {
+    /** Option elements by index (to keep the marked one in view) */
+    this.optionEls = [];
   },
   beforeUnmount() {
     this.removeListeners();
@@ -212,7 +227,69 @@ export default {
       if (!this.disabled) {
         this.displayed = !this.displayed;
         if (this.displayed) {
-          this.$nextTick(this.computeOptionListStyle);
+          this.marked = this.isEmpty ? 0 : this.selected;
+          this.$nextTick(() => {
+            this.computeOptionListStyle();
+            this.revealMarked();
+          });
+        }
+      }
+    },
+    /**
+     * Keeps the marked option in view in the open list
+     */
+    revealMarked() {
+      const el = this.optionEls[this.marked];
+      if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest' });
+    },
+    /**
+     * Marks an option and keeps it in view
+     *
+     * @param {Number} index option index
+     */
+    mark(index) {
+      this.marked = index;
+      this.$nextTick(this.revealMarked);
+    },
+    /**
+     * Keys on the focused select: Up and Down open the list, then move the mark (wrapping);
+     * Enter or Space choose the marked option (or open the list); Escape closes it unchanged;
+     * a letter marks the next option that starts with it
+     *
+     * @param {KeyboardEvent} e keydown event
+     */
+    onKeydown(e) {
+      if (this.disabled || e.ctrlKey || e.metaKey || e.altKey) return;
+      const count = this.options.length;
+      if (!count) return;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (!this.displayed) {
+          this.show();
+          return;
+        }
+        this.mark((this.marked + (e.key === 'ArrowDown' ? 1 : -1) + count) % count);
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (this.displayed) this.select(this.marked);
+        else this.show();
+      } else if (e.key === 'Escape') {
+        if (!this.displayed) return;
+        e.preventDefault();
+        e.stopPropagation();
+        this.displayed = false;
+      } else if (e.key.length === 1) {
+        const letter = e.key.toLowerCase();
+        const text = (option) => String(option).replace(/<[^>]*>/g, '').trim().toLowerCase();
+        const from = this.displayed ? this.marked : this.selected;
+        for (let i = 1; i <= count; i += 1) {
+          const index = (from + i + count) % count;
+          if (text(this.options[index]).startsWith(letter)) {
+            e.preventDefault();
+            if (!this.displayed) this.show();
+            this.mark(index);
+            return;
+          }
         }
       }
     },
@@ -236,10 +313,10 @@ export default {
         const box = selectBoxEl.getBoundingClientRect();
         this.optionListStyle = {
           width: `${selectBoxEl.clientWidth}px`,
-          top: `${box.top - Math.min(this.options.length * 25, 100)}px`,
+          top: `${box.top - Math.min(this.options.length, SELECT_VISIBLE_OPTIONS) * SELECT_OPTION_HEIGHT}px`,
           left: `${box.left}px`,
-          height: `${this.options.length * 25}px`,
-          maxHeight: '100px',
+          height: `${this.options.length * SELECT_OPTION_HEIGHT}px`,
+          maxHeight: `${SELECT_VISIBLE_OPTIONS * SELECT_OPTION_HEIGHT}px`,
         };
       }
     },
@@ -261,17 +338,17 @@ export default {
   outline: unset;
 }
 .uikit_select_textbox_wrapper {
-  height: 25px;
-  border: 1px solid var(--secondary-dark);
+  height: var(--control-height);
+  border: var(--border-width) solid var(--secondary-dark);
 }
 .uikit_select_textbox {
   font-family: Roboto-Regular;
   background: var(--primary-dark);
   color: var(--secondary-lighter);
-  font-size: 10px;
+  font-size: var(--font-xs);
   width: 100%;
   padding: 0;
-  padding-left: 5px;
+  padding-left: var(--space-2);
   -moz-appearance: none;
   -webkit-appearance: none;
   outline: 0;
@@ -326,7 +403,7 @@ export default {
   height: fit-content;
   width: inherit;
   background: var(--primary-dark);
-  outline: 1px solid var(--secondary-light);
+  outline: var(--border-width) solid var(--secondary-light);
   border-bottom: none;
   box-shadow: 0px -5px 10px -2px var(--primary-dark);
 }
@@ -334,18 +411,24 @@ export default {
   display: flex;
   flex-direction: row;
   align-items: center;
-  min-height: 25px;
-  max-height: 25px;
-  padding: 0 5px;
+  min-height: var(--select-option-height);
+  max-height: var(--select-option-height);
+  padding: 0 var(--space-2);
   width: inherit;
   background: var(--secondary-darker);
 }
-.uikit_select_option:hover {
+.uikit_select_option:hover,
+.uikit_select_option.marked {
   background: var(--secondary-dark);
   cursor: pointer;
 }
+/* The current value, in the list: styled like a selected list row */
+.uikit_select_option.current {
+  color: var(--secondary-lighter);
+  background: var(--accent-blue);
+}
 .selected {
-  outline: 1px solid var(--accent-blue);
+  outline: var(--border-width) solid var(--accent-blue);
   outline-offset: -1px;
 }
 </style>
