@@ -4,13 +4,24 @@
     class="app_activity"
   >
     <toolbar />
-    <uk-flex class="top_fragments">
+    <uk-flex
+      class="top_fragments"
+      :style="{ '--patch-bay-width': `${patchBayWidth}px` }"
+    >
       <uk-flex class="top_fragment_left">
         <patch-bay />
+        <!-- The patch bay's right border: drag it to widen it (up to twice its width) -->
+        <uk-resize-handle
+          class="patch_bay_resize"
+          axis="x"
+          @resize="patchBayWidth = $event"
+        />
         <group-pool />
       </uk-flex>
       <visualizer />
     </uk-flex>
+    <!-- The border between the top panels and the modifier strip: drag it to share the height -->
+    <uk-resize-handle axis="y" />
     <modifier />
     <popup-splash
       v-model="loader.state"
@@ -57,6 +68,10 @@ export default {
   },
   data() {
     return {
+      /**
+       * Patch bay width (px): the group pool's width limits leave room for it
+       */
+      patchBayWidth: 200,
       /**
        * Error popup description object
        */
@@ -150,7 +165,6 @@ export default {
 .top_fragments {
   z-index: 10;
   overflow: hidden;
-  resize: vertical;
   min-height: calc(100% - 500px);
   max-height: calc(100% - 280px);
   height: calc(100% - 280px);
