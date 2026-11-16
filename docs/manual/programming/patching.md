@@ -68,7 +68,8 @@ doesn't have opens with a **Missing fixtures** prompt first: see
 
 Click a fixture in the **Fixture Pool** (or the patch bay) to select it: the universe view shows its
 settings and controls, and the visualizer outlines it, so you can tell which light on stage is
-which. Hold <kbd>Ctrl</kbd> and click to select several. Type in **Search items** to show only the
+which. The fixture pool widens to show long names whole, up to a limit; past it, hover a name to
+read it. Hold <kbd>Ctrl</kbd> and click to select several. Type in **Search items** to show only the
 fixtures whose name matches. The universe keeps its selection while you work elsewhere: open it
 again and the same fixtures are selected.
 
@@ -104,7 +105,7 @@ and the rig on stage loses its right-hand head.
 | Setting | Description |
 | --- | --- |
 | **Name** | The universe's name |
-| **ID** | The universe's number, unique in the show (a number another universe uses is refused). Its fixtures follow it |
+| **ID** | The universe's number, given when it is created and fixed from then on (shown greyed out). Its output sends to this universe number |
 | **Output** | The connection this universe is sent through: see [Outputs](/rig/outputs#_3-send-a-universe) |
 | **Color** | The universe's colour in the patch bay |
 

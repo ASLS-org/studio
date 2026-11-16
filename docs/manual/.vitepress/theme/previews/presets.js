@@ -204,7 +204,7 @@ const PRESETS = {
     title: 'Fade in',
     width: 341,
     height: STRIP,
-    component: () => import('@/views/activities/app/fragments/modifiers/group/_widgets/group.scene.modifier.widget.curve.vue'),
+    component: () => import('@/views/activities/app/fragments/modifiers/_widgets/modifier.widget.curve.vue'),
     props: (show) => ({ fade: cue(show, 3).fadeIn }),
   },
   'effect-wave': {
