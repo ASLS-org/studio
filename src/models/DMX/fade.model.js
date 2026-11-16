@@ -48,6 +48,32 @@ const FADE_PRESETS = {
     x: 0.580,
     y: 1.0,
   }],
+  // Appended after the original six: showfiles store the index (see FADE_PRESETS_INDICES).
+  // Values from easings.net (cubic-bezier).
+  SINE_IN: [{ x: 0.12, y: 0 }, { x: 0.39, y: 0 }],
+  SINE_OUT: [{ x: 0.61, y: 1 }, { x: 0.88, y: 1 }],
+  SINE_IN_OUT: [{ x: 0.37, y: 0 }, { x: 0.63, y: 1 }],
+  QUAD_IN: [{ x: 0.11, y: 0 }, { x: 0.5, y: 0 }],
+  QUAD_OUT: [{ x: 0.5, y: 1 }, { x: 0.89, y: 1 }],
+  QUAD_IN_OUT: [{ x: 0.45, y: 0 }, { x: 0.55, y: 1 }],
+  CUBIC_IN: [{ x: 0.32, y: 0 }, { x: 0.67, y: 0 }],
+  CUBIC_OUT: [{ x: 0.33, y: 1 }, { x: 0.68, y: 1 }],
+  CUBIC_IN_OUT: [{ x: 0.65, y: 0 }, { x: 0.35, y: 1 }],
+  QUART_IN: [{ x: 0.5, y: 0 }, { x: 0.75, y: 0 }],
+  QUART_OUT: [{ x: 0.25, y: 1 }, { x: 0.5, y: 1 }],
+  QUART_IN_OUT: [{ x: 0.76, y: 0 }, { x: 0.24, y: 1 }],
+  QUINT_IN: [{ x: 0.64, y: 0 }, { x: 0.78, y: 0 }],
+  QUINT_OUT: [{ x: 0.22, y: 1 }, { x: 0.36, y: 1 }],
+  QUINT_IN_OUT: [{ x: 0.83, y: 0 }, { x: 0.17, y: 1 }],
+  EXPO_IN: [{ x: 0.7, y: 0 }, { x: 0.84, y: 0 }],
+  EXPO_OUT: [{ x: 0.16, y: 1 }, { x: 0.3, y: 1 }],
+  EXPO_IN_OUT: [{ x: 0.87, y: 0 }, { x: 0.13, y: 1 }],
+  CIRC_IN: [{ x: 0.55, y: 0 }, { x: 1, y: 0.45 }],
+  CIRC_OUT: [{ x: 0, y: 0.55 }, { x: 0.45, y: 1 }],
+  CIRC_IN_OUT: [{ x: 0.85, y: 0 }, { x: 0.15, y: 1 }],
+  BACK_IN: [{ x: 0.36, y: 0 }, { x: 0.66, y: -0.56 }],
+  BACK_OUT: [{ x: 0.34, y: 1.56 }, { x: 0.64, y: 1 }],
+  BACK_IN_OUT: [{ x: 0.68, y: -0.6 }, { x: 0.32, y: 1.6 }],
 };
 
 /**
@@ -55,14 +81,32 @@ const FADE_PRESETS = {
  *
  * @constant {Array} FADE_PRESETS_INDICES
  */
-const FADE_PRESETS_INDICES = [
-  FADE_PRESETS.CUSTOM,
-  FADE_PRESETS.LINEAR,
-  FADE_PRESETS.EASE,
-  FADE_PRESETS.EASE_IN,
-  FADE_PRESETS.EASE_OUT,
-  FADE_PRESETS.EASE_IN_OUT,
-];
+const FADE_PRESETS_INDICES = Object.values(FADE_PRESETS);
+
+/**
+ * Display name of each preset, by index (`CUBIC_IN_OUT` → `Cubic in-out`)
+ *
+ * @constant {Array<String>} FADE_PRESET_NAMES
+ */
+const FADE_PRESET_NAMES = Object.keys(FADE_PRESETS).map((key) => {
+  const words = key.toLowerCase().replace(/_in_out$/, ' in-out').replace(/_(in|out)$/, ' $1')
+    .replace(/_/g, ' ');
+  return words.charAt(0).toUpperCase() + words.slice(1);
+});
+
+/**
+ * Newton steps tried before bisecting, when solving a curve for time
+ *
+ * @constant {Number} SOLVE_NEWTON_STEPS
+ */
+const SOLVE_NEWTON_STEPS = 8;
+
+/**
+ * Precision of the time solve (curve x)
+ *
+ * @constant {Number} SOLVE_EPSILON
+ */
+const SOLVE_EPSILON = 1e-5;
 /**
  * Fade directions enumeration
  *
@@ -173,14 +217,14 @@ class Fade {
   }
 
   /**
-   * List of available fade presets/easing functions
+   * Display names of the fade presets, by type index (`Custom`, `Linear`, `Ease in`...)
    *
    * @readonly
    * @type {Array<String>}
    */
   // eslint-disable-next-line class-methods-use-this
-  get availabelEasingFunctions() {
-    return Object.keys(FADE_PRESETS);
+  get presetNames() {
+    return FADE_PRESET_NAMES;
   }
 
   /**
@@ -211,34 +255,58 @@ class Fade {
   }
 
   /**
-   * Returns fade's percented value at any given time.
+   * Returns the fade's progress (0 to 1, beyond for an overshooting curve) at a time.
    *
-   * Computes X and Y from a single set of cached bezier powers instead of the
-   * previous two-pass getValue()+getX() (which each re-derived (1-t)^2/(1-t)^3
-   * independently). Also returns a plain number instead of a toFixed(3)
-   * string - the string conversion allocated on every single frame for no
-   * benefit, since this.value already holds the precise numeric value and any
-   * display rounding belongs in the UI layer, not the per-frame update loop.
+   * The curve is drawn with time on X: at a time fraction x, it finds the curve parameter t with
+   * x(t) = x (Newton steps, bisection when they don't converge), then plays y(t), as CSS easing
+   * does. Keeps `t`, `x` and `value` for the play dot. Hot path: plain numbers, no allocation.
    *
    * @param {Number} time time value in milliseconds
    * @param {Number} duration
-   * @return {Number} Percented value over time
+   * @return {Number} Fade progress at that time
    */
   getValue(time, duration) {
-    const t = time / duration;
-    this.t = t;
+    const fraction = duration > 0 ? time / duration : 1;
+    const x = fraction < 0 ? 0 : Math.min(fraction, 1);
+    const cp = this._controlPoints;
+    const x1 = cp[0].x;
+    const x2 = cp[1].x;
+
+    // Newton on x(t) - x, from t = x
+    let t = x;
+    let solved = false;
+    for (let i = 0; i < SOLVE_NEWTON_STEPS; i++) {
+      const mt = 1 - t;
+      const error = 3 * mt * mt * t * x1 + 3 * mt * t * t * x2 + t * t * t - x;
+      if (Math.abs(error) < SOLVE_EPSILON) {
+        solved = true;
+        break;
+      }
+      const slope = 3 * mt * mt * x1 + 6 * mt * t * (x2 - x1) + 3 * t * t * (1 - x2);
+      if (Math.abs(slope) < 1e-6) break;
+      t -= error / slope;
+      if (t < 0 || t > 1) break;
+    }
+    if (!solved) {
+      // x(t) grows on 0..1 (control point X stays within 0..1): bisect
+      let low = 0;
+      let high = 1;
+      t = x;
+      while (high - low > SOLVE_EPSILON) {
+        const mt = 1 - t;
+        const at = 3 * mt * mt * t * x1 + 3 * mt * t * t * x2 + t * t * t;
+        if (at < x) low = t;
+        else high = t;
+        t = (low + high) / 2;
+      }
+    }
 
     const mt = 1 - t;
-    const mt2 = mt * mt;
-    const t2 = t * t;
-    const a = 3 * mt2 * t;
-    const b = 3 * mt * t2;
-    const c = t2 * t;
-
-    const cp = this._controlPoints;
-
-    this.x = a * cp[0].x + b * cp[1].x + c;
-
+    const a = 3 * mt * mt * t;
+    const b = 3 * mt * t * t;
+    const c = t * t * t;
+    this.t = t;
+    this.x = a * x1 + b * x2 + c;
     const val = a * cp[0].y + b * cp[1].y + c;
     this.value = val;
     return val || 0;
@@ -276,4 +344,5 @@ class Fade {
   }
 }
 
+export { FADE_PRESETS, FADE_PRESET_NAMES };
 export default Fade;
