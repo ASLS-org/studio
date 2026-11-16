@@ -9,7 +9,7 @@
  * Usage: npm run app:check [-- --url http://localhost:5173] [--only <scenario> ...]
  *   --url    use a running dev server instead of starting one
  *   --only   run only these scenarios (repeatable): panels, playing, textscroll, select, resize,
- *            memory, shared, highlight, deletes, keys, popups
+ *            widgets, presets, memory, shared, highlight, deletes, keys, popups
  * Chrome: CHROME_PATH, else the usual install path for the system.
  */
 /* eslint-disable no-console -- a command-line report */
@@ -355,6 +355,22 @@ async function press(page, key, modifiers = []) {
 }
 /** Submits (OK) the top visible popup */
 const submitTopPopup = (page) => click(page, '.popup .popup_validation .uikit_button, .popup .popup_validation button', /^(ok|OK|Ok|Delete|Submit|Confirm)$/i);
+
+/** App modules the scenarios import in the page (served by the dev server) */
+const PAGE_MODULES = {
+  icons: '/src/views/utils/channel.icons.js',
+  library: '/src/models/fixtures/fixture.library.js',
+};
+/** Text of a channel preset option: its span and label */
+const presetText = (r) => `${r.label} ${r.start === r.end ? r.start : `${r.start}–${r.end}`}`;
+/** Same text, whitespace removed (a row's name and span may touch in its text) */
+const squash = (t) => String(t).replace(/\s+/g, '');
+/** Picks a range in the open channel preset menu */
+const pickPreset = (page, r) => click(
+  page,
+  '.uikit_select_option_list.with_trigger .uikit_list_item',
+  new RegExp(`^${presetText(r).replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(' ', '\\s*')}$`),
+);
 
 /** Facts about the demo show used by the scenarios */
 const demo = (page) => page.evaluate(() => {
@@ -802,6 +818,306 @@ const SCENARIOS = {
     await wait(bar + 600);
     const end = await onCurve();
     check('the fade dot stays at the curve\'s end once done', end.x >= end.w - 3 && end.y <= 3, end);
+  },
+
+  /** Channel icons for every OFL and GDTF channel, range labels, and the preset menu */
+  async presets(page) {
+    // Every channel of every bundled fixture (OFL and GDTF) names an icon file, never the "x"
+    const coverage = await page.evaluate(async (modules) => {
+      const { default: channelIcon } = await import(modules.icons);
+      const { default: FixtureLibrary } = await import(modules.library);
+      const ofl = await (await fetch('/fixtures/fixture_list.json')).json();
+      const gdtf = await (await fetch('/gdtf/gdtf_list.json')).json();
+      const jobs = [
+        ...ofl.flatMap(({ name, fixtures }) => fixtures.map((f) => ['ofl', name, f.replace('.json', '')])),
+        ...gdtf.fixtures.map((f) => ['gdtf', f.manufacturer, f.fixtureTypeId]),
+      ];
+      const used = new Map();
+      let channels = 0;
+      let generic = 0;
+      let profiles = 0;
+      let unlabelled = 0;
+      const loaded = await Promise.all(jobs.map(([source, manufacturer, model]) => FixtureLibrary
+        .getProfile(source, manufacturer, model).catch(() => null)));
+      for (const profile of loaded.filter(Boolean)) {
+        profiles += 1;
+        for (const mode of profile.modes) {
+          for (const channel of mode.channels) {
+            channels += 1;
+            const icon = channelIcon(channel);
+            if (icon === 'channel') generic += 1;
+            used.set(icon, (used.get(icon) || 0) + 1);
+            unlabelled += channel.capabilities.filter((c) => !c.label).length;
+          }
+        }
+      }
+      return {
+        profiles, channels, generic, unlabelled, icons: [...used.keys()],
+      };
+    }, PAGE_MODULES);
+    const missing = [];
+    for (const icon of coverage.icons) {
+      const res = await page.evaluate(async (n) => (await fetch(`/src/views/components/uikit/icons/images/${n}.svg`)).status, icon);
+      if (res !== 200) missing.push(icon);
+    }
+    check(
+      `every OFL and GDTF channel names an icon file, never "close" (${coverage.channels} channels, ${coverage.profiles} fixtures, ${coverage.generic} generic)`,
+      coverage.profiles > 400 && !missing.length && !coverage.icons.includes('close'),
+      { missing, profiles: coverage.profiles },
+    );
+    check('every range of every OFL and GDTF fixture has a label', coverage.unlabelled === 0, coverage.unlabelled);
+
+    // One attribute per GDTF family finds its family's icon
+    const families = {
+      Dimmer: 'dimmer',
+      Pan: 'pan',
+      TiltRotate: 'tilt',
+      PositionMSpeed: 'speed',
+      ColorAdd_RY: 'colorintensityamber',
+      ColorAdd_GY: 'colorintensitylime',
+      ColorAdd_UV: 'colorintensityuv',
+      ColorAdd_WW: 'colorintensitywarmwhite',
+      ColorSub_C: 'colorintensitycyan',
+      ColorRGB_Red: 'colorintensityred',
+      CTO: 'colortemperature',
+      HSB_Hue: 'hueshift',
+      HSB_Saturation: 'saturation',
+      ColorMacro1: 'colorpreset',
+      Color2: 'colorwheel',
+      Color1WheelSpin: 'colorwheel',
+      Gobo2: 'gobowheel',
+      Gobo2PosRotate: 'goborotation',
+      Gobo1WheelSpin: 'goborotation',
+      Gobo1PosShake: 'shake',
+      AnimationWheel1: 'animation',
+      Shutter1: 'shutter',
+      Shutter1StrobeRandom: 'strobe',
+      StrobeFrequency: 'strobe',
+      Iris: 'iris',
+      Frost1: 'frost',
+      Prism1: 'prism',
+      Prism1PosRotate: 'prismrotation',
+      Effects2: 'effect',
+      Effects1Rate: 'speed',
+      Blade3A: 'shaper',
+      Zoom: 'zoom',
+      Focus1: 'focus',
+      Fog1: 'fog',
+      Fan1: 'fan',
+      Control1: 'maintenance',
+      FixtureGlobalReset: 'maintenance',
+      DimmerMode: 'control',
+    };
+    const wrong = await page.evaluate(async (expected, modules) => {
+      const { default: channelIcon } = await import(modules.icons);
+      return Object.entries(expected)
+        .map(([attribute, icon]) => [
+          attribute, icon, channelIcon({ attribute, type: attribute, name: attribute })])
+        .filter(([, icon, got]) => icon !== got);
+    }, families, PAGE_MODULES);
+    check('one attribute of each GDTF family gets its family icon', !wrong.length, wrong);
+
+    // GDTF ranges keep their channel set names
+    const gdtfShutter = await page.evaluate(async (modules) => {
+      const { default: FixtureLibrary } = await import(modules.library);
+      const list = await (await fetch('/gdtf/gdtf_list.json')).json();
+      const par = list.fixtures.find((f) => /par/i.test(f.file));
+      const profile = await FixtureLibrary.getProfile('gdtf', par.manufacturer, par.fixtureTypeId);
+      const shutter = profile.modes[0].channels.find((c) => /^Shutter\d$/.test(c.attribute));
+      return shutter ? shutter.capabilities.map((c) => c.label) : null;
+    }, PAGE_MODULES);
+    check(
+      'a GDTF shutter\'s ranges carry their channel set names',
+      !!gdtfShutter && ['Closed', 'Open', 'Strobe'].every((l) => gdtfShutter.includes(l)),
+      gdtfShutter,
+    );
+
+    // Universe: every channel has a menu; the MAC Aura's shutter offers its ranges
+    const d = await demo(page);
+    await openUniverse(page, d.universes[0].id);
+    const columns = () => page.evaluate(() => {
+      const w = [...document.querySelectorAll('.channels_widget')].find((e) => e.offsetParent);
+      return [...w.querySelectorAll('.channels_channel')].map((c) => ({
+        menu: !!c.querySelector('.channel_select .uikit_select_trigger'),
+        text: c.querySelector('.channel_select_text')?.textContent.trim() ?? null,
+        title: c.querySelector('.channel_select')?.getAttribute('title') ?? null,
+      }));
+    });
+    // the open list (fixed, so no offsetParent: the shown one is the one not hidden)
+    const openList = () => page.evaluate(() => {
+      const list = [...document.querySelectorAll('.uikit_select_option_list.with_trigger')]
+        .find((e) => e.style.display !== 'none');
+      if (!list) return null;
+      return {
+        header: list.querySelector('.uikit_select_header')?.textContent.trim() ?? null,
+        search: !!list.querySelector('.uikit_list_searchbox'),
+        options: [...list.querySelectorAll('.uikit_list_item')]
+          .map((o) => o.textContent.replace(/\s+/g, ' ').trim()),
+        current: list.querySelector('.uikit_list_item.selected')?.textContent
+          .replace(/\s+/g, ' ').trim() ?? null,
+      };
+    });
+    const target = await page.evaluate(() => {
+      const app = document.querySelector('#app').__vue_app__;
+      const view = app.config.globalProperties.$view;
+      const fixture = view.universeFixtures?.[0] || view.fixtures?.[0];
+      const index = fixture.channels.findIndex((c) => /^Shutter\d$/.test(c.attribute)
+        && c.capabilities.length > 2);
+      const dimmer = fixture.channels.findIndex((c) => c.attribute === 'Dimmer'
+        && c.capabilities.length === 1);
+      const caps = fixture.channels[index].capabilities;
+      const pick = caps.findIndex((c, i) => i > 0 && c.range[0] > caps[0].range[1]);
+      return {
+        fixtureId: fixture.id,
+        index,
+        dimmer,
+        dimmerName: fixture.channels[dimmer]?.name,
+        name: fixture.channels[index].name,
+        strobes: caps.filter((c) => /strobe/i.test(c.label)).length,
+        pick,
+        start: caps[pick].range[0],
+        end: caps[pick].range[1],
+        label: caps[pick].label,
+      };
+    });
+    const before = await columns();
+    const triggerOf = (i) => `.channels_widget .channels_channel:nth-child(${i + 1}) .uikit_select_trigger`;
+    await click(page, triggerOf(target.dimmer));
+    const dimmerList = await openList();
+    await press(page, 'Escape');
+    check(
+      'every channel has a menu; a dimmer\'s shows its full name and its one range',
+      before.every((c) => c.menu) && before[target.dimmer]?.text === target.dimmerName
+        && dimmerList?.header === target.dimmerName && dimmerList.options.length === 1,
+      { dimmer: before[target.dimmer], dimmerList },
+    );
+    const triggerSel = triggerOf(target.index);
+    await click(page, triggerSel);
+    const shutterList = await openList();
+    await page.keyboard.type('strobe');
+    await wait(SETTLE_MS);
+    const searched = await openList();
+    await press(page, 'Escape');
+    check(
+      'a long range list has a search field that filters it, under the channel\'s name',
+      shutterList?.header === target.name && shutterList.search
+        && searched.options.length === target.strobes
+        && searched.options.every((o) => /strobe/i.test(o)),
+      { header: shutterList?.header, search: shutterList?.search, searched: searched?.options },
+    );
+    await click(page, triggerSel);
+    await pickPreset(page, target);
+    const picked = await page.evaluate((t) => {
+      const fixture = window.__check.show.fixturePool.getFromId(t.fixtureId);
+      return fixture.channels[t.index].value.DMX;
+    }, target);
+    await click(page, triggerSel);
+    const marked = (await openList())?.current;
+    await press(page, 'Escape');
+    check(
+      'picking a range sets the channel to its start and the menu marks it',
+      picked === target.start && squash(marked) === squash(presetText(target)),
+      {
+        picked, start: target.start, marked, label: target.label,
+      },
+    );
+    const shown = (await columns())[target.index];
+    check(
+      'the channel\'s box shows the current range, its tooltip the name and range',
+      shown.text === target.label && shown.title === `${target.name}: ${target.label}`,
+      shown,
+    );
+
+    // Keys: Down then Enter picks the next range, Escape leaves it
+    const expected = await page.evaluate((t) => {
+      const ch = window.__check.show.fixturePool.getFromId(t.fixtureId).channels[t.index];
+      const at = ch.capabilities.findIndex((c) => ch.value.DMX >= c.range[0]
+        && ch.value.DMX <= c.range[1]);
+      return ch.capabilities[(at + 1) % ch.capabilities.length].range[0];
+    }, target);
+    await click(page, triggerSel);
+    await press(page, 'ArrowDown');
+    await press(page, 'Enter');
+    const next = await page.evaluate((t) => {
+      const fixture = window.__check.show.fixturePool.getFromId(t.fixtureId);
+      return { value: fixture.channels[t.index].value.DMX };
+    }, target);
+    next.expected = expected;
+    await click(page, triggerSel);
+    await press(page, 'ArrowDown');
+    await press(page, 'Escape');
+    const kept = await page.evaluate((t) => window.__check.show.fixturePool
+      .getFromId(t.fixtureId).channels[t.index].value.DMX, target);
+    check(
+      'Down and Enter pick the next range; Escape closes the menu unchanged',
+      next.value === next.expected && kept === next.value,
+      { next, kept },
+    );
+
+    // Scene: two fixtures of the same type, an inactive channel: both set, the channel active
+    const sceneGroup = d.groups.find((g) => g.fixtures.length > 1
+      && g.cues.some((c) => c.type === 0));
+    await openGroup(page, sceneGroup.name);
+    await selectCueTile(page, sceneGroup.cues.find((c) => c.type === 0).name);
+    const ids = sceneGroup.fixtures.slice(0, 2);
+    await page.evaluate((list) => {
+      document.querySelector('#app').__vue_app__.config.globalProperties.$view.selectFixtures(list);
+    }, ids);
+    await wait(SETTLE_MS);
+    const row = await page.evaluate(() => {
+      const w = [...document.querySelectorAll('.channels_widget')].find((e) => e.offsetParent);
+      let comp = w?.__vueParentComponent;
+      while (comp && !comp.props?.channels) comp = comp.parent;
+      const rows = comp?.props.channels || [];
+      const index = rows.findIndex((r) => r.capabilities && r.capabilities.length > 2
+        && /^Shutter\d$/.test(r.attribute) && r.targets.length === 2);
+      if (index < 0) return null;
+      const r = rows[index];
+      // make it inactive first, as a fresh scene channel is
+      r.targets.forEach((t) => t.fixtureValue.setQuickAccessor({
+        type: t.type, qaIndex: t.qaIndex, value: 0, active: false,
+      }));
+      const pick = r.capabilities.findIndex((c, i) => i > 0 && c.range[0] > 0);
+      const [start, end] = r.capabilities[pick].range;
+      return {
+        index,
+        pick,
+        start,
+        end,
+        label: r.capabilities[pick].label,
+      };
+    });
+    if (!row) {
+      check('a scene row of two same-type fixtures offers presets', false, 'no such row');
+      return;
+    }
+    await page.evaluate(() => window.__check.show.refreshSaveState());
+    await wait(SETTLE_MS);
+    const sceneTrigger = `.channels_widget .channels_channel:nth-child(${row.index + 1}) .uikit_select_trigger`;
+    await click(page, sceneTrigger, null, { within: '.group_modifier' });
+    await pickPreset(page, row);
+    await wait(SETTLE_MS);
+    const scene = await page.evaluate((r) => {
+      const w = [...document.querySelectorAll('.channels_widget')].find((e) => e.offsetParent);
+      let comp = w?.__vueParentComponent;
+      while (comp && !comp.props?.channels) comp = comp.parent;
+      const current = comp.props.channels[r.index];
+      const entries = current.targets.map((t) => {
+        const fv = t.fixtureValue;
+        const i = fv.fixture.channels
+          .findIndex((c) => c.type === t.type && c.qaIndex === t.qaIndex);
+        const e = fv.entryOf(i);
+        return { value: e.value, active: e.active };
+      });
+      window.__check.show.refreshSaveState();
+      return { entries, saved: window.__check.show.isSaved };
+    }, row);
+    check(
+      'a scene preset sets both fixtures, activates the channel and marks the show unsaved',
+      scene.entries.length === 2 && scene.entries.every((e) => e.value === row.start && e.active)
+        && scene.saved === false,
+      { ...scene, start: row.start },
+    );
   },
 
   /** Each group and universe comes back to its last selection */
