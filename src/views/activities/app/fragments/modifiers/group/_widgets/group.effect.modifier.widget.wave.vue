@@ -15,7 +15,7 @@
         <uk-flex
           col
           :gap="8"
-          style="width: 120px"
+          class="widget_wave_column"
         >
           <uk-flex :gap="8">
             <uk-select-input
@@ -66,9 +66,9 @@
           </uk-flex>
         </uk-flex>
         <uk-flex
-          style="width: 120px"
           col
           :gap="8"
+          class="widget_wave_column"
         >
           <uk-select-input
             v-model="channel.direction"
@@ -397,7 +397,14 @@ export default {
   width: 100%;
 }
 .textual {
+  flex-shrink: 0;
   padding: var(--space-5);
+}
+/* Each column is as narrow as its fields allow with their labels whole, at least 120px */
+.widget_wave_column {
+  flex-shrink: 0;
+  min-width: 120px;
+  width: min-content;
 }
 .widget_wave_modifier {
   position: relative;
