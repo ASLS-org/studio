@@ -139,12 +139,12 @@ export default {
   min-height: 350px;
   max-height: 350px;
   flex: 1;
-  width: 300px;
-  border-right: 1px solid var(--primary-dark);
+  width: var(--widget-width-md);
+  border-right: var(--border-width) solid var(--primary-dark);
 }
 .form_validation {
   width: 100%;
-  padding: 8px;
-  border-top: 1px solid var(--primary-dark);
+  padding: var(--space-4);
+  border-top: var(--border-width) solid var(--primary-dark);
 }
 </style>

@@ -17,7 +17,7 @@ GPL-3.0. Plain JavaScript (no TypeScript), no test suite.
 | Desktop dist | `npm run dist:mac` / `dist:linux` / `dist:win` |
 | User manual | `npm run docs:manual:serve` (VitePress, `docs/manual`) |
 | Manual preview check | `npm run docs:manual:check` (headless Chrome: previews, demos, anchors) |
-| App flow check | `npm run app:check` (headless Chrome: panels, selection memory, deletes, highlight, keys, popups, main-thread blocks) |
+| App flow check | `npm run app:check` (headless Chrome: panels, selection memory, deletes, highlight, keys, popups, selects, hover text scroll, main-thread blocks) |
 | Spec workflow | `openspec list`, `openspec validate --all` |
 
 Node 18 (`.nvmrc`). Path aliases: `@` → `src/`, `@root` → repo root.

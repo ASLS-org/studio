@@ -67,7 +67,7 @@
         <uk-flex
           gap="8"
           center-both
-          style="width:100%;"
+          style="width:100%"
         >
           <uk-select-input
             v-model="swatch"
@@ -80,7 +80,7 @@
           <uk-button
             square
             label="save"
-            style="min-width:64px; height:25px; margin-top:22px"
+            style="min-width:64px; height: var(--control-height); margin-top:22px"
             @click="$emit('save', currentRgb)"
           />
         </uk-flex>
@@ -93,7 +93,7 @@
         <uk-flex
           gap="8"
           center-both
-          style="width:100%;"
+          style="width:100%"
         >
           <uk-txt-input
             label="Hex code"
@@ -104,7 +104,7 @@
           <uk-button
             square
             label="copy"
-            style="height:25px; margin-top:22px"
+            style="height: var(--control-height); margin-top:22px"
             @click="copyHex"
           />
         </uk-flex>
@@ -373,8 +373,6 @@ export default {
       // directly (as the previous version did) corrupted the swatch list
       // for every other instance of this component on the page.
       palette: palette.map((p) => ({ ...p })),
-      _rafId: null,
-      _pendingRgb: null,
     };
   },
   computed: {
@@ -403,7 +401,7 @@ export default {
       // uk-select-input — worth replacing with a slot-based API so this
       // component doesn't need to hand-build markup strings.
       return this.palette.map((item) => `
-        <span style="border: 1px solid #FFFFFF40;height:12px;min-width:12px;background:rgb(${item.r},${item.g},${item.b});margin-right:8px"></span>
+        <span style="border: 1px solid var(--secondary-light);height:12px;min-width:12px;background:rgb(${item.r},${item.g},${item.b});margin-right:8px"></span>
         <h4 style="max-width:60%">${item.name}</h4>
       `);
     },
@@ -416,6 +414,11 @@ export default {
       this.applyColor(r, g, b, { fromMode: null, markCustom: false, emit: false });
     },
   },
+  created() {
+    // Not reactive: a pending animation frame and the colour it will apply
+    this.rafId = null;
+    this.pendingRgb = null;
+  },
   mounted() {
     const [r, g, b] = this.rgbData;
     this.applyColor(r, g, b, { fromMode: null, markCustom: false, emit: false });
@@ -425,9 +428,9 @@ export default {
     window.removeEventListener('pointerup', this.stopDragHueTick);
     window.removeEventListener('pointermove', this.dragLightnessTick);
     window.removeEventListener('pointerup', this.stopDragLightnessTick);
-    if (this._rafId !== null) {
-      cancelAnimationFrame(this._rafId);
-      this._rafId = null;
+    if (this.rafId !== null) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
     }
   },
   methods: {
@@ -488,11 +491,11 @@ export default {
     },
 
     scheduleEmit(r, g, b) {
-      this._pendingRgb = [r, g, b];
-      if (this._rafId !== null) return;
-      this._rafId = requestAnimationFrame(() => {
-        this._rafId = null;
-        const [pr, pg, pb] = this._pendingRgb;
+      this.pendingRgb = [r, g, b];
+      if (this.rafId !== null) return;
+      this.rafId = requestAnimationFrame(() => {
+        this.rafId = null;
+        const [pr, pg, pb] = this.pendingRgb;
         this.$emit('update:modelValue', [pr, pg, pb]);
         this.$emit('input', [pr, pg, pb]);
       });
@@ -717,6 +720,7 @@ export default {
 </script>
 
 <style scoped>
+/* Crosshair and guide lines are drawing, not borders: they stay 1px */
 .color_picker_widget {
   min-width: 560px;
   max-width: 560px;
@@ -729,7 +733,7 @@ export default {
   position: absolute;
   height: 15px;
   width: 15px;
-  border-radius: 50%;
+  border-radius: var(--radius-round);
   background: rgba(0,0,0,.5);
   border: 1px solid white;
   z-index: 200;
@@ -754,7 +758,7 @@ export default {
   width: fit-content;
   flex: 1;
   height: 100%;
-  padding: 10px;
+  padding: var(--space-5);
   background: var(--primary-light);
   border-left: 1px solid var(--primary-dark);
 }
@@ -871,7 +875,7 @@ export default {
     #ff0080B3,
     #ff0000B3
   );
-  border-radius: 50%;
+  border-radius: var(--radius-round);
   mask-image: radial-gradient(circle farthest-side at center, transparent 80%, white 81%);
   touch-action: none;
   cursor: pointer;

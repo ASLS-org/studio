@@ -292,7 +292,7 @@ export default {
   flex-direction: column;
   height: 100%;
   width: 100%;
-  padding: 10px;
+  padding: var(--space-5);
   width: 150px;
 }
 .widget_curve_modifier {
@@ -328,7 +328,7 @@ export default {
   width: 12px;
   height: 12px;
   background: var(--accent-blue);
-  border-radius: 50%;
+  border-radius: var(--radius-round);
   border: 2px solid var(--secondary-light);
   opacity: 0.8;
   cursor: pointer;
@@ -337,7 +337,7 @@ export default {
 .widget_curve_cp:after {
   content: inherit;
   font-family: roboto;
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--secondary-lighter);
   text-align: center;
   position: absolute;
@@ -345,7 +345,7 @@ export default {
   left: -12px;
   background: inherit;
   padding: 1px 5px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   opacity: inherit;
 }
 .widget_curve_cp:nth-child(2) {
@@ -354,7 +354,7 @@ export default {
 }
 .widget_curve_picker {
   border: none !important;
-  background: #b6b7b5;
+  background: var(--curve-handle);
 }
 .widget_curve_cp:active {
   cursor: move;

@@ -26,6 +26,6 @@ export default {
 .uikit_loader_bar {
   width: 100%;
   height: 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
 }
 </style>

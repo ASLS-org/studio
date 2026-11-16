@@ -397,7 +397,7 @@ export default {
   width: 100%;
 }
 .textual {
-  padding: 10px;
+  padding: var(--space-5);
 }
 .widget_wave_modifier {
   position: relative;
@@ -435,14 +435,14 @@ export default {
   width: 12px;
   height: 12px;
   background: #1e45b9;
-  border-radius: 50%;
+  border-radius: var(--radius-round);
   cursor: pointer;
   border: 2px solid rgba(255, 255, 255, .2);
   will-change: left, top;
 }
 .dot .fixture-label {
   font-family: Roboto-medium;
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--secondary-lighter);
   text-align: center;
   position: absolute;
@@ -451,7 +451,7 @@ export default {
   transform: translate(-50%,0%);
   background: inherit;
   padding: 1px 5px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   opacity: inherit;
   opacity: .8;
 }

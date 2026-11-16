@@ -117,7 +117,7 @@ export default {
 
 <style scoped>
 .modifier_widget_fixture_pool {
-  min-width: 250px;
+  min-width: var(--widget-width-sm);
 }
 .modifier_widget_fixture_pool_body {
   width: 100%;

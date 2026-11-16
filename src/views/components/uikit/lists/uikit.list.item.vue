@@ -158,35 +158,40 @@ export default {
   display: flex;
   flex-direction: row;
   align-items: center;
-  height: 30px;
-  border-top: 1px solid transparent;
-  border-bottom: 1px solid var(--primary-dark);
-  padding: 0 8px;
+  height: var(--row-height);
+  border-top: var(--border-width) solid transparent;
+  border-bottom: var(--border-width) solid var(--primary-dark);
+  padding: 0 var(--space-4);
   width: 100%;
   --row-bg: var(--primary-light);
   background: var(--row-bg);
   opacity: 0.9;
   transition: background-color 0.1s;
-  gap: 10px;
+  gap: var(--space-5);
 }
 .tall {
-  min-height: 40px !important;
+  min-height: var(--row-height-tall) !important;
 }
 .uikit_list_item h4 {
   font-family: Roboto-medium;
 }
 .large {
-  min-height: 40px;
+  min-height: var(--row-height-tall);
   height: auto;
-  padding: 0 16px;
-  gap: 12px;
+  padding: 0 var(--space-7);
+  gap: var(--space-6);
 }
 .large h4 {
-  font-size: 14px;
+  font-size: var(--font-md);
 }
 .large .uikit_list_item_icon {
-  width: 16px !important;
-  height: 16px !important;
+  flex-shrink: 0;
+  width: var(--icon-md) !important;
+  min-width: var(--icon-md) !important;
+  max-width: var(--icon-md) !important;
+  height: var(--icon-md) !important;
+  min-height: var(--icon-md) !important;
+  max-height: var(--icon-md) !important;
 }
 .unfold h4 {
   font-family: Roboto-bold !important;
@@ -225,7 +230,8 @@ export default {
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 16px;
+  width: var(--icon-md);
+  min-width: var(--icon-md);
   height: 100%;
   cursor: pointer;
 }
@@ -237,8 +243,13 @@ export default {
   touch-action: none;
 }
 .uikit_list_item_tool :deep(svg) {
-  width: 14px;
-  height: 14px;
+  flex-shrink: 0;
+  width: var(--icon-sm);
+  min-width: var(--icon-sm);
+  max-width: var(--icon-sm);
+  height: var(--icon-sm);
+  min-height: var(--icon-sm);
+  max-height: var(--icon-sm);
   fill: var(--secondary-light);
   transition: fill 0.1s;
 }
@@ -289,30 +300,43 @@ export default {
   background: var(--secondary-dark) !important;
 }
 .uikit_list_item_icon {
-  width: 14px !important;
-  height: 14px !important;
+  flex-shrink: 0;
+  width: var(--icon-sm) !important;
+  min-width: var(--icon-sm) !important;
+  max-width: var(--icon-sm) !important;
+  height: var(--icon-sm) !important;
+  min-height: var(--icon-sm) !important;
+  max-height: var(--icon-sm) !important;
   fill: var(--secondary-lighter) !important;
 }
 .uikit_list_item_icon_small {
-  width: 10px !important;
-  height: 10px !important;
+  flex-shrink: 0;
+  width: var(--icon-xs) !important;
+  min-width: var(--icon-xs) !important;
+  max-width: var(--icon-xs) !important;
+  height: var(--icon-xs) !important;
+  min-height: var(--icon-xs) !important;
+  max-height: var(--icon-xs) !important;
   fill: var(--secondary-lighter) !important;
 }
 .uikit_list_item.unfold {
-  min-height: 30px;
-  max-height: 30px;
+  min-height: var(--row-height);
+  max-height: var(--row-height);
   height: unset !important;
   font-weight: bold;
 }
 .unfold > .uikit_list_item {
-  margin-left: 16px !important;
+  margin-left: var(--space-7) !important;
 }
 .uikit_list_item_colored_dot {
+  flex-shrink: 0;
   height: 8px;
+  min-height: 8px;
   width: 8px;
-  border-radius: 50%;
-  background: #533aaa;
-  border: 1px solid;
+  min-width: 8px;
+  border-radius: var(--radius-round);
+  background: var(--accent-dark-purple);
+  border: var(--border-width) solid;
 }
 .uikit_list_item_more {
   color: var(--secondary-light-alt);

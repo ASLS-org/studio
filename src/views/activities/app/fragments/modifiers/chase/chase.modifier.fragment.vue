@@ -127,14 +127,14 @@ export default {
 .chase_settings {
   height: 100%;
   width: 200px;
-  padding: 10px;
+  padding: var(--space-5);
 }
 .field {
   display: flex;
   flex-direction: column;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-4);
 }
 .field_label {
-  margin-bottom: 8px;
+  margin-bottom: var(--space-4);
 }
 </style>

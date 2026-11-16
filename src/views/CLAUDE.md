@@ -48,8 +48,12 @@ views/
   element); app-wide shortcuts use `$keyboard.addShortcut(match, handler)`. Fields keep their
   keys, and nothing behind an open popup gets any.
 - Styling: `<style scoped>` plain CSS using the design tokens in `src/assets/styles/tokens.css`
-  (`--primary-*`, `--secondary-*`, `--accent-*`; shared with the user manual). No new hard-coded
-  colours; palette lives in `uikit/colors/uikit.colors.js` and `views/utils/palette.js`.
+  (colours `--primary-*`, `--secondary-*`, `--accent-*`; the design scale `--space-*`, `--font-*`,
+  `--icon-*`, `--radius-*`, `--border-width` and the role sizes; shared with the user manual). No
+  raw spacing, type or radius values and no new hard-coded colours; palette lives in
+  `uikit/colors/uikit.colors.js` and `views/utils/palette.js`. Fixed geometry (sizes the code
+  computes with) has its own variable plus a constant in `views/utils/geometry.js`, and is never a
+  scale step: see skill `vue-ui-change` § Design scale.
 - The user manual mounts real widgets and panels as live previews
   (`docs/manual/.vitepress/theme/previews/presets.js`). Renaming or moving a widget, or changing
   its props, breaks them: update the preset (`npm run docs:manual:check` mounts all of them).

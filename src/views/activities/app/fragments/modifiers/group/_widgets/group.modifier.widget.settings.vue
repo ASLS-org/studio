@@ -69,6 +69,6 @@ export default {
 
 .group_settings {
   height: 100%;
-  padding: 10px;
+  padding: var(--space-5);
 }
 </style>

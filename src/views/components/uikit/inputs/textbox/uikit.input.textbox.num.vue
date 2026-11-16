@@ -240,12 +240,12 @@ export default {
   width: 100%;
 }
 .uikit_num_input_textbox_wrapper:not(.color):focus-within {
-  outline: 1px solid var(--accent-blue);
+  outline: var(--border-width) solid var(--accent-blue);
   outline-offset: -1px;
 }
 
 .uikit_num_input_textbox_wrapper.color:focus-within {
-  outline: 1px solid var(--secondary-light);
+  outline: var(--border-width) solid var(--secondary-light);
   outline-offset: -1px;
 }
 .uikit_num_input_textbox {
@@ -253,7 +253,7 @@ export default {
   border: none;
   background: var(--primary-dark);
   color: var(--secondary-lighter);
-  font-size: 12px;
+  font-size: var(--font-sm);
   display: flex;
   width: calc(100% - 14px);
   padding: 0;
@@ -262,8 +262,8 @@ export default {
 }
 .uikit_num_input_textbox_wrapper {
   display: flex;
-  height: 25px;
-  border: 1px solid var(--secondary-dark);
+  height: var(--control-height);
+  border: var(--border-width) solid var(--secondary-dark);
 }
 .uikit_num_input_button {
   display: flex;
@@ -306,7 +306,7 @@ export default {
   outline: none;
 }
 .uikit_num_input_textbox::placeholder {
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--secondary-light);
 }
 .disabled .uikit_num_input_textbox {

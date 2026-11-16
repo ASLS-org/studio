@@ -180,7 +180,7 @@ export default {
   justify-content: center;
   align-items: center;
   display: flex;
-  padding: 0 16px;
+  padding: 0 var(--space-7);
   background: var(--primary-light);
 }
 .menu {
@@ -188,7 +188,7 @@ export default {
   align-items: center;
   height: 100%;
   width: 100%;
-  border-right: 1px solid var(--primary-dark);
+  border-right: var(--border-width) solid var(--primary-dark);
   z-index: 10;
   justify-content: left;
   align-items: center;
@@ -204,15 +204,15 @@ export default {
   z-index: 1;
   /* box-shadow: 0px 10px 15px 1px var(--primary-dark); */
   box-shadow: -2px 10px 15px 0px rgba(0,0,0,.6);
-  border: 1px solid var(--primary-dark);
+  border: var(--border-width) solid var(--primary-dark);
   border-top: none;
   border-bottom: none;
   overflow: hidden;
 }
 .list {
-  background: #22251f;
+  background: var(--primary-lighter-alt);
   z-index: -1;
-  min-width: 250px;
+  min-width: var(--widget-width-sm);
 }
 .selected {
   background: var(--secondary-darker);

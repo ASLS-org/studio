@@ -8,8 +8,8 @@
  *
  * Usage: npm run app:check [-- --url http://localhost:5173] [--only <scenario> ...]
  *   --url    use a running dev server instead of starting one
- *   --only   run only these scenarios (repeatable): panels, playing, memory, shared, highlight,
- *            deletes, keys, popups
+ *   --only   run only these scenarios (repeatable): panels, playing, textscroll, select, resize,
+ *            memory, shared, highlight, deletes, keys, popups
  * Chrome: CHROME_PATH, else the usual install path for the system.
  */
 /* eslint-disable no-console -- a command-line report */
@@ -339,6 +339,8 @@ async function unfoldUniverse(page, id) {
     .some((g) => g.classList.contains('open') && g.querySelector(':scope > .uikit_list_item')
       ?.textContent.trim() === `Universe ${u}`), id);
   if (!open) await openUniverse(page, id);
+  // the unfold animates rows into place: measure them once it's done
+  await wait(400);
 }
 /** Clicks a fixture row (by fixture id) in a list of the panel in view */
 const clickRow = (page, list, id, modifiers) => click(page, `${list} .uikit_list_item[data-key="id:${id}"]`, null, { modifiers, within: '.universe_modifier, .group_modifier', x: 40 });
@@ -432,6 +434,224 @@ const SCENARIOS = {
     check('two cues play', started === 2, `${started} playing`);
     await wait(500);
     await SCENARIOS.panels(page);
+  },
+
+  /** Cut text scrolls to its end on hover and comes back when the pointer leaves */
+  async textscroll(page) {
+    // the patch bay's fixture names (h4) that are cut, and one that fits
+    const names = await page.evaluate(() => {
+      const all = [...document.querySelectorAll('.patch_bay .uikit_list_item h4')]
+        .filter((h) => h.offsetParent);
+      const cut = all.find((h) => h.scrollWidth > h.clientWidth + 1);
+      const fits = all.find((h) => h.scrollWidth <= h.clientWidth);
+      if (cut) cut.dataset.check = 'cut';
+      if (fits) fits.dataset.check = 'fits';
+      return { cut: !!cut, fits: !!fits };
+    });
+    check('the patch bay has a cut name and one that fits', names.cut && names.fits, names);
+    if (!names.cut) return;
+    const state = (which) => page.evaluate((w) => {
+      const h = document.querySelector(`[data-check="${w}"]`);
+      return {
+        left: Math.round(h.scrollLeft),
+        end: h.scrollWidth - h.clientWidth,
+        overflow: h.style.textOverflow,
+      };
+    }, which);
+    const hover = async (which) => {
+      const box = await (await page.$(`[data-check="${which}"]`)).boundingBox();
+      await page.mouse.move(box.x + 10, box.y + box.height / 2);
+    };
+    await hover('cut');
+    await wait(300);
+    const early = await state('cut');
+    const { end } = early;
+    await wait(400 + (end / 40) * 1000 + 300);
+    const atEnd = await state('cut');
+    check('a cut name stays still for a moment, then scrolls to its end', early.left === 0
+      && atEnd.left >= end - 1, { early, atEnd });
+    await page.mouse.move(2, 2);
+    await wait(100);
+    const left = await state('cut');
+    check('leaving puts it back at its start, ellipsised', left.left === 0 && left.overflow === '', left);
+    if (names.fits) {
+      await hover('fits');
+      await wait(1200);
+      check('a name that fits stays still', (await state('fits')).left === 0);
+      await page.mouse.move(2, 2);
+    }
+    // UI that clips its content never scrolls. In a smaller window, panels and rows clip (the
+    // container of the patch bay and the group pool, the colour picker's channel rows): rest on
+    // each element that holds other elements and is cut, near one of its children
+    await page.setViewport({ width: 1100, height: 700 });
+    await wait(500);
+    // points whose element is within 3 levels of a cut UI element (where hovering could reach it)
+    const uiPoints = await page.evaluate(() => {
+      const cut = [...document.querySelectorAll('body *')].filter((e) => e.offsetParent
+        && e.childElementCount > 0 && e.scrollWidth > e.clientWidth + 1
+        && ['hidden', 'clip'].includes(getComputedStyle(e).overflowX));
+      const points = [];
+      cut.forEach((e) => {
+        const r = e.getBoundingClientRect();
+        for (let gy = 0.1; gy < 1 && points.length < 6; gy += 0.2) {
+          for (let gx = 0.05; gx < 1; gx += 0.1) {
+            const x = r.x + r.width * gx;
+            const y = r.y + r.height * gy;
+            let node = document.elementFromPoint(x, y);
+            let depth = 0;
+            while (node && node !== e && depth < 4) { node = node.parentElement; depth += 1; }
+            if (node === e) {
+              points.push([x, y]);
+              return;
+            }
+          }
+        }
+      });
+      return points;
+    });
+    const scrolledUi = [];
+    for (const [x, y] of uiPoints) {
+      await page.mouse.move(x, y);
+      await wait(1500);
+      scrolledUi.push(...await page.evaluate(() => [...document.querySelectorAll('body *')]
+        .filter((e) => e.childElementCount > 0 && e.scrollLeft > 0
+          && getComputedStyle(e).overflowX !== 'auto' && getComputedStyle(e).overflowX !== 'scroll')
+        .map((e) => `${e.tagName.toLowerCase()}.${String(e.className).split(' ')[0]}`)));
+    }
+    await page.mouse.move(2, 2);
+    await page.setViewport({ width: 1600, height: 1000 });
+    check(`resting on UI (${uiPoints.length} places) scrolls no UI, only text`, uiPoints.length > 0
+      && !scrolledUi.length, scrolledUi);
+    await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
+    await hover('cut');
+    await wait(1500);
+    check('with reduced motion, nothing scrolls', (await state('cut')).left === 0);
+    await page.emulateMediaFeatures([]);
+  },
+
+  /** Select inputs: the current value is marked, arrows move, Enter picks, Escape cancels */
+  async select(page) {
+    await click(page, '.group_pool .uikit_cue_container:not(.master) .uikit_chase_title');
+    const read = () => page.evaluate(() => {
+      const box = [...document.querySelectorAll('.chase_modifier .uikit_select')]
+        .find((el) => el.querySelector('.label')?.textContent.trim().startsWith('Quantize'));
+      const view = document.querySelector('#app').__vue_app__.config.globalProperties.$view;
+      const lists = [...document.querySelectorAll('.uikit_select_option_list')]
+        .filter((el) => el.style.display !== 'none');
+      const list = lists[0];
+      return {
+        value: box?.querySelector('.uikit_select_textbox').textContent.trim(),
+        model: view.chase?.quantize,
+        open: !!list,
+        current: list?.querySelector('.current')?.textContent.trim() ?? null,
+        marked: list?.querySelector('.marked')?.textContent.trim() ?? null,
+      };
+    });
+    const options = ['None', '1/8', '1/4', '1/2', '1/1'];
+    const start = await read();
+    check('the chase panel shows its Quantize select', options.includes(start.value), start);
+    await click(page, '.chase_modifier .uikit_select_textbox_wrapper', start.value);
+    const opened = await read();
+    check('opening the list marks the current value', opened.open && opened.current === start.value
+      && opened.marked === start.value, opened);
+    const currentBg = await page.evaluate(() => {
+      const el = [...document.querySelectorAll('.uikit_select_option_list')]
+        .find((l) => l.style.display !== 'none')?.querySelector('.current');
+      const css = el && getComputedStyle(el);
+      return css && { bg: css.backgroundColor, shadow: css.boxShadow };
+    });
+    const accent = await page.evaluate(() => {
+      const swatch = document.createElement('div');
+      swatch.style.background = 'var(--accent-blue)';
+      document.body.appendChild(swatch);
+      const bg = getComputedStyle(swatch).backgroundColor;
+      swatch.remove();
+      return bg;
+    });
+    check('the current value has a full accent background, like a selected row', currentBg
+      && currentBg.bg === accent && currentBg.shadow === 'none', { currentBg, accent });
+    await press(page, 'Escape');
+    const escaped = await read();
+    check('Escape closes the list and keeps the value', !escaped.open && escaped.value === start.value, escaped);
+    await press(page, 'ArrowDown');
+    const reopened = await read();
+    await press(page, 'ArrowDown');
+    await press(page, 'ArrowDown');
+    const moved = await read();
+    await press(page, 'Enter');
+    const picked = await read();
+    const expected = options[(options.indexOf(start.value) + 2) % options.length];
+    check('Down opens the list, Down Down moves the mark, Enter picks it', reopened.open
+      && moved.marked === expected && !picked.open && picked.value === expected
+      && picked.model === options.indexOf(expected), {
+      reopened, moved, picked, expected,
+    });
+    await press(page, 'n');
+    await press(page, 'Enter');
+    const typed = await read();
+    check('typing a letter marks the option starting with it', typed.value === 'None' && typed.model === 0, typed);
+  },
+
+  /** The modifier strip and the group pool's groups resize from anywhere along their border */
+  async resize(page) {
+    const size = (sel, dim) => page.evaluate((s, d) => Math.round(document.querySelector(s)
+      .getBoundingClientRect()[d]), sel, dim);
+    const drag = async (axis, frac, delta) => {
+      const r = await page.evaluate((a) => {
+        const b = document.querySelector(a).getBoundingClientRect();
+        return {
+          x: b.x, y: b.y, w: b.width, h: b.height,
+        };
+      }, axis);
+      const vertical = axis.endsWith('.y');
+      const x = vertical ? r.x + r.w * frac : r.x;
+      const y = vertical ? r.y : r.y + r.h * frac;
+      await page.mouse.move(x, y);
+      await page.mouse.down();
+      await page.mouse.move(vertical ? x : x + delta, vertical ? y + delta : y, { steps: 6 });
+      await page.mouse.up();
+      await wait(SETTLE_MS);
+    };
+    const top = await size('.top_fragments', 'height');
+    await drag('.uikit_resize_handle.y', 0.9, -60);
+    check(
+      'dragging the strip\'s border near its end makes the strip 60 px taller',
+      Math.abs(top - 60 - await size('.top_fragments', 'height')) <= 2,
+    );
+    const groups = await size('.group_pool_groups', 'width');
+    await drag('.groups_resize', 0.5, 50);
+    check(
+      'dragging the groups\' border makes them 50 px wider',
+      Math.abs(groups + 50 - await size('.group_pool_groups', 'width')) <= 2,
+    );
+    // mid-drag, over another element, the cursor stays a resize cursor
+    const mid = await page.evaluate(() => {
+      const b = document.querySelector('.groups_resize').getBoundingClientRect();
+      return { x: b.x, y: b.y + b.height / 2 };
+    });
+    await page.mouse.move(mid.x, mid.y);
+    await page.mouse.down();
+    await page.mouse.move(mid.x - 120, mid.y, { steps: 4 });
+    const cursor = await page.evaluate(({ x, y }) => getComputedStyle(document
+      .elementFromPoint(x, y)).cursor, { x: mid.x - 120, y: mid.y });
+    await page.mouse.up();
+    await wait(SETTLE_MS);
+    const after = await page.evaluate(() => getComputedStyle(document.body).cursor);
+    check('the cursor stays col-resize while dragging, then comes back', cursor === 'col-resize'
+      && after !== 'col-resize', { cursor, after });
+    await drag('.groups_resize', 0.2, -3000);
+    check('the groups stop at their minimum width', (await size('.group_pool_groups', 'width')) === 240);
+    // the patch bay widens up to twice its width; the groups' limit leaves room for it
+    await drag('.patch_bay_resize', 0.5, 120);
+    check('dragging the patch bay\'s border makes it 120 px wider', (await size('.patch_bay', 'width')) === 320);
+    await drag('.patch_bay_resize', 0.5, 2000);
+    check('the patch bay stops at twice its width (400 px)', (await size('.patch_bay', 'width')) === 400);
+    await drag('.groups_resize', 0.5, 3000);
+    const vw = await page.evaluate(() => window.innerWidth);
+    check(
+      'the groups\' maximum shrinks by what the patch bay grew',
+      (await size('.group_pool_groups', 'width')) === vw - 720 - 400,
+    );
   },
 
   /** Each group and universe comes back to its last selection */

@@ -22,6 +22,7 @@ import Live from '@/models/DMX/live.model';
 import ShowSingleton from '@/singletons/show.singleton';
 import ViewState from '@/views/view.state';
 import Keyboard from '@/views/keyboard';
+import installOverflowScroll from '@/views/utils/overflow.scroll';
 
 /** The demo show every preview runs on */
 const SHOWFILE = '/presets/manual.showfile.json';
@@ -171,12 +172,17 @@ export async function mountPreset(el, preset, onError, popupHost) {
   const view = reactive(new ViewState(show));
   app.config.globalProperties.$view = view;
   app.provide('view', view);
-  // Keys reach the preview only while the focus is inside it
-  const keyboard = new Keyboard(view, el);
+  // Keys reach the preview only while the focus is inside it (its component or its popups'
+  // overlay: both are inside the preview's frame)
+  const frame = el.closest('.live_preview') || el;
+  const keyboard = new Keyboard(view, frame);
   app.config.globalProperties.$keyboard = keyboard;
+  // Cut text scrolls on hover, inside the preview only
+  const removeOverflowScroll = installOverflowScroll(frame);
   const unmount = app.unmount.bind(app);
   app.unmount = () => {
     keyboard.dispose();
+    removeOverflowScroll();
     unmount();
   };
   app.config.globalProperties.$http = axios;

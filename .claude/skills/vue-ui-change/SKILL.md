@@ -102,6 +102,28 @@ export default {
   imported by `global.css`. The user manual reuses the same file, so a new or changed token
   shows up there too; keep `tokens.css` custom properties only. No inline hard-coded colours
   except data-driven ones (group/universe/cue colours).
+- **Design scale** (`tokens.css`): sizes come from steps, never raw pixels.
+  | Group | Tokens |
+  |---|---|
+  | Spacing (padding, margin, gap) | `--space-1`…`--space-10` = 2, 4, 6, 8, 10, 12, 16, 20, 24, 32 px |
+  | Type | `--font-xs/sm/md/lg/xl` = 10, 12, 14, 16, 24 px |
+  | Icons | `--icon-xs/sm/md/lg` = 10, 14, 16, 24 px |
+  | Roles | `--control-height` (fields, selects, buttons beside them), `--button-height`, `--row-height`, `--row-height-tall`, `--header-height` (toolbar, panels), `--widget-header-height` (widgets, popups), `--widget-width-sm/md/lg` |
+  | Radius, border | `--radius-sm/md/lg`, `--radius-round` (circles), `--radius-pill`; `--border-width` |
+  | Colour roles | `--on-color-text`, `--on-color-surface` (on cue/chase colours, both themes), `--curve-handle` |
+
+  A new value snaps to the nearest step (ties go down). `uk-flex`'s `gap` prop maps scale pixels
+  to their step. **Fixed values are never scale steps**: a size the code computes with has its own
+  variable *and* a constant in `views/utils/geometry.js` (`--cue-tile-*`, `--chase-row-height`,
+  `--select-option-height`: change both together). A border or offset that is part of a pitch or an
+  alignment (chase rows, the timeline grid, crosshairs, a button lined up with a labelled field)
+  stays raw with a comment, and a one-off size used in one place stays raw: never pull it into a
+  shared variable because another component happens to use the same number.
+- **Resizable areas** use `<uk-resize-handle axis="x|y" />` placed right after the element it
+  resizes (its right border, or the border below it); the element's own min/max apply. Never use
+  CSS `resize` (corner grip only).
+- **Cut text** scrolls on hover by itself (`views/utils/overflow.scroll.js`, installed in
+  `main.js`): just let the text overflow with `overflow: hidden` (plus `text-overflow: ellipsis`).
 - **Idle surfaces** (empty or resting areas: empty lists, the modifier strip, the group pool)
   use `background: var(--primary-light) var(--idle-stripes);` (or their own base colour). Don't
   copy the gradient.

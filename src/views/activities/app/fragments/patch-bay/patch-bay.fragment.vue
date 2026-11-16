@@ -5,7 +5,7 @@
       <span style="flex: 1" />
       <uk-button
         icon="new"
-        style="margin-right: 8px"
+        style="margin-right: var(--space-4)"
         label="new"
         @click="mediaPopupState = true"
       />
@@ -106,20 +106,25 @@ export default {
 
 <style scoped>
 .patch_bay{
+  /* resizable from its right border (app.activity.vue), up to twice its starting width */
+  width: 200px;
+  min-width: 200px;
+  max-width: 400px;
+  flex-shrink: 0;
   background: var(--primary-light);
 }
 .patch_bay_header {
   display: flex;
   flex-direction: row;
-  min-height: 40px;
+  min-height: var(--header-height);
   width: 100%;
-  padding: 0 8px;
+  padding: 0 var(--space-4);
   align-items: center;
-  border-bottom: 1px solid var(--primary-dark);
+  border-bottom: var(--border-width) solid var(--primary-dark);
 }
 .patch_bay_universe_list {
   display: flex;
-  width: 200px;
+  width: 100%;
   height: calc(100% - 39px);
 }
 </style>

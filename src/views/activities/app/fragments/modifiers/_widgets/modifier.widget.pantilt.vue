@@ -71,7 +71,7 @@
           @input="update()"
         />
       </uk-flex>
-      <uk-flex style="margin-top: 8px">
+      <uk-flex style="margin-top: var(--space-4)">
         <uk-checkbox
           v-model="fine"
           label="Set fine channels"
@@ -212,12 +212,13 @@ export default {
 </script>
 
 <style scoped>
+/* Crosshair and guide lines are drawing, not borders: they stay 1px */
 .pantilt_widget {
-  min-width: 350px;
+  min-width: var(--widget-width-lg);
   width: fit-content;
 }
 .textual {
-  padding: 10px;
+  padding: var(--space-5);
   height: 100%;
 }
 .pan_tilt {
@@ -266,7 +267,7 @@ export default {
   position: absolute;
   height: 12px;
   width: 12px;
-  border-radius: 50%;
+  border-radius: var(--radius-round);
   border: 2px solid var(--secondary-light);
   /* background: #1e45b9; */
   background: var(--accent-blue)!important;

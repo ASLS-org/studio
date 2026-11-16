@@ -120,7 +120,7 @@ export default {
 <style scoped>
 
 .modifier_widget_effect_channels {
-  min-width: 300px;
+  min-width: var(--widget-width-md);
 }
 .modifier_widget_effect_channels_body {
   width: 100%;

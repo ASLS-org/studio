@@ -23,6 +23,8 @@ should leave the app in a broken or confusing state.
 |---|---|---|---|
 | 1 | `fix/lists-patch-bay-and-playback` | Lists rebuilt (`uk-list`), patch bay media and fixture delete, fixture-deletion integrity, cue stop on delete, Temporary cues, Config outputs, PWM/bounce/quantize, manual link. Changes archived: `fix-effect-chase-values`, `wire-dead-controls`, `rebuild-uk-list`, `fix-fixture-deletion` | PR #79 |
 | 2 | `feat/add-view-state` (stacked on 1) | One view state (`$view`) for the panel in view, selection (by id, remembered per group and universe), popups (named, one stack) and keys (one path); 3D highlight follows the selection; shaders compiled at boot; `npm run app:check`. Change archived: `add-view-state` | PR #80 |
+| 3 | `feat/standardize-ui-styles` | Overflowing text scrolls on hover; selects mark the current value and take arrow keys; one design scale in `tokens.css` (fixed geometry kept apart in `views/utils/geometry.js`); the modifier strip, groups and patch bay resize from their whole border. Change archived: `standardize-ui-styles` | PR into the epic |
+| 4 | (to name) | Rework all widgets | Planned (2026-11-16) |
 
 ## Candidates (not planned yet)
 

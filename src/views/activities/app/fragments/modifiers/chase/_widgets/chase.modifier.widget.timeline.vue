@@ -657,6 +657,8 @@ export default {
 </script>
 
 <style scoped>
+/* The grid's borders are part of the row and bar pitch the code lays out: they stay 1px,
+   whatever --border-width is */
 .widget_pool_timeline {
   width: 100%;
   position: relative;
@@ -691,7 +693,7 @@ export default {
   flex: 1;
   background: var(--primary-light);
   box-sizing: border-box;
-  padding: 0 8px;
+  padding: 0 var(--space-4);
   text-overflow: ellipsis;
   border-left: 3px solid blueviolet;
   white-space: nowrap;
@@ -715,8 +717,8 @@ export default {
 }
 .widget_pool_timeline_item_icon {
   fill: var(--secondary-lighter);
-  margin-right: 8px;
-  min-width: 16px;
+  margin-right: var(--space-4);
+  min-width: var(--icon-md);
 }
 .disabled h4 {
   color: var(--secondary-light);
@@ -732,7 +734,7 @@ export default {
   background: var(--accent-maroon);
   position: absolute;
   height: 100%;
-  margin-top: 12px;
+  margin-top: 12px; /* lines the cursor up with the grid (fixed) */
   z-index: 30;
   opacity: .8;
 }
@@ -839,9 +841,9 @@ export default {
 .widget_pool_timeline_grid_label_bar {
   font-family: Roboto-medium;
   color: var(--secondary-lighter);
-  font-size: 12px;
+  font-size: var(--font-sm);
   position: absolute;
-  padding: 2px 8px;
+  padding: var(--space-1) var(--space-4);
   height: 100%;
   border-left: 1px solid var(--secondary-light);
   z-index: -1;

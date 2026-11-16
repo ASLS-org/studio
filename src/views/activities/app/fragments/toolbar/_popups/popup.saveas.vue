@@ -58,7 +58,7 @@ export default {
 .body {
   display: flex;
   flex-direction: column;
-  width: 300px;
-  padding: 16px;
+  width: var(--widget-width-md);
+  padding: var(--space-7);
 }
 </style>

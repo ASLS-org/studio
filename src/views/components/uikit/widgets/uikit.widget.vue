@@ -111,7 +111,7 @@ export default {
   display: flex;
   flex-direction: column;
   height: fit-content;
-  border-right: 1px solid var(--primary-dark);
+  border-right: var(--border-width) solid var(--primary-dark);
   background: var(--primary-light);
   user-select: none;
   overflow: hidden;
@@ -123,18 +123,18 @@ export default {
 .header {
   display: flex;
   flex-direction: row;
-  min-height: 30px;
+  min-height: var(--widget-header-height);
   width: 100%;
-  padding: 0 10px;
+  padding: 0 var(--space-5);
   align-items: center;
-  border-bottom: 1px solid var(--primary-dark);
+  border-bottom: var(--border-width) solid var(--primary-dark);
   user-select: none;
 }
 .header_icon {
   fill: var(--secondary-lighter) !important;
-  margin-right: 8px;
-  height: 14px !important;
-  width: 14px !important;
+  margin-right: var(--space-4);
+  height: var(--icon-sm) !important;
+  width: var(--icon-sm) !important;
 }
 .widget.docked {
   min-width: 30px !important;
@@ -148,7 +148,7 @@ export default {
   width: 10px !important;
   height: 10px !important;
   fill: var(--secondary-lighter);
-  margin-left: 8px;
+  margin-left: var(--space-4);
 }
 .widget_action:hover {
   cursor: pointer;
@@ -167,8 +167,8 @@ export default {
   text-align: left;
   justify-content: center;
   text-orientation: vertical-rl;
-  padding-bottom: 10px;
-  padding-top: 10px;
+  padding-bottom: var(--space-5);
+  padding-top: var(--space-5);
   flex-direction: column-reverse;
   background:
     repeating-linear-gradient(
@@ -181,7 +181,7 @@ export default {
 }
 .docked .header_icon {
   margin: 0 !important;
-  margin-top: 8px !important;
+  margin-top: var(--space-4) !important;
 }
 .docked h3 {
   writing-mode: vertical-lr;
