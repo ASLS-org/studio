@@ -9,6 +9,7 @@ import '@/assets/styles/fonts.css';
 import ShowSingleton from '@/singletons/show.singleton';
 import ViewState from '@/views/view.state';
 import Keyboard from '@/views/keyboard';
+import installOverflowScroll from '@/views/utils/overflow.scroll';
 import router from './plugins/router';
 import App from './App.vue';
 
@@ -34,6 +35,8 @@ try {
   EventBus.on('show_loaded', () => view.reset());
   // One keyboard path: top popup, then the focused block, then global shortcuts
   app.config.globalProperties.$keyboard = new Keyboard(view);
+  // Cut or ellipsised text scrolls to its end while hovered
+  installOverflowScroll();
   app.config.globalProperties.$http = axios;
   app.config.globalProperties.$utils = reactive(utils);
   app.config.globalProperties.$liveTicker = LiveTicker;
