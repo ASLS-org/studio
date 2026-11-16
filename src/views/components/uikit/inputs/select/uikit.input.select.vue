@@ -326,8 +326,9 @@ export default {
           this.marked = this.isEmpty ? 0 : this.selected;
           this.$nextTick(() => {
             this.computeOptionListStyle();
-            this.revealMarked();
             if (this.searchable) this.searchBox()?.focus();
+            // the list is built on opening and sized by that style: scroll once it applies
+            this.$nextTick(this.revealMarked);
           });
         }
       }
@@ -506,6 +507,31 @@ export default {
   display: flex;
   cursor: pointer;
 }
+/* The look of a trigger box (an icon and a text), for callers' trigger slots */
+:slotted(.uikit_select_trigger_box) {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  height: var(--control-height);
+  padding: 0 var(--space-3);
+  box-sizing: border-box;
+  background: var(--secondary-darker);
+  border: var(--border-width) solid var(--secondary-dark);
+  color: var(--secondary-lighter);
+  font-family: Roboto-Regular;
+  font-size: var(--font-xs);
+}
+:slotted(.uikit_select_trigger_box:hover) {
+  background: var(--secondary-dark);
+}
+:slotted(.uikit_select_trigger_text) {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
 .uikit_select_box.disabled:focus {
   outline: unset;
 }
@@ -607,6 +633,8 @@ export default {
   background: var(--primary-dark);
   color: var(--secondary-lighter);
   border-bottom: var(--border-width) solid var(--secondary-dark);
+  font-family: Roboto-Bold;
+  font-size: var(--font-xs);
   white-space: nowrap;
 }
 .uikit_select_option:hover,

@@ -34,14 +34,16 @@
         >
           <template #trigger>
             <div
-              class="channel_select_box"
+              class="uikit_select_trigger_box channel_select_box"
               :class="{ inactive: !channel.active }"
             >
               <uk-icon
                 class="channel_icon"
                 :name="getIcon(channel)"
               />
-              <span class="channel_select_text">{{ channelText(channel) }}</span>
+              <span class="uikit_select_trigger_text channel_select_text">
+                {{ channelText(channel) }}
+              </span>
             </div>
           </template>
           <template #header>
@@ -49,7 +51,7 @@
               class="channel_icon"
               :name="getIcon(channel)"
             />
-            <span class="channel_header_name">{{ channel.name || channel.type }}</span>
+            <span>{{ channel.name || channel.type }}</span>
           </template>
         </uk-select-input>
         <uk-fader
@@ -218,24 +220,6 @@ export default {
 .channel_select {
   width: 100%;
 }
-.channel_select_box {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: var(--space-3);
-  width: 100%;
-  height: var(--control-height);
-  padding: 0 var(--space-3);
-  box-sizing: border-box;
-  background: var(--secondary-darker);
-  border: var(--border-width) solid var(--secondary-dark);
-  color: var(--secondary-lighter);
-  font-family: Roboto-Regular;
-  font-size: var(--font-xs);
-}
-.channel_select_box:hover {
-  background: var(--secondary-dark);
-}
 .channel_select_box.inactive {
   color: var(--secondary-light);
 }
@@ -249,16 +233,6 @@ export default {
 }
 .channel_select_box.inactive .channel_icon {
   fill: var(--secondary-light);
-}
-.channel_select_text {
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.channel_header_name {
-  font-family: Roboto-Bold;
-  font-size: var(--font-xs);
 }
 .channel_activity {
   margin-top: var(--space-4);
