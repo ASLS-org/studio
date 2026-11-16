@@ -127,7 +127,7 @@
       class="uikit_list_body_empty"
     >
       <h3>
-        Nothing to display
+        {{ emptyText }}
       </h3>
     </div>
     <uk-popup
@@ -270,6 +270,11 @@ export default {
     },
     /** Only one parent unfolded at a time; the open one fills the list and scrolls */
     accordion: Boolean,
+    /** What the list says when it has no rows (or none match its search) */
+    emptyText: {
+      type: String,
+      default: 'Nothing to display',
+    },
   },
   emits: ['unfold', 'focused', 'highlight', 'toggle', 'select', 'selection', 'reorder', 'delete'],
   data() {

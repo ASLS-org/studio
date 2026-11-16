@@ -164,8 +164,9 @@ export default {
   padding: 0 var(--space-4);
   width: 100%;
   --row-bg: var(--primary-light);
-  background: var(--row-bg);
-  opacity: 0.9;
+  /* Row colours are tints (hover, selected): laid over a solid base, so an idle (striped)
+     background behind the list never shows through */
+  background: linear-gradient(var(--row-bg), var(--row-bg)), var(--primary-light);
   transition: background-color 0.1s;
   gap: var(--space-5);
 }
@@ -204,7 +205,7 @@ export default {
 }
 .uikit_list_item:hover {
   --row-bg: var(--secondary-darker);
-  background: var(--row-bg);
+  background: linear-gradient(var(--row-bg), var(--row-bg)), var(--primary-light);
   cursor: pointer;
 }
 .uikit_list_item_check {
@@ -273,31 +274,33 @@ export default {
 }
 .selected:not(.noSelect){
   --row-bg: var(--secondary-dark) !important;
-  background: var(--row-bg) !important;
+  background: linear-gradient(var(--row-bg), var(--row-bg)), var(--primary-light) !important;
   opacity: 1;
 }
 .selected.highlighted:not(.noSelect) {
   --row-bg: var(--secondary-dark) !important;
-  background: var(--row-bg) !important;
+  background: linear-gradient(var(--row-bg), var(--row-bg)), var(--primary-light) !important;
   opacity: 1;
 }
 .selected.focused:not(.noSelect) {
   --row-bg: var(--accent-blue) !important;
-  background: var(--row-bg) !important;
+  background: linear-gradient(var(--row-bg), var(--row-bg)), var(--primary-light) !important;
   border-color: var(--accent-blue)!important;
   opacity: 1;
 }
 .highlighted:not(.noSelect){
   --row-bg: var(--secondary-darker) !important;
-  background: var(--row-bg) !important;
+  background: linear-gradient(var(--row-bg), var(--row-bg)), var(--primary-light) !important;
 }
 .highlighted.focused:not(.noSelect)  {
   border-color: var(--accent-blue)!important;
   --row-bg: var(--accent-blue) !important;
-  background: var(--row-bg) !important;
+  background: linear-gradient(var(--row-bg), var(--row-bg)), var(--primary-light) !important;
 }
 .unfold:active {
-  background: var(--secondary-dark) !important;
+  background:
+    linear-gradient(var(--secondary-dark), var(--secondary-dark)),
+    var(--primary-light) !important;
 }
 .uikit_list_item_icon {
   flex-shrink: 0;
