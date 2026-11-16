@@ -108,7 +108,7 @@ export default {
   | Spacing (padding, margin, gap) | `--space-1`…`--space-10` = 2, 4, 6, 8, 10, 12, 16, 20, 24, 32 px |
   | Type | `--font-xs/sm/md/lg/xl` = 10, 12, 14, 16, 24 px |
   | Icons | `--icon-xs/sm/md/lg` = 10, 14, 16, 24 px |
-  | Roles | `--control-height` (fields, selects, buttons beside them), `--button-height`, `--row-height`, `--row-height-tall`, `--header-height` (toolbar, panels), `--widget-header-height` (widgets, popups), `--widget-width-sm/md/lg` |
+  | Roles | `--control-height` (fields, selects, buttons beside them), `--button-height`, `--row-height`, `--row-height-tall`, `--header-height` (toolbar, panels), `--widget-header-height` (widgets, popups), `--widget-width-sm/md/lg/xl` (250 to 400 px) |
   | Radius, border | `--radius-sm/md/lg`, `--radius-round` (circles), `--radius-pill`; `--border-width` |
   | Colour roles | `--on-color-text`, `--on-color-surface` (on cue/chase colours, both themes), `--curve-handle` |
 

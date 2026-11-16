@@ -44,26 +44,6 @@ refresh.
 - **WHEN** the operator drags a Dimmer fader
 - **THEN** the fader and its value follow the pointer with no visible lag
 
-### Requirement: Lists keep row state while their items change
-A list SHALL keep each row's selection, highlight, check and unfolded state, matched by the
-item's id (else its name), when its items change or a search filters them. Rows whose item is
-gone SHALL leave the selection. A row whose id or name changes in place SHALL keep its state.
-
-#### Scenario: Patch while a universe is unfolded
-- **GIVEN** universe 0 unfolded in the patch bay
-- **WHEN** the operator patches, deletes or renames a fixture, or adds a universe
-- **THEN** universe 0 stays unfolded and the remaining selection is unchanged
-
-#### Scenario: Change a universe's id
-- **GIVEN** universe 0 unfolded in the patch bay
-- **WHEN** the operator changes its id in the universe settings
-- **THEN** it stays unfolded
-
-#### Scenario: Check during a search
-- **GIVEN** a checkable list with "Aura" typed in its search box
-- **WHEN** the operator checks a row and clears the search
-- **THEN** that row is still checked
-
 ### Requirement: Lists take focus and keys like the browser
 Clicking a row SHALL focus its list. Only the focused list SHALL react to keys. After a delete
 confirmation closes, the list SHALL have focus again.
@@ -283,3 +263,48 @@ has the same size everywhere. Sizes that the layout computes with SHALL keep the
 #### Scenario: Cue pool layout unchanged
 - **WHEN** the operator drags a cue to another slot of the cue pool
 - **THEN** it lands on the slot's grid exactly as before
+
+### Requirement: Lists keep row state when their items change
+A list SHALL keep each row's selection, highlight, check and unfolded state, matched by the
+item's id (else its name), when its items change or a search filters them. Rows whose item is
+gone SHALL leave the selection. A row whose id or name changes in place SHALL keep its state.
+
+#### Scenario: Patch while a universe is unfolded
+- **GIVEN** universe 0 unfolded in the patch bay
+- **WHEN** the operator patches, deletes or renames a fixture, or adds a universe
+- **THEN** universe 0 stays unfolded and the remaining selection is unchanged
+
+#### Scenario: Rename a universe
+- **GIVEN** universe 0 unfolded in the patch bay
+- **WHEN** the operator changes its name in the universe settings
+- **THEN** it stays unfolded
+
+#### Scenario: Check during a search
+- **GIVEN** a checkable list with "Aura" typed in its search box
+- **WHEN** the operator checks a row and clears the search
+- **THEN** that row is still checked
+
+### Requirement: The fixture pool fits its rows
+The fixture pool widget SHALL be as wide as its widest row needs to show the fixture's icon,
+name, address and tools whole, never narrower than 250 px and never wider than 400 px. Beyond
+400 px, rows SHALL be cut and scroll on hover.
+
+#### Scenario: Long fixture names
+- **GIVEN** a universe whose fixture rows need 330 px
+- **WHEN** the operator opens it
+- **THEN** the fixture pool is 330 px wide and no row is cut
+
+#### Scenario: Very long names
+- **GIVEN** a fixture whose row would need 500 px
+- **WHEN** the universe is open
+- **THEN** the fixture pool is 400 px wide and that row's name is cut
+
+### Requirement: Widget fields stay inside their widget
+Every field of a modifier widget, with its label, SHALL fit inside the widget's padding and SHALL
+never overlap a canvas or another field, in any state the widget can show.
+
+#### Scenario: Effect tool phase fields
+- **GIVEN** an effect channel selected, with the PWM waveform (its *Width* field shown)
+- **WHEN** the operator looks at the effect tool
+- **THEN** *Phase start*, *Phase stop* and *Width* end at least 8 px before the wave canvas,
+  and no field's text is cut

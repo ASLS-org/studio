@@ -53,7 +53,7 @@ change touches: the pages are what the proposal's **Manual** line names, and the
 | `F/modifiers/group/group.modifier.fragment.vue`, `_widgets/group.modifier.widget.settings.vue`, `_popups/group.modifier.popup.patch.vue`, `M/DMX/group.model.js` | `programming/groups`, `getting-started/interface#modifier-strip` | `group-modifier`, `group-settings` |
 | `F/modifiers/group/_widgets/group.modifier.widget.cuepool.vue`, `_popups/group.modifier.popup.cuepool.vue` | `programming/scenes`, `programming/effects`, `programming/playback` | `group-cuepool`, `cuepool-add`, `scene-stage`, `effect-stage` |
 | `F/modifiers/group/_widgets/group.modifier.widget.cue.settings.vue`, `M/DMX/cue.model.js` | `programming/scenes` | `cue-settings` |
-| `F/modifiers/group/group.scene.modifier.fragment.vue`, `group.scene.modifier.widget.*`, `M/DMX/scene.model.js`, `fade.model.js` | `programming/scenes` | `scene-modifier`, `scene-curve` |
+| `F/modifiers/group/group.scene.modifier.fragment.vue`, `group.scene.modifier.widget.*`, `F/modifiers/_widgets/modifier.widget.curve.vue`, `M/DMX/scene.model.js`, `fade.model.js` | `programming/scenes` | `scene-modifier`, `scene-curve` |
 | `F/modifiers/group/group.effect.modifier.fragment.vue`, `group.effect.modifier.widget.*`, `group.effect.modifier.popup.channels.vue`, `M/DMX/effect*.model.js` | `programming/effects` | `effect-wave`, `effect-channel-add` |
 | `F/modifiers/chase/`, `M/DMX/chase*.model.js`, `cue.item*.model.js` | `programming/chases` | `chase-modifier`, `timeline-add` |
 | `M/DMX/live.model.js`, `src/worker.js` (BPM, bars, quantize, play/pause) | `concepts/timing`, `programming/playback` | `chase-play`, `master-row` |

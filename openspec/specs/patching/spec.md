@@ -81,21 +81,6 @@ highest existing id.
 - **WHEN** the show is saved and opened again
 - **THEN** every remaining fixture is in its universe, group and scenes, with no error
 
-### Requirement: Universe id edits keep their fixtures
-Changing a universe's ID SHALL carry its fixtures along: they stay patched in it, and deleting,
-selecting or moving them keeps working. An ID another universe already uses SHALL be refused, and
-the field SHALL show the universe's current ID again.
-
-#### Scenario: Delete after changing the id
-- **GIVEN** universe 0 renumbered to 5 in its settings
-- **WHEN** the operator deletes one of its fixtures from the patch bay
-- **THEN** the fixture disappears from the patch bay, the universe view and the visualizer
-
-#### Scenario: Id already in use
-- **GIVEN** universes 0 and 1
-- **WHEN** the operator types 1 as universe 0's ID
-- **THEN** the field goes back to 0 and both universes keep their fixtures
-
 ### Requirement: Deleting a fixture always completes
 Deleting a fixture SHALL remove it from the show, its universe's patch, every group and the
 visualizer, even when one of its groups' cues fails to drop it. Such a failure SHALL be reported
@@ -106,3 +91,18 @@ and SHALL NOT leave the fixture in the group.
 - **WHEN** the operator deletes the fixture
 - **THEN** the fixture leaves the group, the universe and the visualizer, and the show saves and
   reopens without error
+
+### Requirement: A universe's ID is fixed
+A universe SHALL keep the ID it gets when it is created (or that its showfile gives it) for as
+long as it exists. The universe settings SHALL show the ID in a disabled field that can't be
+edited. The universe's output SHALL keep sending to that ID.
+
+#### Scenario: The ID field can't be edited
+- **GIVEN** universe 0 open in the universe view
+- **WHEN** the operator clicks its ID field and types 7
+- **THEN** the field stays at 0, shown disabled, and the patch bay still lists Universe 0
+
+#### Scenario: Saved IDs load unchanged
+- **GIVEN** a showfile whose universes have IDs 0 and 5
+- **WHEN** it is opened
+- **THEN** the universe settings show 0 and 5
