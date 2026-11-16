@@ -203,6 +203,9 @@ class Controls {
    */
   handleKeydown(e) {
     if (e.repeat) return;
+    // Typing in a field (a search, a name) is not a gizmo shortcut
+    const el = e.target;
+    if (el && (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName))) return;
     if (e.key === 'Escape') {
       this.mode = CONTROL_MODES.DISCRETE;
       this.showHelpers();
