@@ -245,6 +245,27 @@ class Fade {
   }
 
   /**
+   * Point of the curve, as drawn from the current control points, at a fade progress. For
+   * display only (it allocates): playback uses getValue().
+   *
+   * @public
+   * @param {Number} t fade progress, 0 to 1 (clamped)
+   * @return {{x: Number, y: Number}} time and value fractions, 0 to 1
+   */
+  pointAt(t) {
+    const p = Math.min(Math.max(Number(t) || 0, 0), 1);
+    const mt = 1 - p;
+    const a = 3 * mt * mt * p;
+    const b = 3 * mt * p * p;
+    const c = p * p * p;
+    const cp = this._controlPoints;
+    return {
+      x: a * cp[0].x + b * cp[1].x + c,
+      y: a * cp[0].y + b * cp[1].y + c,
+    };
+  }
+
+  /**
    * Returns fade's X value from the last getValue() call.
    *
    * @return {Number} X value over time

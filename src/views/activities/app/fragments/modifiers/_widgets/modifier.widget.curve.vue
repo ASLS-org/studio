@@ -76,6 +76,7 @@
 
 <script>
 import LiveMixin from '@/views/mixins/live.mixin';
+import Fade from '@/models/DMX/fade.model';
 
 export default {
   name: 'ModifierWidgetCurve',
@@ -86,25 +87,11 @@ export default {
   mixins: [LiveMixin],
   props: {
     /**
-     * Handle to Fade instance
+     * Handle to Fade instance (an idle linear fade when no scene is selected)
      */
     fade: {
       type: Object,
-      default: () => ({
-        type: 0,
-        controlPoints: [
-          {
-            x: 0,
-            y: 0,
-          },
-          {
-            x: 0,
-            y: 0,
-          },
-        ],
-        direction: 0,
-        availabelEasingFunctions: [],
-      }),
+      default: () => new Fade({ type: 0 }),
     },
   },
   emits: ['input'],
@@ -163,14 +150,14 @@ export default {
      * Control Point 3 (play state) css positioning
      */
     cp3Style() {
-      // fade.value and fade.x are written by playback outside Vue: refresh with the ticker
-      const value = this.live(this.fade.value);
-      const bottomOffset = !this.fade.direction
-        ? value
-        : (1.0 - value);
+      // fade.t (progress) is written by playback outside Vue: refresh with the ticker. The point
+      // comes from the current control points, so the dot stays on the drawn curve after an edit.
+      // The canvas fills the box, so fractions of the box are points of the curve.
+      const point = this.fade.pointAt(this.live(this.fade.t));
+      const y = !this.fade.direction ? point.y : 1.0 - point.y;
       return {
-        bottom: `calc(${(Math.min(bottomOffset, 1) % 1) * 100}% - 6px)`,
-        left: `calc(${(Math.min(this.fade.x, 1) % 1) * (this.canvasDimensions.width / this.canvasDimensions.height) * 100}% - 6px)`,
+        bottom: `calc(${y * 100}% - 6px)`,
+        left: `calc(${point.x * 100}% - 6px)`,
       };
     },
   },
