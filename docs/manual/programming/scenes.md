@@ -132,9 +132,17 @@ The **Fade in** widget shapes how the scene moves from its start values to its e
 
 | Setting | Description |
 | --- | --- |
-| **Type** | A preset curve: **LINEAR**, **EASE**, **EASE_IN**, **EASE_OUT**, **EASE_IN_OUT**, or **CUSTOM** |
-| **CP1 X/Y**, **CP2 X/Y** | The curve's two control points (0 to 1). **CP1** shapes the start of the fade, **CP2** its end |
+| **Type** | A preset curve, each shown with a small picture of its shape: **Linear**, **Ease**, **Ease in**, **Ease out**, **Ease in-out**, then **Sine**, **Quad**, **Cubic**, **Quart**, **Quint**, **Expo**, **Circ** and **Back**, each **in**, **out** and **in-out**. With the list open, type a letter to jump to the presets starting with it. **Custom** is a curve you shaped yourself |
+| **CP1 X/Y**, **CP2 X/Y** | The curve's two control points. **X** (time) goes from 0 to 1; **Y** from −1 to 2. **CP1** shapes the start of the fade, **CP2** its end |
 
-Drag the points on the curve or type their values; changing them sets the type to **CUSTOM**. The
+The scene plays the curve as drawn: halfway through the **Duration**, the channels are where the
+curve is halfway across. **In** curves start slowly, **out** curves arrive slowly, **in-out** do
+both; **Sine** is the gentlest and **Expo** the sharpest.
+
+**Back** curves overshoot: they go past the scene's values (or below the start) before settling.
+The dotted lines mark the start and end levels, with room above and below for overshoot. A channel
+never goes beyond its DMX range (0–255), so an overshoot at full level holds at 255.
+
+Drag the points on the curve or type their values; changing them sets the type to **Custom**. The
 curve is a cubic Bézier curve, like CSS easing: [cubic-bezier.com](https://cubic-bezier.com/)
 shows how the points shape it.
