@@ -17,7 +17,8 @@ views/
   components/uikit/      `uk-*` design system, registered globally in main.js
   mixins/                popup.mixin.js (v-model open/close), modal.mixin.js (named popup
                          state in $view), keys.mixin.js (keyboard block), color.mixin.js
-  utils/                 palette, setCapture (exposed as this.$utils)
+  utils/                 palette, setCapture (exposed as this.$utils); channel.icons.js and
+                         channel.presets.js (channels widget: icon per function, range menu)
 ```
 
 ## Ground rules
