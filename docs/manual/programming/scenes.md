@@ -89,8 +89,11 @@ goes to the fixtures that have that channel.
 > first cue (the top-left slot): set its fixtures one at a time
 > ([Known limitations](/reference/limitations#programming)).
 
-Channel faders are labelled by position (**CH1**, **CH2**…) with an icon for their function (the
-half-filled circle is a dimmer, **R**, **G**, **B** and **W** are colours).
+Channel faders are labelled by position (**CH1**, **CH2**…). As in the universe view, the channel's
+name box (under its value) shows its function and current range, and opens its ranges
+([Channels](/programming/patching#channels)). Picking one sets the channel to that range's start
+and includes it in the scene (it ticks its checkbox). With several fixtures selected, the
+ranges are listed only when they are the same for every fixture behind that fader.
 
 ### Cells
 

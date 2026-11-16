@@ -145,6 +145,18 @@ controls drive *MAC Aura 2* on the demo rig.
 
 One fader per channel, with its value (DMX 0–255) above it. Type a value or drag the fader.
 
+Under each value is the channel's box: an icon for its function (a half-filled circle for a dimmer,
+**R**, **G**, **B**, **W**, **A** (amber) or **UV** for a colour, a thermometer for colour
+temperature, a lightning bolt for a strobe…) and either what the current value does (*Closed*,
+*Strobe fast → slow*, *Gobo 3*) or, on a channel with a single range, its name. Hover it to read
+the full name and range.
+
+Click the box to see the channel's full name and its ranges: each shows its values and what it
+does, and the one holding the current value is highlighted. Pick one to set the channel to the
+start of that range, or use <kbd>↑</kbd> <kbd>↓</kbd> and <kbd>Enter</kbd>; <kbd>Esc</kbd> closes
+the list without a change. Type in the list's search field to keep only the matching ranges.
+Range names come from the fixture's definition.
+
 <LivePreview preset="fixture-channels" />
 
 ### Color Picker
