@@ -9,7 +9,7 @@
  * Usage: npm run app:check [-- --url http://localhost:5173] [--only <scenario> ...]
  *   --url    use a running dev server instead of starting one
  *   --only   run only these scenarios (repeatable): panels, playing, textscroll, select, resize,
- *            widgets, presets, memory, shared, highlight, deletes, keys, popups
+ *            widgets, curves, presets, memory, shared, highlight, deletes, keys, popups
  * Chrome: CHROME_PATH, else the usual install path for the system.
  */
 /* eslint-disable no-console -- a command-line report */
@@ -817,7 +817,95 @@ const SCENARIOS = {
     await playScene(true, null);
     await wait(bar + 600);
     const end = await onCurve();
-    check('the fade dot stays at the curve\'s end once done', end.x >= end.w - 3 && end.y <= 3, end);
+    // the end level (1) sits below the canvas top: the canvas shows -0.25 to 1.25
+    const endY = end.h * (0.25 / 1.5);
+    check('the fade dot stays at the curve\'s end once done', end.x >= end.w - 3
+      && Math.abs(end.y - endY) <= 3, { ...end, endY });
+  },
+
+  /** Fade presets: the picker, playback as drawn, overshoot clamped */
+  async curves(page) {
+    const d = await demo(page);
+    const group = d.groups.find((g) => g.cues.some((c) => c.type === 0));
+    const scene = group.cues.find((c) => c.type === 0);
+    await openGroup(page, group.name);
+    await selectCueTile(page, scene.name);
+    const fadeOf = () => page.evaluate((id) => {
+      const cue = window.__check.show.groupPool.groups.flatMap((g) => g.cuePool.cues)
+        .find((c) => c.id === id);
+      return {
+        type: cue.fadeIn.type,
+        name: cue.fadeIn.presetNames[cue.fadeIn.type],
+        points: cue.fadeIn.controlPoints.map((p) => [p.x, p.y]),
+      };
+    }, scene.id);
+    await page.evaluate(() => window.__check.show.refreshSaveState());
+
+    // The picker: a standard select of named presets, each with a picture of its curve
+    await click(page, '.widget_curve .widget_curve_type .uikit_select_textbox_wrapper');
+    const options = await page.evaluate(() => [...document.querySelectorAll(
+      '.uikit_select_option_list .uikit_select_option',
+    )].map((o) => ({ name: o.textContent.trim(), curve: !!o.querySelector('svg path') })));
+    await click(page, '.uikit_select_option_list .uikit_select_option', 'Expo out');
+    const picked = await fadeOf();
+    const box = await page.evaluate(() => {
+      const t = document.querySelector('.widget_curve_type .uikit_select_textbox');
+      return { text: t?.textContent.trim(), curve: !!t?.querySelector('svg path') };
+    });
+    const unsaved = await page.evaluate(() => {
+      window.__check.show.refreshSaveState();
+      return !window.__check.show.isSaved;
+    });
+    check(
+      'the fade type select lists 30 named presets with their curve; picking Expo out sets its points',
+      options.length === 30 && options.every((o) => o.curve) && options[0].name === 'Custom'
+        && options.some((o) => o.name === 'Back in-out') && picked.name === 'Expo out'
+        && same(picked.points, [[0.16, 1], [0.3, 1]]) && box.text === 'Expo out' && box.curve
+        && unsaved,
+      {
+        count: options.length, picked, box, unsaved,
+      },
+    );
+
+    // Playback follows the drawn curve: Ease in at half time plays its value at time 0.5
+    const played = await page.evaluate((id) => {
+      const cue = window.__check.show.groupPool.groups.flatMap((g) => g.cuePool.cues)
+        .find((c) => c.id === id);
+      if (cue.animationId != null) cue.cue(false);
+      cue.relative = false;
+      const fv = cue.fixtureValues.find((v) => v.channels.some((c) => c.active && !c.isFine));
+      const channel = fv.channels.find((c) => c.active && !c.isFine);
+      const target = 200;
+      channel.value = target;
+      const read = () => fv.fixture.getQuickAccessor(channel).value.DMX;
+      const at = (type, fraction) => {
+        cue.fadeIn.type = type;
+        cue.update(fraction * 1000, 1000);
+        return read();
+      };
+      const easeIn = at(3, 0.5);
+      const linear = at(1, 0.5);
+      channel.value = 255;
+      let max = 0;
+      let raw = 0;
+      for (let k = 0; k < 100; k += 1) {
+        max = Math.max(max, at(28, k / 100));
+        raw = Math.max(raw, cue.fadeIn.value);
+      }
+      return {
+        easeIn, linear, max, raw, back: cue.fadeIn.presetNames[28],
+      };
+    }, scene.id);
+    check(
+      'an Ease in fade to 200 plays about 63 at half time (its curve), Linear 100',
+      Math.abs(played.easeIn - 63) <= 2 && Math.round(played.linear) === 100,
+      played,
+    );
+    check(
+      `${played.back} overshoots its curve past 1 and the channel never exceeds 255`,
+      played.back === 'Back out' && played.raw > 1.05 && played.max <= 255,
+      played,
+    );
   },
 
   /** Channel icons for every OFL and GDTF channel, range labels, and the preset menu */
