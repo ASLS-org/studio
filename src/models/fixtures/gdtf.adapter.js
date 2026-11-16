@@ -2,6 +2,7 @@ import Capability from '../DMX/capabilityManager.model';
 import { PROFILE_SOURCES, buildCapabilityLookup } from './fixture.profile';
 import { FINE_CHANNEL_TERMINOLOGY, deriveTypeKey } from './channel.types';
 import { GDTFError } from './gdtf.archive';
+import capabilityLabel from './capability.labels';
 import modelCenter, { modelMeshes } from './gdtf.meshes';
 
 /**
@@ -625,12 +626,15 @@ function homeBytes(dmxChannel, functions, bytes) {
  *
  * @param {String} baseName Channel name (OFL naming)
  * @param {String} label Display suffix (geometry instance), or ''
- * @param {Object} info Attribute, geometry, fine flag, capability data and home value
+ * @param {Object} info Attribute, geometry, fine flag, capability data, home value and the
+ * profile's wheels (for range labels)
  * @returns {Object} Profile channel without fine pairing and qaIndex
  */
 function buildChannel(baseName, label, info) {
   const { type, color } = deriveTypeKey(baseName, info.isFine, info.capabilities);
-  const capabilities = info.capabilities.map((capability) => new Capability(capability));
+  const capabilities = info.capabilities.map((capability) => new Capability({
+    ...capability, label: capabilityLabel(capability, info.wheels, baseName),
+  }));
   const name = info.isFine ? `${baseName}${FINE_CHANNEL_TERMINOLOGY}` : baseName;
   return {
     name: label ? `${name} ${label}` : name,
@@ -702,7 +706,12 @@ function buildMode(mode, context) {
       slots.push({
         address: addresses[0],
         channel: buildChannel(baseName, target.label, {
-          attribute, geometry: target.geometry, isFine: false, capabilities, defaultValue: home[0],
+          attribute,
+          geometry: target.geometry,
+          isFine: false,
+          capabilities,
+          defaultValue: home[0],
+          wheels: context.wheels,
         }),
         fineAddresses: addresses.slice(1),
         fine: addresses.slice(1).map((_, i) => buildChannel(baseName, target.label, {
@@ -710,6 +719,7 @@ function buildMode(mode, context) {
           geometry: target.geometry,
           isFine: true,
           defaultValue: home[i + 1],
+          wheels: context.wheels,
           // As OFL: a single-function channel's fine byte retypes that function
           capabilities: capabilities.length === 1
             ? [{ ...capabilities[0], dmxRange: [0, 255], type: `${baseName}${FINE_CHANNEL_TERMINOLOGY}` }]

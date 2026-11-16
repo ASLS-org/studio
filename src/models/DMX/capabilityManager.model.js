@@ -508,6 +508,12 @@ class Capability {
   constructor(capabilityData) {
     this.type = capabilityData.type;
     this.range = capabilityData.dmxRange || DEFAULT_CAPABILITY_RANGE;
+    /**
+     * Short label of the range, given by the source adapter (see fixtures/capability.labels.js)
+     *
+     * @type {String}
+     */
+    this.label = capabilityData.label || capabilityData.comment || capabilityData.type || '';
     this.entities = {};
     this.parameters = {};
     this.isFine = false;

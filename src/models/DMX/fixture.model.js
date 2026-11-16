@@ -393,7 +393,8 @@ class Fixture {
   }
 
   /**
-   * Simplified channel object. does not contain capability(ies) data
+   * Plain channel rows for the channels widget: value, type, colour, attribute, name and the
+   * channel's ranges (shared profile capabilities, read only)
    *
    * @type {Object}
    */
@@ -412,6 +413,10 @@ class Fixture {
       active: channel.active,
       qaIndex: channel.qaIndex,
       cell: channel.cell,
+      attribute: channel.attribute,
+      name: channel.name,
+      isFine: channel.isFine,
+      capabilities: channel.capabilities,
     }));
   }
 

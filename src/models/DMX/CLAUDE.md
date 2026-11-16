@@ -43,7 +43,8 @@ Enums live next to their model and are exported: `CUE_TYPES`, `CUE_STATES`,
   raw scene values, saved back unchanged. Fixtures save `channelCount`; a mismatch on load is
   reported (`Fixture.footprintChanged`).
 - `Capability.getValue()` returns one reused object per capability: read it immediately. Entities
-  the data doesn't give span their whole range and are flagged `implicit`.
+  the data doesn't give span their whole range and are flagged `implicit`. `Capability.label` is
+  the range's short name (`fixtures/capability.labels.js`, set by the adapters, never saved).
 - **Cells** (`fixtures/fixture.cells.js`): parts repeating a set of channels (GDTF geometries,
   OFL pixels; pixel groups and other channels are the whole fixture). Each `Channel` has `cell`
   and `kind` (type without the cell's name: OFL pixel types differ per cell, so compare on

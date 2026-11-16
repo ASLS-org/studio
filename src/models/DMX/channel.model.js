@@ -28,6 +28,7 @@ class Channel {
     const { profileChannel } = data;
     this.id = data.id;
     this.type = profileChannel.type;
+    this.name = profileChannel.name || profileChannel.type;
     this.attribute = profileChannel.attribute;
     this.isFine = profileChannel.isFine;
     this.color = profileChannel.color;
