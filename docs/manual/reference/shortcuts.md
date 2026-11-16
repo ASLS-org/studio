@@ -31,6 +31,17 @@ is open, nothing behind it reacts to keys.
 Popups that belong to a view (the universe's **Patch Fixture**, a group's **Add**…) close when you
 open another universe, group or chase.
 
+## Selects
+
+Choice fields such as **Quantize**, **Trigger Style** or a colour. Click one, or move to it, then:
+
+| Keys | Action |
+| --- | --- |
+| <kbd>↓</kbd> / <kbd>↑</kbd> | Open the list (the current value is marked), then move the mark |
+| <kbd>Enter</kbd> or <kbd>Space</kbd> | Choose the marked value |
+| <kbd>Escape</kbd> | Close the list without changing the value (in a popup, a second <kbd>Escape</kbd> closes the popup) |
+| A letter | Mark the next value starting with it |
+
 ## Lists
 
 Fixture pools, the patch bay, a popup's lists, an effect's channels.

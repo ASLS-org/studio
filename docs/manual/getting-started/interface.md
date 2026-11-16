@@ -37,7 +37,8 @@ Lists the universes, each unfolding to its fixtures with their address (`U0 - CH
 address 14). Unfold a universe to open it in the modifier strip; click a fixture to select it
 there and outline it in the visualizer. Type in **Search items** to find fixtures across
 universes. **New** adds a universe; select fixtures and press <kbd>Delete</kbd> to remove them
-from the show. More in [Patching fixtures](/programming/patching).
+from the show. Drag its right border to widen it, up to twice its width. More in
+[Patching fixtures](/programming/patching).
 
 <LivePreview preset="patch-bay" />
 
@@ -45,7 +46,8 @@ from the show. More in [Patching fixtures](/programming/patching).
 
 One column per group, with its chases in rows, and the **Master** column on the right. Click a
 group's name to open it in the modifier strip; click a chase to open it; click a chase's play
-button to start it. **New** creates a group. More in [Groups](/programming/groups),
+button to start it. **New** creates a group. Drag the border between the groups and **Master** to
+make the groups wider or narrower. More in [Groups](/programming/groups),
 [Chases](/programming/chases) and [Playing a show](/programming/playback).
 
 <LivePreview preset="group-pool" />
@@ -60,7 +62,8 @@ resize it, and reduce it to its title with **–**. More in [Visualizer](/interf
 ## Modifier Strip
 
 The bottom of the window shows the editing **view** for what you picked, as a row of widgets. When
-they don't fit, scroll the strip sideways.
+they don't fit, scroll the strip sideways. Drag the border above the strip, anywhere along it, to
+make it taller or shorter.
 
 | You picked | The strip shows | Page |
 | --- | --- | --- |
@@ -85,3 +88,8 @@ select, <kbd>Ctrl</kbd>+click (<kbd>Cmd</kbd>+click on a Mac) to add to the sele
 <kbd>Backspace</kbd> to delete (with a confirmation). In lists you can delete from, each item has
 a trash icon at its right. Items you can reorder have a grip at their far right: drag it. The striped area below the last
 item is the list's empty space. All the list keys are in [Shortcuts](/reference/shortcuts#lists).
+
+A name or label too long for its place is cut with **…**: rest the pointer on it and it scrolls to
+show the rest, then back. Choice fields (**Quantize**, **Trigger Style**, colours…) open their list
+with a click or the arrow keys; the current value is marked in the list (see
+[Shortcuts](/reference/shortcuts#selects)).
