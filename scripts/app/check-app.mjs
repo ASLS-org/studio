@@ -654,6 +654,156 @@ const SCENARIOS = {
     );
   },
 
+  /** Modifier widgets: fixed universe ID, fixture pool width, effect fields, fade play dot */
+  async widgets(page) {
+    const d = await demo(page);
+    const visibleEl = (sel) => `[...document.querySelectorAll('${sel}')].find((e) => e.offsetParent)`;
+    // Universe ID: disabled, typing changes nothing
+    await openUniverse(page, d.universes[0].id);
+    const idField = await page.evaluateHandle(() => [
+      ...document.querySelectorAll('.universe_settings_wrapper .uikit_num_input'),
+    ].find((e) => e.offsetParent && e.querySelector('.label')?.textContent.trim() === 'ID'));
+    const input = await idField.asElement()?.$('input');
+    const disabled = input ? await input.evaluate((e) => e.disabled) : null;
+    if (input) {
+      await input.click({ clickCount: 3 }).catch(() => {});
+      await page.keyboard.type('7');
+      await page.keyboard.press('Enter');
+      await wait(SETTLE_MS);
+    }
+    const ids = await page.evaluate(() => window.__check.show.universePool.universes
+      .map((u) => u.id));
+    const shown = input ? await input.evaluate((e) => e.value) : null;
+    const unchanged = same(ids, d.universes.map((u) => u.id))
+      && shown === String(d.universes[0].id);
+    check('the universe ID field is disabled and typing leaves it unchanged', disabled === true
+      && unchanged, { disabled, ids, shown });
+
+    // Fixture pool: as wide as its rows, between 250 and 400 px
+    const pool = () => page.evaluate((js) => {
+      const w = eval(js); // eslint-disable-line no-eval
+      const rows = [...w.querySelectorAll('.uikit_list_item')];
+      const cut = rows.filter((r) => [...r.querySelectorAll('h4')]
+        .some((t) => t.scrollWidth > t.clientWidth + 1)).map((r) => r.querySelector('h4').textContent.trim());
+      const more = rows.some((r) => [...r.querySelectorAll('.uikit_list_item_more')]
+        .some((t) => t.scrollWidth > t.clientWidth + 1));
+      return { width: Math.round(w.getBoundingClientRect().width), cut, more };
+    }, visibleEl('.modifier_widget_fixture_pool'));
+    const fitted = await pool();
+    check('the fixture pool fits the demo rows whole (250 to 400 px)', fitted.width >= 250
+      && fitted.width <= 400 && !fitted.cut.length, fitted);
+    const long = 'A fixture with a name long enough to need more than four hundred pixels';
+    const original = await page.evaluate((n) => {
+      const f = window.__check.show.universePool.universes[0].fixturePool.fixtures[0];
+      const { name } = f;
+      f.name = n;
+      return name;
+    }, long);
+    await wait(SETTLE_MS * 2);
+    const wide = await pool();
+    check(
+      'a long name widens the pool to 400 px, then its name is cut, not its address',
+      wide.width === 400 && wide.cut.length === 1 && !wide.more,
+      wide,
+    );
+    await page.evaluate((n) => {
+      window.__check.show.universePool.universes[0].fixturePool.fixtures[0].name = n;
+    }, original);
+
+    // Effect tool: every field whole and clear of the canvas, with or without PWM's Width
+    const effectGroup = d.groups.find((g) => g.cues.some((c) => c.type === 1));
+    if (effectGroup) {
+      await openGroup(page, effectGroup.name);
+      await selectCueTile(page, effectGroup.cues.find((c) => c.type === 1).name);
+      const fields = () => page.evaluate(() => {
+        const w = [...document.querySelectorAll('.widget_wave')].find((e) => e.offsetParent);
+        if (!w) return null;
+        const canvas = w.querySelector('.widget_wave_modifier').getBoundingClientRect();
+        const all = [...w.querySelectorAll('.uikit_num_input, .uikit_select')];
+        const right = Math.max(...all.map((e) => e.getBoundingClientRect().right));
+        const cut = all.map((e) => e.querySelector('.label'))
+          .filter((l) => l && l.scrollWidth > l.clientWidth + 1)
+          .map((l) => l.textContent.trim());
+        return { gap: Math.round(canvas.left - right), cut, count: all.length };
+      });
+      const plain = await fields();
+      // the channel the effect tool shows (dev build: components are reachable from their root)
+      const wave = await page.evaluate(() => {
+        const w = [...document.querySelectorAll('.widget_wave')].find((e) => e.offsetParent);
+        let comp = w?.__vueParentComponent;
+        while (comp && !comp.props?.channel) comp = comp.parent;
+        const ch = comp?.props.channel;
+        if (!ch?.waveOptions) return null;
+        const before = ch.waveform;
+        ch.waveform = ch.waveOptions.findIndex((o) => /pwm/i.test(o));
+        window.__checkWave = { ch, before };
+        return before;
+      });
+      await wait(SETTLE_MS);
+      const pwm = await fields();
+      check(
+        'effect tool fields end at least 8 px before the canvas, labels whole (with PWM too)',
+        plain && pwm && plain.gap >= 8 && pwm.gap >= 8 && !plain.cut.length && !pwm.cut.length
+        && pwm.count > plain.count,
+        { plain, pwm, wave },
+      );
+      await page.evaluate(() => {
+        const { ch, before } = window.__checkWave || {};
+        if (ch) ch.waveform = before;
+      });
+    } else check('the demo has an effect cue', false);
+
+    // Fade editor: the play dot sits on the drawn curve, and at its end once done
+    const sceneGroup = d.groups.find((g) => g.cues.some((c) => c.type === 0));
+    const scene = sceneGroup.cues.find((c) => c.type === 0);
+    await openGroup(page, sceneGroup.name);
+    await selectCueTile(page, scene.name);
+    const onCurve = () => page.evaluate(() => {
+      const w = [...document.querySelectorAll('.widget_curve')].find((e) => e.offsetParent);
+      const canvas = w.querySelector('canvas');
+      const dot = w.querySelector('.widget_curve_picker');
+      const c = canvas.getBoundingClientRect();
+      const r = dot.getBoundingClientRect();
+      const cx = ((r.left + r.width / 2) - c.left) * (canvas.width / c.width);
+      const cy = ((r.top + r.height / 2) - c.top) * (canvas.height / c.height);
+      const ctx = canvas.getContext('2d');
+      const px = ctx.getImageData(Math.round(cx) - 3, Math.round(cy) - 3, 7, 7).data;
+      let hit = false;
+      for (let i = 3; i < px.length; i += 4) if (px[i] > 0) hit = true;
+      return {
+        hit, x: Math.round(cx), y: Math.round(cy), w: canvas.width, h: canvas.height,
+      };
+    });
+    const bar = await page.evaluate((id) => {
+      const group = window.__check.show.groupPool.groups
+        .find((g) => g.cuePool.cues.some((c) => c.id === id));
+      const cue = group.cuePool.cues.find((c) => c.id === id);
+      cue.fadeIn.type = 3; // EASE_IN
+      cue.duration = 1;
+      if (cue.animationId != null) cue.cue(false);
+      cue.cue(true);
+      return cue.fadeIn.durationMS;
+    }, scene.id);
+    const playScene = (on, type) => page.evaluate((id, state, t) => {
+      const cue = window.__check.show.groupPool.groups.flatMap((g) => g.cuePool.cues)
+        .find((c) => c.id === id);
+      if (t != null) cue.fadeIn.type = t;
+      if (state !== (cue.animationId != null)) cue.cue(state);
+    }, scene.id, on, type);
+    await wait(bar * 0.45);
+    const mid = await onCurve();
+    check('the fade dot is on the drawn curve mid-fade', mid.hit && mid.x > 5 && mid.x < mid.w - 5, mid);
+    // stopped halfway, then the curve changes: the dot moves onto the new curve
+    await playScene(false, 4); // EASE_OUT
+    await wait(SETTLE_MS * 2);
+    const edited = await onCurve();
+    check('after a curve edit, the fade dot is on the new curve', edited.hit, edited);
+    await playScene(true, null);
+    await wait(bar + 600);
+    const end = await onCurve();
+    check('the fade dot stays at the curve\'s end once done', end.x >= end.w - 3 && end.y <= 3, end);
+  },
+
   /** Each group and universe comes back to its last selection */
   async memory(page) {
     const d = await demo(page);
