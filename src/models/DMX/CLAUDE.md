@@ -74,6 +74,11 @@ Enums live next to their model and are exported: `CUE_TYPES`, `CUE_STATES`,
   Live time. Chases store their Quantize as an option index and convert it with
   `CHASE_QUANTIZE_BEATS`. Always pair it with `Live.remove(id)`.
   Time units: `Live.beatDuration` / `Live.barDuration` in ms, derived from BPM.
+- **Fades:** `Fade.getValue(time, duration)` solves the Bézier for time (x(t) = time fraction,
+  Newton then bisection, no allocation) and plays y(t), so playback matches the drawn curve.
+  Presets are indexed in `FADE_PRESETS` order (stored in showfiles): append, never reorder.
+  Control point Y may overshoot (−1 to 2); scenes clamp each written value to 0–255 (the universe
+  frame is a `Uint8Array`, which would wrap).
 - **Pools:** `addRaw`, `addExisting`, `getFromId` (throws), `delete`, `clearAll`, plus a `listable`
   getter that shapes data for `uk-list`. New pools follow the same API.
 - **Ids:** numeric and unique per pool. Getters coerce with `Number(id)`. A fixture or universe

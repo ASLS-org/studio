@@ -154,7 +154,10 @@ export default {
   sized to its options), `#header` heads the list, whose body is then a real `uk-list` of `items`
   (`id` = option index; `searchable` turns on its search box, keys work from it; `emptyText` goes to
   its empty state; always 6 rows high and 200 to 360 px wide). Never hand-roll rows or a list:
-  reuse `uk-list`. and `reselect` makes it an action menu that emits on
+  reuse `uk-list`. Trigger slots
+  use the shared look `uikit_select_trigger_box` / `uikit_select_trigger_text` (styled by the
+  select through `:slotted`): the channel box does. A plain select's options can carry inline SVG (the
+  fade type shows each curve). and `reselect` makes it an action menu that emits on
   every pick, current option included, and follows `modelValue` silently. The channels widget's
   channel box uses all of them (`views/utils/channel.presets.js` caches options per capability
   array).
