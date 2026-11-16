@@ -113,6 +113,7 @@
   --widget-width-md: 300px;
   --widget-width-lg: 350px;
   --widget-width-xl: 400px;
+  --channel-column-width: 64px; /* one channel of the channels widget: select, value, fader */
 }
 
 /** Fixed geometry: sizes the code computes with. Never part of the scale, never snapped. Each is
