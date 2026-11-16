@@ -112,6 +112,7 @@
   --widget-width-sm: 250px;
   --widget-width-md: 300px;
   --widget-width-lg: 350px;
+  --widget-width-xl: 400px;
 }
 
 /** Fixed geometry: sizes the code computes with. Never part of the scale, never snapped. Each is

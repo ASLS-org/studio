@@ -338,7 +338,9 @@ export default {
   background: var(--accent-dark-purple);
   border: var(--border-width) solid;
 }
+/* The detail (address, count...) stays whole: the label is cut first */
 .uikit_list_item_more {
+  flex-shrink: 0;
   color: var(--secondary-light-alt);
   font-family: roboto-regular!important;
 }
