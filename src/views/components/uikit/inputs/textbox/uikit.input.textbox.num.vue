@@ -1,7 +1,7 @@
 <template>
   <div
     class="uikit_num_input"
-    :class="{ disabled: disabled }"
+    :class="{ disabled: disabled || readonly }"
   >
     <div
       v-if="label"
@@ -13,12 +13,16 @@
     <div
       class="uikit_num_input_textbox_wrapper"
       :class="{color: color !== null}"
-      :style="{ borderColor: !disabled && color ? `color-mix(in srgb,${color} 70%,#0000)` : '' }"
+      :style="{
+        borderColor: !disabled && !readonly && color
+          ? `color-mix(in srgb,${color} 70%,#0000)`
+          : ''
+      }"
     >
       <input
         v-model="content"
         class="uikit_num_input_textbox"
-        :disabled="disabled"
+        :disabled="disabled || readonly"
         :placeholder="placeholder"
         @keydown.up="incrementValue"
         @keydown.down="decrementValue"
@@ -34,7 +38,7 @@
       <span
         class="uikit_num_input_button"
         :style="{
-          backgroundColor: !disabled && color
+          backgroundColor: !disabled && !readonly && color
             ? `color-mix(in srgb,${color} 70%,#0000)`
             : ''
         }"
@@ -69,6 +73,7 @@
  * and/or by hitting the UP/DOWN arrow keys.
  * @namespace uikit/inputs/textboxes
  * @story Default {"value": 10, "label":"default", "min": 0, "max":100}
+ * @story "Read Only" {"value": 10, "label":"default", "readonly": true}
  */
 export default {
   name: 'UkNumInput',
@@ -123,6 +128,10 @@ export default {
      * Whether or not the input should be disabeld
      */
     disabled: Boolean,
+    /**
+     * Looks disabled, but the label isn't dimmed (like the text and select inputs)
+     */
+    readonly: Boolean,
     /**
      * Apply aleternative color styling
      */
@@ -183,7 +192,7 @@ export default {
      */
     incrementValue() {
       const increment = parseFloat(this.content) + parseFloat(10 ** -this.precision);
-      if (increment <= this.max && !this.disabled) {
+      if (increment <= this.max && !this.disabled && !this.readonly) {
         this.content = increment.toFixed(this.precision);
         this.updateValue(true);
       }
@@ -194,7 +203,7 @@ export default {
      */
     decrementValue() {
       const decrement = parseFloat(this.content) - parseFloat(10 ** -this.precision);
-      if (decrement >= this.min && !this.disabled) {
+      if (decrement >= this.min && !this.disabled && !this.readonly) {
         this.content = decrement.toFixed(this.precision);
         this.updateValue(true);
       }

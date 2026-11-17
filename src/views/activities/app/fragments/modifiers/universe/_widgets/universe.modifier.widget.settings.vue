@@ -19,11 +19,18 @@
           />
           <uk-num-input
             :model-value="universe.id"
-            disabled
+            readonly
             style="width: 60px"
             label="ID"
           />
         </uk-flex>
+        <uk-select-input
+          label="Color"
+          color="var(--accent-blue)"
+          :model-value="getIndexFromColor(universe.color)"
+          :options="colorOptions"
+          @input="setUniverseColor"
+        />
         <uk-flex
           gap="10"
           center-both
@@ -43,18 +50,11 @@
           />
           <uk-button
             square
-            label="config"
+            label="add"
             style="height: var(--control-height); min-width: 75px; margin-top: 22px"
             @click="connectionsPopupState = true"
           />
         </uk-flex>
-        <uk-select-input
-          label="Color"
-          color="var(--accent-blue)"
-          :model-value="getIndexFromColor(universe.color)"
-          :options="colorOptions"
-          @input="setUniverseColor"
-        />
       </uk-flex>
     </template>
     <h3

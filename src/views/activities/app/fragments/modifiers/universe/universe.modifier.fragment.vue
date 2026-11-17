@@ -20,6 +20,7 @@
       v-show="selectedFixture"
       ref="settings"
       :fixture="selectedFixture"
+      @repatch="repatchPopupDisplayState = true"
     />
     <position-tool-widget
       v-show="selectedFixture"
@@ -59,6 +60,10 @@
       v-model="patchPopupDisplayState"
       :universe="universe"
     />
+    <repatch-popup
+      v-model="repatchPopupDisplayState"
+      :fixture="selectedFixture"
+    />
   </uk-flex>
 </template>
 
@@ -75,6 +80,7 @@ import UniverseSettingsWidget from './_widgets/universe.modifier.widget.settings
 import FixtureSettingsWidget from './_widgets/universe.modifier.widget.fixture.settings.vue';
 import PositionToolWidget from './_widgets/universe.modifier.widget.fixture.position.tool.vue';
 import PatchPopup from './_popups/universe.modifier.popup.patch.vue';
+import RepatchPopup from './_popups/universe.modifier.popup.repatch.vue';
 import UniverseConnectionWidget from './_widgets/universe.modifier.widget.connection.vue';
 
 export default {
@@ -94,6 +100,7 @@ export default {
     PanTiltWidget,
     ModifierWidgetCells,
     PatchPopup,
+    RepatchPopup,
   },
   mixins: [LiveMixin],
   computed: {
@@ -101,6 +108,10 @@ export default {
      * Patch popup display state
      */
     patchPopupDisplayState: modal('universe.patch', 'universe'),
+    /**
+     * Repatch popup display state
+     */
+    repatchPopupDisplayState: modal('universe.repatch', 'universe'),
     /**
      * Universe in view (the last one, while another panel is in view)
      *
