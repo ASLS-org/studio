@@ -74,8 +74,8 @@ the universe it should listen to.
 
 ## Check That It Works
 
-1. Patch a fixture at the address its display shows (minus 1: Studio counts from 0, see
-   [Patching](/programming/patching#patch-settings)), in the universe you're streaming.
+1. Patch a fixture at the address its display shows
+   ([Patching](/programming/patching#patch-settings)), in the universe you're streaming.
 2. In the universe view, push its dimmer fader up (and open its shutter if it has one).
 3. The light should follow. If it doesn't, see [Troubleshooting](/reference/troubleshooting#outputs).
 

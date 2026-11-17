@@ -16,7 +16,7 @@ copying that into Studio. If Studio and the lights disagree on a mode or an addr
 react to the wrong channels: a dimmer fader moves the pan, a colour comes out wrong.
 
 **In the demo show:** universe *Stage* holds four *MAC Aura* in *Standard* mode (14 channels) at
-addresses 0, 14, 28 and 42, so 56 addresses in use and 456 free.
+addresses 1, 15, 29 and 43, so 56 addresses in use and 456 free.
 
 ## Patching a Fixture
 
@@ -26,10 +26,13 @@ addresses 0, 14, 28 and 42, so 56 addresses in use and 456 free.
 4. Choose its **Fixture mode**. The mode sets how many channels the fixture uses.
 5. Check the **Address** (Studio proposes the first free one) and, to patch several identical
    fixtures one after another, the **Amount**.
-6. Press **OK**. The fixtures appear in the fixture pool, in the patch bay and in the visualizer.
+6. Press **OK**. The fixtures appear in the fixture pool, in the patch bay and in the visualizer,
+   at the centre of the stage: place them with the **Position Tool**
+   ([below](#fixture-settings-and-position)).
 
-The preview adds a *Generic PAR RGBW* to the demo rig: it takes the first free address, 56, and
-hangs 4 m up, 3 m in front of the heads (**Pos Y** −3, **Pos Z** 4, **°Rot X** 180).
+The preview adds a *Generic PAR RGBW* to the demo rig: it takes the first free address, 57, and
+is then hung 4 m up, 3 m in front of the heads (**Position Y** −3, **Position Z** 4,
+**Rotation X** 180).
 
 <LivePreview preset="patch-add" />
 
@@ -45,17 +48,12 @@ file: [Fixture Library](/rig/fixtures).
 | --- | --- |
 | **Name** | The fixture's name in lists |
 | **Fixture mode** | The fixture's DMX mode: it sets the channels it uses |
-| **Address** | First address, 0 to 511. The fixture uses the addresses from there on |
-| **Amount** | How many fixtures to patch, one after another |
+| **Address** | First address, 1 to 512, as your DMX equipment counts. The fixture uses the addresses from there on. The map below shows the new fixtures as faint ghost blocks where they would go, red when the range is taken or runs past 512 |
+| **Amount** | How many fixtures to patch, one after another. Several are numbered after their name: *Spot 1*, *Spot 2*… |
 | **Stop** | The last address the fixtures use (read only) |
-| **Pos X/Y/Z**, **°Rot X/Y/Z** | Position (meters) and rotation (degrees) of the first fixture |
-| **Offset X/Y/Z**, **°Offset X/Y/Z** | Added to the position and rotation of each next fixture, to lay out a row |
 
-A fixture is placed with Z up: a rotation of 180° on X hangs it with its beam pointing down.
-
-> **Note:** Studio counts addresses from 0, as its lists show (`U0 - CH14` is universe 0, address
-> 14). Address 0 is the channel your DMX equipment calls 1, so a fixture set to address 1 on its
-> display goes at address 0 in Studio.
+When the range can't be patched, a message under the map says why: the fixtures already holding
+those addresses, the range running past 512, or no free range that large in the universe.
 
 ### Importing GDTF fixtures
 
@@ -111,8 +109,9 @@ and the rig on stage loses its right-hand head.
 
 ## Fixture Settings and Position
 
-The **Fixture Settings** widget renames the selected fixture, moves its **Address** and changes
-its **Mode**. The **Model** is shown for reference.
+The **Fixture Settings** widget renames the selected fixture and changes its **Mode**. The **Model**
+is shown for reference; next to them, **Ch Start**, **Ch Stop** and **Ch Count** give the addresses it
+uses. To move it, press **Edit** in the widget's header ([Repatching](#repatching)).
 
 <LivePreview preset="fixture-settings" />
 
@@ -121,8 +120,31 @@ keep their value and new channels start at 0. If the new mode needs more address
 after the fixture, or goes past the end of the universe, the change is refused and the fixture keeps
 its mode.
 
+### Repatching
+
+**Edit** opens the **Repatch** popup: a map of a universe's 512 addresses, 32 per row, each
+fixture a block over the addresses it uses, with its name and its first and last address. The
+selected fixtures are outlined on the map and highlighted in the visualizer.
+
+- **Drag** a block to move the fixture. Click to select one, <kbd>Ctrl</kbd>/<kbd>⌘</kbd> or
+  <kbd>Shift</kbd>-click to select several, and drag them together. A block never lands on
+  another fixture (it stays where it last fitted) and stops at address 1 and 512; click an empty
+  address to clear the selection.
+- **Selection** picks a fixture of the universe shown from a list.
+- **Move to free range** puts the selected fixtures, back to back, at the first free addresses of
+  the universe shown. Pick another **Universe** first to move them there; their groups, scenes
+  and effects keep them.
+- **Remove gaps** slides the universe's fixtures down to address 1, in their order, closing the
+  gaps between them.
+- **Reset** puts every fixture back where it is patched.
+
+The side of the popup lists the **Changes**, each fixture's addresses before and after (click one
+to select it); a fixture moving to another universe gets a warning below. Nothing moves until you
+press **OK**; **Cancel** keeps every address.
+
 The **Position Tool** places the fixture on stage for the visualizer: **Position X/Y/Z** in meters
-(to the centimetre) and **Rotation X/Y/Z** in degrees. You can also drag fixtures in the
+(to the centimetre) and **Rotation X/Y/Z** in degrees. A fixture is placed with Z up: a rotation of
+180° on X hangs it with its beam pointing down. You can also drag fixtures in the
 [visualizer](/interface/visualizer/).
 
 Stage axes: **X** runs left to right as the audience sees it, **Y** from the audience (negative)

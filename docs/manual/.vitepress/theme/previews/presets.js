@@ -151,7 +151,7 @@ const PRESETS = {
   },
   'fixture-settings': {
     title: 'Fixture Settings',
-    width: 200,
+    width: 300,
     height: STRIP,
     component: () => import('@/views/activities/app/fragments/modifiers/universe/_widgets/universe.modifier.widget.fixture.settings.vue'),
     props: (show) => ({ fixture: fixture(show, 0) }),
@@ -430,7 +430,7 @@ const PRESETS = {
   },
   'patch-add': {
     // The universe view's fixture pool Add opens the patch popup (the patch bay's New doesn't
-    // yet). A PAR is patched, hung at the front, and appears in the rig
+    // yet). A PAR is patched, appears in the rig, and is hung at the front with the Position Tool
     title: 'Universe',
     width: 480,
     height: 620,
@@ -448,17 +448,16 @@ const PRESETS = {
       { click: '.popup .uikit_list_item', has: 'Bundled (GDTF)' },
       { click: '.popup .uikit_list_item', has: 'Generic PAR RGBW' },
       { wait: 900 },
-      { caption: 'Place it: 4 m up, 3 m in front, hanging' },
-      { field: 'Pos Y', text: '-3', within: '.popup' },
-      { field: 'Pos Z', text: '4', within: '.popup' },
-      { field: '°Rot X', text: '180', within: '.popup' },
-      { caption: 'OK patches it' },
+      { caption: 'OK patches it at the first free address' },
       popupButton('ok'),
       { wait: 1200 },
-      { caption: 'In the fixture pool and on stage' },
-      { wait: 600 },
-      { caption: 'Select it: the visualizer outlines it, 3 m in front of the rig' },
+      { caption: 'Select it in the fixture pool' },
       row('Generic PAR RGBW'),
+      { wait: 900 },
+      { caption: 'Place it: 4 m up, 3 m in front, hanging' },
+      { field: 'Position Y', text: '-3' },
+      { field: 'Position Z', text: '4' },
+      { field: 'Rotation X', text: '180' },
       { wait: 2800 },
       { caption: null },
     ],
