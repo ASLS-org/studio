@@ -45,7 +45,7 @@ change touches: the pages are what the proposal's **Manual** line names, and the
 | `F/patch-bay/` (fragment, `_popups/popup.media.vue`) | `getting-started/interface#patch-bay`, `programming/patching` | `patch-bay`, `patch-bay-new`, `patch-bay-select`, `patch-bay-filter`, `visualizer-modes` |
 | `F/modifiers/universe/universe.modifier.fragment.vue`, `_popups/universe.modifier.popup.patch.vue` | `programming/patching`, `rig/fixtures` | `patch-add`, `universe-stream` |
 | `F/modifiers/universe/_widgets/universe.modifier.widget.settings.vue` | `programming/patching` | `universe-settings` |
-| `F/modifiers/universe/_widgets/universe.modifier.widget.fixture.settings.vue` | `programming/patching` | `fixture-settings` |
+| `F/modifiers/universe/_widgets/universe.modifier.widget.fixture.settings.vue`, `_popups/universe.modifier.popup.repatch.vue`, `_widgets/universe.modifier.map.vue`, `V/utils/dmx.js` (addresses shown 1–512, also `getting-started/interface`, `concepts`, `rig/outputs`, `reference/glossary`, `reference/troubleshooting`) | `programming/patching` | `fixture-settings`, `patch-add` |
 | `F/modifiers/universe/_widgets/universe.modifier.widget.fixture.position.tool.vue` | `programming/patching`, `interface/visualizer#placing-fixtures` | `fixture-position` |
 | `F/modifiers/_widgets/modifier.widget.fixture.pool.vue` | `programming/patching`, `programming/groups` | `fixture-pool-delete`, `group-fixture-pool-delete` |
 | `F/modifiers/_widgets/modifier.widget.fixture.channels.vue`, `colorpicker`, `pantilt`, `cells`, `curve` (via the theme's `previews/FixtureControl.vue`) | `programming/patching`, `programming/scenes` | `fixture-channels`, `fixture-color`, `fixture-pantilt` |

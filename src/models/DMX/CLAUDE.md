@@ -65,6 +65,9 @@ Enums live next to their model and are exported: `CUE_TYPES`, `CUE_STATES`,
   playback/runtime state out of `showData`.
 - **Reactivity:** `$show` is deeply reactive. Wrap render objects stored on models (3D instances)
   in `markRaw` where they are created.
+- **Output remap:** `Universe.packFrame` writes each address from
+  `channels[channel.outputSource]`, as `255 - value` when `channel.outputInvert`; `Fixture.setupOutput`
+  sets both from `invertPan` / `invertTilt` / `swapPanTilt` (saved). Programmed values never change.
 - **Frames:** `Live.onFrame(fn)` callbacks run after the animations on every tick, also while
   paused or stopped. `UniversePool` uses one to pack each universe's persistent `frame`
   (`Uint8Array(512)`) and send it on running streams. Output, and later the visualizer, read
@@ -83,7 +86,10 @@ Enums live next to their model and are exported: `CUE_TYPES`, `CUE_STATES`,
   getter that shapes data for `uk-list`. New pools follow the same API.
 - **Ids:** numeric and unique per pool. Getters coerce with `Number(id)`. A fixture or universe
   loaded from a show keeps its saved id (references point to it); new ones get the highest id + 1.
-  A universe's id never changes after that (it is also its output's universe number). Loading
+  A universe's id never changes after that (it is also its output's universe number).
+  Addresses (`chStart`) are 0-based in the engine and showfiles; views show them 1–512
+  (`views/utils/dmx.js`). Move patched fixtures only through `UniversePool.repatch(moves)` (checks
+  the whole result, then unpatches and patches), never by writing `chStart`. Loading
   skips universe/group references to missing fixtures and reports the count.
   `Show.deleteFixture` finds the universe by membership and never stops halfway.
 

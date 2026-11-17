@@ -133,6 +133,8 @@ export default {
   16px icons) are opt-in modes; defaults stay as in the app. `large` is for lists people read
   (the user manual's navigation). Extend components with opt-in props like these rather than
   restyling them from outside.
+- **DMX addresses** are shown 1–512 through `views/utils/dmx.js` (`dmxAddress`, `chStartOf`);
+  the engine stores them from 0.
 - **Rows over idle stripes stay solid:** `--secondary-dark/-darker` are see-through tints, so a row
   or option lays its tint over a solid base (`linear-gradient(tint, tint), var(--primary-light)`),
   never at reduced opacity.
