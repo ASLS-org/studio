@@ -69,6 +69,9 @@ class Fixture {
    * @param {Number} [data.channelCount] Channel count saved with the show
    * @param {Object} data.position Fixture's position in 3D space
    * @param {Object} data.rotation Fixture's rotation in 3D space
+   * @param {Boolean} [data.invertPan] Outputs 255 minus the pan value (see setupOutput)
+   * @param {Boolean} [data.invertTilt] Outputs 255 minus the tilt value
+   * @param {Boolean} [data.swapPanTilt] Outputs pan on the tilt channels and tilt on the pan ones
    */
   constructor(data = DEFAULT_FIXTURE_DATA) {
     if (!data.isStub) {
@@ -107,6 +110,10 @@ class Fixture {
         y: 0,
         z: 0,
       };
+      // Output options (absent in showfiles saved before them: off)
+      this._invertPan = !!data.invertPan;
+      this._invertTilt = !!data.invertTilt;
+      this._swapPanTilt = !!data.swapPanTilt;
       // Channels start at their home value (GDTF Default, 0 for OFL)
       this.parseFromProfile();
     }
@@ -130,7 +137,8 @@ class Fixture {
       icon: 'movinghead',
       id: this.id,
       universe: this.universe,
-      more: `U${this.universe}-CH${this.chStart}`,
+      // DMX addresses read 1 to 512 (stored from 0)
+      more: `U${this.universe} - CH${this.chStart + 1}`,
     };
   }
 
@@ -154,6 +162,9 @@ class Fixture {
       source: this.source,
       position: this.position,
       rotation: this.rotation,
+      invertPan: this.invertPan,
+      invertTilt: this.invertTilt,
+      swapPanTilt: this.swapPanTilt,
     };
   }
 
@@ -375,6 +386,7 @@ class Fixture {
     this.prepareChannels();
     this.setupFineChannels();
     this.setupQuickAccessors();
+    this.setupOutput();
     // Channels the old mode didn't have keep their home value. Coarse channels first: writing a
     // coarse channel resets its fine byte
     const home = this.channels.map((channel) => channel.value.DMX);
@@ -639,6 +651,7 @@ class Fixture {
     this.prepareChannels(); // Prepare fixture's channels
     this.setupFineChannels();
     this.setupQuickAccessors();
+    this.setupOutput();
   }
 
   /**
@@ -684,6 +697,87 @@ class Fixture {
   setupFineChannels() {
     this.channels.forEach((channel) => {
       channel.fineChannels = channel.fineIndexes.map((index) => this.channels[index]);
+    });
+  }
+
+  /**
+   * Whether the pan output is reversed (255 minus the value, fine byte included)
+   *
+   * @type {Boolean}
+   */
+  set invertPan(invert) {
+    this._invertPan = !!invert;
+    this.setupOutput();
+  }
+
+  get invertPan() {
+    return this._invertPan;
+  }
+
+  /**
+   * Whether the tilt output is reversed (255 minus the value, fine byte included)
+   *
+   * @type {Boolean}
+   */
+  set invertTilt(invert) {
+    this._invertTilt = !!invert;
+    this.setupOutput();
+  }
+
+  get invertTilt() {
+    return this._invertTilt;
+  }
+
+  /**
+   * Whether the pan and tilt outputs are exchanged (pan values out on the tilt channels and back)
+   *
+   * @type {Boolean}
+   */
+  set swapPanTilt(swap) {
+    this._swapPanTilt = !!swap;
+    this.setupOutput();
+  }
+
+  get swapPanTilt() {
+    return this._swapPanTilt;
+  }
+
+  /**
+   * Sets what each channel outputs (Universe.packFrame): its own value, or with Swap pan/tilt the
+   * value of its counterpart on the other axis (coarse with coarse, fine with fine, per cell), and
+   * reversed (255 - value) on the pan or tilt channels when inverted. Faders and scenes keep the
+   * programmed values; only the output changes.
+   *
+   * @public
+   */
+  setupOutput() {
+    const { channels } = this;
+    channels.forEach((channel, index) => {
+      channel.outputSource = index;
+      channel.outputInvert = false;
+    });
+    const cells = new Map();
+    channels.forEach((channel, index) => {
+      const key = channel.cell || '';
+      if (!cells.has(key)) cells.set(key, { Pan: null, Tilt: null });
+      const axes = cells.get(key);
+      ['Pan', 'Tilt'].forEach((axis) => {
+        if (axes[axis] === null && isAxisChannel(channel, axis)) axes[axis] = index;
+      });
+    });
+    cells.forEach((axes) => {
+      const outputs = (axis) => (axes[axis] === null
+        ? [] : [axes[axis], ...channels[axes[axis]].fineIndexes]);
+      const pan = outputs('Pan');
+      const tilt = outputs('Tilt');
+      if (this._swapPanTilt && pan.length && tilt.length) {
+        for (let i = 0; i < Math.min(pan.length, tilt.length); i++) {
+          channels[pan[i]].outputSource = tilt[i];
+          channels[tilt[i]].outputSource = pan[i];
+        }
+      }
+      if (this._invertPan) pan.forEach((i) => { channels[i].outputInvert = true; });
+      if (this._invertTilt) tilt.forEach((i) => { channels[i].outputInvert = true; });
     });
   }
 

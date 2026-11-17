@@ -179,7 +179,14 @@ class Universe {
       const address = this._addressMap[i];
       const fixture = address === undefined ? undefined : this._patch[address];
       const channel = fixture ? fixture.channels[i - address] : undefined;
-      frame[i] = channel ? channel.value.DMX : 0;
+      if (channel) {
+        // Invert / swap pan and tilt (Fixture.setupOutput): plain numbers, no allocation
+        const source = fixture.channels[channel.outputSource] || channel;
+        const value = source.value.DMX;
+        frame[i] = channel.outputInvert ? 255 - value : value;
+      } else {
+        frame[i] = 0;
+      }
     }
     return frame;
   }
@@ -293,8 +300,10 @@ class Universe {
    */
   canPatchMany(chStart, chCount, amount) {
     const total = chCount * amount;
+    if (chStart < 0 || chStart + total > DMX_UNIVERSE_LENGTH) return false;
     for (let i = chStart; i < chStart + total; i++) {
-      if (this._addressMap[i]) {
+      // A fixture at address 0 owns slots holding 0: test for any owner
+      if (this._addressMap[i] != null) {
         return false;
       }
     }
@@ -360,4 +369,5 @@ class Universe {
   }
 }
 
+export { DMX_UNIVERSE_LENGTH };
 export default Universe;
