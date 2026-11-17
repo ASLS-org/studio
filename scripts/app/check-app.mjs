@@ -9,7 +9,7 @@
  * Usage: npm run app:check [-- --url http://localhost:5173] [--only <scenario> ...]
  *   --url    use a running dev server instead of starting one
  *   --only   run only these scenarios (repeatable): panels, playing, textscroll, select, resize,
- *            widgets, curves, presets, memory, shared, highlight, deletes, keys, popups
+ *            widgets, curves, repatch, presets, memory, shared, highlight, deletes, keys, popups
  * Chrome: CHROME_PATH, else the usual install path for the system.
  */
 /* eslint-disable no-console -- a command-line report */
@@ -905,6 +905,296 @@ const SCENARIOS = {
       `${played.back} overshoots its curve past 1 and the channel never exceeds 255`,
       played.back === 'Back out' && played.raw > 1.05 && played.max <= 255,
       played,
+    );
+  },
+
+  /** Addresses 1-512, the repatch popup and its map, the patch popup map, invert and swap */
+  async repatch(page) {
+    const d = await demo(page);
+    const u0 = d.universes[0];
+    const [first, second] = u0.fixtures;
+    const fixtureState = (id) => page.evaluate((fid) => {
+      const f = window.__check.show.fixturePool.getFromId(fid);
+      return { universe: Number(f.universe), chStart: f.chStart, chCount: f.chCount };
+    }, id);
+    const canPatch = (uid, start, count) => page.evaluate((u, a, n) => window.__check.show
+      .universePool.getFromId(u).canPatchMany(a, n, 1), uid, start, count);
+
+    // Addresses read 1 to 512
+    await openUniverse(page, u0.id);
+    await unfoldUniverse(page, u0.id);
+    await clickRow(page, '.modifier_widget_fixture_pool', first);
+    const shown = await page.evaluate((id) => ({
+      row: document.querySelector(`.patch_bay .uikit_list_item[data-key$="/id:${id}"] .uikit_list_item_more`)
+        ?.textContent.trim(),
+      field: [...document.querySelectorAll('.fixture_settings_patch input')].map((i) => i.value).join(','),
+    }), first);
+    const firstState = await fixtureState(first);
+    check(
+      'addresses read 1-512: the first fixture (stored 0) shows U0 - CH1, Start 1 and Stop 14',
+      firstState.chStart === 0 && shown.row === `U${u0.id} - CH1`
+        && shown.field === `1,${firstState.chCount},${firstState.chCount}`,
+      { ...shown, firstState },
+    );
+
+    // The range of the fixture at address 0 counts as taken
+    const free0 = await canPatch(u0.id, 0, 14);
+    const past = await canPatch(u0.id, 505, 14);
+    check('a range over address 1, or past 512, is not free', free0 === false && past === false, { free0, past });
+
+    // Repatch popup: drag the second fixture to a free row, OK
+    await clickRow(page, '.modifier_widget_fixture_pool', second);
+    const before = await fixtureState(second);
+    const dragTo = async (id, slot) => {
+      const points = await page.evaluate((fid, target) => {
+        const grid = document.querySelector('.repatch_popup .universe_map_grid').getBoundingClientRect();
+        const block = document.querySelector(`.repatch_popup .universe_map_block.first[data-fixture="${fid}"]`)
+          .getBoundingClientRect();
+        const w = grid.width / 32;
+        const h = grid.height / 16;
+        return {
+          from: { x: block.left + w / 2, y: block.top + block.height / 2 },
+          to: {
+            x: grid.left + ((target % 32) + 0.5) * w,
+            y: grid.top + (Math.floor(target / 32) + 0.5) * h,
+          },
+          // the block's first slot, from its position
+          startSlot: Math.round((block.left - grid.left) / w)
+            + Math.round((block.top - grid.top) / h) * 32,
+        };
+      }, id, slot);
+      await page.mouse.move(points.from.x, points.from.y);
+      await page.mouse.down();
+      await page.mouse.move(points.from.x + 10, points.from.y + 10, { steps: 3 });
+      await page.mouse.move(points.to.x, points.to.y, { steps: 6 });
+      await page.mouse.up();
+      await wait(SETTLE_MS);
+    };
+    const openRepatch = async () => {
+      await click(page, '.fixture_settings .header .uikit_button', 'Edit');
+      await wait(SETTLE_MS);
+    };
+    const okEnabled = () => page.evaluate(() => {
+      const ok = [...document.querySelectorAll('.popup .popup_validation .uikit_button, .popup .popup_validation button')]
+        .find((b) => /^ok$/i.test(b.textContent.trim()));
+      return !!ok && !ok.classList.contains('disabled') && !ok.disabled;
+    });
+    await openRepatch();
+    const blocks = await page.evaluate(() => document.querySelectorAll('.repatch_popup .universe_map_block.first').length);
+    await dragTo(second, 320); // row 11, first slot: address 321
+    const draftOk = await okEnabled();
+    const previewIds = () => page.evaluate(() => {
+      const app = document.querySelector('#app').__vue_app__;
+      const ids = app.config.globalProperties.$view.previewIds;
+      return ids ? [...ids] : null;
+    });
+    const preview = { open: JSON.stringify(await previewIds()) === JSON.stringify([second]) };
+    await submitTopPopup(page);
+    preview.closed = (await previewIds()) === null;
+    const moved = await fixtureState(second);
+    const oldFree = await canPatch(u0.id, before.chStart, before.chCount);
+    const shownAfter = await page.evaluate(() => [...document.querySelectorAll('.fixture_settings_patch input')]
+      .map((i) => i.value).join(','));
+    const unsaved = await page.evaluate(() => {
+      window.__check.show.refreshSaveState();
+      return !window.__check.show.isSaved;
+    });
+    check(
+      'the map shows each fixture; dragging one to address 321 and OK repatches it there and frees its old range',
+      blocks === u0.fixtures.length && draftOk && moved.chStart === 320 && oldFree
+        && shownAfter === `321,${320 + moved.chCount},${moved.chCount}` && unsaved && preview.open
+        && preview.closed,
+      {
+        blocks, draftOk, moved, oldFree, shownAfter, unsaved, preview,
+      },
+    );
+
+    // A drag onto another fixture stops where the block last fitted; Cancel leaves everything
+    await openRepatch();
+    await dragTo(second, 0);
+    const conflict = await page.evaluate(() => document.querySelectorAll('.repatch_popup .universe_map_block.conflict').length);
+    const told = await page.evaluate((fid) => {
+      let c = document.querySelector('.repatch_popup').__vueParentComponent;
+      while (c && !c.proxy?.showUniverse) c = c.parent;
+      return {
+        errors: document.querySelectorAll('.repatch_popup .universe_message.error').length,
+        conflicting: c.proxy.conflicting,
+        draft: c.proxy.draft[fid].chStart,
+      };
+    }, second);
+    await click(page, '.popup .popup_validation .uikit_button, .popup .popup_validation button', /^[Cc]ancel$/);
+    await popupsAfterClosing(page, 0);
+    const kept = await fixtureState(second);
+    check(
+      'dragging onto another fixture never overlaps it (the block stops where it last fitted); Cancel keeps every address',
+      conflict === 0 && told.errors === 0 && !told.conflicting && told.draft !== 0
+        && kept.chStart === 320,
+      { conflict, kept, told },
+    );
+
+    // Dragging past the last row keeps the block inside the universe
+    await openRepatch();
+    const edge = await page.evaluate((fid) => {
+      const grid = document.querySelector('.repatch_popup .universe_map_grid').getBoundingClientRect();
+      const block = document.querySelector(`.repatch_popup .universe_map_block.first[data-fixture="${fid}"]`)
+        .getBoundingClientRect();
+      return {
+        x: block.left + 8, y: block.top + 8, right: grid.right + 150, bottom: grid.bottom + 150,
+      };
+    }, second);
+    await page.mouse.move(edge.x, edge.y);
+    await page.mouse.down();
+    await page.mouse.move(edge.right, edge.bottom, { steps: 8 }); // past the grid's corner
+    await page.mouse.up();
+    await wait(SETTLE_MS);
+    const clamped = await page.evaluate((fid) => {
+      let c = document.querySelector('.repatch_popup').__vueParentComponent;
+      while (c && !c.proxy?.showUniverse) c = c.parent;
+      return c.proxy.draft[fid].chStart;
+    }, second);
+    await click(page, '.popup .popup_validation .uikit_button, .popup .popup_validation button', /^[Cc]ancel$/);
+    await popupsAfterClosing(page, 0);
+    check('a block dragged past address 512 stops at the end of the universe', clamped === 512 - kept.chCount, { clamped });
+
+    // Remove gaps packs the universe from address 1, in order
+    await openRepatch();
+    await click(page, '.repatch_popup .uikit_button', 'Remove gaps');
+    await submitTopPopup(page);
+    const packed = await page.evaluate((uid) => window.__check.show.universePool.getFromId(uid)
+      .fixturePool.fixtures.map((f) => [f.chStart, f.chCount]).sort((a, b) => a[0] - b[0]), u0.id);
+    const contiguous = packed.every(([start], i) => (i === 0 ? start === 0
+      : start === packed[i - 1][0] + packed[i - 1][1]));
+    check('Remove gaps packs the universe from address 1 without gaps', contiguous, packed.slice(0, 4));
+
+    // Another universe: the fixture keeps its groups and scenes
+    if (d.universes.length > 1) {
+      const u1 = d.universes[1];
+      const group = d.groups.find((g) => g.fixtures.includes(second));
+      await openRepatch();
+      const index = d.universes.findIndex((u) => u.id === u1.id);
+      await page.evaluate((i) => {
+        let c = document.querySelector('.repatch_popup').__vueParentComponent;
+        while (c && !c.proxy?.showUniverse) c = c.parent;
+        c.proxy.showUniverse(i);
+      }, index);
+      await wait(SETTLE_MS);
+      await click(page, '.repatch_popup .uikit_button', 'Move to free range');
+      await submitTopPopup(page);
+      const across = await fixtureState(second);
+      const kept2 = await page.evaluate((fid, uid, gid) => {
+        const { show } = window.__check;
+        const inUniverse = show.universePool.getFromId(uid).fixturePool.fixtures
+          .some((f) => f.id === fid);
+        const g = gid == null ? null : show.groupPool.groups.find((x) => x.id === gid);
+        return {
+          inUniverse,
+          inGroup: g ? g.fixturePool.fixtures.some((f) => f.id === fid) : null,
+        };
+      }, second, u1.id, group ? group.id : null);
+      check(
+        'Move to free range in another universe moves the fixture there; its group keeps it',
+        across.universe === Number(u1.id) && kept2.inUniverse && kept2.inGroup !== false,
+        { across, ...kept2 },
+      );
+    }
+
+    // Two fixtures trade places in one repatch; an overlapping one changes nothing
+    const traded = await page.evaluate((ids) => {
+      const { show } = window.__check;
+      const [a, b] = ids.map((id) => show.fixturePool.getFromId(id));
+      const pool = show.universePool;
+      const at = [[a.universe, a.chStart], [b.universe, b.chStart]];
+      pool.repatch([
+        { fixture: a, universe: at[1][0], chStart: at[1][1] },
+        { fixture: b, universe: at[0][0], chStart: at[0][1] },
+      ]);
+      const swapped = a.chStart === at[1][1] && b.chStart === at[0][1];
+      let refused = false;
+      try {
+        pool.repatch([{ fixture: a, universe: b.universe, chStart: b.chStart }]);
+      } catch {
+        refused = a.chStart === at[1][1];
+      }
+      return { swapped, refused };
+    }, [first, u0.fixtures[2]]);
+    check('two fixtures trade addresses in one repatch; an overlap is refused unchanged', traded.swapped && traded.refused, traded);
+
+    // Patch popup: the range about to be patched shows red over a fixture
+    await openUniverse(page, u0.id);
+    const highlight = await page.evaluate(async () => {
+      let c = document.querySelector('.universe_modifier').__vueParentComponent;
+      while (c && !c.proxy?.displayPatchPopup) c = c.parent;
+      c.proxy.displayPatchPopup();
+      await new Promise((r) => { setTimeout(r, 400); });
+      let p = document.querySelector('.patch_popup').__vueParentComponent;
+      while (p && !p.proxy?.loadFixture) p = p.parent;
+      const list = await (await fetch('/gdtf/gdtf_list.json')).json();
+      const par = list.fixtures.find((f) => /par/i.test(f.file));
+      await p.proxy.loadFixture({ source: 'gdtf', manufacturer: par.manufacturer, fixture: par.fixtureTypeId });
+      p.proxy.setAddress(1);
+      await new Promise((r) => { setTimeout(r, 300); });
+      const shownError = {
+        red: !!document.querySelector('.patch_popup .universe_map_highlight.error'),
+        error: p.proxy.patchError,
+        message: document.querySelector('.patch_popup .universe_message.error')?.textContent.trim(),
+        rowLabels: document.querySelectorAll('.patch_popup .universe_map_row_label').length,
+      };
+      // Several identical fixtures are numbered
+      p.proxy.amount = 2;
+      p.proxy.autoPatch();
+      const known = window.__check.show.fixturePool.fixtures.length;
+      p.proxy.patchFixtures();
+      shownError.names = window.__check.show.fixturePool.fixtures.slice(known).map((f) => f.name);
+      shownError.base = p.proxy.fixture.name;
+      return shownError;
+    });
+    await popupsAfterClosing(page, 0);
+    check(
+      'the patch popup map (no row numbers) shows a taken range in red, says which fixture holds it, and numbers identical fixtures',
+      highlight.red && highlight.error && /^Addresses 1–\d+ are taken by /.test(highlight.message || '')
+        && highlight.rowLabels === 0
+        && JSON.stringify(highlight.names) === JSON.stringify([`${highlight.base} 1`, `${highlight.base} 2`]),
+      highlight,
+    );
+
+    // Invert and swap pan/tilt change the output, not the programmed values
+    const output = await page.evaluate(() => {
+      const { show } = window.__check;
+      const fixture = show.fixturePool.fixtures.find((f) => f.hasPan && f.hasTilt);
+      const universe = show.universePool.getFromId(fixture.universe);
+      const pan = fixture.channels.findIndex((c) => c.attribute === 'Pan' && !c.isFine);
+      const tilt = fixture.channels.findIndex((c) => c.attribute === 'Tilt' && !c.isFine);
+      const panFine = fixture.channels[pan].fineIndexes[0];
+      fixture.setChannel(pan, 64);
+      if (panFine != null) fixture.setChannel(panFine, 0);
+      fixture.setChannel(tilt, 10);
+      const frame = () => {
+        const f = universe.packFrame();
+        return {
+          pan: f[fixture.chStart + pan],
+          panFine: panFine == null ? null : f[fixture.chStart + panFine],
+          tilt: f[fixture.chStart + tilt],
+        };
+      };
+      const plain = frame();
+      fixture.invertPan = true;
+      const inverted = frame();
+      fixture.invertPan = false;
+      fixture.swapPanTilt = true;
+      const swapped = frame();
+      const saved = fixture.showData.swapPanTilt;
+      fixture.swapPanTilt = false;
+      return {
+        plain, inverted, swapped, saved, fader: fixture.channels[pan].value.DMX, panFine,
+      };
+    });
+    check(
+      'Invert pan outputs 255 - value (fine too); Swap outputs tilt on pan; the fader keeps 64',
+      output.plain.pan === 64 && output.inverted.pan === 191
+        && (output.panFine == null || output.inverted.panFine === 255)
+        && output.swapped.pan === 10 && output.swapped.tilt === 64 && output.saved === true
+        && output.fader === 64,
+      output,
     );
   },
 
