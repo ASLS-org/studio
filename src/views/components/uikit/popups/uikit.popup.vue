@@ -31,6 +31,8 @@
         class="popup_validation"
         :gap="8"
       >
+        <!-- @slot Extra footer buttons, on the left -->
+        <slot name="actions" />
         <uk-spacer />
         <uk-button
           v-if="cancelable"
@@ -38,6 +40,7 @@
           @click="cancel()"
         />
         <uk-button
+          class="popup_ok"
           :disabled="!valid"
           :label="validateTxt"
           @click="submit()"
@@ -423,6 +426,10 @@ export default {
 .body {
   align-items: center;
   height: 100%;
+}
+/* OK stands out from the other buttons */
+.popup_validation .popup_ok:not(.disabled) {
+  background: var(--secondary-light) !important;
 }
 .popup_validation {
   width: 100%;
