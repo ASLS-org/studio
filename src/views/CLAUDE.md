@@ -23,7 +23,10 @@ views/
                          pose maths: line, grid, circle, arc, align, distribute, fan,
                          aim for the Arrange popup; mounts, turn and tilt for the
                          Position Tool; patchPoses for where the patch popup puts new
-                         fixtures)
+                         fixtures); effect.scope.js (an effect's waves sampled over one loop
+                         and matched per fixture, colour mixing, pan/tilt angle ranges
+                         from profiles and the degree view, speed, absolute shapes,
+                         spreads and colour presets: the Pan/Tilt and Colour scopes)
 ```
 
 ## Ground rules

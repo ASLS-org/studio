@@ -18,8 +18,8 @@ Read `src/views/CLAUDE.md` for the folder map.
 | New screen region | `activities/app/fragments/<area>/` | `<area>.fragment.vue` |
 
 Reuse before creating. List the existing kit with
-`ls -R src/views/components/uikit | grep .vue`: buttons, inputs (checkbox, select, textbox
-num/str, range fader/knob/gauge/vumeter), lists, menus, popups, widgets, cues, containers
+`ls -R src/views/components/uikit | grep .vue`: buttons, inputs (checkbox, color, select,
+textbox num/str, range fader/knob/gauge/vumeter), lists, menus, popups, widgets, cues, containers
 (`uk-flex`, `uk-spacer`), icons, loaders.
 
 ## Component skeleton (match existing files)
@@ -160,6 +160,13 @@ export default {
   disabled look with the label not dimmed, like read-only text and selects); `relative` is for a
   field standing for several values: a `null` value shows the `placeholder` (`--`), and the arrows
   and arrow keys emit `step` (±1 precision unit) instead of changing the value (Position Tool).
+- **View switches** in a widget (the Pan/Tilt Scope's Deg, Fit) sit among its fields as square
+  `uk-button toggleable color="var(--accent-blue)"`, keyed by state, never in the header.
+- **Colour fields** (`uk-color-input`): `v-model` `#rrggbb`; a swatch opening the system picker
+  (reports live while dragging) and an editable hex code (Enter or blur; anything else reverts).
+  Use it for any colour a field sets, never a bare `<input type="color">`.
+- **Lists' `selection` event** sends the selected items (the caller's objects), the `selection`
+  prop takes ids: map `items.map((i) => i.id)` when storing what was picked.
 - **Selects** (`uk-select-input`): options are HTML strings. The option list is teleported and
   built only while open. A `#trigger` slot replaces the text box (the list opens upwards from it,
   sized to its options), `#header` heads the list, whose body is then a real `uk-list` of `items`
