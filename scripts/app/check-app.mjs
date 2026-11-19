@@ -9,7 +9,8 @@
  * Usage: npm run app:check [-- --url http://localhost:5173] [--only <scenario> ...]
  *   --url    use a running dev server instead of starting one
  *   --only   run only these scenarios (repeatable): panels, playing, textscroll, select, resize,
- *            widgets, curves, repatch, presets, memory, shared, highlight, deletes, keys, popups
+ *            widgets, curves, repatch, position, presets, memory, shared, highlight, deletes,
+ *            keys, popups
  * Chrome: CHROME_PATH, else the usual install path for the system.
  */
 /* eslint-disable no-console -- a command-line report */
@@ -360,6 +361,7 @@ const submitTopPopup = (page) => click(page, '.popup .popup_validation .uikit_bu
 const PAGE_MODULES = {
   icons: '/src/views/utils/channel.icons.js',
   library: '/src/models/fixtures/fixture.library.js',
+  placement: '/src/views/utils/placement.js',
 };
 /** Text of a channel preset option: its span and label */
 const presetText = (r) => `${r.label} ${r.start === r.end ? r.start : `${r.start}–${r.end}`}`;
@@ -905,6 +907,220 @@ const SCENARIOS = {
       `${played.back} overshoots its curve past 1 and the channel never exceeds 255`,
       played.back === 'Back out' && played.raw > 1.05 && played.max <= 255,
       played,
+    );
+  },
+
+  /** Position Tool on several fixtures, the Arrange popup and its placement maths */
+  async position(page) {
+    const d = await demo(page);
+    const u0 = d.universes[0];
+    const [a, b] = u0.fixtures;
+    const poses = (ids) => page.evaluate((list) => list.map((id) => {
+      const f = window.__check.show.fixturePool.getFromId(id);
+      return { ...f.position, rz: Math.round(f.rotation.z), invertPan: f.invertPan };
+    }), ids);
+    const field = (cls) => page.evaluate((c) => {
+      const input = [...document.querySelectorAll(`.${c} input`)].find((e) => e.offsetParent);
+      return input ? { value: input.value, placeholder: input.placeholder } : null;
+    }, cls);
+
+    await openUniverse(page, u0.id);
+    await unfoldUniverse(page, u0.id);
+    await clickRow(page, '.modifier_widget_fixture_pool', a);
+    await clickRow(page, '.modifier_widget_fixture_pool', b, ['Meta']);
+    await page.evaluate((ids) => {
+      const { fixturePool } = window.__check.show;
+      fixturePool.getFromId(ids[0]).setPose({ x: -2, y: 0, z: 4 }, { x: 180, y: 0, z: 30 });
+      fixturePool.getFromId(ids[1]).setPose({ x: 2, y: 0, z: 4 }, { x: 180, y: 0, z: 30 });
+    }, [a, b]);
+    await wait(SETTLE_MS);
+    const mixed = await field('position_tool_position_x');
+    const sharedZ = await field('position_tool_position_z');
+    const title = await page.evaluate(() => [...document.querySelectorAll('.position_tool .header h3, .position_tool .header')]
+      .find((e) => e.offsetParent)?.textContent || '');
+    check(
+      'two fixtures selected: the Position Tool says so, X (they differ) shows --, Z (shared) shows 4',
+      mixed?.value === '' && mixed?.placeholder === '--' && Number(sharedZ?.value) === 4
+        && /Position Tool \(2\)/.test(title),
+      { mixed, sharedZ, title },
+    );
+
+    // Typing sets the axis on both; the arrows nudge each from its own value
+    const zInput = await page.evaluateHandle(() => [...document.querySelectorAll('.position_tool_position_z input')].find((e) => e.offsetParent));
+    await zInput.asElement().click({ clickCount: 3 });
+    await page.keyboard.type('6');
+    await page.keyboard.press('Enter');
+    await wait(SETTLE_MS);
+    const typed = await poses([a, b]);
+    await page.evaluate(() => [...document.querySelectorAll('.position_tool_position_x .uikit_num_input_button_section')]
+      .find((e) => e.offsetParent).click());
+    await wait(SETTLE_MS);
+    const nudged = await poses([a, b]);
+    check(
+      'typing Z 6 sets both fixtures; the X arrow nudges each by 0.1 and keeps their spacing',
+      typed.every((p) => p.z === 6) && typed[0].x === -2 && typed[1].x === 2
+        && nudged[0].x === -1.9 && nudged[1].x === 2.1,
+      { typed, nudged },
+    );
+
+    // Arrange: A opens it; Line X spacing 2 around 0 places four fixtures in pool order
+    const four = u0.fixtures.slice(0, 4);
+    await page.evaluate((ids) => document.querySelector('#app').__vue_app__.config.globalProperties.$view.selectFixtures(ids), four);
+    await wait(SETTLE_MS);
+    await page.evaluate(() => document.activeElement?.blur());
+    await page.keyboard.press('a');
+    await wait(SETTLE_MS);
+    const opened = (await probe(page, 'popups')).includes('Arrange');
+    const arrange = (fn, ...args) => page.evaluate((src, list) => {
+      let c = document.querySelector('.arrange_popup').__vueParentComponent;
+      while (c && !c.proxy?.pickMode) c = c.parent;
+      // eslint-disable-next-line no-new-func
+      return new Function('p', 'args', src)(c.proxy, list);
+    }, fn, args);
+    const startPoses = await poses(four);
+    // Typing a decimal value keeps every digit, applied on Enter (not after the first key)
+    await arrange("p.pickMode([{ id: 'line' }]);");
+    await wait(SETTLE_MS);
+    const spacingInput = await page.$('.arrange_spacing input');
+    await spacingInput.click({ clickCount: 3 });
+    await page.keyboard.type('12.5');
+    const whileTyping = await arrange('return p.settings.line.spacing;');
+    await page.keyboard.press('Enter');
+    await wait(SETTLE_MS);
+    const typedSpacing = await arrange('return p.settings.line.spacing;');
+    check(
+      'Arrange fields take a typed decimal value whole, applied on Enter',
+      whileTyping === 1 && typedSpacing === 12.5,
+      { whileTyping, typedSpacing },
+    );
+    await arrange("p.set('axis', 'x'); p.set('spacing', 2); p.set('centre', 0);");
+    await submitTopPopup(page);
+    await wait(SETTLE_MS);
+    const lined = await poses(four);
+    check(
+      'A opens Arrange; Line on X, spacing 2 around 0, OK: four fixtures at −3, −1, 1, 3 in pool order',
+      opened && same(lined.map((p) => p.x), [-3, -1, 1, 3]),
+      { opened, lined },
+    );
+    // Circle then Cancel: every fixture back as it was
+    await page.keyboard.press('a');
+    await wait(SETTLE_MS);
+    await arrange("p.pickMode([{ id: 'circle' }]); p.set('radius', 3);");
+    const moved = await poses(four);
+    await page.keyboard.press('Escape');
+    await wait(SETTLE_MS);
+    const restored = await poses(four);
+    const left = await popupsAfterClosing(page, 0);
+    check(
+      'Circle moves the fixtures live; Escape (Cancel) puts every one back',
+      !same(moved, lined) && same(restored, lined) && left.length === 0,
+      {
+        moved, restored, lined, left, startPoses,
+      },
+    );
+
+    // Apply keeps the arrangement and the popup open; it is greyed out until something changes
+    await page.keyboard.press('a');
+    await wait(SETTLE_MS);
+    const applyOff = await page.$eval('.arrange_commit', (e) => e.classList.contains('disabled'));
+    await arrange("p.pickMode([{ id: 'line' }]); p.set('axis', 'y'); p.set('spacing', 1);");
+    await wait(SETTLE_MS);
+    const applyOn = await page.$eval('.arrange_commit', (e) => !e.classList.contains('disabled'));
+    await page.click('.arrange_commit');
+    await wait(SETTLE_MS);
+    const committed = await poses(four);
+    await page.keyboard.press('Escape');
+    await wait(SETTLE_MS);
+    const afterCancel = await poses(four);
+    await popupsAfterClosing(page, 0);
+    check(
+      'Arrange Apply: greyed out until a change, keeps the result; Cancel then comes back to it',
+      applyOff && applyOn && same(afterCancel, committed) && !same(committed, lined),
+      {
+        applyOff, applyOn, committed, afterCancel,
+      },
+    );
+
+    // Mount buttons: Floor stands every selected fixture up, keeping its turn
+    await page.evaluate((ids) => ids.forEach((id) => window.__check.show.fixturePool.getFromId(id)
+      .setPose({ x: 0, y: 0, z: 6 }, { x: 180, y: 0, z: 30 })), four);
+    await wait(SETTLE_MS);
+    const hungLit = await page.$eval('.position_tool_mount_hung', (e) => e.classList.contains('toggled'));
+    await page.click('.position_tool_mount_floor');
+    await wait(SETTLE_MS);
+    const floored = await page.evaluate((ids) => ids.map((id) => {
+      const r = window.__check.show.fixturePool.getFromId(id).rotation;
+      return [Math.round(r.x), Math.round(r.y), Math.round(r.z)];
+    }), four);
+    const turn = await field('position_tool_turn');
+    check(
+      'mounts: Hung lights for hung fixtures; Floor stands them up and keeps their turn (30°)',
+      hungLit && floored.every((r) => same(r, [0, 0, 30])) && Number(turn?.value) === 30,
+      { hungLit, floored, turn },
+    );
+
+    // Stage map: dragging a dot moves the whole selection, snapped to 0.25 m
+    await page.evaluate((ids) => ids.forEach((id, i) => window.__check.show.fixturePool
+      .getFromId(id).setPose({ x: i - 1.5, y: 0, z: 6 }, { x: 180, y: 0, z: 0 })), four);
+    await wait(SETTLE_MS);
+    const dot = await page.$(`.stage_map_fixture[data-fixture="${four[0]}"] circle`);
+    const box = await dot.boundingBox();
+    const cx = box.x + box.width / 2;
+    const cy = box.y + box.height / 2;
+    await page.mouse.move(cx, cy);
+    await page.mouse.down();
+    await page.mouse.move(cx + 20, cy - 20, { steps: 4 });
+    await page.mouse.move(cx + 37, cy - 41, { steps: 4 });
+    await page.mouse.up();
+    await wait(SETTLE_MS);
+    const dragged = await poses(four);
+    const dx = dragged[0].x - -1.5;
+    const dy = dragged[0].y;
+    const onGrid = (v) => Math.abs(v * 4 - Math.round(v * 4)) < 1e-6;
+    check(
+      'stage map: dragging a dot moves every selected fixture by the same step, on a 0.25 m grid',
+      dx > 0 && dy > 0 && onGrid(dragged[0].x) && onGrid(dragged[0].y)
+        && dragged.every((p, i) => Math.abs(p.x - (i - 1.5 + dx)) < 1e-6
+          && Math.abs(p.y - dy) < 1e-6 && p.z === 6),
+      { dragged },
+    );
+
+    // The placement maths behind each mode
+    const maths = await page.evaluate(async (modules) => {
+      const P = await import(modules.placement);
+      const pose = (x, y = 0, z = 0, rz = 0) => ({
+        position: { x, y, z }, rotation: { x: 0, y: 0, z: rz },
+      });
+      const xy = (list) => list.map((p) => [p.position.x, p.position.y]);
+      const xs = (list) => list.map((p) => p.position.x);
+      return {
+        grid: P.grid([pose(0), pose(0), pose(0), pose(0)], { columns: 2, spacingX: 2, spacingY: 2 })
+          .map((p) => [p.position.x, p.position.y]),
+        circle: xy(P.circle([pose(0), pose(0), pose(0), pose(0)], { radius: 1 })),
+        arc: xy(P.arc([pose(0), pose(0), pose(0)], { radius: 1, start: 0, end: 180 })),
+        align: xs(P.align([pose(0), pose(2), pose(6)], { axis: 'x', to: 'max' })),
+        distribute: xs(P.distribute([pose(0), pose(5), pose(1), pose(9)], { axis: 'x' })),
+        fan: P.fan([pose(0), pose(0), pose(0)], { axis: 'z', angle: 20 }).map((p) => p.rotation.z),
+        down: P.aimRotation({ x: 0, y: 0, z: 4 }, { x: 0, y: 0, z: 0 }),
+        up: P.aimRotation({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 4 }),
+        side: P.aimRotation({ x: 0, y: 0, z: 0 }, { x: 4, y: 0, z: 0 }),
+        mount: P.mountOf(P.mountRotation('back', -45, 10)),
+      };
+    }, PAGE_MODULES);
+    check(
+      'placement maths: grid, circle, arc, align, distribute, fan, aim and mounts give the expected poses',
+      same(maths.grid, [[-1, 1], [1, 1], [-1, -1], [1, -1]])
+        && same(maths.circle, [[1, 0], [0, 1], [-1, 0], [0, -1]])
+        && same(maths.arc, [[1, 0], [0, 1], [-1, 0]])
+        && same(maths.align, [6, 6, 6])
+        && same(maths.distribute, [0, 6, 3, 9])
+        && same(maths.fan, [-20, 0, 20])
+        && same(maths.down, { x: 180, y: 0, z: 0 }) && same(maths.up, { x: 0, y: 0, z: 0 })
+        && same(maths.side, { x: 0, y: 90, z: 0 })
+        && same(maths.mount, {
+          mount: 'back', turn: -45, tilt: 10, exact: true,
+        }),
+      maths,
     );
   },
 
