@@ -22,7 +22,8 @@ views/
                          dmx.js (addresses shown 1-512, stored from 0); placement.js (pure
                          pose maths: line, grid, circle, arc, align, distribute, fan,
                          aim for the Arrange popup; mounts, turn and tilt for the
-                         Position Tool)
+                         Position Tool; patchPoses for where the patch popup puts new
+                         fixtures)
 ```
 
 ## Ground rules
