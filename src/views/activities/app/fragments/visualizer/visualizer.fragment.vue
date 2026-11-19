@@ -70,6 +70,7 @@
 import { markRaw } from 'vue';
 import Visualizer from '@/plugins/visualizer/visualizer';
 import EventBus from '@/plugins/eventbus';
+import Controls from '@/plugins/visualizer/controls';
 
 const MAX_RECORDING_TIME_S = 15;
 
@@ -160,8 +161,14 @@ export default {
     this.$show.visualizerHandle.fixtureRenderer.setPatch(this.$show.patchSnapshot);
     this.warmed = this.$show.visualizerHandle.warmUp();
     this.applySelection();
+    // Gizmo keys (T, R, H, Escape, Ctrl+Z) through the app's one key path
+    this.removeGizmoKeys = this.$keyboard?.addShortcut(
+      (e) => Controls.handlesKey(e),
+      (e) => Controls.handleKey(e),
+    );
   },
   beforeUnmount() {
+    if (this.removeGizmoKeys) this.removeGizmoKeys();
     EventBus.off('patch_changed', this.schedulePatchUpdate);
     EventBus.off('fixture_pose', this.handleFixturePose);
     EventBus.off('fixture_transformed', this.handleFixtureTransformed);

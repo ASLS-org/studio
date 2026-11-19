@@ -192,20 +192,31 @@ class Controls {
     this.controlHandle.domElement.addEventListener('wheel', () => {
       cancelAnimationFrame(this.rafID);
     });
-    window.addEventListener('keydown', this.handleKeydown.bind(this)); // Listen for keydown events
   }
 
   /**
-   * Handles keydown events in order to switch between different modes
+   * Whether a key is a gizmo shortcut: T (move), R (rotate), H or Escape (helpers off), Ctrl+Z
+   * (apply). The app's key path ($keyboard) calls it, so fields and popups keep their keys.
    *
-   * @pmublic
-   * @param {Object} e keydown event
+   * @public
+   * @param {KeyboardEvent} e keydown event
+   * @returns {Boolean}
    */
-  handleKeydown(e) {
-    if (e.repeat) return;
-    // Typing in a field (a search, a name) is not a gizmo shortcut
-    const el = e.target;
-    if (el && (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName))) return;
+  handlesKey(e) {
+    // Not before init (no gizmo yet)
+    if (!this.handle || e.repeat || e.altKey || e.metaKey) return false;
+    const key = e.key.toLowerCase();
+    if (key === 'z') return e.ctrlKey;
+    return !e.ctrlKey && !e.shiftKey && ['escape', 't', 'r', 'h'].includes(key);
+  }
+
+  /**
+   * Switches the gizmo mode for a key (see handlesKey)
+   *
+   * @public
+   * @param {KeyboardEvent} e keydown event
+   */
+  handleKey(e) {
     if (e.key === 'Escape') {
       this.mode = CONTROL_MODES.DISCRETE;
       this.showHelpers();

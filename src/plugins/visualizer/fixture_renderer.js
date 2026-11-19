@@ -238,6 +238,11 @@ class FixtureRenderer {
     instance.model.position = { ...position };
     instance.model.rotation = { ...rotation };
     if (reattach) {
+      // The gizmo goes back on the whole selection, not just this fixture (several are edited)
+      if (this.selection && this.selection.ids.includes(id)) {
+        this.setSelection(this.selection.ids, this.selection.gizmo);
+        return;
+      }
       Controls.attach(instance.handle);
     }
     this.onChange();
