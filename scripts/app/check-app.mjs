@@ -9,8 +9,8 @@
  * Usage: npm run app:check [-- --url http://localhost:5173] [--only <scenario> ...]
  *   --url    use a running dev server instead of starting one
  *   --only   run only these scenarios (repeatable): panels, playing, textscroll, select, resize,
- *            widgets, curves, repatch, position, presets, memory, shared, highlight, deletes,
- *            keys, popups
+ *            widgets, curves, repatch, position, scopes, presets, memory, shared, highlight,
+ *            deletes, keys, popups
  * Chrome: CHROME_PATH, else the usual install path for the system.
  */
 /* eslint-disable no-console -- a command-line report */
@@ -362,6 +362,8 @@ const PAGE_MODULES = {
   icons: '/src/views/utils/channel.icons.js',
   library: '/src/models/fixtures/fixture.library.js',
   placement: '/src/views/utils/placement.js',
+  palette: '/src/views/utils/palette.js',
+  scope: '/src/views/utils/effect.scope.js',
 };
 /** Text of a channel preset option: its span and label */
 const presetText = (r) => `${r.label} ${r.start === r.end ? r.start : `${r.start}–${r.end}`}`;
@@ -1122,6 +1124,626 @@ const SCENARIOS = {
         }),
       maths,
     );
+  },
+
+  /** Pan/Tilt and Colour scopes: views, drags, keys, fields, shapes, presets and the editor */
+  async scopes(page) {
+    const d = await demo(page);
+    // An effect with Pan, Tilt and colour waves, and one with colour waves only
+    const found = await page.evaluate(() => {
+      const types = (cue) => (cue.channels || []).map((c) => c.type);
+      for (const group of window.__check.show.groupPool.groups) {
+        const effects = group.cuePool.cues.filter((c) => c.type === 1);
+        const both = effects.find((c) => ['Pan', 'Tilt', 'Red'].every((t) => types(c).includes(t)));
+        const colour = effects.find((c) => !types(c).includes('Pan') && types(c).includes('Red'));
+        if (both && colour) return { group: group.id, both: both.id, colour: colour.id };
+      }
+      return null;
+    });
+    if (!found) {
+      check('the demo has an effect with Pan, Tilt and colour waves, and a colour-only one', false, found);
+      return;
+    }
+    const group = d.groups.find((g) => g.id === found.group);
+    const cueName = (id) => group.cues.find((c) => c.id === id).name;
+    const waves = (id = found.both) => page.evaluate((gid, cid) => {
+      const { cues } = window.__check.show.groupPool.getFromId(gid).cuePool;
+      const cue = cues.find((c) => c.id === cid);
+      return Object.fromEntries(cue.channels.map((c) => [c.type, {
+        min: c.min,
+        max: c.max,
+        phase: c.phase,
+        start: c.fixturePhaseStart,
+        stop: c.fixturePhaseStop,
+        frequency: c.frequency,
+        waveform: c.waveform,
+        width: c.width,
+        direction: c.direction,
+      }]));
+    }, found.group, id);
+    // A known ellipse: pan 92-164, tilt 104-152, one cycle, the fixtures spread over it
+    await page.evaluate((gid, cid) => {
+      const { cues } = window.__check.show.groupPool.getFromId(gid).cuePool;
+      const cue = cues.find((c) => c.id === cid);
+      const set = (type, fields) => Object.assign(
+        cue.channels.find((c) => c.type === type),
+        fields,
+      );
+      const wave = {
+        waveform: 0, frequency: 1, direction: 0, fixturePhaseStart: 0, fixturePhaseStop: 360,
+      };
+      set('Pan', {
+        ...wave, min: 92, max: 164, phase: 0,
+      });
+      set('Tilt', {
+        ...wave, min: 104, max: 152, phase: 90,
+      });
+    }, found.group, found.both);
+    const shown = () => page.evaluate(() => {
+      const all = (sel) => [...document.querySelectorAll(sel)]
+        .filter((e) => e.getClientRects().length);
+      return {
+        pantilt: all('.pantilt_scope').length,
+        paths: all('.pantilt_scope_path').length,
+        dots: all('.pantilt_scope_dot').map((g) => g.textContent.trim()),
+        labels: all('.pantilt_scope_label').length,
+        queue: all('.pantilt_scope_queue').length,
+        colour: all('.colour_scope').length,
+      };
+    });
+    // The strip scrolls sideways: bring a scope into view before pointing at it
+    const reveal = (sel) => page.evaluate((s) => [...document.querySelectorAll(s)]
+      .find((e) => e.getClientRects().length)
+      .scrollIntoView({ block: 'nearest', inline: 'nearest' }), sel);
+    const pickFrom = async (select, option) => {
+      await click(page, `${select} .uikit_select_textbox_wrapper`);
+      await click(page, '.uikit_select_option_list .uikit_select_option', option);
+    };
+    const typeIn = async (sel, text) => {
+      const input = await page.evaluateHandle((s) => [...document.querySelectorAll(`${s} input`)]
+        .find((e) => e.getClientRects().length), sel);
+      await input.asElement().click({ clickCount: 3 });
+      await page.keyboard.type(text);
+      await page.keyboard.press('Enter');
+      await wait(SETTLE_MS);
+    };
+
+    // A modulated channel picked in the list shows its scope
+    const selectChannel = async (type) => {
+      await click(page, '.modifier_widget_effect_channels .uikit_list_item', new RegExp(`^${type}`));
+      await wait(300);
+    };
+    await openGroup(page, group.name);
+    await selectCueTile(page, cueName(found.both));
+    await wait(300);
+    await selectChannel('Pan');
+    const both = await shown();
+    const count = group.fixtures.length;
+    check(
+      'Pan selected: the Pan/Tilt Scope alone, one shared path with its queue, N dots, only the first numbered, no values in the plot',
+      both.pantilt === 1 && both.colour === 0 && both.paths === 1 && both.queue === 1
+        && both.labels === 0 && both.dots.length === count && both.dots[0] === '1'
+        && both.dots.slice(1).every((text) => text === ''),
+      both,
+    );
+    await selectChannel('Red');
+    const red = await shown();
+    await selectChannel('Dimmer');
+    const dimmer = await shown();
+    check(
+      'Red selected: the Colour Scope alone; Dimmer selected: no scope',
+      red.colour === 1 && red.pantilt === 0 && dimmer.colour === 0 && dimmer.pantilt === 0,
+      { red, dimmer },
+    );
+    // The scope comes before the Effect Tool
+    await selectChannel('Pan');
+    const order = await page.evaluate(() => {
+      const panel = [...document.querySelectorAll('.pantilt_scope')].find((e) => e.offsetParent)
+        ?.parentElement;
+      const kids = panel ? [...panel.children] : [];
+      const at = (cls) => kids.findIndex((k) => k.classList.contains(cls));
+      return { pantilt: at('pantilt_scope'), wave: at('widget_wave') };
+    });
+    check('the scope comes before the Effect Tool', order.pantilt >= 0 && order.pantilt < order.wave, order);
+
+    await selectCueTile(page, cueName(found.colour));
+    await wait(300);
+    await selectChannel('Red');
+    const colourOnly = await shown();
+    check('a colour-only effect shows the Colour Scope and no Pan/Tilt Scope', colourOnly.pantilt === 0 && colourOnly.colour === 1, colourOnly);
+    await selectCueTile(page, cueName(found.both));
+    await wait(300);
+    await selectChannel('Pan');
+
+    // Circle in degrees: as many degrees across as up, from the fixture's own ranges
+    const ranges = await page.evaluate(async (gid, cid, modules) => {
+      const { rangesOf } = await import(modules.scope);
+      const { cues } = window.__check.show.groupPool.getFromId(gid).cuePool;
+      const cue = cues.find((c) => c.id === cid);
+      return rangesOf(cue.channels.find((c) => c.type === 'Pan').fixtures.map((f) => f.handle));
+    }, found.group, found.both, PAGE_MODULES);
+    await reveal('.pantilt_scope');
+    await pickFrom('.pantilt_scope_shape', 'Circle');
+    const circle = await waves();
+    const degrees = (w, range) => ((w.max - w.min) * range) / 255;
+    check(
+      'Circle is round in degrees: the pan and tilt spans cover the same angle (fixture ranges)',
+      Math.abs(degrees(circle.Pan, ranges.pan) - degrees(circle.Tilt, ranges.tilt)) < 3,
+      { ranges, pan: degrees(circle.Pan, ranges.pan), tilt: degrees(circle.Tilt, ranges.tilt) },
+    );
+    // Shapes are absolute: Line, then Circle, gives Circle alone
+    await pickFrom('.pantilt_scope_shape', 'Line horizontal');
+    await pickFrom('.pantilt_scope_shape', 'Pretzel');
+    await pickFrom('.pantilt_scope_shape', 'Circle');
+    const again = await waves();
+    // The selects show what the waves are: Circle, then Custom once the tilt phase moves
+    const selectText = (sel) => page.evaluate((q) => [...document.querySelectorAll(`${q} .uikit_select_textbox`)]
+      .find((e) => e.offsetParent)?.textContent.trim(), sel);
+    const shapeShown = await selectText('.pantilt_scope_shape');
+    await page.evaluate((gid, cid) => {
+      const { cues } = window.__check.show.groupPool.getFromId(gid).cuePool;
+      const tilt = cues.find((c) => c.id === cid).channels.find((c) => c.type === 'Tilt');
+      tilt.phase = 45;
+    }, found.group, found.both);
+    await wait(SETTLE_MS);
+    const customShown = await selectText('.pantilt_scope_shape');
+    await pickFrom('.pantilt_scope_shape', 'Circle');
+    // The form keeps a fixed width on the left, the field is on its right
+    const layout = await page.evaluate(() => {
+      const scope = [...document.querySelectorAll('.pantilt_scope')].find((e) => e.offsetParent);
+      const form = scope.querySelector('.pantilt_scope_controls').getBoundingClientRect();
+      const field = scope.querySelector('.pantilt_scope_field').getBoundingClientRect();
+      return {
+        form: Math.round(form.width),
+        left: field.right <= form.left + 1,
+        square: Math.abs(field.width - field.height) <= 1,
+      };
+    });
+    check(
+      'Shape shows Circle, then Custom after a Tilt phase edit; a square graph sits left of the form (340 px)',
+      shapeShown === 'Circle' && customShown === 'Custom' && layout.form === 340 && layout.left
+        && layout.square,
+      { shapeShown, customShown, layout },
+    );
+    check(
+      'shapes leave no traces: Line, Pretzel, then Circle equals Circle alone',
+      JSON.stringify([again.Pan, again.Tilt]) === JSON.stringify([circle.Pan, circle.Tilt]),
+      { circle: [circle.Pan, circle.Tilt], again: [again.Pan, again.Tilt] },
+    );
+
+    // DMX view: moving the path snaps to the grid step; Shift moves by single steps
+    await click(page, '.pantilt_scope_units');
+    const geometry = () => page.evaluate(() => {
+      const scope = [...document.querySelectorAll('.pantilt_scope')].find((e) => e.getClientRects().length);
+      const svg = scope.querySelector('.pantilt_scope_svg');
+      const box = scope.querySelector('.pantilt_scope_box').getBoundingClientRect();
+      const field = scope.querySelector('.pantilt_scope_field').getBoundingClientRect();
+      return {
+        step: Number(svg.dataset.step),
+        scale: field.width / svg.viewBox.baseVal.width,
+        box: { x: box.x + box.width / 2, y: box.y + box.height / 2 },
+        units: scope.querySelector('.pantilt_scope_field').dataset.units,
+      };
+    });
+    const g = await geometry();
+    const dragFromTo = async (from, to, shift) => {
+      await page.mouse.move(from.x, from.y);
+      await page.mouse.down();
+      if (shift) await page.keyboard.down('Shift');
+      await page.mouse.move((from.x + to.x) / 2, (from.y + to.y) / 2, { steps: 3 });
+      await page.mouse.move(to.x, to.y, { steps: 3 });
+      await page.mouse.up();
+      if (shift) await page.keyboard.up('Shift');
+      await wait(SETTLE_MS);
+    };
+    const before = await waves();
+    await dragFromTo(g.box, { x: g.box.x + (g.step * 2 + g.step / 3) * g.scale, y: g.box.y });
+    const moved = await waves();
+    const g2 = await geometry();
+    await dragFromTo(g2.box, { x: g2.box.x + 3 * g2.scale, y: g2.box.y }, true);
+    const fine = await waves();
+    check(
+      'DMX view: dragging the path moves Pan Min and Max by grid steps (Shift: single steps); Tilt stays',
+      g.units.toUpperCase() === 'DMX' && g.step > 0 && moved.Pan.min - before.Pan.min === g.step * 2
+        && moved.Pan.max - before.Pan.max === g.step * 2 && fine.Pan.min - moved.Pan.min === 3
+        && moved.Tilt.min === before.Tilt.min,
+      {
+        g, before: [before.Pan, before.Tilt], moved: [moved.Pan, moved.Tilt], fine: fine.Pan,
+      },
+    );
+    // The top handle (outside the box) moves Tilt's high end only
+    const handle = await page.evaluate(() => {
+      const el = [...document.querySelectorAll('.pantilt_scope_handle_top')].find((e) => e.getClientRects().length);
+      const r = el.getBoundingClientRect();
+      return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+    });
+    const g3 = await geometry();
+    const down = fine.Tilt.max > 255 - g3.step * 2;
+    await dragFromTo(handle, { x: handle.x, y: handle.y + (down ? 2 : -2) * g3.step * g3.scale });
+    const resized = (await waves()).Tilt;
+    check(
+      'dragging the top handle moves the Tilt high end by grid steps and keeps its low end',
+      resized.max === fine.Tilt.max + (down ? -2 : 2) * g3.step && resized.min === fine.Tilt.min,
+      { before: fine.Tilt, resized, step: g3.step },
+    );
+    // Arrow keys with the field focused
+    await page.evaluate(() => [...document.querySelectorAll('.pantilt_scope_field')]
+      .find((e) => e.getClientRects().length).focus());
+    const beforeKeys = await waves();
+    await press(page, 'ArrowDown');
+    await press(page, 'ArrowLeft', ['Shift']);
+    const keyed = await waves();
+    check(
+      'arrow keys move the path: Down lowers Tilt by 1, Shift+Left lowers Pan by 10',
+      keyed.Tilt.min === beforeKeys.Tilt.min - 1 && keyed.Pan.min === beforeKeys.Pan.min - 10
+        && keyed.Pan.max === beforeKeys.Pan.max - 10,
+      { before: [beforeKeys.Pan, beforeKeys.Tilt], keyed: [keyed.Pan, keyed.Tilt] },
+    );
+    // Fields (DMX view): Centre pan 128 then Size pan 40 gives 108-148; Speed 3 triples
+    await typeIn('.pantilt_scope_centrePan', '128');
+    await typeIn('.pantilt_scope_sizePan', '40');
+    await typeIn('.pantilt_scope_speed', '3');
+    const typed = await waves();
+    check(
+      'typing Centre pan 128, Size pan 40 and Speed 3 sets Pan to 108-148 and both Freq to 3',
+      typed.Pan.min === 108 && typed.Pan.max === 148 && typed.Pan.frequency === 3
+        && typed.Tilt.frequency === 3,
+      [typed.Pan, typed.Tilt],
+    );
+    // Spread: Mirror
+    await pickFrom('.pantilt_scope_spread', 'Mirror');
+    const mirrored = await waves();
+    const sym = await page.evaluate((gid, cid) => {
+      const { cues } = window.__check.show.groupPool.getFromId(gid).cuePool;
+      return cues.find((c) => c.id === cid).channels[0].directionOptions.indexOf('SYM');
+    }, found.group, found.both);
+    check(
+      'Mirror sets both waves to SYM, Phase start 0 and stop 360',
+      ['Pan', 'Tilt'].every((t) => mirrored[t].direction === sym && mirrored[t].start === 0 && mirrored[t].stop === 360),
+      [mirrored.Pan, mirrored.Tilt],
+    );
+    // Mirror: the second half plays pan flipped (heads as mirror images); saved and read back
+    const mirror = await page.evaluate((gid, cid) => {
+      const { cues } = window.__check.show.groupPool.getFromId(gid).cuePool;
+      const cue = cues.find((c) => c.id === cid);
+      const pan = cue.channels.find((c) => c.type === 'Pan');
+      const tilt = cue.channels.find((c) => c.type === 'Tilt');
+      const active = (w) => w.fixtures.filter((f) => f.active);
+      const n = active(pan).length;
+      const pairs = [];
+      [0.1, 0.37, 0.8].forEach((t) => {
+        pan.update(t);
+        tilt.update(t);
+        const [p1, pN] = [active(pan)[0].value, active(pan)[n - 1].value];
+        const [t1, tN] = [active(tilt)[0].value, active(tilt)[n - 1].value];
+        pairs.push({ panSum: Math.round(p1 + pN), tiltSame: Math.abs(t1 - tN) < 0.5 });
+      });
+      const data = pan.showData;
+      const Channel = pan.constructor;
+      const back = new Channel(data, cue.fixtures, cue.duration);
+      const older = new Channel({ ...data, mirror: undefined }, cue.fixtures, cue.duration);
+      return {
+        panMirror: pan.mirror,
+        tiltMirror: tilt.mirror,
+        sum: pan.min + pan.max,
+        pairs,
+        saved: data.mirror,
+        loaded: back.mirror,
+        older: older.mirror,
+      };
+    }, found.group, found.both);
+    check(
+      'Mirror mirrors Pan only: first and last heads\' pans add up to Min + Max, same tilt; saved, read back, off when missing',
+      mirror.panMirror === true && mirror.tiltMirror === false
+        && mirror.pairs.every((p) => Math.abs(p.panSum - mirror.sum) <= 1 && p.tiltSame)
+        && mirror.saved === true && mirror.loaded === true && mirror.older === false,
+      mirror,
+    );
+    // The Effect Tool's Mirror toggle switches it for the channel it shows
+    const toolMirror = async () => page.evaluate((gid, cid) => {
+      const { cues } = window.__check.show.groupPool.getFromId(gid).cuePool;
+      return cues.find((c) => c.id === cid).channels.find((c) => c.type === 'Pan').mirror;
+    }, found.group, found.both);
+    await click(page, '.widget_wave .widget_wave_mirror', 'mirror');
+    const toolOff = await toolMirror();
+    await click(page, '.widget_wave .widget_wave_mirror', 'mirror');
+    const toolOn = await toolMirror();
+    check('the Effect Tool\'s Mirror toggle switches the channel\'s Mirror', toolOff === false && toolOn === true, { toolOff, toolOn });
+    // Hovering the graph reads the pan/tilt under the pointer and the grid step; a dot can't be
+    // dragged along the path (a press on it moves the shape, like the box)
+    const centre = await page.evaluate(() => {
+      const r = [...document.querySelectorAll('.pantilt_scope_field')]
+        .find((e) => e.getClientRects().length).getBoundingClientRect();
+      return { x: r.x + r.width * 0.9, y: r.y + r.height * 0.9 };
+    });
+    await page.mouse.move(centre.x, centre.y);
+    await wait(SETTLE_MS);
+    const hoverText = await page.evaluate(() => [...document.querySelectorAll('.pantilt_scope_readout')]
+      .find((e) => e.offsetParent)?.textContent.trim());
+    check(
+      'hovering the graph reads the pan and tilt under the pointer and the grid step',
+      /^Pan -?\d+°? · Tilt -?\d+°? · grid \d+°?$/.test(hoverText || ''),
+      hoverText,
+    );
+    // A corner handle moves one end of each span: bottom-right, the pan high and tilt low ends
+    const cornerBefore = await waves();
+    const g4 = await geometry();
+    const corner = await page.evaluate(() => {
+      const r = [...document.querySelectorAll('.pantilt_scope_handle_bottomright')]
+        .find((e) => e.getClientRects().length).getBoundingClientRect();
+      return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+    });
+    const by = g4.step * g4.scale;
+    await dragFromTo(corner, { x: corner.x + by, y: corner.y + by });
+    const cornerAfter = await waves();
+    const panHigh = Math.max(cornerBefore.Pan.min, cornerBefore.Pan.max);
+    const tiltLow = Math.min(cornerBefore.Tilt.min, cornerBefore.Tilt.max);
+    check(
+      'dragging the bottom-right corner handle raises the Pan high end and lowers the Tilt low end',
+      Math.max(cornerAfter.Pan.min, cornerAfter.Pan.max) === Math.min(255, panHigh + g4.step)
+        && Math.min(cornerAfter.Tilt.min, cornerAfter.Tilt.max) === Math.max(0, tiltLow - g4.step)
+        && Math.min(cornerAfter.Pan.min, cornerAfter.Pan.max)
+          === Math.min(cornerBefore.Pan.min, cornerBefore.Pan.max),
+      {
+        before: [cornerBefore.Pan, cornerBefore.Tilt],
+        after: [cornerAfter.Pan, cornerAfter.Tilt],
+        step: g4.step,
+      },
+    );
+
+    await selectChannel('Red');
+    // Colour strip: drags snap to 15°, fields, presets
+    await reveal('.colour_scope');
+    const strip = await page.evaluate(() => {
+      const el = [...document.querySelectorAll('.colour_scope_canvas')].find((e) => e.offsetParent);
+      const r = el.getBoundingClientRect();
+      const { dataset } = el.parentElement;
+      return {
+        x: r.x,
+        y: r.y,
+        width: r.width,
+        rows: Number(dataset.rows),
+        block: Number(dataset.block),
+        band: Number(dataset.band),
+      };
+    });
+    const dragStrip = async (y, dx) => {
+      const x = strip.x + strip.width / 3;
+      await page.mouse.move(x, y);
+      await page.mouse.down();
+      await page.mouse.move(x + dx, y, { steps: 4 });
+      await page.mouse.up();
+      await wait(SETTLE_MS);
+    };
+    const colourBefore = await waves();
+    const colourTypes = ['Red', 'Green', 'Blue'].filter((t) => colourBefore[t]);
+    await dragStrip(strip.y + strip.band / 2, strip.width / 4 + 3);
+    const shifted = await waves();
+    const expectPhase = (t) => {
+      const phase = colourBefore[t].phase - 90 * colourBefore[t].frequency;
+      return Math.round(((phase % 360) + 360) % 360) % 360;
+    };
+    check(
+      'dragging the colour strip a quarter width right shifts every colour Phase by 90° per cycle (snapped)',
+      colourTypes.every((t) => shifted[t].phase === expectPhase(t)),
+      colourTypes.map((t) => [t, colourBefore[t].phase, shifted[t].phase, expectPhase(t)]),
+    );
+    // The last row: scroll the rows to the bottom first (they scroll when there are many)
+    const lastRow = await page.evaluate(() => {
+      const canvas = [...document.querySelectorAll('.colour_scope_canvas')].find((e) => e.offsetParent);
+      const field = canvas.closest('.colour_scope_field');
+      field.scrollTop = field.scrollHeight;
+      const { dataset } = canvas.parentElement;
+      const r = canvas.getBoundingClientRect();
+      return r.y + (Number(dataset.rows) - 1) * Number(dataset.block) + Number(dataset.band) / 2;
+    });
+    await dragStrip(lastRow, strip.width / 8);
+    await page.evaluate(() => {
+      const canvas = [...document.querySelectorAll('.colour_scope_canvas')].find((e) => e.offsetParent);
+      canvas.closest('.colour_scope_field').scrollTop = 0;
+    });
+    const spread = await waves();
+    check(
+      'dragging the last row changes every colour wave\'s Phase stop',
+      colourTypes.every((t) => spread[t].stop !== shifted[t].stop),
+      colourTypes.map((t) => [t, shifted[t].stop, spread[t].stop]),
+    );
+    const colourWaves = await page.evaluate((gid, cid) => {
+      const { cues } = window.__check.show.groupPool.getFromId(gid).cuePool;
+      return cues.find((c) => c.id === cid).channels.map((c) => c.type)
+        .filter((t) => ['Red', 'Green', 'Blue', 'Cyan', 'Magenta', 'Yellow', 'White', 'Amber'].includes(t));
+    }, found.group, found.both);
+    // Preset and Spread share the first row half and half, nothing else on it
+    const head = await page.evaluate(() => {
+      const scope = [...document.querySelectorAll('.colour_scope')].find((e) => e.offsetParent);
+      const row = scope.querySelector('.colour_scope_head').getBoundingClientRect();
+      const width = (sel) => Math.round(scope.querySelector(sel).getBoundingClientRect().width);
+      return {
+        preset: width('.colour_scope_preset'),
+        spread: width('.colour_scope_spread'),
+        row: Math.round(row.width),
+        buttons: scope.querySelectorAll('.colour_scope_head .uikit_button').length,
+      };
+    });
+    check(
+      'Preset and Spread share the first row of the Colour Scope\'s form half and half',
+      Math.abs(head.preset - head.spread) <= 1 && head.buttons === 0
+        && head.preset + head.spread >= head.row - 12,
+      head,
+    );
+    // Fields: Phase stop 0 on every colour wave
+    await typeIn('.colour_scope_fixturePhaseStop', '0');
+    const stopped = await waves();
+    check('typing Phase stop 0 sets it on every colour wave', colourWaves.every((t) => stopped[t].stop === 0), colourWaves.map((t) => stopped[t].stop));
+    // A preset that adds a channel: it shows in Modulated Channels at once
+    await page.evaluate((gid, cid) => {
+      const { cues } = window.__check.show.groupPool.getFromId(gid).cuePool;
+      const cue = cues.find((c) => c.id === cid);
+      const blue = cue.channels.find((c) => c.type === 'Blue');
+      if (blue) cue.deleteChannel(blue);
+    }, found.group, found.both);
+    await wait(SETTLE_MS);
+    const channelNames = () => page.evaluate(() => [...document.querySelectorAll(
+      '.modifier_widget_effect_channels .uikit_list_item',
+    )].filter((e) => e.offsetParent).map((e) => e.textContent.trim()));
+    const withoutBlue = await channelNames();
+    await pickFrom('.colour_scope_preset', 'Rainbow');
+    const withBlue = await channelNames();
+    const colourInputs = () => page.evaluate(() => [...document.querySelectorAll(
+      '.colour_scope_colour input[type="color"]',
+    )].filter((e) => e.offsetParent).map((e) => e.value));
+    const rainbowInputs = await colourInputs();
+    check(
+      'Rainbow adds the missing Blue wave, shown at once in Modulated Channels; A and B read black and white',
+      !withoutBlue.some((n) => /Blue/.test(n)) && withBlue.some((n) => /Blue/.test(n))
+        && rainbowInputs.join() === '#000000,#ffffff',
+      { withoutBlue, withBlue, rainbowInputs },
+    );
+    // Generic: Colour B on the rainbow sets every channel's Max, the hue offsets stay
+    const setColourInput = (end, hex) => page.evaluate((e, h) => {
+      const input = [...document.querySelectorAll(`.colour_scope_colour_${e} input[type="color"]`)]
+        .find((el) => el.offsetParent);
+      input.value = h;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    }, end, hex);
+    const rainbow = await waves();
+    await setColourInput('b', '#ff8000');
+    await wait(SETTLE_MS);
+    const warm = await waves();
+    check(
+      'Colour B #ff8000 on Rainbow sets the Max of red, green, blue to 255, 128, 0 and keeps their phases',
+      warm.Red.max === 255 && warm.Green.max === 128 && warm.Blue.max === 0
+        && ['Red', 'Green', 'Blue'].every((t) => warm[t].phase === rainbow[t].phase),
+      { warm: [warm.Red, warm.Green, warm.Blue] },
+    );
+    // The colour field takes a typed hex code
+    const hexBox = await page.evaluateHandle(() => [...document.querySelectorAll(
+      '.colour_scope_colour_a .uikit_color_input_textbox',
+    )].find((e) => e.offsetParent));
+    await hexBox.asElement().click({ clickCount: 3 });
+    await page.keyboard.type('20c0ff');
+    await page.keyboard.press('Enter');
+    await wait(SETTLE_MS);
+    const typedA = await waves();
+    const shownA = await colourInputs();
+    check(
+      'typing 20c0ff in Colour A sets every channel\'s Min (32, 192, 255) and the field shows it',
+      typedA.Red.min === 32 && typedA.Green.min === 192 && typedA.Blue.min === 255
+        && shownA[0] === '#20c0ff',
+      { red: typedA.Red, shownA },
+    );
+    // Add Modulated Channel: the fixtures' channels with icons, in use marked; OK adds and selects
+    await click(page, '.modifier_widget_effect_channels .uikit_button', 'add');
+    const offered = await page.evaluate(() => {
+      const popup = [...document.querySelectorAll('.popup_fx_channels')].find((e) => e.offsetParent);
+      return [...popup.querySelectorAll('.uikit_list_item')].map((e) => ({
+        name: e.querySelector('h4')?.textContent.trim() || e.textContent.trim(),
+        icon: !!e.querySelector('.uikit_list_item_icon'),
+        inUse: /in use/.test(e.textContent),
+      }));
+    });
+    const fresh = offered.find((o) => !o.inUse);
+    if (fresh) {
+      await click(page, '.popup_fx_channels .uikit_list_item', new RegExp(`^${fresh.name}`));
+      await submitTopPopup(page);
+    }
+    const afterAdd = await page.evaluate((gid, cid) => {
+      const { cues } = window.__check.show.groupPool.getFromId(gid).cuePool;
+      const types = cues.find((c) => c.id === cid).channels.map((c) => c.type);
+      const sel = [...document.querySelectorAll('.modifier_widget_effect_channels .uikit_list_item.selected')]
+        .filter((e) => e.offsetParent).map((e) => e.textContent.trim());
+      return { types, sel };
+    }, found.group, found.both);
+    check(
+      'Add Modulated Channel lists the fixtures\' channels with icons (Pan in use); OK adds one and selects it',
+      offered.length > 4 && offered.every((o) => o.icon) && offered.some((o) => o.inUse && /^Pan/.test(o.name))
+        && fresh && afterAdd.types.includes(fresh.name)
+        && afterAdd.sel.some((n) => n.startsWith(fresh.name)),
+      { offered: offered.map((o) => `${o.name}${o.inUse ? '*' : ''}`), fresh, afterAdd },
+    );
+    await selectChannel('Red');
+    // Police starts from red and blue (A and B show them); changing B rewrites the waves
+    await pickFrom('.colour_scope_preset', 'Police');
+    const policeInputs = await colourInputs();
+    await setColourInput('b', '#4b0082');
+    await wait(SETTLE_MS);
+    const police = await waves();
+    const swatches = await page.evaluate(
+      async (modules) => (await import(modules.palette)).default,
+      PAGE_MODULES,
+    );
+    const hexOf = (c) => `#${[c.r, c.g, c.b].map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+    const tomato = swatches.find((c) => c.name === 'Tomato Red');
+    const blue = swatches.find((c) => c.name === 'Blue');
+    check(
+      'Police shows A Blue and B Tomato Red; B #4b0082 sets every channel\'s Max from it',
+      policeInputs.join() === `${hexOf(blue)},${hexOf(tomato)}`
+        && police.Red.max === 0x4b && police.Green.max === 0 && police.Blue.max === 0x82,
+      { policeInputs, red: police.Red, blue: police.Blue },
+    );
+    // Chase: a Width field, setting every PWM colour wave
+    await pickFrom('.colour_scope_preset', 'Chase');
+    await typeIn('.colour_scope_width', '30');
+    const chased = await waves();
+    check(
+      'Chase shows a Width field; typing 30 sets every colour wave\'s PWM width',
+      ['Red', 'Green', 'Blue'].every((t) => chased[t].width === 30),
+      ['Red', 'Green', 'Blue'].map((t) => chased[t].width),
+    );
+
+    // Presets are absolute: Strobe and Police, then Fade, equal Fade alone, from Colour A to B
+    await pickFrom('.colour_scope_preset', 'Fade');
+    const fadeAlone = await waves();
+    await pickFrom('.colour_scope_preset', 'Strobe');
+    const strobeSpread = await selectText('.colour_scope_spread');
+    const strobePreset = await selectText('.colour_scope_preset');
+    await page.evaluate((gid, cid) => {
+      const { cues } = window.__check.show.groupPool.getFromId(gid).cuePool;
+      cues.find((c) => c.id === cid).channels.find((c) => c.type === 'Green').phase = 33;
+    }, found.group, found.both);
+    await wait(SETTLE_MS);
+    const editedPreset = await selectText('.colour_scope_preset');
+    check(
+      'picking Strobe shows Strobe and its Together spread; a Green phase edit shows Custom',
+      strobePreset === 'Strobe' && strobeSpread === 'Together' && editedPreset === 'Custom',
+      { strobePreset, strobeSpread, editedPreset },
+    );
+    await pickFrom('.colour_scope_preset', 'Police');
+    await pickFrom('.colour_scope_preset', 'Fade');
+    const fadeAgain = await waves();
+    const [hexA, hexB] = await colourInputs();
+    const rgbOf = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+    const [a, b] = [rgbOf(hexA), rgbOf(hexB)];
+    check(
+      'colour presets leave no traces: Strobe, Police, then Fade equals Fade alone, from A to B',
+      JSON.stringify(colourWaves.map((t) => fadeAgain[t]))
+        === JSON.stringify(colourWaves.map((t) => fadeAlone[t]))
+        && fadeAgain.Red.min === a[0] && fadeAgain.Red.max === b[0] && fadeAgain.Blue.max === b[2],
+      {
+        hexA, hexB, red: fadeAgain.Red, alone: fadeAlone.Red,
+      },
+    );
+
+    // Playing: the playhead shows, the dots move, no main-thread block over 50 ms
+    const dotsNow = () => page.evaluate(() => [...document.querySelectorAll('.pantilt_scope_dot')]
+      .filter((e) => e.getClientRects().length).map((e) => `${e.style.left},${e.style.top}`).join(' '));
+    await probe(page, 'resetLongTasks');
+    await page.evaluate((gid, cid) => {
+      const { cues } = window.__check.show.groupPool.getFromId(gid).cuePool;
+      const cue = cues.find((c) => c.id === cid);
+      if (cue.animationId == null) cue.cue(true);
+    }, found.group, found.both);
+    await wait(800);
+    const playhead = await page.evaluate(() => [...document.querySelectorAll('.colour_scope_playhead')].some((e) => e.offsetParent));
+    await selectChannel('Pan');
+    const still = await dotsNow();
+    await wait(700);
+    const playing = {
+      playhead,
+      moved: (await dotsNow()) !== still,
+      maxBlock: await probe(page, 'maxBlock'),
+    };
+    check('while the effect plays, the playhead shows, the dots move, no main-thread block over 50 ms', playing.playhead && playing.moved && playing.maxBlock <= 50, playing);
   },
 
   /** Addresses 1-512, the repatch popup and its map, the patch popup map, invert and swap */
