@@ -70,12 +70,31 @@
           :gap="8"
           class="widget_wave_column"
         >
-          <uk-select-input
-            v-model="channel.direction"
-            :disabled="!channel.type"
-            label="Direction"
-            :options="channel.directionOptions"
-          />
+          <!-- Mirror: the second half of the fixtures plays the wave flipped (lit while on, keyed
+            by state so a click keeps the look in step) -->
+          <uk-flex
+            :gap="8"
+            class="widget_wave_direction"
+          >
+            <uk-select-input
+              v-model="channel.direction"
+              :disabled="!channel.type"
+              label="Direction"
+              :options="channel.directionOptions"
+            />
+            <uk-button
+              :key="`mirror-${!!channel.mirror}`"
+              class="widget_wave_mirror"
+              label="mirror"
+              title="The second half of the fixtures plays the wave flipped (Min + Max − value)"
+              square
+              toggleable
+              color="var(--accent-blue)"
+              :disabled="!channel.type"
+              :model-value="!!channel.mirror"
+              @click="channel.mirror = !channel.mirror"
+            />
+          </uk-flex>
           <uk-select-input
             :model-value="channel.cellPhase ? 1 : 0"
             :disabled="!channel.type"
@@ -222,9 +241,9 @@ export default {
      */
     shapeSignature() {
       const {
-        waveform, min, max, frequency, phase, color, width, direction,
+        waveform, min, max, frequency, phase, color, width, direction, mirror,
       } = this.channel;
-      return [waveform, min, max, frequency, phase, color, width, direction].join('|');
+      return [waveform, min, max, frequency, phase, color, width, direction, mirror].join('|');
     },
   },
   watch: {
@@ -386,6 +405,23 @@ export default {
         }
       }
       ctx.stroke();
+
+      // Mirror: the flipped wave the second half of the fixtures plays, dashed and faint
+      if (this.channel.mirror) {
+        const flip = Number(this.channel.min) + Number(this.channel.max);
+        ctx.save();
+        ctx.globalAlpha = 0.5;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        for (let i = 0; i <= samples; i++) {
+          const t = i / samples;
+          const y = this.valueToY(flip - this.channel.getValue(t), h);
+          if (i === 0) ctx.moveTo(t * w, y);
+          else ctx.lineTo(t * w, y);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
     },
   },
 };
@@ -405,6 +441,18 @@ export default {
   flex-shrink: 0;
   min-width: 120px;
   width: min-content;
+}
+.widget_wave_direction {
+  align-items: flex-end;
+}
+.widget_wave_direction .uikit_select {
+  flex: 1;
+  min-width: 0;
+}
+/* As tall as the select beside it */
+.widget_wave_mirror {
+  flex: none;
+  height: var(--control-height);
 }
 .widget_wave_modifier {
   position: relative;
