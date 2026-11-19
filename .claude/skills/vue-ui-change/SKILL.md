@@ -129,6 +129,11 @@ export default {
   copy the gradient.
 - **Popups** (`uk-popup`) attach to the injected `popupHost` when a parent provides one (the
   manual's previews), else to the body; don't append popups to `document.body` yourself.
+  Extra footer buttons go in its `#actions` slot (left of the footer, e.g. Arrange's *Apply*);
+  *OK* is the one light button, every other `uk-button` is `--secondary-dark`.
+- **Toggle buttons** (`uk-button toggleable`) start from `modelValue` and light in `color`; for a
+  button group showing a state (Position Tool mounts), bind `modelValue` and key each button by
+  its state so a click on the lit one keeps it lit.
 - **List rows** (`uk-list-item`): `tall` (40px) and `large` (40px, 16px padding, 14px labels,
   16px icons) are opt-in modes; defaults stay as in the app. `large` is for lists people read
   (the user manual's navigation). Extend components with opt-in props like these rather than
@@ -151,6 +156,10 @@ export default {
   there. A missing name shows `close.svg` (an "x"). Channel icons come only from
   `views/utils/channel.icons.js` (`channelIcon(channel)`: GDTF attribute families, then legacy
   type keys, then name words, then `channel`); it only returns existing files.
+- **Number fields** (`uk-num-input`): `readonly` shows a value the operator can't change (the
+  disabled look with the label not dimmed, like read-only text and selects); `relative` is for a
+  field standing for several values: a `null` value shows the `placeholder` (`--`), and the arrows
+  and arrow keys emit `step` (±1 precision unit) instead of changing the value (Position Tool).
 - **Selects** (`uk-select-input`): options are HTML strings. The option list is teleported and
   built only while open. A `#trigger` slot replaces the text box (the list opens upwards from it,
   sized to its options), `#header` heads the list, whose body is then a real `uk-list` of `items`

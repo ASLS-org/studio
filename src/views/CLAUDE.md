@@ -19,7 +19,10 @@ views/
                          state in $view), keys.mixin.js (keyboard block), color.mixin.js
   utils/                 palette, setCapture (exposed as this.$utils); channel.icons.js and
                          channel.presets.js (channels widget: icon per function, range menu);
-                         dmx.js (addresses shown 1-512, stored from 0)
+                         dmx.js (addresses shown 1-512, stored from 0); placement.js (pure
+                         pose maths: line, grid, circle, arc, align, distribute, fan,
+                         aim for the Arrange popup; mounts, turn and tilt for the
+                         Position Tool)
 ```
 
 ## Ground rules
