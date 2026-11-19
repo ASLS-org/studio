@@ -215,6 +215,24 @@ class Fixture {
   }
 
   /**
+   * Sets position (metres) and rotation (degrees) at once, telling the visualizer once, as an edit
+   * (the gizmo follows)
+   *
+   * @public
+   * @param {Object} position `{ x, y, z }`
+   * @param {Object} rotation `{ x, y, z }`
+   */
+  setPose(position, rotation) {
+    this._position = { x: position.x, y: position.y, z: position.z };
+    this._rotation = {
+      x: Fixture.degToRad(rotation.x),
+      y: Fixture.degToRad(rotation.y),
+      z: Fixture.degToRad(rotation.z),
+    };
+    this.emitPose(true);
+  }
+
+  /**
    * Fixture's X position in 3D space (meter)
    *
    * @type {Number}
