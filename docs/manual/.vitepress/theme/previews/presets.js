@@ -218,6 +218,22 @@ const PRESETS = {
     props: (show) => ({ channel: cue(show, 2).channels[0] }),
     clock: true,
   },
+  'effect-pantilt-scope': {
+    title: 'Pan/Tilt Scope',
+    width: 560,
+    height: STRIP,
+    component: () => import('@/views/activities/app/fragments/modifiers/group/_widgets/group.effect.modifier.widget.scope.pantilt.vue'),
+    props: (show) => ({ effect: cue(show, 2) }),
+    clock: true,
+  },
+  'effect-colour-scope': {
+    title: 'Colour Scope',
+    width: 600,
+    height: STRIP,
+    component: () => import('@/views/activities/app/fragments/modifiers/group/_widgets/group.effect.modifier.widget.scope.colour.vue'),
+    props: (show) => ({ effect: cue(show, 1) }),
+    clock: true,
+  },
   /* ── Panels ── */
   'patch-bay': {
     title: 'Patch Bay',
@@ -494,7 +510,8 @@ const PRESETS = {
   },
 
   'effect-channel-add': {
-    // Rainbow plays (colour only); the Eight preset adds pan and tilt: the beams start drawing
+    // Rainbow plays (colour only); adding Pan and Tilt from the fixtures' channels sets the beams
+    // moving
     title: 'Effect',
     width: 760,
     height: 520,
@@ -508,12 +525,17 @@ const PRESETS = {
     demo: [
       { caption: 'Rainbow plays: it only moves the colour' },
       { wait: 3000 },
-      { caption: 'Add a modulated channel' },
+      { caption: 'Add a modulated channel: the fixtures\' own channels are listed' },
       { click: '.uikit_button', has: 'add' },
       { wait: 900 },
-      { caption: 'Pick a preset: pan & tilt, Eight' },
-      { click: '.popup .uikit_list_item', has: 'pan & tilt' },
-      { click: '.popup .uikit_list_item.uikit_sublist_body', has: 'Eight' },
+      { caption: 'Pick Pan' },
+      { click: '.popup .uikit_list_item', has: 'Pan' },
+      popupButton('ok'),
+      { wait: 900 },
+      { caption: 'Then Tilt' },
+      { click: '.uikit_button', has: 'add' },
+      { wait: 700 },
+      { click: '.popup .uikit_list_item', has: 'Tilt' },
       popupButton('ok'),
       { wait: 1000 },
       { caption: 'Pan and Tilt join the effect, over their whole range: beams sweep off stage' },
@@ -526,7 +548,7 @@ const PRESETS = {
       row('Tilt'),
       { field: 'Min', text: '104' },
       { field: 'Max', text: '152' },
-      { caption: 'The beams now draw figures of eight on the floor, in rainbow colours' },
+      { caption: 'The beams now sweep the floor in rainbow colours; the Pan/Tilt Scope shapes it' },
       { wait: 7000 },
       { caption: null },
     ],
