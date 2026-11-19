@@ -149,6 +149,7 @@ import EventBus from '@/plugins/eventbus';
 import FixtureLibrary from '@/models/fixtures/fixture.library';
 import { PROFILE_SOURCES } from '@/models/fixtures/fixture.profile';
 import { dmxAddress, chStartOf } from '@/views/utils/dmx';
+import { patchPoses } from '@/views/utils/placement';
 import UniverseMap from '../_widgets/universe.modifier.map.vue';
 import UniverseMessage from '../_widgets/universe.modifier.message.vue';
 
@@ -161,8 +162,6 @@ const DEFAULT_FIXTURE_DATA = {
   modes: [{}],
   chStart: 0,
   universe: 0,
-  position: { x: 0, y: 0, z: 0 },
-  rotation: { x: 0, y: 0, z: 0 },
   mode: 0,
   loaded: false,
 };
@@ -291,6 +290,9 @@ export default {
         if (this.checkPatch()) {
           try {
             const chCount = this.fixture.modes[this.fixture.mode].channels.length;
+            // Hung in a line on a free truss row (smoke and fans on the floor)
+            const { fixtures: onStage } = this.$show.fixturePool;
+            const poses = patchPoses(this.amount, this.fixture.category, onStage);
             for (let i = 0; i < this.amount; i++) {
               this.fixture.chStart = i * chCount + this.chStart;
               const fixture = this.$show.fixturePool.addRaw({
@@ -303,8 +305,8 @@ export default {
                 mode: this.fixture.modeNames[this.fixture.mode],
                 universe: this.fixture.universe,
                 chStart: this.fixture.chStart,
-                position: { ...this.fixture.position },
-                rotation: { ...this.fixture.rotation },
+                position: poses[i].position,
+                rotation: poses[i].rotation,
               });
               this.universe.patchFixture(fixture);
             }

@@ -1360,7 +1360,9 @@ const SCENARIOS = {
       p.proxy.autoPatch();
       const known = window.__check.show.fixturePool.fixtures.length;
       p.proxy.patchFixtures();
-      shownError.names = window.__check.show.fixturePool.fixtures.slice(known).map((f) => f.name);
+      const added = window.__check.show.fixturePool.fixtures.slice(known);
+      shownError.names = added.map((f) => f.name);
+      shownError.poses = added.map((f) => [f.position.x, f.position.y, f.position.z, f.rotation.x]);
       shownError.base = p.proxy.fixture.name;
       return shownError;
     });
@@ -1371,6 +1373,12 @@ const SCENARIOS = {
         && highlight.rowLabels === 0
         && JSON.stringify(highlight.names) === JSON.stringify([`${highlight.base} 1`, `${highlight.base} 2`]),
       highlight,
+    );
+    // New fixtures are hung 4 m up in a line, 1 m apart, on the first free row (demo heads: 11.5 m)
+    check(
+      'patched fixtures are hung in a line at 4 m, 1 m apart, 3 m in front, not at the origin',
+      JSON.stringify(highlight.poses) === JSON.stringify([[-0.5, -3, 4, 180], [0.5, -3, 4, 180]]),
+      highlight.poses,
     );
 
     // Invert and swap pan/tilt change the output, not the programmed values

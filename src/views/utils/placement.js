@@ -365,3 +365,52 @@ export function beamOnFloor(rotation) {
   const beam = UP.clone().applyQuaternion(quaternionOf(rotation));
   return { x: beam.x, y: beam.y };
 }
+
+/**
+ * Categories that stand on the floor when patched; every other fixture is hung on a truss
+ *
+ * @constant {Array<String>}
+ */
+const FLOOR_CATEGORIES = ['Smoke', 'Hazer', 'Fan', 'Stand'];
+
+/**
+ * Rows tried in turn for new fixtures, by mount: truss lines in front of and over the stage,
+ * or the back of the stage for floor units (Y in metres)
+ *
+ * @constant {Object}
+ */
+const PATCH_ROWS = {
+  hung: { z: 4, rows: [-3, 0, 3, -6, 6, 9] },
+  floor: { z: 0, rows: [3, 5, 1, 7] },
+};
+
+/**
+ * Where newly patched fixtures go: in a line along X, 1 m apart and centred, hung at 4 m (on
+ * the floor for smoke machines and fans), on the first row no other fixture is in the way of.
+ * When every row is taken, the line continues to the right of the first row
+ *
+ * @public
+ * @param {Number} count fixtures to place
+ * @param {?String} category fixture category (e.g. `Moving Head`)
+ * @param {Array<Object>} [others=[]] poses (or fixtures) already on stage
+ * @returns {Array<Object>} `{ position, rotation }` per fixture
+ */
+export function patchPoses(count, category, others = []) {
+  const mount = FLOOR_CATEGORIES.includes(category) ? 'floor' : 'hung';
+  const { z, rows } = PATCH_ROWS[mount];
+  const { euler } = MOUNTS.find((m) => m.id === mount);
+  const halfWidth = (count - 1) / 2;
+  const onRow = (y) => others.filter(({ position: p }) => Math.abs(p.y - y) < 0.5
+    && Math.abs(p.z - z) < 1);
+  const free = (y) => onRow(y).every(({ position: p }) => Math.abs(p.x) > halfWidth + 0.5);
+  let y = rows.find(free);
+  let centre = 0;
+  if (y === undefined) {
+    [y] = rows;
+    centre = Math.max(...onRow(y).map(({ position: p }) => p.x)) + 1 + halfWidth;
+  }
+  return Array.from({ length: count }, (_, i) => ({
+    position: { x: round(centre + i - halfWidth), y, z },
+    rotation: { ...euler },
+  }));
+}
