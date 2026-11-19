@@ -158,13 +158,16 @@ const PRESETS = {
   },
   'fixture-position': {
     title: 'Position Tool',
-    width: 170,
+    width: 450,
     height: STRIP,
-    componentWidth: 170,
+    componentWidth: 450,
     componentHeight: STRIP,
     stage: true,
     component: () => import('@/views/activities/app/fragments/modifiers/universe/_widgets/universe.modifier.widget.fixture.position.tool.vue'),
-    props: (show) => ({ fixture: fixture(show, 0) }),
+    props: (show) => ({
+      fixtures: [fixture(show, 0)],
+      universeFixtures: universe(show).fixturePool.fixtures,
+    }),
     clock: true,
   },
   'universe-settings': {
@@ -184,9 +187,9 @@ const PRESETS = {
   },
   'group-cuepool': {
     title: 'Cue Pool',
-    width: 440,
+    width: 170,
     height: STRIP,
-    componentWidth: 440,
+    componentWidth: 170,
     componentHeight: STRIP,
     stage: true,
     component: CuePool,
@@ -293,9 +296,9 @@ const PRESETS = {
   'scene-stage': {
     // The rig's two scenes, one after the other: each fades in over its duration
     title: 'Cue Pool',
-    width: 440,
+    width: 170,
     height: STRIP,
-    componentWidth: 440,
+    componentWidth: 170,
     componentHeight: STRIP,
     stage: true,
     component: CuePool,
@@ -317,9 +320,9 @@ const PRESETS = {
   'effect-stage': {
     // The rig's effects: a hue chase across the heads, then crossing circles in blue
     title: 'Cue Pool',
-    width: 440,
+    width: 170,
     height: STRIP,
-    componentWidth: 440,
+    componentWidth: 170,
     componentHeight: STRIP,
     stage: true,
     component: CuePool,
@@ -455,9 +458,9 @@ const PRESETS = {
       row('Generic PAR RGBW'),
       { wait: 900 },
       { caption: 'Place it: 4 m up, 3 m in front, hanging' },
-      { field: 'Position Y', text: '-3' },
-      { field: 'Position Z', text: '4' },
-      { field: 'Rotation X', text: '180' },
+      { field: 'Y m', text: '-3' },
+      { field: 'Height', text: '4' },
+      { click: '.position_tool_mount_hung' },
       { wait: 2800 },
       { caption: null },
     ],

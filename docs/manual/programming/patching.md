@@ -31,8 +31,7 @@ addresses 1, 15, 29 and 43, so 56 addresses in use and 456 free.
    ([below](#fixture-settings-and-position)).
 
 The preview adds a *Generic PAR RGBW* to the demo rig: it takes the first free address, 57, and
-is then hung 4 m up, 3 m in front of the heads (**Position Y** −3, **Position Z** 4,
-**Rotation X** 180).
+is then hung 4 m up, 3 m in front of the heads (**Y** −3, **Height** 4, **Mount** hung).
 
 <LivePreview preset="patch-add" />
 
@@ -142,15 +141,51 @@ The side of the popup lists the **Changes**, each fixture's addresses before and
 to select it); a fixture moving to another universe gets a warning below. Nothing moves until you
 press **OK**; **Cancel** keeps every address.
 
-The **Position Tool** places the fixture on stage for the visualizer: **Position X/Y/Z** in meters
-(to the centimetre) and **Rotation X/Y/Z** in degrees. A fixture is placed with Z up: a rotation of
-180° on X hangs it with its beam pointing down. You can also drag fixtures in the
-[visualizer](/interface/visualizer/).
+### Position Tool
 
-Stage axes: **X** runs left to right as the audience sees it, **Y** from the audience (negative)
-to the back of the stage (positive), **Z** up from the floor. The demo heads sit at Y 0, Z 6: on a
-truss 6 m up, across the middle of the stage. Change *MAC Aura 1*'s **Position Z** below and watch
-it move.
+The **Position Tool** places the selected fixtures on stage for the visualizer. You can also drag
+them in the [visualizer](/interface/visualizer/).
+
+- **The stage map**, on the left, shows the stage from above: the back at the top, the audience
+  at the bottom, a dot per fixture of the universe (fixtures of other universes are faint). A
+  short line shows where a beam points when it isn't straight up or down. Click a dot to select
+  its fixture (<kbd>Ctrl</kbd>/<kbd>⌘</kbd> or <kbd>Shift</kbd> to add or remove one), and drag
+  it to move the whole selection on a 0.25 m grid; hold <kbd>Alt</kbd> to drag freely.
+- **X**, **Y** and **Height** give the position in meters, to the centimetre. **X** runs left (−)
+  to right (+) as the audience sees it, **Y** from the audience (−) to the back of the stage (+),
+  **Height** up from the floor.
+- **Mount** says how the fixture hangs: on the **floor** (beam up), **hung** from a truss (beam
+  down), on the **left** or **right wall**, on the **back wall** (beam toward the audience) or at
+  the **front** (beam toward the back). **Turn** spins it on its base and **Tilt** leans its beam,
+  in degrees. Changing the mount keeps the turn and the tilt.
+
+With several fixtures selected (the header shows how many), a field shows their value when they
+share it and **--** when they differ; a mount is lit only when they all share it. Typing a value
+sets it on all of them; the arrows move each one a step from where it is, so a row keeps its
+spacing.
+
+**Arrange** (in the header, or <kbd>A</kbd>) places the whole selection at once, in the fixture
+pool's order. Pick a mode on the left (type in **Search items** to find one) and set it on the
+right; a value you type applies when you press <kbd>Enter</kbd> or leave the field.
+
+| Mode | Places the fixtures |
+|---|---|
+| **Line** | Evenly along X, Y or Z, at a spacing, around a centre |
+| **Grid** | In rows of a number of columns on the floor, around a centre |
+| **Circle** | Evenly on a circle, on the floor or upright facing the audience; they can face its centre or away from it |
+| **Arc** | As Circle, from a start to an end angle (0° to the right, turning towards the back) |
+| **Align** | All at the lowest, middle or highest value of the selection on one axis |
+| **Distribute** | Even gaps between the two outermost fixtures on one axis |
+| **Fan** | Rotations spread from −angle to +angle about one axis |
+| **Aim** | Each fixture turned to point its beam at one point |
+
+The fixtures move in the visualizer as you change the settings. **Apply** keeps the result and
+leaves the popup open, so you can combine modes: a **Line**, **Apply**, then **Aim** them all at
+one point. **OK** keeps the result and closes; **Cancel** puts every fixture back where it was
+when you opened the popup or last pressed **Apply**.
+
+The demo heads hang at Y 0, height 6: on a truss 6 m up, across the middle of the stage. Change
+*MAC Aura 1*'s **Height** below, or drag its dot, and watch it move.
 
 <LivePreview preset="fixture-position" />
 
