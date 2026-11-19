@@ -27,11 +27,13 @@ addresses 1, 15, 29 and 43, so 56 addresses in use and 456 free.
 5. Check the **Address** (Studio proposes the first free one) and, to patch several identical
    fixtures one after another, the **Amount**.
 6. Press **OK**. The fixtures appear in the fixture pool, in the patch bay and in the visualizer,
-   at the centre of the stage: place them with the **Position Tool**
-   ([below](#fixture-settings-and-position)).
+   in a line 1 m apart, centred left to right. They are hung 4 m up on the first row that is
+   still free (3 m in front of the stage's centre, then over it, behind it, further out); smoke
+   machines, hazers and fans stand on the floor at the back instead. Adjust them with the
+   **Position Tool** ([below](#fixture-settings-and-position)).
 
 The preview adds a *Generic PAR RGBW* to the demo rig: it takes the first free address, 57, and
-is then hung 4 m up, 3 m in front of the heads (**Y** −3, **Height** 4, **Mount** hung).
+is hung 4 m up, 3 m in front of the heads.
 
 <LivePreview preset="patch-add" />
 

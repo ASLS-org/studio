@@ -24,9 +24,8 @@ In the toolbar, open **File** and pick **New Showfile**. Choose the **Blank** te
 
 With **Amount** `2`, Studio patches both at once, one after the other in the universe, named
 *Generic PAR RGBW 1* and *Generic PAR RGBW 2*. They appear in the fixture pool, the patch bay and
-the visualizer, both at the centre of the stage: select the second one in the fixture pool and set
-its **Position X** to `3` in the **Position Tool**, so they stand side by side. More in
-[Patching fixtures](/programming/patching).
+the visualizer, hung side by side 4 m up, 1 m apart, in front of the stage. Move them with the
+**Position Tool** whenever you like. More in [Patching fixtures](/programming/patching).
 
 ## 3. Make a Group
 
