@@ -18,6 +18,7 @@ import Controls from '@/plugins/visualizer/controls';
 import { QUALITY_SETTINGS, GUIDE_SETTINGS } from '@/plugins/visualizer/quality';
 import EventBus from '@/plugins/eventbus';
 import { visualizerStandIn } from './host';
+import stage from './stage';
 
 /**
  * The visualizer loads some assets from page-relative URLs (Studio always runs at its root): in
@@ -52,6 +53,22 @@ released and the show gets back its stand-in.
 export default {
   name: 'VisualizerPreview',
   compatConfig: { MODE: 3 },
+  computed: {
+    /**
+     * What the running stage preview selects, as a comparable key (its view state's highlight)
+     *
+     * @type {String}
+     */
+    highlightKey() {
+      const highlight = stage.view?.highlight;
+      return highlight ? `${highlight.ids.join(',')}|${highlight.gizmo}` : '';
+    },
+  },
+  watch: {
+    highlightKey() {
+      this.applySelection();
+    },
+  },
   async mounted() {
     THREE.DefaultLoadingManager.setURLModifier(fromSiteRoot);
     const preferences = this.$show.visualizerHandle && this.$show.visualizerHandle.showData;
@@ -92,11 +109,11 @@ export default {
       visualizer.controls.addEventListener('start', () => { this.framed = true; });
     }
     visualizer.fixtureRenderer.setPatch(this.$show.patchSnapshot);
-    // As visualizer.fragment.vue: follow the patch, poses, selection highlights, and write back
+    this.applySelection();
+    // As visualizer.fragment.vue: follow the patch, poses, the selection, and write back
     // positions dragged with the transform controls
     this.onPatch = () => visualizer.fixtureRenderer.setPatch(this.$show.patchSnapshot);
     this.onPose = (pose) => visualizer.fixtureRenderer.setPose(pose);
-    this.onHighlight = (highlight) => visualizer.fixtureRenderer.highlight(highlight);
     this.onTransformed = ({ id, position, rotation }) => {
       if (!this.$show.fixturePool.checkIfExists(id)) return;
       const fixture = this.$show.fixturePool.getFromId(id);
@@ -105,7 +122,6 @@ export default {
     };
     EventBus.on('patch_changed', this.onPatch);
     EventBus.on('fixture_pose', this.onPose);
-    EventBus.on('fixture_highlight', this.onHighlight);
     EventBus.on('fixture_transformed', this.onTransformed);
     this.resizeObserver = new ResizeObserver(() => {
       visualizer.resize();
@@ -127,7 +143,6 @@ export default {
     this.gone = true;
     EventBus.off('patch_changed', this.onPatch);
     EventBus.off('fixture_pose', this.onPose);
-    EventBus.off('fixture_highlight', this.onHighlight);
     EventBus.off('fixture_transformed', this.onTransformed);
     if (this.resizeObserver) this.resizeObserver.disconnect();
     if (this.viewObserver) this.viewObserver.disconnect();
@@ -135,6 +150,17 @@ export default {
     if (this.added) this.release();
   },
   methods: {
+    /**
+     * Shows the running stage preview's selection (highlight and transform controls)
+     */
+    applySelection() {
+      const highlight = stage.view?.highlight;
+      if (!this.visualizer?.fixtureRenderer || this.gone) return;
+      this.visualizer.fixtureRenderer.setSelection(
+        highlight ? highlight.ids : [],
+        highlight ? highlight.gizmo : false,
+      );
+    },
     /**
      * Places the camera in front of the demo rig, a little above it, far enough for the whole
      * stage to fit the box (four heads hung 6 m up, 9 m apart, their beams fanned up to 9 m out)

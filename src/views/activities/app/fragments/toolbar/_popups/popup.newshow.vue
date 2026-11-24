@@ -23,7 +23,7 @@
         <uk-flex
           col
           gap="10"
-          style="padding:10px;"
+          style="padding:var(--space-5)"
         >
           <h4>Template:</h4>
           <p class="subtitle">
@@ -116,7 +116,6 @@ export default {
      */
     async submit() {
       this.close();
-      this.$router.replace('/');
       await this.$show.loadFromUrl(`${import.meta.env.VITE_STATIC_URL}demo/showfiles/${this.selectedTemplate.showfile}`);
       this.$show.loading.state = false;
       // Yeah it sucks... But cleaning up everything from the view was a nightmare so for now:
@@ -143,7 +142,7 @@ export default {
 <style scoped>
 .form {
   width: 400px;
-  border-right: 1px solid var(--primary-dark);
+  border-right: var(--border-width) solid var(--primary-dark);
 }
 .preview{
   height: 200px;
@@ -154,7 +153,7 @@ export default {
 }
 .subtitle {
   font-family: Roboto-Regular;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-4);
   color: var(--secondary-lighter-alt);
 }
 .template_list{

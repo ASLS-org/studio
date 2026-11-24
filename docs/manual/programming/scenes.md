@@ -52,13 +52,9 @@ These are *Sunset*'s settings: a 1-bar fade, played once, from the current value
 | **Name** | The cue's name |
 | **Color** | The cue's colour in the cue pool and in chases |
 | **Loop Style** | **One Shot** plays the cue once; **Loop** repeats it until you stop it |
-| **Trigger Style** | Saved with the cue; see the note below |
+| **Trigger Style** | **Toggle**: a click starts the cue, the next click stops it. **Temporary**: the cue plays while you hold the mouse button on it, and stops when you release it, as a flash button |
 | **Start** | **Absolute**: a scene fades from 0. **Relative**: it fades from the channels' current values, so it blends from whatever was on stage |
 | **Duration** | How long the cue lasts, in bars (see [Timing and playback](/concepts/timing)). For a scene, this is its fade time |
-
-> **Note:** **Trigger Style** has no effect yet: every cue starts and stops on a click, as
-> **Toggle** describes. **Temporary** (playing only while held) isn't available in this release
-> ([Known limitations](/reference/limitations#programming)).
 
 > **Note:** A scene that has played to its end stays on stage: it stops, but its values remain on
 > the fixtures until something else changes them.
@@ -93,8 +89,11 @@ goes to the fixtures that have that channel.
 > first cue (the top-left slot): set its fixtures one at a time
 > ([Known limitations](/reference/limitations#programming)).
 
-Channel faders are labelled by position (**CH1**, **CH2**…) with an icon for their function (the
-half-filled circle is a dimmer, **R**, **G**, **B** and **W** are colours).
+Channel faders are labelled by position (**CH1**, **CH2**…). As in the universe view, the channel's
+name box (under its value) shows its function and current range, and opens its ranges
+([Channels](/programming/patching#channels)). Picking one sets the channel to that range's start
+and includes it in the scene (it ticks its checkbox). With several fixtures selected, the
+ranges are listed only when they are the same for every fixture behind that fader.
 
 ### Cells
 
@@ -133,9 +132,17 @@ The **Fade in** widget shapes how the scene moves from its start values to its e
 
 | Setting | Description |
 | --- | --- |
-| **Type** | A preset curve: **LINEAR**, **EASE**, **EASE_IN**, **EASE_OUT**, **EASE_IN_OUT**, or **CUSTOM** |
-| **CP1 X/Y**, **CP2 X/Y** | The curve's two control points (0 to 1). **CP1** shapes the start of the fade, **CP2** its end |
+| **Type** | A preset curve, each shown with a small picture of its shape: **Linear**, **Ease**, **Ease in**, **Ease out**, **Ease in-out**, then **Sine**, **Quad**, **Cubic**, **Quart**, **Quint**, **Expo**, **Circ** and **Back**, each **in**, **out** and **in-out**. With the list open, type a letter to jump to the presets starting with it. **Custom** is a curve you shaped yourself |
+| **CP1 X/Y**, **CP2 X/Y** | The curve's two control points. **X** (time) goes from 0 to 1; **Y** from −1 to 2. **CP1** shapes the start of the fade, **CP2** its end |
 
-Drag the points on the curve or type their values; changing them sets the type to **CUSTOM**. The
+The scene plays the curve as drawn: halfway through the **Duration**, the channels are where the
+curve is halfway across. **In** curves start slowly, **out** curves arrive slowly, **in-out** do
+both; **Sine** is the gentlest and **Expo** the sharpest.
+
+**Back** curves overshoot: they go past the scene's values (or below the start) before settling.
+The dotted lines mark the start and end levels, with room above and below for overshoot. A channel
+never goes beyond its DMX range (0–255), so an overshoot at full level holds at 255.
+
+Drag the points on the curve or type their values; changing them sets the type to **Custom**. The
 curve is a cubic Bézier curve, like CSS easing: [cubic-bezier.com](https://cubic-bezier.com/)
 shows how the points shape it.

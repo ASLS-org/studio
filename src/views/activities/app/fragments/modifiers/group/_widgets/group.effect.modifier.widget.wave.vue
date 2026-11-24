@@ -15,14 +15,26 @@
         <uk-flex
           col
           :gap="8"
-          style="width: 120px"
+          class="widget_wave_column"
         >
-          <uk-select-input
-            v-model="channel.waveform"
-            :disabled="!channel.type"
-            label="Waveform"
-            :options="channel.waveOptions"
-          />
+          <uk-flex :gap="8">
+            <uk-select-input
+              v-model="channel.waveform"
+              :disabled="!channel.type"
+              label="Waveform"
+              style="flex: 1; min-width: 0"
+              :options="channel.waveOptions"
+            />
+            <uk-num-input
+              v-if="isPWM"
+              v-model="channel.width"
+              :disabled="!channel.type"
+              :min="1"
+              :max="99"
+              label="Width"
+              style="width: 44px; flex: none"
+            />
+          </uk-flex>
           <uk-flex :gap="8">
             <uk-num-input
               v-model="channel.min"
@@ -54,16 +66,35 @@
           </uk-flex>
         </uk-flex>
         <uk-flex
-          style="width: 120px"
           col
           :gap="8"
+          class="widget_wave_column"
         >
-          <uk-select-input
-            v-model="channel.direction"
-            :disabled="!channel.type"
-            label="Direction"
-            :options="channel.directionOptions"
-          />
+          <!-- Mirror: the second half of the fixtures plays the wave flipped (lit while on, keyed
+            by state so a click keeps the look in step) -->
+          <uk-flex
+            :gap="8"
+            class="widget_wave_direction"
+          >
+            <uk-select-input
+              v-model="channel.direction"
+              :disabled="!channel.type"
+              label="Direction"
+              :options="channel.directionOptions"
+            />
+            <uk-button
+              :key="`mirror-${!!channel.mirror}`"
+              class="widget_wave_mirror"
+              label="mirror"
+              title="The second half of the fixtures plays the wave flipped (Min + Max − value)"
+              square
+              toggleable
+              color="var(--accent-blue)"
+              :disabled="!channel.type"
+              :model-value="!!channel.mirror"
+              @click="channel.mirror = !channel.mirror"
+            />
+          </uk-flex>
           <uk-select-input
             :model-value="channel.cellPhase ? 1 : 0"
             :disabled="!channel.type"
@@ -137,6 +168,7 @@ export default {
           max: 0,
           frequency: 0,
           phase: 0,
+          width: 50,
           waveform: 0,
           waveOptions: ['No Channel Selected'],
           direction: 0,
@@ -185,6 +217,23 @@ export default {
   },
   computed: {
     /**
+     * Whether the channel's waveform is PWM (its width is then shown)
+     *
+     * @type {Boolean}
+     */
+    /**
+     * Whether the channel's direction is a bounce (its time runs back on odd cycles)
+     *
+     * @type {Boolean}
+     */
+    isBounce() {
+      const name = this.channel.directionOptions?.[this.channel.direction];
+      return name === 'BOUNCELRT' || name === 'BOUNCERTL';
+    },
+    isPWM() {
+      return this.channel.waveOptions?.[this.channel.waveform] === 'PWM';
+    },
+    /**
      * Changes only when something that affects the drawn curve's *shape*
      * changes. Used to redraw the canvas without a full deep watch on the
      * whole channel object (which also contains high-frequency fields like
@@ -192,9 +241,9 @@ export default {
      */
     shapeSignature() {
       const {
-        waveform, min, max, frequency, phase, color,
+        waveform, min, max, frequency, phase, color, width, direction, mirror,
       } = this.channel;
-      return [waveform, min, max, frequency, phase, color].join('|');
+      return [waveform, min, max, frequency, phase, color, width, direction, mirror].join('|');
     },
   },
   watch: {
@@ -283,10 +332,23 @@ export default {
       }
 
       const freq = Math.max(Number(this.channel.frequency) || 0, 0.0001);
-      // Same scaling as the original implementation — this is what produces
-      // visible separation between fixtures across the canvas width.
-      const phaseFraction = ((((Number(fixture.phase) || 0) / freq) * (180 / Math.PI)) / 360);
-      let t = (this.channel.time || 0) + phaseFraction;
+      const time = this.channel.time || 0;
+      let t;
+      if (this.isBounce) {
+        // The curve runs forward on even cycles and backward on odd ones (FXChannel.bounceTime):
+        // place the dot, in the current cycle, where the curve has the fixture's wave position
+        const cycles = freq * time;
+        const k = Math.floor(cycles);
+        const folded = k % 2 === 0 ? cycles - k : 1 - (cycles - k);
+        let q = folded + (Number(fixture.phase) || 0) / (2 * Math.PI);
+        q -= Math.floor(q);
+        t = (k % 2 === 0 ? k + q : k + 1 - q) / freq;
+      } else {
+        // Same scaling as the original implementation — this is what produces
+        // visible separation between fixtures across the canvas width.
+        const phaseFraction = ((((Number(fixture.phase) || 0) / freq) * (180 / Math.PI)) / 360);
+        t = time + phaseFraction;
+      }
       t -= Math.floor(t); // wrap into [0, 1) safely for negative values
 
       const xOffset = t * w;
@@ -343,6 +405,23 @@ export default {
         }
       }
       ctx.stroke();
+
+      // Mirror: the flipped wave the second half of the fixtures plays, dashed and faint
+      if (this.channel.mirror) {
+        const flip = Number(this.channel.min) + Number(this.channel.max);
+        ctx.save();
+        ctx.globalAlpha = 0.5;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        for (let i = 0; i <= samples; i++) {
+          const t = i / samples;
+          const y = this.valueToY(flip - this.channel.getValue(t), h);
+          if (i === 0) ctx.moveTo(t * w, y);
+          else ctx.lineTo(t * w, y);
+        }
+        ctx.stroke();
+        ctx.restore();
+      }
     },
   },
 };
@@ -354,7 +433,26 @@ export default {
   width: 100%;
 }
 .textual {
-  padding: 10px;
+  flex-shrink: 0;
+  padding: var(--space-5);
+}
+/* Each column is as narrow as its fields allow with their labels whole, at least 120px */
+.widget_wave_column {
+  flex-shrink: 0;
+  min-width: 120px;
+  width: min-content;
+}
+.widget_wave_direction {
+  align-items: flex-end;
+}
+.widget_wave_direction .uikit_select {
+  flex: 1;
+  min-width: 0;
+}
+/* As tall as the select beside it */
+.widget_wave_mirror {
+  flex: none;
+  height: var(--control-height);
 }
 .widget_wave_modifier {
   position: relative;
@@ -392,14 +490,14 @@ export default {
   width: 12px;
   height: 12px;
   background: #1e45b9;
-  border-radius: 50%;
+  border-radius: var(--radius-round);
   cursor: pointer;
   border: 2px solid rgba(255, 255, 255, .2);
   will-change: left, top;
 }
 .dot .fixture-label {
   font-family: Roboto-medium;
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--secondary-lighter);
   text-align: center;
   position: absolute;
@@ -408,7 +506,7 @@ export default {
   transform: translate(-50%,0%);
   background: inherit;
   padding: 1px 5px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   opacity: inherit;
   opacity: .8;
 }

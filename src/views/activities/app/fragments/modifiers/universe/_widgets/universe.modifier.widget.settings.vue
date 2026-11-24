@@ -18,15 +18,23 @@
             style="width: 100%"
           />
           <uk-num-input
-            v-model="universe.id"
+            :model-value="universe.id"
+            readonly
             style="width: 60px"
             label="ID"
           />
         </uk-flex>
+        <uk-select-input
+          label="Color"
+          color="var(--accent-blue)"
+          :model-value="getIndexFromColor(universe.color)"
+          :options="colorOptions"
+          @input="setUniverseColor"
+        />
         <uk-flex
           gap="10"
           center-both
-          style="width:100%;"
+          style="width:100%"
         >
           <uk-select-input
             :model-value="universe?.stream?.client?.name ?? null"
@@ -42,17 +50,11 @@
           />
           <uk-button
             square
-            label="config"
-            style="height:25px; min-width: 75px; margin-top:22px"
+            label="add"
+            style="height: var(--control-height); min-width: 75px; margin-top: 22px"
+            @click="connectionsPopupState = true"
           />
         </uk-flex>
-        <uk-select-input
-          label="Color"
-          color="var(--accent-blue)"
-          :model-value="getIndexFromColor(universe.color)"
-          :options="colorOptions"
-          @input="setUniverseColor"
-        />
       </uk-flex>
     </template>
     <h3
@@ -61,17 +63,23 @@
     >
       No Universe Selected
     </h3>
+    <connections-popup v-model="connectionsPopupState" />
   </uk-widget>
 </template>
 
 <script>
+import modal from '@/views/mixins/modal.mixin';
 import colorMixin from '@/views/mixins/color.mixin';
+import ConnectionsPopup from '@/views/activities/app/fragments/toolbar/_popups/popup.connections.vue';
 
 export default {
   name: 'UniverseModifierSettings',
   compatConfig: {
     // or, for full vue 3 compat in this component:
     MODE: 3,
+  },
+  components: {
+    ConnectionsPopup,
   },
   mixins: [colorMixin],
   props: {
@@ -91,6 +99,10 @@ export default {
     };
   },
   computed: {
+    /**
+     * Connections popup display state (opened by Config)
+     */
+    connectionsPopupState: modal('universe.connections', 'universe'),
     /**
      * Returns an array of HTML-formated strings s to be fed into uikit select inputs
      *
@@ -119,12 +131,12 @@ export default {
 
 <style scoped>
 .universe_settings_wrapper{
-  min-width: 250px;
+  min-width: var(--widget-width-sm);
 }
 .universe_settings {
   height: 100%;
-  padding: 10px;
-  min-width: 250px;
+  padding: var(--space-5);
+  min-width: var(--widget-width-sm);
 }
 .empty_text {
   display: flex;

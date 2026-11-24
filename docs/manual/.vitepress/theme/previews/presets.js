@@ -23,10 +23,8 @@
  *   size (a demo with popups gets room for them); popupInBox: its popups open in its own box (a
  *   component that is a popup, e.g. the visualizer settings, next to the card)
  * - fit: 'scale' (default: whole, scaled down to fit) or 'scroll' (panels wider than the page)
- * - route: initial path of the preview's router; with `panel`, the router view is the preview
- *   (Studio panels that read the route)
- * - warmRoute: where the router starts before going to `route`, for panels that read their route
- *   only when it changes (the group and chase panels: their route watchers aren't immediate)
+ * - view(view, show): sets up the preview's own view state (src/views/view.state.js) before it
+ *   mounts: the panel, group or chase it shows (the selection follows, as in Studio)
  * - clock: true when it shows anything moving (Studio's clock runs while it's the active preview)
  * - demo: steps a fake cursor plays on the component (previews/demo.js); the reader watches. A
  *   demo plays its flow to the end; each loop starts again from the demo show
@@ -64,17 +62,6 @@ const VisualizerSettings = () => import('@/views/activities/app/fragments/toolba
 
 /** A fixture row in the patch bay (under its universe) */
 const patchRow = (has) => ({ click: '.uikit_list_item.uikit_sublist_body', has });
-/**
- * The patch bay opens a fixture in the universe panel, whose fixture pool outlines it in the
- * visualizer (with the move/rotate controls): without that panel, outline it here
- * @param {Show} show
- * @param {Object} to route
- */
-const outlineFixture = (show, to) => {
-  const id = Number(to.query.fixtureId);
-  if (Number.isNaN(id) || !show.fixturePool.checkIfExists(id)) return;
-  show.fixturePool.getFromId(id).highlightSingle(true, true);
-};
 /** A row in a widget's list */
 const row = (has) => ({ click: '.uikit_list_item', has });
 /** A cue's body in the cue pool (plays or stops it), by slot */
@@ -164,20 +151,23 @@ const PRESETS = {
   },
   'fixture-settings': {
     title: 'Fixture Settings',
-    width: 200,
+    width: 300,
     height: STRIP,
     component: () => import('@/views/activities/app/fragments/modifiers/universe/_widgets/universe.modifier.widget.fixture.settings.vue'),
     props: (show) => ({ fixture: fixture(show, 0) }),
   },
   'fixture-position': {
     title: 'Position Tool',
-    width: 170,
+    width: 450,
     height: STRIP,
-    componentWidth: 170,
+    componentWidth: 450,
     componentHeight: STRIP,
     stage: true,
     component: () => import('@/views/activities/app/fragments/modifiers/universe/_widgets/universe.modifier.widget.fixture.position.tool.vue'),
-    props: (show) => ({ fixture: fixture(show, 0) }),
+    props: (show) => ({
+      fixtures: [fixture(show, 0)],
+      universeFixtures: universe(show).fixturePool.fixtures,
+    }),
     clock: true,
   },
   'universe-settings': {
@@ -197,9 +187,9 @@ const PRESETS = {
   },
   'group-cuepool': {
     title: 'Cue Pool',
-    width: 440,
+    width: 170,
     height: STRIP,
-    componentWidth: 440,
+    componentWidth: 170,
     componentHeight: STRIP,
     stage: true,
     component: CuePool,
@@ -217,7 +207,7 @@ const PRESETS = {
     title: 'Fade in',
     width: 341,
     height: STRIP,
-    component: () => import('@/views/activities/app/fragments/modifiers/group/_widgets/group.scene.modifier.widget.curve.vue'),
+    component: () => import('@/views/activities/app/fragments/modifiers/_widgets/modifier.widget.curve.vue'),
     props: (show) => ({ fade: cue(show, 3).fadeIn }),
   },
   'effect-wave': {
@@ -226,6 +216,22 @@ const PRESETS = {
     height: STRIP,
     component: () => import('@/views/activities/app/fragments/modifiers/group/_widgets/group.effect.modifier.widget.wave.vue'),
     props: (show) => ({ channel: cue(show, 2).channels[0] }),
+    clock: true,
+  },
+  'effect-pantilt-scope': {
+    title: 'Pan/Tilt Scope',
+    width: 560,
+    height: STRIP,
+    component: () => import('@/views/activities/app/fragments/modifiers/group/_widgets/group.effect.modifier.widget.scope.pantilt.vue'),
+    props: (show) => ({ effect: cue(show, 2) }),
+    clock: true,
+  },
+  'effect-colour-scope': {
+    title: 'Colour Scope',
+    width: 600,
+    height: STRIP,
+    component: () => import('@/views/activities/app/fragments/modifiers/group/_widgets/group.effect.modifier.widget.scope.colour.vue'),
+    props: (show) => ({ effect: cue(show, 1) }),
     clock: true,
   },
   /* ── Panels ── */
@@ -237,7 +243,6 @@ const PRESETS = {
     componentHeight: 620,
     stage: true,
     component: PatchBay,
-    onRoute: outlineFixture,
     clock: true,
   },
   'group-pool': {
@@ -255,9 +260,7 @@ const PRESETS = {
     height: STRIP,
     fit: 'scroll',
     component: () => import('@/views/activities/app/fragments/modifiers/group/group.modifier.fragment.vue'),
-    route: '/group/0',
-    warmRoute: '/group/1',
-    panel: true,
+    view: (view) => view.openGroup(0),
     clock: true,
   },
   'scene-modifier': {
@@ -275,9 +278,7 @@ const PRESETS = {
     height: STRIP,
     fit: 'scroll',
     component: () => import('@/views/activities/app/fragments/modifiers/chase/chase.modifier.fragment.vue'),
-    route: '/group/0/chase/0',
-    warmRoute: '/group/1/chase/0',
-    panel: true,
+    view: (view) => view.openChase(0, 0),
     clock: true,
   },
   /* ── Visualizer ── */
@@ -290,7 +291,6 @@ const PRESETS = {
     componentHeight: 520,
     stage: true,
     component: PatchBay,
-    onRoute: outlineFixture,
     demo: [
       { caption: 'Select a fixture' },
       patchRow('MAC Aura 2'),
@@ -312,9 +312,9 @@ const PRESETS = {
   'scene-stage': {
     // The rig's two scenes, one after the other: each fades in over its duration
     title: 'Cue Pool',
-    width: 440,
+    width: 170,
     height: STRIP,
-    componentWidth: 440,
+    componentWidth: 170,
     componentHeight: STRIP,
     stage: true,
     component: CuePool,
@@ -336,9 +336,9 @@ const PRESETS = {
   'effect-stage': {
     // The rig's effects: a hue chase across the heads, then crossing circles in blue
     title: 'Cue Pool',
-    width: 440,
+    width: 170,
     height: STRIP,
-    componentWidth: 440,
+    componentWidth: 170,
     componentHeight: STRIP,
     stage: true,
     component: CuePool,
@@ -366,7 +366,6 @@ const PRESETS = {
     componentHeight: 520,
     stage: true,
     component: PatchBay,
-    onRoute: outlineFixture,
     demo: [
       { caption: 'Click: one fixture' },
       patchRow('MAC Aura 1'),
@@ -375,6 +374,24 @@ const PRESETS = {
       { ...patchRow('MAC Aura 3'), ctrl: true },
       { ...patchRow('MAC Aura 4'), ctrl: true },
       { wait: 2500 },
+      { caption: null },
+    ],
+  },
+  'patch-bay-new': {
+    // New opens the media popup: a DMX universe (the only type so far), named, then added
+    title: 'Patch Bay',
+    width: 440,
+    height: 420,
+    component: PatchBay,
+    demo: [
+      { caption: 'New: choose what to add' },
+      { click: '.patch_bay_header .uikit_button', has: 'new' },
+      { wait: 1200 },
+      { caption: 'A DMX universe: name it' },
+      { field: 'Name', text: 'Truss', within: '.popup' },
+      { caption: 'OK adds it to the patch bay' },
+      popupButton('ok'),
+      { wait: 2600 },
       { caption: null },
     ],
   },
@@ -432,7 +449,7 @@ const PRESETS = {
   },
   'patch-add': {
     // The universe view's fixture pool Add opens the patch popup (the patch bay's New doesn't
-    // yet). A PAR is patched, hung at the front, and appears in the rig
+    // yet). A PAR is patched, appears in the rig, and is hung at the front with the Position Tool
     title: 'Universe',
     width: 480,
     height: 620,
@@ -440,8 +457,7 @@ const PRESETS = {
     componentHeight: STRIP,
     stage: true,
     component: UniverseModifier,
-    route: '/universe/0',
-    panel: true,
+    view: (view) => view.openUniverse(0),
     clock: true,
     demo: [
       { caption: 'Add opens the patch popup' },
@@ -451,16 +467,10 @@ const PRESETS = {
       { click: '.popup .uikit_list_item', has: 'Bundled (GDTF)' },
       { click: '.popup .uikit_list_item', has: 'Generic PAR RGBW' },
       { wait: 900 },
-      { caption: 'Place it: 4 m up, 3 m in front, hanging' },
-      { field: 'Pos Y', text: '-3', within: '.popup' },
-      { field: 'Pos Z', text: '4', within: '.popup' },
-      { field: '°Rot X', text: '180', within: '.popup' },
-      { caption: 'OK patches it' },
+      { caption: 'OK patches it at the first free address, hung 4 m up' },
       popupButton('ok'),
       { wait: 1200 },
-      { caption: 'In the fixture pool and on stage' },
-      { wait: 600 },
-      { caption: 'Select it: the visualizer outlines it, 3 m in front of the rig' },
+      { caption: 'Select it: the Position Tool shows where it went' },
       row('Generic PAR RGBW'),
       { wait: 2800 },
       { caption: null },
@@ -500,7 +510,8 @@ const PRESETS = {
   },
 
   'effect-channel-add': {
-    // Rainbow plays (colour only); the Eight preset adds pan and tilt: the beams start drawing
+    // Rainbow plays (colour only); adding Pan and Tilt from the fixtures' channels sets the beams
+    // moving
     title: 'Effect',
     width: 760,
     height: 520,
@@ -514,12 +525,17 @@ const PRESETS = {
     demo: [
       { caption: 'Rainbow plays: it only moves the colour' },
       { wait: 3000 },
-      { caption: 'Add a modulated channel' },
+      { caption: 'Add a modulated channel: the fixtures\' own channels are listed' },
       { click: '.uikit_button', has: 'add' },
       { wait: 900 },
-      { caption: 'Pick a preset: pan & tilt, Eight' },
-      { click: '.popup .uikit_list_item', has: 'pan & tilt' },
-      { click: '.popup .uikit_list_item.uikit_sublist_body', has: 'Eight' },
+      { caption: 'Pick Pan' },
+      { click: '.popup .uikit_list_item', has: 'Pan' },
+      popupButton('ok'),
+      { wait: 900 },
+      { caption: 'Then Tilt' },
+      { click: '.uikit_button', has: 'add' },
+      { wait: 700 },
+      { click: '.popup .uikit_list_item', has: 'Tilt' },
       popupButton('ok'),
       { wait: 1000 },
       { caption: 'Pan and Tilt join the effect, over their whole range: beams sweep off stage' },
@@ -532,7 +548,7 @@ const PRESETS = {
       row('Tilt'),
       { field: 'Min', text: '104' },
       { field: 'Max', text: '152' },
-      { caption: 'The beams now draw figures of eight on the floor, in rainbow colours' },
+      { caption: 'The beams now sweep the floor in rainbow colours; the Pan/Tilt Scope shapes it' },
       { wait: 7000 },
       { caption: null },
     ],
@@ -614,7 +630,7 @@ const PRESETS = {
     height: STRIP,
     component: Timeline,
     props: (show) => ({ pool: chase(show) }),
-    route: '/group/0/chase/0',
+    view: (view) => view.openChase(0, 0),
     demo: [
       { caption: 'Double click a lane: a cue item (here Sunset, in bar 1)' },
       { dblclick: '.widget_pool_timeline_grid_row', nth: 3, x: 90 },
@@ -697,8 +713,7 @@ const PRESETS = {
     componentWidth: 560,
     componentHeight: STRIP,
     component: UniverseModifier,
-    route: '/universe/0',
-    panel: true,
+    view: (view) => view.openUniverse(0),
     start: (show) => {
       if (!show.outputPool.outputs.length) {
         show.outputPool.addRaw({ name: 'Gateway', remote: '127.0.0.1', port: 4515 });

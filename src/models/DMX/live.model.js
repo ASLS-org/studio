@@ -23,12 +23,6 @@ const ANIMATION_METHODS = {
 };
 
 /**
- * Quantization shift tolerance
- *
- * @constant {Number} QUANTIZATION_TOLERANCE
- */
-const QUANTIZATION_TOLERANCE = 0.1;
-/**
  * TAP BPM precision
  *
  * @constant {Number} TAP_PRECISION
@@ -249,20 +243,27 @@ class Live {
    *
    * @public
    * @param {Function} updateFunction handle to update function
-   * @param {number} [quantize=0] Animation quantization
+   * @param {number} [quantize=0] Animation quantization in beats (fractions allowed): the
+   *   animation starts on the next multiple of `quantize` beats of Live time. 0 starts at once.
+   * @param {number} [fps=60] Animation frame rate
+   * @param {Function} [quantizeReadyCallback] called when the animation actually starts
    * @return {Number} Animation ID
    */
   add(updateFunction, quantize = 0, fps = 60, quantizeReadyCallback = () => {}) {
-    if (quantize) {
+    if (quantize > 0) {
       const animationId = this.genAnimationId();
+      let first = null;
       const animation = new Animation(((t) => {
-        const tick = ((parseInt(t, 10) / parseInt(this.beatDuration, 10)) % quantize);
-        if (tick >= quantize - 1 && tick <= quantize - 1 + QUANTIZATION_TOLERANCE) {
-          const animationIndex = this.animations.findIndex((item) => item.id === animationId);
-          if (animationIndex > -1) {
-            this.animations[animationIndex]._updateFunction = updateFunction;
-            quantizeReadyCallback();
-          }
+        const step = quantize * this.beatDuration;
+        const boundary = Math.floor(t / step);
+        // Starts when Live time enters another quantize interval: the next boundary, or any jump
+        // (transport stopped or reset, tempo changed), so a waiting animation never stays stuck
+        if (first === null) {
+          first = boundary;
+        } else if (boundary !== first) {
+          animation._updateFunction = updateFunction;
+          quantizeReadyCallback();
+          updateFunction(t);
         }
       }), animationId);
       this.animations.push(animation);

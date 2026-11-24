@@ -15,7 +15,6 @@
           filterable
           no-highlight
           auto-select-first
-          accordion
           @toggle="setFixtureList"
         />
       </uk-flex>
@@ -123,21 +122,11 @@ export default {
      * @param {Array} fixturesData array of fixture objects
      */
     setFixtureList(fixturesData) {
-      /**
-       * Force clearing selected fixtures appearance on toggled data change
-       */
-      if (this.selectedFixtures.length) {
-        this.selectedFixtures[0].highlightSingle(false, true);
-      }
-      this.selectedFixtures = fixturesData.map((fixture, index) => {
-        const fxt = this.$show.fixturePool.getFromId(fixture.id);
-        if (index) {
-          fxt.highlight(true, true);
-        } else {
-          fxt.highlightSingle(true, true);
-        }
-        return fxt;
-      });
+      this.selectedFixtures = fixturesData
+        .map((fixture) => this.$show.fixturePool.fixtures.find((f) => f.id === fixture.id))
+        .filter(Boolean);
+      // The 3D view shows the fixtures being picked while the popup is open
+      this.$view.previewFixtures(this.selectedFixtures.map((fixture) => fixture.id));
     },
     /**
      * Create new group
@@ -160,9 +149,7 @@ export default {
      * @public
      */
     deinit() {
-      if (this.selectedFixtures.length) {
-        this.selectedFixtures[0].highlightSingle(false, true);
-      }
+      this.$view.previewFixtures(null);
     },
   },
 };
@@ -178,11 +165,11 @@ export default {
 }
 .fixture_list {
   height: 100%;
-  width: 300px;
-  border-right: 1px solid var(--primary-dark);
+  width: var(--widget-width-md);
+  border-right: var(--border-width) solid var(--primary-dark);
 }
 .group_settings{
-  padding: 10px;
+  padding: var(--space-5);
   min-width: 150px;
 }
 </style>

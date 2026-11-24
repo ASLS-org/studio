@@ -67,6 +67,8 @@ class Show extends EventEmitter {
     this.ready = false;
     this.artnetServerUrl = import.meta.env.VITE_APP_DMX2WS_SERVER_URL;
     this.visualizerHandle = null;
+    // Universe and group references to missing fixtures skipped by the last load
+    this.droppedReferences = 0;
     this.universePool.addRaw();
     this.preloadFixtureList();
   }
@@ -247,6 +249,11 @@ class Show extends EventEmitter {
     showData.universes.forEach((universeData) => {
       const universe = this.universePool.addRaw(universeData);
       universeData.fixtures.forEach((fixtureData) => {
+        // A reference to a fixture the show doesn't have is dropped (reported after loading)
+        if (!this.fixturePool.checkIfExists(fixtureData.id)) {
+          this.droppedReferences += 1;
+          return;
+        }
         const fixture = this.fixturePool.getFromId(fixtureData.id);
         universe.patchFixture(fixture, true);
       });
@@ -263,6 +270,10 @@ class Show extends EventEmitter {
       showData.groups.forEach((g) => {
         const group = this.groupPool.addRaw(g);
         g.fixtures.forEach((f) => {
+          if (!this.fixturePool.checkIfExists(f.id)) {
+            this.droppedReferences += 1;
+            return;
+          }
           const fixture = this.fixturePool.getFromId(f.id);
           group.addFixture(fixture);
         });
@@ -284,10 +295,8 @@ class Show extends EventEmitter {
   prepareOutputs(showData) {
     if (showData.outputs) {
       showData.outputs.forEach((o) => {
-        this.outputPool.addRaw({
-          ...o,
-          universe: this.universePool.getFromId(o.universe),
-        });
+        // An output's saved universe isn't used (and may have been deleted)
+        this.outputPool.addRaw(o);
       });
     }
   }
@@ -298,17 +307,24 @@ class Show extends EventEmitter {
    * @param {Object} fixture a fixture configuration object
    */
   deleteFixture(fixture) {
+    if (!this.fixturePool.checkIfExists(fixture.id)) return;
     const fixtureHandle = this.fixturePool.getFromId(fixture.id);
-    if (fixtureHandle) {
-      this.groupPool.groups.forEach((g) => {
-        if (g.fixturePool.checkIfExists(fixtureHandle.id)) {
-          g.deleteFixture(fixtureHandle);
-        }
-      });
-      const universe = this.universePool.getFromId(fixtureHandle.universe);
-      universe.unpatchFixture(fixtureHandle);
-      this.fixturePool.delete(fixtureHandle, true);
-    }
+    // Each group drops the fixture on its own: one failing doesn't stop the delete
+    this.groupPool.groups.forEach((g) => {
+      if (!g.fixturePool.checkIfExists(fixtureHandle.id)) return;
+      try {
+        g.deleteFixture(fixtureHandle);
+      } catch (err) {
+        EventBus.emit('app_error', new Error(`Group "${g.name}" could not drop fixture `
+          + `${fixtureHandle.id}: ${err.message}`));
+      }
+    });
+    // Its universe is the one it's patched in (its universe number may be stale)
+    const universe = this.universePool.universes
+      .find((u) => u.fixturePool.checkIfExists(fixtureHandle.id))
+      || this.universePool.universes.find((u) => u.id === Number(fixtureHandle.universe));
+    if (universe) universe.unpatchFixture(fixtureHandle);
+    this.fixturePool.delete(fixtureHandle, true);
   }
 
   /**
@@ -419,6 +435,7 @@ class Show extends EventEmitter {
 
     this.loading.message = 'Setting up show fixtures';
     this.loading.percentage = 60;
+    this.droppedReferences = 0;
     await this.prepareFixtures(showData);
 
     this.loading.message = 'Setting up universes';
@@ -435,6 +452,12 @@ class Show extends EventEmitter {
     this.loading.percentage = 90;
     this.prepareOutputs(showData);
 
+    if (this.droppedReferences) {
+      EventBus.emit('app_error', new Error(`${this.droppedReferences} fixture reference(s) in this `
+        + 'show pointed to fixtures it no longer has and were dropped. Check your universes and '
+        + 'groups.'));
+    }
+
     this.loading.message = 'Finalizing';
     this.loading.percentage = 95;
     this.name = showData.name;
@@ -442,6 +465,7 @@ class Show extends EventEmitter {
     this.isSaved = true;
 
     this.persistLocally();
+    EventBus.emit('show_loaded');
   }
 
   /**

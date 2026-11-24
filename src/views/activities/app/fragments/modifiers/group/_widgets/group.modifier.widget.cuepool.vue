@@ -12,11 +12,10 @@
         class="body"
       >
         <uk-flex
+          ref="keys"
           tabindex="0"
           col
           class="body"
-          @focus="handleFocus(true)"
-          @focusout="handleFocus(false)"
         >
           <div
             ref="grid"
@@ -54,8 +53,10 @@
               class="grid_item"
               :draggable="true"
               @click="playCue(cue)"
+              @pointerdown="pressCue(cue, $event)"
               @dragstart="
                 (e) => {
+                  releaseHeldCue();
                   startDrag(e, cue);
                 }
               "
@@ -120,7 +121,7 @@
     </uk-flex>
     <popup-cue-pool
       v-model="cuePopupDisplayState"
-      :cue-id="selectedCue"
+      :cue-id="newCueId"
       :group="group"
       @add="addCue"
     />
@@ -128,7 +129,11 @@
 </template>
 
 <script>
+import modal from '@/views/mixins/modal.mixin';
 import LiveMixin from '@/views/mixins/live.mixin';
+import KeysMixin from '@/views/mixins/keys.mixin';
+import { CUE_TILE_WIDTH, CUE_TILE_HEIGHT, CUE_TILES_PER_ROW } from '@/views/utils/geometry';
+import { CUE_TRIGGER_STYLES } from '@/models/DMX/cue.model';
 import popupCuePool from '../_popups/group.modifier.popup.cuepool.vue';
 
 export default {
@@ -140,7 +145,7 @@ export default {
   components: {
     popupCuePool,
   },
-  mixins: [LiveMixin],
+  mixins: [LiveMixin, KeysMixin],
   props: {
     /**
      * Handle to group instance
@@ -154,9 +159,13 @@ export default {
       }),
     },
   },
-  emits: ['select', 'add'],
+  emits: ['add'],
   data() {
     return {
+      /**
+       * Temporary cue held down with the pointer (stops on release)
+       */
+      heldCue: null,
       /**
        * Widget header data
        */
@@ -165,17 +174,9 @@ export default {
         icon: 'grid',
       },
       /**
-       * Cue creation popup display state
+       * Cue pool slot a new cue is being created in
        */
-      cuePopupDisplayState: false,
-      /**
-       * Handle to group's cue list
-       */
-      cues: this.group.cuePool.cues,
-      /**
-       * Selected cue index
-       */
-      selectedCue: null,
+      newCueId: null,
       /**
        * Whether cue's body (player) is seleted
        */
@@ -184,23 +185,34 @@ export default {
        * Whether cue's footer (selector) is seleted
        */
       hoveredCueSelector: -1,
-      /**
-       * Cue deletion popup state
-       */
-      deletePopupState: false,
     };
   },
-  watch: {
+  computed: {
     /**
-     * @todo maybe avoid watching whole groups, evern though watching routine isn't deep ?
+     * Cue creation popup display state
      */
-    group() {
-      this.cues = this.group ? this.group.cuePool.cues : [];
-      this.selectCue(this.cues[0] || null);
+    cuePopupDisplayState: modal('cuepool.add', 'group'),
+    /**
+     * The group's cues
+     *
+     * @type {Array<Object>}
+     */
+    cues() {
+      return this.group ? this.group.cuePool.cues : [];
+    },
+    /**
+     * Id of the group's selected cue (from the view state)
+     *
+     * @type {?Number}
+     */
+    selectedCue() {
+      // Outside the app (the manual's home story) there is no view state: no selection
+      if (!this.$view || !this.group || this.$view.group?.id !== this.group.id) return null;
+      return this.$view.cue?.id ?? null;
     },
   },
   beforeUnmount() {
-    window.removeEventListener('keydown', this.keydownHandler);
+    this.releaseHeldCue();
   },
   methods: {
     /**
@@ -238,8 +250,8 @@ export default {
      */
     computeCueStyle(cue) {
       const style = {
-        left: `${parseInt(cue.id % 4, 10) * 100}px`,
-        top: `${Math.floor(parseInt(cue.id, 10) / 4) * 81}px`,
+        left: `${(parseInt(cue.id, 10) % CUE_TILES_PER_ROW) * CUE_TILE_WIDTH}px`,
+        top: `${Math.floor(parseInt(cue.id, 10) / CUE_TILES_PER_ROW) * CUE_TILE_HEIGHT}px`,
       };
       return style;
     },
@@ -252,8 +264,8 @@ export default {
      */
     computeCuePreviewStyle(cue) {
       const style = {
-        left: `${parseInt(cue.id % 4, 10) * 6.9}px`,
-        top: `${Math.floor(parseInt(cue.id, 10) / 4) * 6.11}px`,
+        left: `${(parseInt(cue.id, 10) % CUE_TILES_PER_ROW) * 6.9}px`,
+        top: `${Math.floor(parseInt(cue.id, 10) / CUE_TILES_PER_ROW) * 6.11}px`,
         background: cue.color,
       };
       return style;
@@ -265,13 +277,9 @@ export default {
      * @param {Object} cue handle to cue instance
      */
     selectCue(cue) {
-      if (cue) {
-        this.selectedCue = cue.id;
-        this.$emit('select', cue);
-      } else {
-        this.selectedCue = null;
-        this.$emit('select', null);
-      }
+      if (!this.$view) return;
+      if (this.group && this.$view.group?.id !== this.group.id) this.$view.openGroup(this.group.id);
+      this.$view.selectCue(cue ? cue.id : null);
     },
     /**
      * Plays a cue from the pool
@@ -280,8 +288,39 @@ export default {
      * @param {Object} cue handle to cue instance
      */
     playCue(cue) {
+      // A Temporary cue plays while held (see pressCue): the click after the release is ignored
+      if (cue.triggerStyle === CUE_TRIGGER_STYLES.TEMPORARY) return;
       this.selectCue(cue);
       cue.cue(true);
+    },
+    /**
+     * Starts a Temporary cue while the pointer is held on it, until the button is released
+     * (anywhere), the press is cancelled or the cue is dragged
+     *
+     * @public
+     * @param {Object} cue handle to cue instance
+     * @param {PointerEvent} e pointerdown event
+     */
+    pressCue(cue, e) {
+      if (cue.triggerStyle !== CUE_TRIGGER_STYLES.TEMPORARY || e.button !== 0) return;
+      this.releaseHeldCue();
+      this.selectCue(cue);
+      if (cue.animationId == null) cue.cue(true);
+      this.heldCue = cue;
+      window.addEventListener('pointerup', this.releaseHeldCue);
+      window.addEventListener('pointercancel', this.releaseHeldCue);
+    },
+    /**
+     * Stops the Temporary cue held down, if any
+     *
+     * @public
+     */
+    releaseHeldCue() {
+      window.removeEventListener('pointerup', this.releaseHeldCue);
+      window.removeEventListener('pointercancel', this.releaseHeldCue);
+      const cue = this.heldCue;
+      this.heldCue = null;
+      if (cue && cue.animationId != null) cue.cue(false);
     },
     /**
      * Displays cue creation popup
@@ -290,7 +329,7 @@ export default {
      * @param {Number} cueId index of the cue to be created
      */
     displayCuepoolPopup(cueId) {
-      this.selectedCue = cueId;
+      this.newCueId = cueId;
       this.cuePopupDisplayState = true;
     },
     /**
@@ -301,7 +340,6 @@ export default {
      */
     addCue(cue) {
       this.selectCue(cue);
-      this.cues = this.group.cuePool.cues;
       this.$emit('add', cue);
     },
     /**
@@ -310,11 +348,9 @@ export default {
        * @public
      */
     deleteCue() {
-      this.deletePopupState = false;
-      const cue = this.group.cuePool.getFromId(this.selectedCue);
-      this.group.deleteCue(cue);
-      this.cues = this.group.cuePool.cues;
-      this.selectCue(this.cues[0] || null);
+      // The selected cue: once it's gone, the view falls back to the group's first cue
+      const cue = this.cues.find((c) => c.id === this.selectedCue);
+      if (cue) this.group.deleteCue(cue);
     },
     /**
      * Initiates cue dragging procedure
@@ -352,28 +388,27 @@ export default {
       this.$refs.scroller.style.marginTop = `${(e.target.clientHeight - 25) * scrollingPerc}px`;
     },
     /**
-     * Handle component focus event
+     * Element whose focus makes the cue pool the focused block
      *
-       * @public
-     * @param {Bool} state focus state
+     * @public
+     * @returns {?Element}
      */
-    handleFocus(state) {
-      window.removeEventListener('keydown', this.keydownHandler);
-      if (state) {
-        window.addEventListener('keydown', this.keydownHandler);
-      }
+    keysElement() {
+      return this.$refs.keys?.$el || null;
     },
     /**
-     * Keydown handler
+     * Keys while the cue pool has focus: Delete or Backspace deletes the selected cue
      *
-       * @public
-     * @param {Object} e keydown event
+     * @public
+     * @param {KeyboardEvent} e keydown event
+     * @returns {Boolean} whether the key was handled
      */
-    keydownHandler(e) {
-      const { key } = e;
-      if (key === 'Backspace' || key === 'Delete') {
+    handleKeys(e) {
+      if (e.key === 'Backspace' || e.key === 'Delete') {
         this.deleteCue();
+        return true;
       }
+      return false;
     },
   },
 };
@@ -409,26 +444,27 @@ export default {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 99px;
-  height: 80px;
+  /* the grid pitch minus the 1px between tiles (fixed geometry) */
+  width: calc(var(--cue-tile-width) - 1px);
+  height: calc(var(--cue-tile-height) - 1px);
   cursor: pointer;
-  background: #161913;
+  background: var(--primary-light);
   opacity: 1;
   z-index: 1;
 }
 .grid_item_overlay {
-  border: 1px solid var(--secondary-dark);
+  border: var(--border-width) solid var(--secondary-dark);
   width: 100%;
   height: 100%;
   display: flex;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   flex-direction: column;
   opacity: 0.8;
   transition: opacity 0.15s;
 }
 .selected .grid_item_overlay {
   opacity: 1;
-  border: 1px solid var(--secondary-light);
+  border: var(--border-width) solid var(--secondary-light);
 }
 .grid_item:not(.empty):active {
   cursor: move;
@@ -448,7 +484,7 @@ export default {
   justify-content: center;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding: 8px;
+  padding: var(--space-4);
   white-space: initial;
   border-color: transparent;
 }
@@ -461,7 +497,7 @@ export default {
 .grid_item_body_icon {
   height: 28px !important;
   width: 18px !important;
-  fill: #ffffffb3; /* Since cues are colored, we're enforcing dark theme font color policies */
+  fill: var(--on-color-text);
 }
 .grid_item_body_icon.playing {
   height: 12px !important;
@@ -476,7 +512,7 @@ export default {
   align-items: center;
   text-align: center;
   justify-content: center;
-  padding: 0 8px;
+  padding: 0 var(--space-4);
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
@@ -495,7 +531,7 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 4px 4px;
+  padding: var(--space-2) var(--space-2);
   width: 100%;
   text-align: center;
   overflow: hidden;
@@ -533,7 +569,7 @@ export default {
   width: 100%;
   background: var(--secondary-light);
   opacity: 0.5;
-  border: 1px solid var(--secondary-light);
+  border: var(--border-width) solid var(--secondary-light);
 }
 .cue_preview {
   position: absolute;
@@ -543,7 +579,7 @@ export default {
 }
 .cue_preview.selected {
   opacity: 1;
-  border: 1px solid var(--secondary-light);
+  border: var(--border-width) solid var(--secondary-light);
 }
 .cue_preview.playing {
   animation: playing_animation 0.5s infinite alternate;

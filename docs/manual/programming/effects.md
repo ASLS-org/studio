@@ -15,29 +15,24 @@ blue.
 Create an effect like any cue: double click an empty slot of the group's **Cue Pool** and choose
 **effect** (see [Creating a cue](/programming/scenes#creating-a-cue)). Effects loop by default.
 Selecting an effect shows its widgets in the group view: **Modulated Channels**, **Channel
-Fixtures Activity** and the **Effect Tool**, from left to right (the demo below shows all three).
+Fixtures Activity**, the selected channel's scope (**Colour Scope** or **Pan/Tilt Scope**), then
+the **Effect Tool**, from left to right.
 
 ## Modulated Channels
 
 Lists the channels this effect moves. Click one to edit it in the **Effect Tool**.
 
-Press **Add** to add a channel. The **Add Modulated Channel** popup lists the kinds of channels an
-effect can move: unfold one, pick a preset and press **OK**.
+Press **Add** to add a channel. The **Add Modulated Channel** popup lists every channel the
+effect's fixtures have, each with its icon; the ones the effect already moves say **in use**. Pick
+one (<kbd>Ctrl</kbd>/<kbd>⌘</kbd> or <kbd>Shift</kbd> + click for several) and press **OK**: it
+joins the effect with a plain wave over its whole range, and is selected. To remove a channel,
+select it, press <kbd>Delete</kbd> or <kbd>Backspace</kbd> and confirm.
 
-| Kind | Presets |
-| --- | --- |
-| Zoom | zoom |
-| Dimmer | dimmer |
-| Pan & tilt | Line, Circle, Eight, Pan, Tilt |
-| Color | Hue shift, color intensity red, green and blue |
+Selecting a colour channel shows the [Colour Scope](#colour-scope), selecting Pan or Tilt the
+[Pan/Tilt Scope](#pan-tilt-scope): their presets and shapes set whole looks in one go.
 
-A preset adds its channels with their settings, or applies them to the channels the effect already
-has. To remove a channel, select it, press <kbd>Delete</kbd> or <kbd>Backspace</kbd> and
-confirm.
-
-The preview adds the **Eight** preset to *Rainbow* while it plays. Pan and tilt first sweep their
-whole range, so the beams leave the stage; narrowing **Min** and **Max** keeps the figure on the
-floor. Presets move a channel over its full range: narrowing it is usually the next thing to do.
+The preview adds Pan and Tilt to *Rainbow* while it plays. They first sweep their whole range, so
+the beams leave the stage; narrowing **Min** and **Max** keeps them on the floor.
 
 <LivePreview preset="effect-channel-add" />
 
@@ -60,6 +55,8 @@ Try the settings below on the demo rig's four heads, with a dimmer effect:
   first head to the last, as a wave.
 - **SYM**: the offsets grow from both ends towards the middle: the movement opens and closes like a
   curtain.
+- **BOUNCELRT**: the offsets of **LTR**, but the wave runs one way for a cycle, then back the
+  other way for the next, smoothly. **BOUNCERTL** starts the other way, as **RTL**.
 
 ## Effect Tool
 
@@ -70,11 +67,13 @@ on it. Below is *Ballyhoo*'s pan: a sine between 92 and 164, twice per effect du
 
 | Setting | Description |
 | --- | --- |
-| **Waveform** | The shape: **SINE** (smooth), **TRIANGLE** (straight up and down), **SQUARE** (jumps between min and max) |
+| **Waveform** | The shape: **SINE** (smooth), **TRIANGLE** (straight up and down), **SQUARE** (jumps between min and max), **PWM** (a square whose time at max you set with **Width**) |
+| **Width** | With **PWM** only: the share of each cycle spent at **Max**, 1–99 %. At 10 %, short flashes; at 90 %, short blackouts |
 | **Min**, **Max** | The channel's lowest and highest value (DMX 0–255) |
 | **Freq** | How many times the waveform repeats over the effect's **Duration** (1–100). At 1, a 2-bar effect does one cycle every 2 bars |
 | **Phase** | Shifts the whole waveform, in degrees |
-| **Direction** | How the offset runs across fixtures: **LTR** first to last, **RTL** last to first, **SYM** from both ends to the middle |
+| **Direction** | How the offset runs across fixtures: **LTR** first to last, **RTL** last to first, **SYM** from both ends to the middle, **BOUNCELRT** and **BOUNCERTL** back and forth |
+| **Mirror** | The second half of the fixtures (in the effect's order; the middle one of an odd count stays) plays the wave flipped: high where the others are low. On **Pan**, heads move as mirror images, left and right; the graph adds the flipped wave, dashed |
 | **Spread over** | **Fixtures**: one offset per fixture, a fixture's cells move together. **Cells**: one offset per cell (fixture order, then cell order), so the movement runs along a pixel bar |
 | **Phase start**, **Phase stop** | The offset of the first and of the last fixture (or cell), −360° to 360°. Those in between are spread evenly |
 
@@ -88,9 +87,115 @@ effect runs its colour cycle along the pixels instead of changing the whole bar 
 > **Note:** An effect moves its channel in every cell of a fixture (each pixel's dimmer, each head's
 > pan).
 
-> **Note:** In this release, the **PWM** waveform keeps the channel at its lowest, and the
-> **BOUNCELRT** and **BOUNCERTL** directions don't spread the fixtures (they all move together).
-> Use the other waveforms and directions ([Known limitations](/reference/limitations#programming)).
+## Colour Scope
+
+Shown while a colour channel (red, green, blue, cyan, magenta, yellow, white or amber) is
+selected in **Modulated Channels**, its rows on the left of its fields: one row per fixture,
+numbered at its start, with time running across one effect loop. Each row is
+painted with the colour that fixture gets at each moment, so a colour travelling across the rig
+reads as a diagonal. A line marks the current moment while the effect plays; a fixture switched
+off in **Channel Fixtures Activity** shows an empty row. Hover a row to read the fixture, the
+moment and its colour (RGB, with a swatch). Below is *Rainbow*.
+
+<LivePreview preset="effect-colour-scope" />
+
+- **Drag a row sideways** to shift the timing of every colour channel (**Phase**), in 15° steps
+  (**Shift**: single degrees). The colours follow the pointer.
+- **Drag the last row** to spread the colour more or less across the fixtures (**Phase stop**).
+- **Phase**, **Speed**, **Phase start** and **Phase stop** set every colour channel at once. A
+  field shows `--` when the channels differ; its arrows then step each one from its own value.
+- **Spread** places the fixtures, as on the Pan/Tilt Scope (**Custom** when it's none of them).
+
+**Colour A** and **Colour B** are the colours at the two ends of the colour channels: A where
+each one is at its **Min**, B where it is at its **Max**. They show the effect's real colours,
+whatever made it, and take any colour: click the swatch to pick one, or type its hex code. Changing A or B rewrites red,
+green and blue at that end (adding them when missing) and keeps the timing, so on *Rainbow*
+(black to white) a B in orange keeps the hues travelling but warms them all.
+
+**Preset** shows the preset the colour channels follow (**Custom** when none matches, after an
+edit for instance) and sets every colour channel in one go, from A to B, at the current **Speed**, starting
+from its own colours (Police in blue and red, Fire in red and orange…). It adds red, green and
+blue when the effect lacks them (they show in **Modulated Channels** at once) and sets the other
+colour channels to 0, so a preset never keeps anything from the previous one. A line under the
+fields says what it does. When the colours flash (chases, strobes, sparkle), **Width** sets how
+long each flash stays lit.
+
+| Preset | Look |
+| --- | --- |
+| **Rainbow** | Every hue in turn, travelling across the fixtures (black to white) |
+| **Fade** | From A to B and back, travelling across the fixtures |
+| **Fade together** | The same fade, every fixture at once |
+| **Pulse** | B breathing out of A, every fixture at once |
+| **Wave** | B rising out of A, travelling across the fixtures |
+| **Chase** | One fixture at a time in B, the others in A |
+| **Strobe** | Every fixture flashing B together (white on black to start with) |
+| **Sparkle** | Short flashes of B here and there |
+| **Flip** | Every fixture switching between A and B |
+| **Police** | A and B in fast turns (blue and red to start with) |
+| **Fire** | A flickering towards B (red and orange to start with) |
+| **Ocean** | A and B rolling slowly across (blue and turquoise to start with) |
+| **Sunset** | A glowing into B (orange-red and purple to start with) |
+
+## Pan/Tilt Scope
+
+Shown while **Pan** or **Tilt** is selected in **Modulated Channels** (the effect needs both):
+the shape the heads draw, on the left of its fields. Making the panel taller enlarges the drawing;
+the fields keep their width. The drawing is in **degrees**, from the pan and tilt ranges in the
+fixture's profile (540° and 270° when the profile doesn't say), at the same scale across and up,
+so a circle on screen is a circle in the air. Two switches stacked next to the drawing, lit while
+on, change the view: **Deg** (degrees; off: DMX, 0–255 on both axes) and **Fit** (zoomed on the
+shape; off: the whole range). Hover the drawing to read the pan and tilt under the pointer and
+the grid's step.
+
+When every fixture follows the same shape, as usual, the shape is drawn once and the fixtures
+queue along it while the effect plays: the first fixture is the numbered dot, the others follow
+as small faint dots, and a bright stretch of the line shows how far the queue reaches (the
+spread). When fixtures follow different shapes, the first one's shape is lit and the others are
+faint. Hover a dot to light it and read its number and name. Below is *Ballyhoo*.
+
+<LivePreview preset="effect-pantilt-scope" />
+
+- **Drag inside the dashed box** (or on a dot) to move the shape. **Drag a handle** to resize
+  it: an edge handle moves that side, a corner handle two sides at once. Moves snap to the grid;
+  hold **Shift** for single DMX steps. The corner shows the range while you drag.
+- **Arrow keys** move the shape by one DMX step once you've clicked the field (**Shift**: 10).
+- To spread the fixtures along the shape, use **Spread**, or **Phase start** and **Phase stop**.
+
+| Field | Description |
+| --- | --- |
+| **Centre pan**, **Centre tilt** | The middle of the shape (degrees or DMX, as the field shows). Typing a value moves the shape and keeps its size |
+| **Size pan**, **Size tilt** | The shape's width and height. Typing a value keeps the centre |
+| **Speed** | How many times the shape runs per effect loop. Both channels keep their ratio |
+| **Phase start**, **Phase stop** | The spread of the fixtures along the shape, on both channels |
+
+**Shape** shows the shape the channels draw, or **Custom** when they match none (after an edit
+here or in the Effect Tool); picking one sets both channels at once. It keeps the centre, uses the current **Speed**, and gives
+back a size a line had flattened, so picking shapes one after another never leaves traces of the
+previous one. Round shapes (circles, diagonals, diamond) get the same angle across and up.
+
+| Shape | Movement |
+| --- | --- |
+| **Circle**, **Circle reverse** | A circle, one way or the other |
+| **Ellipse** | A circle stretched to the current width and height |
+| **Eight**, **Infinity** | A figure eight standing up, or lying down |
+| **Line horizontal**, **Line vertical** | A sweep across, or up and down |
+| **Diagonal up**, **Diagonal down** | A sweep along a diagonal |
+| **Diamond** | Straight lines between four points |
+| **Zigzag**, **Wave** | A sweep across, going up and down four times on the way, sharp or smooth |
+| **Swing** | A U, like a pendulum |
+| **Clover**, **Knot**, **Ballyhoo**, **Pretzel** | Looping figures, from calm to busy |
+
+**Spread** shows how the fixtures are placed on the shape (**Custom** when it's none of these)
+and places them:
+
+| Spread | Fixtures |
+| --- | --- |
+| **Together** | All at the same place |
+| **Wave** | Evenly around the shape, first to last |
+| **Reverse** | Evenly, last to first |
+| **Mirror** | From both ends towards the middle, the second half mirrored left to right (Mirror on Pan): heads move as mirror images |
+| **Half** | Over half the shape |
+| **Bounce** | Evenly, the wave running one way then back |
 
 ## Timing
 
@@ -107,6 +212,7 @@ the hues every 4 s at 120 BPM. *Ballyhoo*'s pan and tilt have **Freq** 2: a circ
 | --- | --- | --- |
 | Slow breathing | Dimmer | SINE, Min 40, Max 255, Phase stop 0 |
 | Chaser | Dimmer | SQUARE, Phase stop 360, LTR: one light on at a time, running along |
-| Rainbow wave | Hue shift preset | Phase stop 360: each light a step further round the colour wheel |
-| Ballyhoo | Circle preset | Narrow pan and tilt ranges; Phase stop 180 so neighbours turn opposite ways |
-| Mirror | Any | Direction SYM: both ends move together, towards the middle |
+| Rainbow wave | Red, Green, Blue | Colour Scope preset **Rainbow**: each light a step further round the colour wheel |
+| Ballyhoo | Pan, Tilt | Pan/Tilt Scope shape **Circle**, a small size; Phase stop 180 so neighbours turn opposite ways |
+| Mirror | Pan, Tilt | Pan/Tilt Scope spread **Mirror**: heads move as mirror images, left and right |
+| Symmetric chase | Any | Direction SYM: both ends move together, towards the middle |

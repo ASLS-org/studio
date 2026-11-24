@@ -43,7 +43,8 @@ Enums live next to their model and are exported: `CUE_TYPES`, `CUE_STATES`,
   raw scene values, saved back unchanged. Fixtures save `channelCount`; a mismatch on load is
   reported (`Fixture.footprintChanged`).
 - `Capability.getValue()` returns one reused object per capability: read it immediately. Entities
-  the data doesn't give span their whole range and are flagged `implicit`.
+  the data doesn't give span their whole range and are flagged `implicit`. `Capability.label` is
+  the range's short name (`fixtures/capability.labels.js`, set by the adapters, never saved).
 - **Cells** (`fixtures/fixture.cells.js`): parts repeating a set of channels (GDTF geometries,
   OFL pixels; pixel groups and other channels are the whole fixture). Each `Channel` has `cell`
   and `kind` (type without the cell's name: OFL pixel types differ per cell, so compare on
@@ -64,17 +65,33 @@ Enums live next to their model and are exported: `CUE_TYPES`, `CUE_STATES`,
   playback/runtime state out of `showData`.
 - **Reactivity:** `$show` is deeply reactive. Wrap render objects stored on models (3D instances)
   in `markRaw` where they are created.
+- **Output remap:** `Universe.packFrame` writes each address from
+  `channels[channel.outputSource]`, as `255 - value` when `channel.outputInvert`; `Fixture.setupOutput`
+  sets both from `invertPan` / `invertTilt` / `swapPanTilt` (saved). Programmed values never change.
 - **Frames:** `Live.onFrame(fn)` callbacks run after the animations on every tick, also while
   paused or stopped. `UniversePool` uses one to pack each universe's persistent `frame`
   (`Uint8Array(512)`) and send it on running streams. Output, and later the visualizer, read
   frames, never channel objects.
 - **Live:** `Live.add(updateFn, quantize = 0, fps = 60, onReady)` returns an id. With `quantize`
-  the callback starts on the next quantized bar boundary. Always pair it with `Live.remove(id)`.
+  (in beats, fractions allowed) the callback starts on the next multiple of that many beats of
+  Live time. Chases store their Quantize as an option index and convert it with
+  `CHASE_QUANTIZE_BEATS`. Always pair it with `Live.remove(id)`.
   Time units: `Live.beatDuration` / `Live.barDuration` in ms, derived from BPM.
+- **Fades:** `Fade.getValue(time, duration)` solves the Bézier for time (x(t) = time fraction,
+  Newton then bisection, no allocation) and plays y(t), so playback matches the drawn curve.
+  Presets are indexed in `FADE_PRESETS` order (stored in showfiles): append, never reorder.
+  Control point Y may overshoot (−1 to 2); scenes clamp each written value to 0–255 (the universe
+  frame is a `Uint8Array`, which would wrap).
 - **Pools:** `addRaw`, `addExisting`, `getFromId` (throws), `delete`, `clearAll`, plus a `listable`
   getter that shapes data for `uk-list`. New pools follow the same API.
-- **Ids:** numeric and unique per pool. Getters coerce with `Number(id)`. `FixturePool.addRaw`
-  renumbers fixtures in load order, so never skip a saved fixture on load (references would shift).
+- **Ids:** numeric and unique per pool. Getters coerce with `Number(id)`. A fixture or universe
+  loaded from a show keeps its saved id (references point to it); new ones get the highest id + 1.
+  A universe's id never changes after that (it is also its output's universe number).
+  Addresses (`chStart`) are 0-based in the engine and showfiles; views show them 1–512
+  (`views/utils/dmx.js`). Move patched fixtures only through `UniversePool.repatch(moves)` (checks
+  the whole result, then unpatches and patches), never by writing `chStart`. Loading
+  skips universe/group references to missing fixtures and reports the count.
+  `Show.deleteFixture` finds the universe by membership and never stops halfway.
 
 ## Known debt (don't copy these patterns)
 

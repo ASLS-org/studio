@@ -15,18 +15,12 @@ class FixturePool {
   /**
    * Pool's listable data
    *
-   * @todo remove this ? Am I even using it ?
+   * Rows of the patch bay and fixture pools (see Fixture.listable)
    * @readonly
    * @type {Array}
    */
   get listable() {
-    return this.fixtures.map((fixture) => ({
-      name: fixture.name,
-      icon: 'movinghead',
-      id: fixture.id,
-      universe: fixture.universe,
-      more: `U${fixture.universe} - CH${fixture.chStart}`,
-    }));
+    return this.fixtures.map((fixture) => fixture.listable);
   }
 
   /**
@@ -90,7 +84,8 @@ class FixturePool {
    */
   addRaw(fixtureData) {
     const fixture = new Fixture(fixtureData);
-    fixture.id = this.genFixtureId();
+    // A saved fixture keeps its id: universes, groups and scenes refer to it
+    fixture.id = fixtureData.id != null ? Number(fixtureData.id) : this.genFixtureId();
     this.fixtures.push(fixture);
     return fixture;
   }
@@ -108,7 +103,6 @@ class FixturePool {
   delete(fixture, destroy = false) {
     const index = this.fixtures.findIndex((item) => item.id === fixture.id);
     if (index > -1) {
-      this.fixtures[index].highlight(false, true);
       this.fixtures.splice(index, 1);
       if (destroy) {
         Fixture.deleteInstance(fixture);
@@ -136,14 +130,7 @@ class FixturePool {
    * @returns {Number} The fixture's unique ID
    */
   genFixtureId() {
-    return this.fixtures.reduce(
-      (prev, current) => (
-        (prev && prev.id > current.id)
-          ? prev.id
-          : current.id
-      ),
-      -1,
-    ) + 1;
+    return this.fixtures.reduce((max, fixture) => Math.max(max, Number(fixture.id)), -1) + 1;
   }
 }
 

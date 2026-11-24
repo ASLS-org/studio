@@ -28,6 +28,7 @@
 
 <script>
 import LiveMixin from '@/views/mixins/live.mixin';
+import { CHASE_ROW_HEIGHT } from '@/views/utils/geometry';
 
 export default {
   name: 'UkChase',
@@ -60,7 +61,7 @@ export default {
        * The chase's default snapHeight
        * TODO: this should be hardcoded ?
        */
-      snapHeight: 26,
+      snapHeight: CHASE_ROW_HEIGHT,
     };
   },
   computed: {
@@ -71,15 +72,12 @@ export default {
      * @returns {String} css-forted top-offset string
      */
     offsetTop() {
-      return `${this.chase.id * 26}px`;
+      return `${this.chase.id * CHASE_ROW_HEIGHT}px`;
     },
   },
   watch: {
     modelValue(value) {
       this.chase = value;
-    },
-    '$route.params.chaseId': function routeParamsChaseIdWatcher() {
-      this.selected = this.$route.params.chaseId === this.chase.id;
     },
   },
   methods: {
@@ -130,8 +128,9 @@ export default {
 .uikit_chase {
   position: absolute;
   display: flex;
-  height: 25px;
+  height: calc(var(--chase-row-height) - 1px);
   width: 100%;
+  /* part of the row pitch: stays 1px whatever --border-width is */
   border: 1px solid var(--secondary-light);
   background: rgb(202, 39, 93);
   opacity: 0.8;
@@ -150,32 +149,32 @@ export default {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  background: #ffffff33; /* Since cues are colored, we're enforcing dark theme font color */
+  background: var(--on-color-surface);
 }
 .selected > .uikit_chase_btn {
   background: rgba(255, 255, 255, 0.4);
 }
 .uikit_chase_icon {
-  height: 14px !important;
-  width: 14px !important;
-  fill: #ffffffb3 !important; /* Since cues are colored, we're enforcing dark theme font color */
+  height: var(--icon-sm) !important;
+  width: var(--icon-sm) !important;
+  fill: var(--on-color-text) !important;
 }
 .playing .uikit_chase_icon {
-  height: 10px !important;
-  width: 10px !important;
+  height: var(--icon-xs) !important;
+  width: var(--icon-xs) !important;
   animation: softblink linear 0.8s infinite alternate;
 }
 .uikit_chase_title {
   display: flex;
   align-items: center;
-  padding: 0 8px;
+  padding: 0 var(--space-4);
   width: 100%;
   height: 100%;
   cursor: pointer;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #ffffffb3 !important; /* Since cues are colored, we're enforcing dark theme font color */
+  color: var(--on-color-text) !important;
 }
 .uikit_chase_loader {
   position: absolute;

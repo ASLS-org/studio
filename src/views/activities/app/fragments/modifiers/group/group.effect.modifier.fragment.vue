@@ -2,6 +2,7 @@
   <uk-flex>
     <widget-FX-channels
       :effect="effect ? effect : undefined"
+      :selected="selectedFxChannel ? selectedFxChannel.type : null"
       @select="selectFxChannel"
     />
     <uk-widget
@@ -30,6 +31,18 @@
         @toggle="setFixturesActivity"
       />
     </uk-widget>
+    <!-- The selected channel's scope, before its wave: the colour one for a colour channel, the
+      pan/tilt one for Pan or Tilt (when the effect has both) -->
+    <colour-scope
+      v-if="scope === 'colour'"
+      :key="`colour-${effect.id}`"
+      :effect="effect"
+    />
+    <pan-tilt-scope
+      v-if="scope === 'pantilt'"
+      :key="`pantilt-${effect.id}`"
+      :effect="effect"
+    />
     <widget-wave
       v-show="selectedFxChannel && effect && effect.channels && effect.channels.length"
       :key="effect && effect.id"
@@ -39,8 +52,11 @@
 </template>
 
 <script>
+import { COLOUR_TYPES, waveOf } from '@/views/utils/effect.scope';
 import WidgetWave from './_widgets/group.effect.modifier.widget.wave.vue';
 import WidgetFXChannels from './_widgets/group.effect.modifier.widget.channels.vue';
+import PanTiltScope from './_widgets/group.effect.modifier.widget.scope.pantilt.vue';
+import ColourScope from './_widgets/group.effect.modifier.widget.scope.colour.vue';
 
 export default {
   name: 'GroupEffectModifierFragment',
@@ -51,6 +67,8 @@ export default {
   components: {
     WidgetWave,
     WidgetFXChannels,
+    PanTiltScope,
+    ColourScope,
   },
   props: {
     /**
@@ -80,9 +98,45 @@ export default {
       fixtures: [],
     };
   },
+  computed: {
+    /**
+     * The effect's channel types, in order (changes when channels come and go, or the effect)
+     *
+     * @type {Array<String>}
+     */
+    channelTypes() {
+      return (this.effect?.channels || []).map((channel) => channel.type);
+    },
+    /**
+     * Scope of the selected channel: 'colour', 'pantilt' or null
+     *
+     * @type {?String}
+     */
+    scope() {
+      const type = this.selectedFxChannel?.type;
+      if (!type || !this.effect) return null;
+      if (COLOUR_TYPES.includes(type)) return 'colour';
+      if ((type === 'Pan' || type === 'Tilt') && waveOf(this.effect, 'Pan') && waveOf(this.effect, 'Tilt')) {
+        return 'pantilt';
+      }
+      return null;
+    },
+  },
   watch: {
+    /**
+     * Keeps a channel of this effect selected: the first one when the selected channel isn't
+     * among its channels (another effect opened, the channel deleted)
+     */
+    channelTypes: {
+      immediate: true,
+      handler(types) {
+        const current = this.selectedFxChannel;
+        const kept = current && this.effect?.channels?.includes(current);
+        if (!kept) this.selectFxChannel(types.length ? this.effect.channels[0] : undefined);
+      },
+    },
     'selectedFxChannel.listableFixtures': function () {
-      this.fixtures = this.selectedFxChannel.listableFixtures;
+      this.fixtures = this.selectedFxChannel ? this.selectedFxChannel.listableFixtures : [];
     },
   },
   methods: {
@@ -94,7 +148,7 @@ export default {
      */
     selectFxChannel(channel) {
       this.selectedFxChannel = channel;
-      this.fixtures = this.selectedFxChannel.listableFixtures;
+      this.fixtures = channel ? channel.listableFixtures : [];
     },
     /**
      * Update active fixture list of the currently selected effect channel
@@ -122,7 +176,7 @@ export default {
 
 <style scoped>
 .effect_fixtures {
-  min-width: 250px;
+  min-width: var(--widget-width-sm);
 }
 .effect_fixtures_list {
   height: 100%;

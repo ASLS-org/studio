@@ -74,7 +74,7 @@ export default {
       /**
        * Button's toggle state.
        */
-      toggled: this.toggleable ? this.value : false,
+      toggled: this.toggleable ? this.modelValue : false,
     };
   },
   watch: {
@@ -112,19 +112,19 @@ export default {
   display: flex;
   user-select: none;
   background: var(--secondary-dark);
-  height: 20px;
-  min-height: 20px;
+  height: var(--button-height);
+  min-height: var(--button-height);
   min-width: 70px;
   /* max-width: 100px; */
-  border-radius: 10px;
+  border-radius: var(--radius-pill);
   align-items: center;
   justify-content: center;
   text-transform: uppercase;
-  padding: 0 14px;
+  padding: 0 var(--space-6);
   opacity: .9;
 }
 .uikit_button:not(.disabled):not(.toggleable){
-  background: var(--secondary-light)!important;
+  background: var(--secondary-dark)!important;
 }
 .uikit_button.toggleable{
   background: var(--secondary-darker);
@@ -132,12 +132,13 @@ export default {
 }
 .uikit_button.square{
   border-radius: 0;
+  border: 1px solid var(--secondary-dark)
 }
 .uikit_button_label {
   display: table-cell;
   vertical-align: middle;
   text-align: center;
-  font-size: 10px;
+  font-size: var(--font-xs);
   color: var(--secondary-lighter);
 }
 .uikit_button:not(.disabled):hover {
@@ -160,8 +161,8 @@ export default {
 }
 .uikit_button_icon{
   fill: var(--secondary-lighter);
-  margin-right:8px;
-  height:14px!important;
+  margin-right:var(--space-4);
+  height:var(--icon-sm)!important;
   width:14px!important
 }
 </style>

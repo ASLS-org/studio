@@ -33,10 +33,12 @@ The **show's name** in the middle gets a `*` when it has changes you haven't sav
 
 ## Patch Bay
 
-Lists the universes, each unfolding to its fixtures with their address (`U0 - CH14`: universe 0,
-address 14). Unfold a universe to open it in the modifier strip; click a fixture to select it
+Lists the universes, each unfolding to its fixtures with their address (`U0 - CH15`: universe 0,
+address 15). Unfold a universe to open it in the modifier strip; click a fixture to select it
 there and outline it in the visualizer. Type in **Search items** to find fixtures across
-universes. More in [Patching fixtures](/programming/patching).
+universes. **New** adds a universe; select fixtures and press <kbd>Delete</kbd> to remove them
+from the show. Drag its right border to widen it, up to twice its width. More in
+[Patching fixtures](/programming/patching).
 
 <LivePreview preset="patch-bay" />
 
@@ -44,7 +46,8 @@ universes. More in [Patching fixtures](/programming/patching).
 
 One column per group, with its chases in rows, and the **Master** column on the right. Click a
 group's name to open it in the modifier strip; click a chase to open it; click a chase's play
-button to start it. **New** creates a group. More in [Groups](/programming/groups),
+button to start it. **New** creates a group. Drag the border between the groups and **Master** to
+make the groups wider or narrower. More in [Groups](/programming/groups),
 [Chases](/programming/chases) and [Playing a show](/programming/playback).
 
 <LivePreview preset="group-pool" />
@@ -59,13 +62,19 @@ resize it, and reduce it to its title with **–**. More in [Visualizer](/interf
 ## Modifier Strip
 
 The bottom of the window shows the editing **view** for what you picked, as a row of widgets. When
-they don't fit, scroll the strip sideways.
+they don't fit, scroll the strip sideways. Drag the border above the strip, anywhere along it, to
+make it taller or shorter.
 
 | You picked | The strip shows | Page |
 | --- | --- | --- |
 | A universe or a fixture | Universe settings and stream, its fixture pool, the fixture's settings, position and controls | [Patching fixtures](/programming/patching) |
 | A group | Group settings, its fixture pool, its cue pool, and the selected cue's widgets | [Groups](/programming/groups), [Scenes](/programming/scenes), [Effects](/programming/effects) |
 | A chase | Chase settings and its timeline | [Chases](/programming/chases) |
+
+Each universe and each group remembers what you selected in it until you close Studio: go back to
+a group and its cue and fixtures are still selected, go back to a universe and its fixture and
+cells are too. If you deleted what was selected, the first one is selected instead. The patch
+bay, the group pool, the strip and the visualizer always show the same selection.
 
 The demo rig's group view, with *Rig*'s settings, fixtures and cue pool:
 
@@ -74,5 +83,13 @@ The demo rig's group view, with *Rig*'s settings, fixtures and cue pool:
 ### Widgets
 
 Each widget has a title bar with its icon. Lists in widgets work the same everywhere: click to
-select, <kbd>Ctrl</kbd>+click to add to the selection, **Search items** to filter, and
-<kbd>Delete</kbd> or <kbd>Backspace</kbd> to delete the selection (with a confirmation).
+select, <kbd>Ctrl</kbd>+click (<kbd>Cmd</kbd>+click on a Mac) to add to the selection,
+<kbd>Shift</kbd>+click to select a range, **Search items** to filter, <kbd>Delete</kbd> or
+<kbd>Backspace</kbd> to delete (with a confirmation). In lists you can delete from, each item has
+a trash icon at its right. Items you can reorder have a grip at their far right: drag it. The striped area below the last
+item is the list's empty space. All the list keys are in [Shortcuts](/reference/shortcuts#lists).
+
+A name or label too long for its place is cut with **…**: rest the pointer on it and it scrolls to
+show the rest, then back. Choice fields (**Quantize**, **Trigger Style**, colours…) open their list
+with a click or the arrow keys; the current value is marked in the list (see
+[Shortcuts](/reference/shortcuts#selects)).

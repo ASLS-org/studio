@@ -21,7 +21,8 @@ fader you move is sent right away. How bars, BPM and quantize fit together:
 ## Cues
 
 In a group's **Cue Pool** ([Scenes](/programming/scenes#the-cue-pool) describes it), click a
-cue's body to start it, and again to stop it. A playing cue
+cue's body to start it, and again to stop it; hold a **Temporary** cue to play it until you
+release the button ([Cue settings](/programming/scenes#cue-settings)). A playing cue
 shows its progress. A **One Shot** cue stops by itself at the end of its **Duration**; a scene's look
 then stays on stage. A **Loop** cue runs until you stop it.
 

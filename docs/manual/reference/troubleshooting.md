@@ -12,7 +12,7 @@ check [Known limitations](/reference/limitations), then ask in the
 | The connection stays **Disconnected** or shows **Conn error** | The gateway isn't running, or listens elsewhere | Desktop app: restart it. Browser: start the gateway, then **Connect** again. Check **IP** `127.0.0.1` and **Port** `4515` |
 | **Connected**, but no light reacts | The universe isn't streaming | Open the universe: set its **Output**, then **Start streaming** in **Stream** |
 | Streaming, but no light reacts | Wrong node address, network, or Art-Net universe | Check the node's IP in **Host**, that your computer is on the node's network, and that the node listens to the same universe number |
-| Streaming, but the wrong lights react, or faders do the wrong thing | Addresses or modes don't match the lights | Studio counts addresses from 0: a light set to 1 goes at 0. Set each fixture's **Fixture mode** to the mode set on the light |
+| Streaming, but the wrong lights react, or faders do the wrong thing | Addresses or modes don't match the lights | Check that each fixture's **Ch Start** address (in Fixture Settings) is the one on the light's display (move it with [Repatching](/programming/patching#repatching)) and that its **Fixture mode** is the mode set on the light |
 | The Outputs log says "Unsupported protocol" | The gateway can't send that protocol yet | Use **ARTNET** ([what's verified](/rig/outputs#what-s-verified)) |
 | Everything worked, then stopped after reopening the show | Outputs aren't saved yet | Connect again and set each universe's **Output** and **Stream** again |
 | Lights flicker or answer slowly | Two programs send to the same node, or a busy Wi-Fi network | Close the other lighting software; use a cable for the network |
@@ -36,6 +36,7 @@ check [Known limitations](/reference/limitations), then ask in the
 | Studio opens the demo show | First run, another browser, a private window, or cleared data | **Load Showfile** your exported show |
 | The `*` stays after saving | Something changed since | Save again with <kbd>Ctrl</kbd>+<kbd>S</kbd> |
 | **Load Showfile** did nothing | The file isn't a Studio showfile | Pick a `.json` file exported from Studio |
+| "Fixture reference(s) … were dropped" when opening a show | The show listed fixtures it no longer had (left over from an earlier delete) | Nothing to do: the show opens without them and is saved that way. Check your universes and groups |
 | A shortcut does nothing on a Mac | Shortcuts use <kbd>Ctrl</kbd>, not <kbd>Cmd</kbd> | Use <kbd>Ctrl</kbd> ([Shortcuts](/reference/shortcuts)) |
 
 ## Visualizer

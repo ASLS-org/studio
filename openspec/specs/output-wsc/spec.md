@@ -31,3 +31,12 @@ and streams were started.
 - **GIVEN** a universe that started streaming before any cue
 - **WHEN** a scene setting Dimmer to 255 with no fade starts
 - **THEN** the first frame sent after the scene's first tick already carries 255
+
+### Requirement: Universe Config opens the connections
+The **Config** button next to a universe's **Output** SHALL open the outputs popup
+(**Input/Outputs**, the same one as **Preferences → Outputs**), where connections are created
+and set up.
+
+#### Scenario: Config
+- **WHEN** the operator presses **Config** in a universe's settings
+- **THEN** the **Input/Outputs** popup opens

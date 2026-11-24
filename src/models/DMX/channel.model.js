@@ -28,6 +28,7 @@ class Channel {
     const { profileChannel } = data;
     this.id = data.id;
     this.type = profileChannel.type;
+    this.name = profileChannel.name || profileChannel.type;
     this.attribute = profileChannel.attribute;
     this.isFine = profileChannel.isFine;
     this.color = profileChannel.color;
@@ -38,6 +39,10 @@ class Channel {
     this.fineIndexes = profileChannel.fine;
     this.fineChannels = [];
     this.active = true;
+    // What goes out on this channel's address (Fixture.setupOutput): the value of the channel at
+    // this index of the fixture, reversed (255 - value) when outputInvert is set
+    this.outputSource = data.id - 1;
+    this.outputInvert = false;
     this._lookup = profileChannel.lookup || EMPTY_LOOKUP;
     // GDTF channels start at the fixture's home value
     this._value = {

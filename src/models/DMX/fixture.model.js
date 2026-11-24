@@ -69,6 +69,9 @@ class Fixture {
    * @param {Number} [data.channelCount] Channel count saved with the show
    * @param {Object} data.position Fixture's position in 3D space
    * @param {Object} data.rotation Fixture's rotation in 3D space
+   * @param {Boolean} [data.invertPan] Outputs 255 minus the pan value (see setupOutput)
+   * @param {Boolean} [data.invertTilt] Outputs 255 minus the tilt value
+   * @param {Boolean} [data.swapPanTilt] Outputs pan on the tilt channels and tilt on the pan ones
    */
   constructor(data = DEFAULT_FIXTURE_DATA) {
     if (!data.isStub) {
@@ -87,7 +90,6 @@ class Fixture {
       this.savedChannelCount = Number.isInteger(data.channelCount) ? data.channelCount : null;
       this.channels = [];
       this.quickChannelsAccessors = {};
-      this._highlighted = false;
       this._rotation = {
         x: 0,
         y: 0,
@@ -108,6 +110,10 @@ class Fixture {
         y: 0,
         z: 0,
       };
+      // Output options (absent in showfiles saved before them: off)
+      this._invertPan = !!data.invertPan;
+      this._invertTilt = !!data.invertTilt;
+      this._swapPanTilt = !!data.swapPanTilt;
       // Channels start at their home value (GDTF Default, 0 for OFL)
       this.parseFromProfile();
     }
@@ -131,7 +137,8 @@ class Fixture {
       icon: 'movinghead',
       id: this.id,
       universe: this.universe,
-      more: `U${this.universe}-CH${this.chStart}`,
+      // DMX addresses read 1 to 512 (stored from 0)
+      more: `U${this.universe} - CH${this.chStart + 1}`,
     };
   }
 
@@ -155,6 +162,9 @@ class Fixture {
       source: this.source,
       position: this.position,
       rotation: this.rotation,
+      invertPan: this.invertPan,
+      invertTilt: this.invertTilt,
+      swapPanTilt: this.swapPanTilt,
     };
   }
 
@@ -202,6 +212,24 @@ class Fixture {
       rotation: { ...this._rotation },
       reattach,
     });
+  }
+
+  /**
+   * Sets position (metres) and rotation (degrees) at once, telling the visualizer once, as an edit
+   * (the gizmo follows)
+   *
+   * @public
+   * @param {Object} position `{ x, y, z }`
+   * @param {Object} rotation `{ x, y, z }`
+   */
+  setPose(position, rotation) {
+    this._position = { x: position.x, y: position.y, z: position.z };
+    this._rotation = {
+      x: Fixture.degToRad(rotation.x),
+      y: Fixture.degToRad(rotation.y),
+      z: Fixture.degToRad(rotation.z),
+    };
+    this.emitPose(true);
   }
 
   /**
@@ -376,6 +404,7 @@ class Fixture {
     this.prepareChannels();
     this.setupFineChannels();
     this.setupQuickAccessors();
+    this.setupOutput();
     // Channels the old mode didn't have keep their home value. Coarse channels first: writing a
     // coarse channel resets its fine byte
     const home = this.channels.map((channel) => channel.value.DMX);
@@ -394,7 +423,8 @@ class Fixture {
   }
 
   /**
-   * Simplified channel object. does not contain capability(ies) data
+   * Plain channel rows for the channels widget: value, type, colour, attribute, name and the
+   * channel's ranges (shared profile capabilities, read only)
    *
    * @type {Object}
    */
@@ -413,6 +443,10 @@ class Fixture {
       active: channel.active,
       qaIndex: channel.qaIndex,
       cell: channel.cell,
+      attribute: channel.attribute,
+      name: channel.name,
+      isFine: channel.isFine,
+      capabilities: channel.capabilities,
     }));
   }
 
@@ -581,16 +615,6 @@ class Fixture {
     return this.channels.length;
   }
 
-  /**
-   * Whether the fixture is highlighted in the visualizer
-   *
-   * @readonly
-   * @type {Boolean}
-   */
-  get highlighted() {
-    return this._highlighted;
-  }
-
   setQuickAccessor(channel, value) {
     if (this.hasQuickAccessor(channel)) {
       this.setChannel(this.getQuickAccessor(channel).id - 1, value);
@@ -645,6 +669,7 @@ class Fixture {
     this.prepareChannels(); // Prepare fixture's channels
     this.setupFineChannels();
     this.setupQuickAccessors();
+    this.setupOutput();
   }
 
   /**
@@ -694,28 +719,83 @@ class Fixture {
   }
 
   /**
-   * Highlights the fixture in the visualizer
+   * Whether the pan output is reversed (255 minus the value, fine byte included)
    *
-   * @param {Boolean} state wheter the fixture should be highlighted or not
-   * @param {Boolean} [centerControls=false] whether the move/rotate gizmo follows the highlight
+   * @type {Boolean}
    */
-  highlight(state, centerControls = false) {
-    this._highlighted = state;
-    EventBus.emit('fixture_highlight', {
-      id: this.id, state, single: false, center: centerControls,
-    });
+  set invertPan(invert) {
+    this._invertPan = !!invert;
+    this.setupOutput();
+  }
+
+  get invertPan() {
+    return this._invertPan;
   }
 
   /**
-   * Highlights the fixture in the visualizer while unhighlighting any other highlighted fixture
+   * Whether the tilt output is reversed (255 minus the value, fine byte included)
    *
-   * @param {Boolean} state wheter the fixture should be highlighted or not
-   * @param {Boolean} [centerControls=false] whether the move/rotate gizmo follows the highlight
+   * @type {Boolean}
    */
-  highlightSingle(state, centerControls = false) {
-    this._highlighted = state;
-    EventBus.emit('fixture_highlight', {
-      id: this.id, state, single: true, center: centerControls,
+  set invertTilt(invert) {
+    this._invertTilt = !!invert;
+    this.setupOutput();
+  }
+
+  get invertTilt() {
+    return this._invertTilt;
+  }
+
+  /**
+   * Whether the pan and tilt outputs are exchanged (pan values out on the tilt channels and back)
+   *
+   * @type {Boolean}
+   */
+  set swapPanTilt(swap) {
+    this._swapPanTilt = !!swap;
+    this.setupOutput();
+  }
+
+  get swapPanTilt() {
+    return this._swapPanTilt;
+  }
+
+  /**
+   * Sets what each channel outputs (Universe.packFrame): its own value, or with Swap pan/tilt the
+   * value of its counterpart on the other axis (coarse with coarse, fine with fine, per cell), and
+   * reversed (255 - value) on the pan or tilt channels when inverted. Faders and scenes keep the
+   * programmed values; only the output changes.
+   *
+   * @public
+   */
+  setupOutput() {
+    const { channels } = this;
+    channels.forEach((channel, index) => {
+      channel.outputSource = index;
+      channel.outputInvert = false;
+    });
+    const cells = new Map();
+    channels.forEach((channel, index) => {
+      const key = channel.cell || '';
+      if (!cells.has(key)) cells.set(key, { Pan: null, Tilt: null });
+      const axes = cells.get(key);
+      ['Pan', 'Tilt'].forEach((axis) => {
+        if (axes[axis] === null && isAxisChannel(channel, axis)) axes[axis] = index;
+      });
+    });
+    cells.forEach((axes) => {
+      const outputs = (axis) => (axes[axis] === null
+        ? [] : [axes[axis], ...channels[axes[axis]].fineIndexes]);
+      const pan = outputs('Pan');
+      const tilt = outputs('Tilt');
+      if (this._swapPanTilt && pan.length && tilt.length) {
+        for (let i = 0; i < Math.min(pan.length, tilt.length); i++) {
+          channels[pan[i]].outputSource = tilt[i];
+          channels[tilt[i]].outputSource = pan[i];
+        }
+      }
+      if (this._invertPan) pan.forEach((i) => { channels[i].outputInvert = true; });
+      if (this._invertTilt) tilt.forEach((i) => { channels[i].outputInvert = true; });
     });
   }
 

@@ -29,7 +29,7 @@
         <uk-flex
           style="
             align-items: flex-end;
-            border-top:1px solid var(--primary-dark)
+            border-top:var(--border-width) solid var(--primary-dark)
           "
           gap="8"
         >
@@ -50,7 +50,7 @@
         <uk-flex
           col
           gap="8"
-          style="padding: 10px;height:100%"
+          style="padding: var(--space-5);height:100%"
         >
           <uk-flex
             col
@@ -59,7 +59,7 @@
             <uk-txt-input
               v-model="formOutput.name"
               label="Label"
-              style="width: 100%;"
+              style="width: 100%"
               :disabled="!selectedOutput"
             />
             <uk-select-input
@@ -127,8 +127,8 @@
         <uk-flex
           style="
             align-items: flex-end;
-            /* padding:10px; */
-            border-top:1px solid var(--primary-dark)
+            /* padding:var(--space-5); */
+            border-top:var(--border-width) solid var(--primary-dark)
           "
           gap="1"
         >
@@ -302,7 +302,7 @@ export default {
 .spinner{
   height: 10px;
   width: 10px;
-  border-radius: 100%;
+  border-radius: var(--radius-round);
   border: 2px solid var(--accent-sea-green)
 }
 </style>
@@ -324,7 +324,7 @@ export default {
   height: 100%;
 }
 .form{
-  border-left: 1px solid var(--primary-dark);
+  border-left: var(--border-width) solid var(--primary-dark);
   width: 370px;
 }
 .stats{
@@ -357,7 +357,7 @@ export default {
   overflow-y: auto;
   flex-direction: column;
   align-items: start;
-  padding: 5px;
+  padding: var(--space-2);
   max-height: 122px;
 }
 </style>

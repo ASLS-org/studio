@@ -1,9 +1,9 @@
 <template>
   <uk-flex class="universe_modifier">
-    <universe-settings-widget v-model="universe" />
+    <universe-settings-widget :model-value="universe" />
     <universe-connection-widget
       v-show="universe.stream"
-      v-model="universe"
+      :model-value="universe"
     />
     <fixture-pool-widget
       :pool="universe.fixturePool"
@@ -12,25 +12,31 @@
         text: 'add',
         callback: displayPatchPopup,
       }"
-      :auto-select="selectedFixtureIndex"
-      @select="selectFixture"
+      :selection="selectedIds"
+      @selection="selectFixtures"
       @delete="deleteFixtures"
     />
     <fixture-settings-widget
       v-show="selectedFixture"
       ref="settings"
       :fixture="selectedFixture"
+      @repatch="repatchPopupDisplayState = true"
     />
     <position-tool-widget
       v-show="selectedFixture"
       ref="positionTool"
-      :fixture="selectedFixture"
+      :fixtures="selectedFixtures"
+      :universe-fixtures="universe.fixturePool?.fixtures || []"
+      :others="otherFixtures"
+      @arrange="arrangePopupDisplayState = true"
+      @selection="selectFixtures"
     />
     <modifier-widget-cells
       v-if="selectedFixture && selectedFixture.cells.length"
       :key="selectedFixture.id"
       :cells="selectedFixture.cells.map((cell) => cell.name)"
-      @change="selectedCells = $event"
+      :model-value="selectedCells"
+      @change="selectCells"
     />
     <fixture-channels-widget
       v-show="selectedFixture"
@@ -58,10 +64,19 @@
       v-model="patchPopupDisplayState"
       :universe="universe"
     />
+    <repatch-popup
+      v-model="repatchPopupDisplayState"
+      :fixture="selectedFixture"
+    />
+    <arrange-popup
+      v-model="arrangePopupDisplayState"
+      :fixtures="selectedFixtures"
+    />
   </uk-flex>
 </template>
 
 <script>
+import modal from '@/views/mixins/modal.mixin';
 import LiveMixin from '@/views/mixins/live.mixin';
 import FixturePoolWidget from '../_widgets/modifier.widget.fixture.pool.vue';
 import FixtureChannelsWidget from '../_widgets/modifier.widget.fixture.channels.vue';
@@ -73,6 +88,8 @@ import UniverseSettingsWidget from './_widgets/universe.modifier.widget.settings
 import FixtureSettingsWidget from './_widgets/universe.modifier.widget.fixture.settings.vue';
 import PositionToolWidget from './_widgets/universe.modifier.widget.fixture.position.tool.vue';
 import PatchPopup from './_popups/universe.modifier.popup.patch.vue';
+import RepatchPopup from './_popups/universe.modifier.popup.repatch.vue';
+import ArrangePopup from './_popups/universe.modifier.popup.arrange.vue';
 import UniverseConnectionWidget from './_widgets/universe.modifier.widget.connection.vue';
 
 export default {
@@ -92,33 +109,74 @@ export default {
     PanTiltWidget,
     ModifierWidgetCells,
     PatchPopup,
+    RepatchPopup,
+    ArrangePopup,
   },
   mixins: [LiveMixin],
-  data() {
-    return {
-      /**
-       * Handle to universe instance
-       */
-      universe: {},
-      /**
-       * Currently selected fixture
-       */
-      selectedFixture: null,
-      /**
-       * Patch popup display state
-       */
-      patchPopupDisplayState: false,
-      /**
-       * Index of the currently selected fixture in the universe's fixture pool.
-       */
-      selectedFixtureIndex: 0,
-      /**
-       * Cells of the selected fixture the controls apply to, null for all (view state only)
-       */
-      selectedCells: null,
-    };
-  },
   computed: {
+    /**
+     * Patch popup display state
+     */
+    patchPopupDisplayState: modal('universe.patch', 'universe'),
+    /**
+     * Repatch popup display state
+     */
+    repatchPopupDisplayState: modal('universe.repatch', 'universe'),
+    /**
+     * Arrange popup display state
+     */
+    arrangePopupDisplayState: modal('universe.arrange', 'universe'),
+    /**
+     * Universe in view (the last one, while another panel is in view)
+     *
+     * @type {Object}
+     */
+    universe() {
+      return this.$view.universe || {};
+    },
+    /**
+     * Selected fixture ids of the universe. They stay as they are while another panel is in
+     * view, so a hidden panel has nothing to update
+     *
+     * @type {Array<Number>}
+     */
+    selectedIds() {
+      return this.$view.universeFixtures.map((fixture) => fixture.id);
+    },
+    /**
+     * Fixture whose controls are shown: the main selected one
+     *
+     * @type {?Object}
+     */
+    selectedFixture() {
+      return this.$view.universeFixtures[0] || null;
+    },
+    /**
+     * Selected fixtures in fixture pool order (the order placement follows)
+     *
+     * @type {Array<Object>}
+     */
+    selectedFixtures() {
+      const ids = new Set(this.selectedIds);
+      return (this.universe.fixturePool?.fixtures || []).filter((fixture) => ids.has(fixture.id));
+    },
+    /**
+     * Fixtures of the other universes (faint on the Position Tool's map)
+     *
+     * @type {Array<Fixture>}
+     */
+    otherFixtures() {
+      const own = new Set((this.universe.fixturePool?.fixtures || []).map((fixture) => fixture.id));
+      return this.$show.fixturePool.fixtures.filter((fixture) => !own.has(fixture.id));
+    },
+    /**
+     * Cells of the selected fixture the controls apply to, null for all
+     *
+     * @type {?Array<String>}
+     */
+    selectedCells() {
+      return this.$view.universeCells;
+    },
     /**
      * Selected fixture's channels, refreshed by the live ticker (playback writes bypass Vue)
      */
@@ -144,57 +202,37 @@ export default {
         ? this.selectedFixture.getPanTilt(this.selectedCells) : undefined);
     },
   },
-  watch: {
-    selectedFixture() {
-      this.selectedCells = null;
-    },
-    '$route.query.fixtureId': function routeQueryFixtureIdWatcher(fixtureId) {
-      this.selectFixture(fixtureId);
-    },
-    // TODO: feed method straight into watcher
-    '$route.params.universeId': function routeParamsUniverseIdWatcher(universeId) {
-      this.fetchUniverseData(universeId);
-      this.selectedFixtureIndex = 0;
-    },
-  },
   mounted() {
-    this.fetchUniverseData(0);
+    // A opens Arrange while the universe panel is in view with fixtures selected
+    this.removeArrangeShortcut = this.$keyboard?.addShortcut(
+      (e) => e.key.toLowerCase() === 'a' && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey
+        && this.$view.panel === 'universe' && this.selectedFixtures.length > 0,
+      () => { this.arrangePopupDisplayState = true; },
+    );
   },
   beforeUnmount() {
-    if (this.selectedFixture && this.selectedFixture.id) {
-      this.selectedFixture.highlightSingle(false);
-    }
+    if (this.removeArrangeShortcut) this.removeArrangeShortcut();
   },
   methods: {
     /**
-     * Fetches universe data
+     * Selects fixtures of the universe (a new main fixture shows all its cells again)
      *
      * @public
+     * @param {Array<Number>} ids fixture ids, main one first
      */
-    fetchUniverseData(id) {
-      if (id !== undefined) {
-        try {
-          this.universe = this.$show.universePool.getFromId(id);
-          this.selectFixture(0);
-        } catch (err) {
-          this.universe = {};
-          this.selectedFixture = null;
-        }
-      }
+    selectFixtures(ids) {
+      const main = this.$view.fixture?.id;
+      this.$view.selectFixtures(ids);
+      if (this.$view.fixture?.id !== main) this.$view.selectCells(null);
     },
     /**
-     * Fetches selected fixture data
+     * Selects the cells the controls apply to
      *
      * @public
+     * @param {?Array<String>} cells cell names, null for all
      */
-    selectFixture(id) {
-      if (id !== undefined) {
-        try {
-          this.selectedFixture = this.universe.fixturePool.getFromId(id || 0);
-        } catch (err) {
-          this.selectedFixture = null;
-        }
-      }
+    selectCells(cells) {
+      this.$view.selectCells(cells);
     },
     /**
      * Display the patch popup
@@ -203,13 +241,6 @@ export default {
      */
     displayPatchPopup() {
       this.patchPopupDisplayState = true;
-    },
-    handleFocus(state) {
-      if (!state) {
-        if (this.selectedFixture) {
-          this.selectedFixture.highlightSingle(false, true);
-        }
-      }
     },
     /**
      * Sets the selected fixture channel value
@@ -256,16 +287,10 @@ export default {
      * @param {Array} selectedFixtures Array of universe fixture objetcs to be deleted.
      */
     deleteFixtures(selectedFixtures) {
+      // The view falls back to the universe's first remaining fixture
       selectedFixtures.forEach((fixture) => {
         this.$show.deleteFixture(fixture);
       });
-      if (this.universe.fixturePool.fixtures.length) {
-        // eslint-disable-next-line prefer-destructuring
-        this.selectedFixture = this.universe.fixturePool.fixtures[0];
-      } else {
-        this.selectedFixture = null;
-      }
-      this.selectedFixtureIndex = 0;
     },
   },
 };

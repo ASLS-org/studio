@@ -92,7 +92,8 @@ export default {
       this.updateValue(false);
     },
     background(newVal) {
-      this.$refs.track.style.background = newVal;
+      // May run while the gauge is being removed (the channels widget switching fixtures)
+      if (this.$refs.track) this.$refs.track.style.background = newVal;
     },
   },
   mounted() {
@@ -130,8 +131,8 @@ export default {
   justify-content: center;
   width: 70px;
   height: 100%;
-  padding-top: 8px;
-  padding-bottom: 8px;
+  padding-top: var(--space-4);
+  padding-bottom: var(--space-4);
   overflow: hidden;
 }
 .uikit_gauge_wrapper {

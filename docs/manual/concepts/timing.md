@@ -28,9 +28,11 @@ long, and the cues still change on the same beats.
 
 ## Starting on the Bar
 
-When you start a chase, its **Quantize** decides when it actually begins: on the next bar, so
-chases started a little early or late still land together on the downbeat, or at once. The
-setting is a chase's ([Chases](/programming/chases#chase-settings)).
+When you start a chase, its **Quantize** decides when it actually begins: on the next bar
+(**1/1**), so chases started a little early or late still land together on the downbeat, on the
+next half bar, beat or half beat (**1/2**, **1/4**, **1/8**), or at once (**None**). At 120 BPM,
+**1/1** waits up to 2 s and **1/4** up to half a second. The setting is a chase's
+([Chases](/programming/chases#chase-settings)).
 
 ## How Cues End
 

@@ -45,7 +45,7 @@
         icon="library"
         label="Import GDTF…"
         :disabled="importing"
-        style="height: 25px"
+        style="height: var(--control-height)"
         @click="$refs.gdtfFiles.click()"
       />
       <input
@@ -68,6 +68,7 @@
 </template>
 
 <script>
+import modal from '@/views/mixins/modal.mixin';
 import EventBus from '@/plugins/eventbus';
 import FixtureLibrary from '@/models/fixtures/fixture.library';
 import { PROFILE_SOURCES } from '@/models/fixtures/fixture.profile';
@@ -85,10 +86,6 @@ export default {
   },
   data() {
     return {
-      /**
-       * Popup display state
-       */
-      state: false,
       /**
        * Popup header definition
        */
@@ -112,6 +109,10 @@ export default {
     };
   },
   computed: {
+    /**
+     * Popup display state
+     */
+    state: modal('app.missing-fixtures', 'app', true),
     /**
      * Number of fixture types still missing
      *
@@ -216,26 +217,26 @@ export default {
 <style scoped>
 .missing_body {
   width: 460px;
-  padding: 16px;
+  padding: var(--space-7);
 }
 .missing_body.dragging {
-  outline: 1px dashed var(--accent-blue);
+  outline: var(--border-width) dashed var(--accent-blue);
   outline-offset: -4px;
 }
 .missing_list {
   list-style: none;
   margin: 0;
   padding: 0;
-  border: 1px solid var(--primary-dark);
+  border: var(--border-width) solid var(--primary-dark);
 }
 .missing_list li {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
 }
 .missing_list li + li {
-  border-top: 1px solid var(--primary-dark);
+  border-top: var(--border-width) solid var(--primary-dark);
 }
 .missing_icon {
   width: 12px;

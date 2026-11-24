@@ -46,7 +46,8 @@ Press **Disconnect** to close the connection, **Delete** to remove it.
 
 Open the universe in the patch bay. In its **Universe** settings, pick the connection as its
 **Output**: the **Stream** widget appears next to it, where you say how the gateway sends this
-universe.
+universe. **Config**, next to **Output**, opens **Preferences → Outputs** to add or set up a
+connection.
 
 1. **Protocol**: **ARTNET** for an Art-Net node (see what's verified below).
 2. **Host**: the Art-Net node's IP address, and **Port**: `6454`, the Art-Net port (filled in
@@ -73,8 +74,8 @@ the universe it should listen to.
 
 ## Check That It Works
 
-1. Patch a fixture at the address its display shows (minus 1: Studio counts from 0, see
-   [Patching](/programming/patching#patch-settings)), in the universe you're streaming.
+1. Patch a fixture at the address its display shows
+   ([Patching](/programming/patching#patch-settings)), in the universe you're streaming.
 2. In the universe view, push its dimmer fader up (and open its shutter if it has one).
 3. The light should follow. If it doesn't, see [Troubleshooting](/reference/troubleshooting#outputs).
 
@@ -95,5 +96,4 @@ computer: connecting, streaming Art-Net, and the values following faders, scenes
 
 > **Note:** In this release, connections and universe streams aren't saved with the show: after
 > opening a show or reloading Studio, connect again and set each universe's **Output** and
-> **Stream** again. The **Config** button next to **Output** does nothing yet; use
-> **Preferences → Outputs**. See [Known limitations](/reference/limitations#outputs).
+> **Stream** again. See [Known limitations](/reference/limitations#outputs).

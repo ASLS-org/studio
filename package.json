@@ -18,6 +18,7 @@
     "docs:manual:build": "vitepress build ./docs/manual",
     "docs:manual:serve": "vitepress dev ./docs/manual",
     "docs:manual:check": "node scripts/manual/check-previews.mjs",
+    "app:check": "node scripts/app/check-app.mjs",
     "docs:serve": "npm run docs:manual:serve & npm run docs:dev:ui:serve & npm run docs:dev:core:serve",
     "electron:start": " electron-vite dev",
     "electron:build": " electron-vite build",

@@ -23,7 +23,7 @@ class OutputPool {
       color: output.color,
       remote: output.remote,
       port: output.port,
-      universe: output.universe.id,
+      universe: output.universe?.id ?? null,
     }));
   }
 

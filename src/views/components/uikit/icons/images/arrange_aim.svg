@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg viewBox="0 0 16 16" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <rect width="16" height="16" fill="none" />
+  <polygon points="2.00,2.00 7.13,13.00 8.87,12.00" />
+  <circle cx="2.00" cy="2.00" r="1.5" />
+  <polygon points="8.00,2.00 7.00,12.50 9.00,12.50" />
+  <circle cx="8.00" cy="2.00" r="1.5" />
+  <polygon points="14.00,2.00 7.13,12.00 8.87,13.00" />
+  <circle cx="14.00" cy="2.00" r="1.5" />
+  <path fill-rule="evenodd" d="M8,10.2a3,3 0 1,0 0.01,0z M8,11.6a1.6,1.6 0 1,0 0.01,0z" />
+</svg>

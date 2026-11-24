@@ -40,7 +40,7 @@ lasts 2 seconds.
 ## Universe
 
 A block of 512 DMX channels, sent to your lights through one output (a USB interface, an Art-Net or
-sACN node…). Studio counts its addresses from 0 to 511. A new show has four universes; add more as
+sACN node…). Its addresses run from 1 to 512, as on your DMX equipment. A new show has four universes; add more as
 your rig grows.
 
 Universes are how the rig is wired, not how it is programmed: a group can hold fixtures of several

@@ -31,6 +31,8 @@
         class="popup_validation"
         :gap="8"
       >
+        <!-- @slot Extra footer buttons, on the left -->
+        <slot name="actions" />
         <uk-spacer />
         <uk-button
           v-if="cancelable"
@@ -38,6 +40,7 @@
           @click="cancel()"
         />
         <uk-button
+          class="popup_ok"
           :disabled="!valid"
           :label="validateTxt"
           @click="submit()"
@@ -167,12 +170,30 @@ export default {
       this.update();
     },
   },
+  created() {
+    const vm = this;
+    /**
+     * This popup as a layer of the view state: where Escape and Enter go while it's on top
+     * (views/keyboard.js). Popups without validation (the splash) ignore both.
+     */
+    this.layer = {
+      get el() {
+        return vm.$el && vm.$el.nodeType === 1 ? vm.$el : null;
+      },
+      close() {
+        if (!vm.noValidation) vm.close();
+      },
+      submit() {
+        if (!vm.noValidation && vm.valid) vm.submit();
+      },
+    };
+  },
   mounted() {
     this.host().appendChild(this.$el);
     this.update();
   },
   beforeUnmount() {
-    window.removeEventListener('keydown', this.handleKeydown);
+    this.setLayer(false);
     if (this.backdrop && this.backdropEl) {
       this.backdropEl.remove();
     }
@@ -189,11 +210,8 @@ export default {
      *
      */
     update() {
-      window.removeEventListener('keydown', this.handleKeydown);
       this.displayed = this.modelValue;
-      if (this.displayed) {
-        window.addEventListener('keydown', this.handleKeydown);
-      }
+      this.setLayer(this.displayed);
       if (this.displayed && this.backdrop) {
         this.backdropEl = document.createElement('div');
         this.backdropEl.className = `backdrop${this.opaque ? ' opaque' : ''}`;
@@ -243,7 +261,22 @@ export default {
        */
       this.$emit('update:modelValue', this.displayed);
       this.$emit('input', this.displayed);
+      this.setLayer(false);
+    },
+    /**
+     * Puts the popup on top of the view state's layers while it shows, or takes it off. Without
+     * a view state (a page outside the app), it listens to Escape and Enter itself
+     *
+     * @param {Boolean} shown whether the popup shows
+     */
+    setLayer(shown) {
+      if (this.$view) {
+        if (shown) this.$view.pushLayer(this.layer);
+        else this.$view.removeLayer(this.layer);
+        return;
+      }
       window.removeEventListener('keydown', this.handleKeydown);
+      if (shown) window.addEventListener('keydown', this.handleKeydown);
     },
     cancel() {
       if (!this.onCancel) {
@@ -360,16 +393,16 @@ export default {
   user-select: none;
   overflow: hidden;
   box-shadow: -2px 2px 20px 2px var(--primary-dark);
-  border: 1px solid var(--secondary-darker);
-  border-radius: 5px;
+  border: var(--border-width) solid var(--secondary-darker);
+  border-radius: var(--radius-md);
   z-index: 200;
   height: auto;
   transform-origin: 50% 50%;
 }
 .header {
-  min-height: 30px;
+  min-height: var(--widget-header-height);
   width: 100%;
-  padding: 0 10px;
+  padding: 0 var(--space-5);
   align-items: center;
   background: var(--secondary-darker);
   user-select: none;
@@ -379,12 +412,12 @@ export default {
   background: var(--secondary-darker);
 }
 .popup_close_icon {
-  width: 16px !important;
-  height: 16px !important;
+  width: var(--icon-md) !important;
+  height: var(--icon-md) !important;
   fill: var(--accent-red);
   opacity: .8;
   transform: rotate(45deg);
-  margin-left: 16px;
+  margin-left: var(--space-7);
 }
 .popup_close_icon:hover {
   cursor: pointer;
@@ -394,10 +427,14 @@ export default {
   align-items: center;
   height: 100%;
 }
+/* OK stands out from the other buttons */
+.popup_validation .popup_ok:not(.disabled) {
+  background: var(--secondary-light) !important;
+}
 .popup_validation {
   width: 100%;
-  padding: 8px;
-  border-top: 1px solid var(--primary-dark);
+  padding: var(--space-4);
+  border-top: var(--border-width) solid var(--primary-dark);
 }
 .popup_backdrop {
   position: fixed;
