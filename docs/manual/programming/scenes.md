@@ -6,7 +6,7 @@ reached with a fade when you play it. Scenes and [effects](/programming/effects)
 
 Here the demo rig plays its two scenes in turn: *Warm wash*, amber pools in front of each head,
 then *Sunset*, deep red to gold with the beams fanned wide, then *Warm wash* again. Each fades
-from where the lights are to the scene's values over its duration (one bar, 2 s), then holds.
+from where the lights are to the scene's values over its **Fade in** (one bar, 2 s), and its look stays.
 Watch the colour, the beam width (zoom) and the aim all move together: a scene can set any channel.
 
 <LivePreview preset="scene-stage" />
@@ -43,7 +43,8 @@ channel: [Playing a show](/programming/playback#cues), where you can try the dem
 
 ## Cue Settings
 
-These are *Sunset*'s settings: a 1-bar fade, played once, from the current values.
+These are *Sunset*'s settings: it fades from the current values. A scene's fade times are in its
+**Fade in** and **Fade out** widgets (see [Fade In and Fade Out](#fade-in-and-fade-out)).
 
 <LivePreview preset="cue-settings" />
 
@@ -51,18 +52,22 @@ These are *Sunset*'s settings: a 1-bar fade, played once, from the current value
 | --- | --- |
 | **Name** | The cue's name |
 | **Color** | The cue's colour in the cue pool and in chases |
-| **Loop Style** | **One Shot** plays the cue once; **Loop** repeats it until you stop it |
+| **Loop Style** | Effects only. **One Shot** plays the effect once; **Loop** repeats it until you stop it |
 | **Trigger Style** | **Toggle**: a click starts the cue, the next click stops it. **Temporary**: the cue plays while you hold the mouse button on it, and stops when you release it, as a flash button |
-| **Start** | **Absolute**: a scene fades from 0. **Relative**: it fades from the channels' current values, so it blends from whatever was on stage |
-| **Duration** | How long the cue lasts, in bars (see [Timing and playback](/concepts/timing)). For a scene, this is its fade time |
+| **Start** | **Absolute**: a scene fades from 0. **Relative**: it fades from the channels' current values, so it blends from whatever was on stage. An effect set to **Relative** fades in and out (see [Fading in and out](/programming/effects#fading-in-and-out)) |
+| **Duration** | Effects only: how long one pass of the effect lasts, in bars (see [Timing and playback](/concepts/timing)) |
 
-> **Note:** A scene that has played to its end stays on stage: it stops, but its values remain on
-> the fixtures until something else changes them.
+A scene has no **Loop Style** or **Duration**: it ends by itself once faded in, and its values stay
+on the fixtures until something else changes them.
+
+> **Note:** Stopping a scene while it fades in fades it out over its **Fade out**: to 0 with
+> **Absolute**, back to the values it started from with **Relative**. With a **Fade out** of 0, it
+> stops at once where it got to.
 
 ### How a scene fades
 
-Over its **Duration**, a scene moves each active channel from its start value to the scene's value,
-following its **Fade in** curve. **Start** picks the start value:
+Over its **Fade in** time, a scene moves each active channel from its start value to the scene's
+value, following its **Fade in** curve. **Start** picks the start value:
 
 <SceneFade />
 
@@ -123,19 +128,24 @@ on the scene's selected fixtures and cells.
 - **Check it from black.** A scene with **Start** **Relative** looks different depending on what
   played before; play it after a blackout once to see its own values.
 
-## Fade In
+## Fade In and Fade Out
 
-The **Fade in** widget shapes how the scene moves from its start values to its end values over its
-**Duration**: a curve from start (bottom left) to end (top right).
+The **Fade in** widget shapes how the scene moves from its start values to its own values when it
+starts: a curve from start (bottom left) to end (top right). The **Fade out** widget, next to it,
+shapes how it leaves when you stop it. Each has its own time.
+
+In a [chase](/programming/chases#the-timeline), the same fades play inside each item: the fade in
+from the item's start, the fade out up to its end.
 
 <LivePreview preset="scene-curve" />
 
 | Setting | Description |
 | --- | --- |
+| **Bars** | How long the fade lasts, 0 to 64 bars. 0 means no fade: the values change at once |
 | **Type** | A preset curve, each shown with a small picture of its shape: **Linear**, **Ease**, **Ease in**, **Ease out**, **Ease in-out**, then **Sine**, **Quad**, **Cubic**, **Quart**, **Quint**, **Expo**, **Circ** and **Back**, each **in**, **out** and **in-out**. With the list open, type a letter to jump to the presets starting with it. **Custom** is a curve you shaped yourself |
 | **CP1 X/Y**, **CP2 X/Y** | The curve's two control points. **X** (time) goes from 0 to 1; **Y** from −1 to 2. **CP1** shapes the start of the fade, **CP2** its end |
 
-The scene plays the curve as drawn: halfway through the **Duration**, the channels are where the
+The scene plays the curve as drawn: halfway through the fade, the channels are where the
 curve is halfway across. **In** curves start slowly, **out** curves arrive slowly, **in-out** do
 both; **Sine** is the gentlest and **Expo** the sharpest.
 

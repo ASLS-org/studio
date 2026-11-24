@@ -12,12 +12,13 @@ explains the units; how to set the tempo and play the show is in
 | Beat | 60 ÷ BPM seconds: 0.5 s at 120 BPM |
 | Bar | 4 beats: 2 s at 120 BPM, 4 s at 60 BPM |
 
-Cue and chase durations are whole numbers of bars. An effect's **Freq** counts waveform cycles per
+Effect and chase durations are whole numbers of bars; fade times are in bars too, in steps of a
+hundredth. An effect's **Freq** counts waveform cycles per
 duration, so its speed follows the tempo too.
 
 | At 120 BPM | Lasts |
 | --- | --- |
-| A scene with **Duration** 1 | 2 s fade |
+| A scene with a **Fade in** of 1 bar | 2 s fade |
 | An effect with **Duration** 2 and **Freq** 1 | one cycle every 4 s |
 | A chase with **Duration** 4 | 8 s per pass |
 
@@ -36,15 +37,17 @@ next half bar, beat or half beat (**1/2**, **1/4**, **1/8**), or at once (**None
 
 ## How Cues End
 
-A cue's **Loop Style** decides what happens at the end of its duration:
+A scene fades in, then ends and its look stays; stopping it before that fades it out (see
+[Fade In and Fade Out](/programming/scenes#fade-in-and-fade-out)). An effect's **Loop Style**
+decides what happens at the end of its duration:
 
-| | **One Shot** | **Loop** |
-| --- | --- | --- |
-| Scene | Fades in over its duration, stops; its look stays | Stays on after its fade, until stopped |
-| Effect | Runs its duration once, stops | Repeats until stopped (the default) |
+| **One Shot** | **Loop** |
+| --- | --- |
+| Runs its duration once, stops | Repeats until stopped (the default) |
 
-A scene's **Start** sets where its fade begins, from 0 or from the current values: see
-[How a scene fades](/programming/scenes#how-a-scene-fades).
+A cue's **Start** sets where its fade begins, from 0 or from the current values: see
+[How a scene fades](/programming/scenes#how-a-scene-fades) and
+[Fading in and out](/programming/effects#fading-in-and-out).
 
 ## What Plays Together
 

@@ -96,11 +96,12 @@ plays or stops it. There are two kinds:
 | --- | --- | --- |
 | What it does | Brings channels to set values | Moves channels along a waveform |
 | Values | One value per active channel, per fixture (per cell) | A min, a max, a waveform, a phase per fixture |
-| Over its duration | Fades in, along its fade curve | Repeats its waveform **Freq** times |
-| When it ends | Stops; its look stays on stage | Loops by default |
+| Over time | Fades in along its **Fade in** curve, then ends; its look stays | Repeats its waveform **Freq** times per **Duration** |
+| Stopped while fading in | Fades out along its **Fade out** curve | Stops (fades out when **Relative**) |
 
-Every cue has a **Duration** in bars and a **Loop Style** (once, or until stopped). Scenes have a
-**Start**: from 0, or from the channels' current values. Durations follow the tempo: double the
+Every cue has a **Start**: from 0, or from the channels' current values. A scene has a **Fade in**
+and a **Fade out** in bars; an effect has a **Duration** in bars and a **Loop Style** (once, or
+until stopped), and fades only when **Relative**. Durations follow the tempo: double the
 BPM and every fade and every effect runs twice as fast.
 
 **In the demo show:** *Rig* has four cues.

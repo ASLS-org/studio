@@ -205,10 +205,18 @@ const PRESETS = {
   },
   'scene-curve': {
     title: 'Fade in',
-    width: 341,
+    width: 381,
     height: STRIP,
     component: () => import('@/views/activities/app/fragments/modifiers/_widgets/modifier.widget.curve.vue'),
-    props: (show) => ({ fade: cue(show, 3).fadeIn }),
+    props: (show) => ({ fade: cue(show, 3).fadeIn, timed: true }),
+  },
+  'effect-fade': {
+    title: 'Fade in',
+    width: 381,
+    height: STRIP,
+    component: () => import('@/views/activities/app/fragments/modifiers/_widgets/modifier.widget.curve.vue'),
+    props: (show) => ({ fade: cue(show, 2).fadeIn, timed: true }),
+    start: (show) => { cue(show, 2).fadeIn.duration = 2; },
   },
   'effect-wave': {
     title: 'Effect Tool',

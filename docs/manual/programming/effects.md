@@ -16,7 +16,8 @@ Create an effect like any cue: double click an empty slot of the group's **Cue P
 **effect** (see [Creating a cue](/programming/scenes#creating-a-cue)). Effects loop by default.
 Selecting an effect shows its widgets in the group view: **Modulated Channels**, **Channel
 Fixtures Activity**, the selected channel's scope (**Colour Scope** or **Pan/Tilt Scope**), then
-the **Effect Tool**, from left to right.
+the **Effect Tool**, from left to right. An effect whose **Start** is **Relative** also shows its
+**Fade in** and **Fade out** first (see [Fading in and out](#fading-in-and-out)).
 
 ## Modulated Channels
 
@@ -205,6 +206,30 @@ follows the show's tempo: double the BPM and the effect runs twice as fast. See
 
 **In the demo show:** both effects last 2 bars. *Rainbow*'s colour has **Freq** 1: one trip around
 the hues every 4 s at 120 BPM. *Ballyhoo*'s pan and tilt have **Freq** 2: a circle every 2 s.
+
+## Fading in and out
+
+An effect started over a scene usually jumps: the heads snap onto its path, the colours cut to its
+waves. Set its **Start** to **Relative** in **Cue Settings** (the same setting as for
+[scenes](/programming/scenes#cue-settings)) and it blends instead:
+
+- **Starting** it, the effect takes the values its channels hold at that moment and moves from them
+  into the running effect over its **Fade in**. The effect keeps moving all along.
+- **Stopping** it, its tile shows stopped at once, and the effect blends back to those values over
+  its **Fade out**, then lets go.
+- **Starting it again** while it fades out blends in from wherever the channels are, with no jump.
+
+With **Relative**, a **Fade in** and a **Fade out** widget come first among the effect's widgets.
+Each has a **Type** (the same curves as a [scene's fade](/programming/scenes#how-a-scene-fades)),
+the curve's control points, and **Bars**: how long the fade lasts, 0 to 64 bars. 0 means no fade.
+
+<LivePreview preset="effect-fade" />
+
+With **Absolute** (the default), the fade widgets are hidden and the effect starts and stops at
+once.
+
+In a [chase](/programming/chases#the-timeline), a Relative effect fades the same way inside each
+item: in from the item's start, out up to its end.
 
 ## Recipes
 

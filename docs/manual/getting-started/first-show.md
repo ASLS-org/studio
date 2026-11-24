@@ -48,7 +48,7 @@ in [Groups](/programming/groups).
    **sat** and **val** fields.
 6. Click the second PAR in **Scene Fixtures** and repeat steps 4 and 5.
 
-Click the scene's body in the cue pool: both PARs fade to red over one bar (its **Duration**), then
+Click the scene's body in the cue pool: both PARs fade to red over one bar (its **Fade in**), then
 the scene stops and the red stays. Only ticked channels are part of the scene: anything you leave
 unticked keeps whatever another cue gave it. More in [Scenes](/programming/scenes).
 
@@ -70,7 +70,7 @@ bright when the other is dark. More in [Effects](/programming/effects).
 1. In the group pool, double click the first empty chase slot of `Front`. The chase view opens.
 2. Set its **Duration** to `2` bars.
 3. In the timeline, double click the `Red` lane at its start (**1.0** on the ruler), then the
-   `Pulse` lane at **2.0**. Each item lasts its cue's duration: one bar.
+   `Pulse` lane at **2.0**. Each item lasts one bar.
 
 Lanes are the group's cues, in cue pool order. An item plays its cue from its left edge for its
 length; a scene item fades in over its cue's duration and keeps its look until the next item

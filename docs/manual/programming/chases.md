@@ -36,10 +36,19 @@ lasts 8 seconds; at 60 BPM, 16 seconds.
 ## The Timeline
 
 Each lane is one of the group's cues; the ruler counts bars and beats. A **cue item** on a lane
-plays that cue from where it starts, for as long as it lasts.
+plays that cue from where it starts, for as long as it lasts. The item starts the cue with its
+**Fade in** and ends with its **Fade out**, so the cue has faded out when the item ends. The item
+draws these fades: the fade in curve at its start, a flat line while the cue holds, the fade out
+curve at its end.
 
-- **Add** a cue item: double click its lane where it should start. It gets the cue's duration, or
-  less if another item follows.
+Stretching an item makes the cue hold longer; its fades keep their own times. An item shorter than
+both fades together plays them shortened, in proportion. An effect fades only when its **Start** is
+**Relative** (see [Fading in and out](/programming/effects#fading-in-and-out)); otherwise it plays
+at full strength from the item's start to its end.
+
+- **Add** a cue item: double click its lane where it should start. An effect's item gets its
+  **Duration**, a scene's is long enough for its fades (one bar at least), or less if another
+  item follows.
 - **Move** it: drag its middle. **Resize** it: drag its right edge.
 - **Remove** it: right click it.
 - **Zoom**: drag up or down on the ruler; double click the ruler to reset.
@@ -55,11 +64,12 @@ colour starts cycling, because *Rainbow* only moves colour channels.
 
 | Cue | At the item's end |
 | --- | --- |
-| Scene | Its look stays until another item changes the same channels |
-| Effect | It stops; its channels keep the value they had at that moment |
+| Scene, **Absolute** | Faded out to 0, or, with a **Fade out** of 0, its look stays until another item changes the same channels |
+| Scene or effect, **Relative** | Faded back to the values its channels had when the item began, or, with a **Fade out** of 0, its last values stay |
+| Effect, **Absolute** | It stops; its channels keep the value they had at that moment |
 
-So a chase that ends on an effect leaves the lights wherever the effect was. End on a scene (as
-*Story* does with *Sunset*) for a clean, known look.
+So a chase that ends on an Absolute effect leaves the lights wherever the effect was. End on a
+scene with no **Fade out** (as *Story* does with *Sunset*) for a clean, known look.
 
 ## Deleting a Chase
 

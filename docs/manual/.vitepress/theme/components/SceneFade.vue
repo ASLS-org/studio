@@ -89,7 +89,7 @@ const ease = (x) => {
 
 /**
  * Animated illustration of a scene's fade: the value moves from where it starts to the scene's
- * value along the fade curve, over the scene's duration (one bar here), and the lights follow.
+ * value along the fade curve, over the scene's Fade in (one bar here), and the lights follow.
  * Absolute starts from 0 (dark); Relative from the look already on stage.
  * @example <SceneFade />
  */
@@ -98,7 +98,7 @@ export default {
   data() {
     return {
       progress: 0.6,
-      caption: 'Sunset, a scene with a 1-bar duration, played twice: from 0 (Absolute) and from '
+      caption: 'Sunset, a scene with a 1-bar fade in, played twice: from 0 (Absolute) and from '
         + 'what\'s on stage, Warm wash (Relative)',
       rows: [
         {
