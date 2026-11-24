@@ -44,7 +44,7 @@ In Studio's visualizer header:
 
 Fixtures you select in the patch bay or a fixture pool are outlined in the visualizer, with the
 **transform controls** on them. Drag the controls to move or turn the fixtures on stage; the change
-is written to their **Position** and **Rotation** when you release the mouse. Keys switch the
+is written to their position and mount when you release the mouse. Keys switch the
 controls:
 
 | Key | Mode | Controls |
@@ -60,9 +60,13 @@ the truss.
 
 <LivePreview preset="visualizer-modes" />
 
+The keys do nothing while you type in a field or a popup is open.
+
 Select several fixtures (<kbd>Ctrl</kbd>+click) to move them together, as one block: handy to
 shift a whole truss. For exact values, type them in the universe view's
-[Position Tool](/programming/patching#fixture-settings-and-position) instead.
+[Position Tool](/programming/patching#position-tool) instead, or drag them on its stage map; its
+**Arrange** popup also places the selection in a line, grid, circle or arc, or aims it at one
+point.
 
 ## What It Draws
 

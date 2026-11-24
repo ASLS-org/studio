@@ -227,7 +227,7 @@ export default {
 
 <style scoped>
 .body {
-  padding: 10px;
+  padding: var(--space-5);
   min-width: 400px;
   max-width: 400px;
   max-height: 40vh;
@@ -235,25 +235,25 @@ export default {
 }
 
 .function_button {
-  margin-top: 8px;
-  margin-left: 8px;
+  margin-top: var(--space-4);
+  margin-left: var(--space-4);
 }
 .separator {
-  margin: 4px 0;
+  margin: var(--space-2) 0;
   width: 100%;
 }
 .subtitle {
   font-family: Roboto-Regular;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-4);
   color: var(--secondary-lighter-alt);
 }
 .title{
-  border-bottom: 1px solid var(--primary-dark);
+  border-bottom: var(--border-width) solid var(--primary-dark);
 }
 .title_icon {
   fill: var(--secondary-lighter);
 }
 h4 {
-  margin-bottom: 4px;
+  margin-bottom: var(--space-2);
 }
 </style>

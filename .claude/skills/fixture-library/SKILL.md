@@ -52,7 +52,11 @@ previous build's output.
 - **Modes.** A fixture with no `modes` is rejected by the library ("defines no modes").
 - **Capabilities.** Channel type keys come from the rules in `src/models/fixtures/ofl.adapter.js`;
   value handling comes from `CAPABILITY_TYPES` in `capabilityManager.model.js` and the cases in
-  `Fixture.setChannel()`. Unknown types load but do nothing in the visualizer. Check with:
+  `Fixture.setChannel()`. Unknown types load but do nothing in the visualizer. Each range gets a
+  `label` (runtime only) from `capability.labels.js`, called by both adapters: the OFL `comment` or
+  GDTF channel set / function name, else built from its type and data (wheel slot names come from
+  the profile's `wheels`). Channel icons are keyed on the GDTF `attribute` (skill `vue-ui-change`
+  § Icons), so new adapter attributes need no icon work unless no family matches. Check with:
   `node -e "const f=require('./public/fixtures/<m>/<f>.json');console.log([...new Set(Object.values(f.availableChannels).flatMap(c=>c.capabilities||[c.capability]).map(c=>c.type))])"`
 - **Physical.** `physical.lens.degreesMinMax` sets the beam angle (defaults 10–25°), and
   `physical.bulb.colorTemperature` the default white. Colour and gobo wheels are read from

@@ -20,11 +20,16 @@
       v-show="selectedFixture"
       ref="settings"
       :fixture="selectedFixture"
+      @repatch="repatchPopupDisplayState = true"
     />
     <position-tool-widget
       v-show="selectedFixture"
       ref="positionTool"
-      :fixture="selectedFixture"
+      :fixtures="selectedFixtures"
+      :universe-fixtures="universe.fixturePool?.fixtures || []"
+      :others="otherFixtures"
+      @arrange="arrangePopupDisplayState = true"
+      @selection="selectFixtures"
     />
     <modifier-widget-cells
       v-if="selectedFixture && selectedFixture.cells.length"
@@ -59,6 +64,14 @@
       v-model="patchPopupDisplayState"
       :universe="universe"
     />
+    <repatch-popup
+      v-model="repatchPopupDisplayState"
+      :fixture="selectedFixture"
+    />
+    <arrange-popup
+      v-model="arrangePopupDisplayState"
+      :fixtures="selectedFixtures"
+    />
   </uk-flex>
 </template>
 
@@ -75,6 +88,8 @@ import UniverseSettingsWidget from './_widgets/universe.modifier.widget.settings
 import FixtureSettingsWidget from './_widgets/universe.modifier.widget.fixture.settings.vue';
 import PositionToolWidget from './_widgets/universe.modifier.widget.fixture.position.tool.vue';
 import PatchPopup from './_popups/universe.modifier.popup.patch.vue';
+import RepatchPopup from './_popups/universe.modifier.popup.repatch.vue';
+import ArrangePopup from './_popups/universe.modifier.popup.arrange.vue';
 import UniverseConnectionWidget from './_widgets/universe.modifier.widget.connection.vue';
 
 export default {
@@ -94,6 +109,8 @@ export default {
     PanTiltWidget,
     ModifierWidgetCells,
     PatchPopup,
+    RepatchPopup,
+    ArrangePopup,
   },
   mixins: [LiveMixin],
   computed: {
@@ -101,6 +118,14 @@ export default {
      * Patch popup display state
      */
     patchPopupDisplayState: modal('universe.patch', 'universe'),
+    /**
+     * Repatch popup display state
+     */
+    repatchPopupDisplayState: modal('universe.repatch', 'universe'),
+    /**
+     * Arrange popup display state
+     */
+    arrangePopupDisplayState: modal('universe.arrange', 'universe'),
     /**
      * Universe in view (the last one, while another panel is in view)
      *
@@ -125,6 +150,24 @@ export default {
      */
     selectedFixture() {
       return this.$view.universeFixtures[0] || null;
+    },
+    /**
+     * Selected fixtures in fixture pool order (the order placement follows)
+     *
+     * @type {Array<Object>}
+     */
+    selectedFixtures() {
+      const ids = new Set(this.selectedIds);
+      return (this.universe.fixturePool?.fixtures || []).filter((fixture) => ids.has(fixture.id));
+    },
+    /**
+     * Fixtures of the other universes (faint on the Position Tool's map)
+     *
+     * @type {Array<Fixture>}
+     */
+    otherFixtures() {
+      const own = new Set((this.universe.fixturePool?.fixtures || []).map((fixture) => fixture.id));
+      return this.$show.fixturePool.fixtures.filter((fixture) => !own.has(fixture.id));
     },
     /**
      * Cells of the selected fixture the controls apply to, null for all
@@ -158,6 +201,17 @@ export default {
       return this.live(this.selectedFixture
         ? this.selectedFixture.getPanTilt(this.selectedCells) : undefined);
     },
+  },
+  mounted() {
+    // A opens Arrange while the universe panel is in view with fixtures selected
+    this.removeArrangeShortcut = this.$keyboard?.addShortcut(
+      (e) => e.key.toLowerCase() === 'a' && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey
+        && this.$view.panel === 'universe' && this.selectedFixtures.length > 0,
+      () => { this.arrangePopupDisplayState = true; },
+    );
+  },
+  beforeUnmount() {
+    if (this.removeArrangeShortcut) this.removeArrangeShortcut();
   },
   methods: {
     /**

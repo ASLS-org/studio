@@ -116,8 +116,13 @@ export default {
 </script>
 
 <style scoped>
+/* As wide as its widest row, within bounds: longer rows are cut and scroll on hover. It doesn't
+   shrink when the strip is short of room (the strip scrolls instead) */
 .modifier_widget_fixture_pool {
-  min-width: 250px;
+  flex-shrink: 0;
+  width: fit-content;
+  min-width: var(--widget-width-sm);
+  max-width: var(--widget-width-xl);
 }
 .modifier_widget_fixture_pool_body {
   width: 100%;

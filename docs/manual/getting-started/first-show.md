@@ -19,14 +19,13 @@ In the toolbar, open **File** and pick **New Showfile**. Choose the **Blank** te
 2. In its **Fixture Pool**, press **Add**.
 3. In the popup, unfold **Bundled (GDTF)** and pick **Generic PAR RGBW**. Keep its first **Fixture
    mode** (6 channels).
-4. Set **Amount** to `2` and **Offset X** to `3`, so the two PARs stand side by side.
+4. Set **Amount** to `2`.
 5. Press **OK**.
 
-With **Amount** `2`, Studio patches both at once, one after the other in the universe, each
-**Offset X** further along.
-
-The two PARs appear in the fixture pool, the patch bay and the visualizer. More in
-[Patching fixtures](/programming/patching).
+With **Amount** `2`, Studio patches both at once, one after the other in the universe, named
+*Generic PAR RGBW 1* and *Generic PAR RGBW 2*. They appear in the fixture pool, the patch bay and
+the visualizer, hung side by side 4 m up, 1 m apart, in front of the stage. Move them with the
+**Position Tool** whenever you like. More in [Patching fixtures](/programming/patching).
 
 ## 3. Make a Group
 

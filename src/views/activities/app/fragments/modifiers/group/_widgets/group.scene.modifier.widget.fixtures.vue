@@ -58,7 +58,7 @@ export default {
 
 <style scoped>
 .scene_fixtures {
-  min-width: 250px;
+  min-width: var(--widget-width-sm);
 }
 .scene_fixtures_list {
   height: 100%;

@@ -203,8 +203,8 @@ export default {
 .uikit_knob_wrapper {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 8px;
+  gap: var(--space-4);
+  padding: var(--space-4);
   align-items: center;
   justify-content: center;
 }
@@ -214,7 +214,7 @@ export default {
   flex-direction: column;
   width: 50px;
   height: 50px;
-  border-radius: 50%;
+  border-radius: var(--radius-round);
   align-items: center;
   justify-content: center;
   cursor: pointer;
@@ -224,7 +224,7 @@ export default {
   flex-direction: column;
   width: 38px;
   height: 38px;
-  border-radius: 50%;
+  border-radius: var(--radius-round);
   background: linear-gradient(180deg, var(--primary-light), var(--secondary-dark) 100%);
   border: 3px solid var(--primary-lighter);
   align-items: center;
@@ -257,7 +257,7 @@ export default {
   border-radius: 5px;
 }
 .uikit_knob_value h4 {
-  color: #ffffff80;
+  color: var(--secondary-light-alt);
 }
 .disabled {
   opacity: 0.5;

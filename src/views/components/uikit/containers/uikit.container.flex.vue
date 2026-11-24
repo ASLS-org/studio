@@ -15,6 +15,24 @@
 </template>
 
 <script>
+/**
+ * Spacing steps of the design scale (tokens.css), by pixel value
+ *
+ * @constant {Object} SPACE_STEPS
+ */
+const SPACE_STEPS = {
+  2: 'var(--space-1)',
+  4: 'var(--space-2)',
+  6: 'var(--space-3)',
+  8: 'var(--space-4)',
+  10: 'var(--space-5)',
+  12: 'var(--space-6)',
+  16: 'var(--space-7)',
+  20: 'var(--space-8)',
+  24: 'var(--space-9)',
+  32: 'var(--space-10)',
+};
+
 export default {
   name: 'UkFlex',
   compatConfig: {
@@ -72,7 +90,9 @@ export default {
       default: false,
     },
     /**
-     * Gap value in pixels between items
+     * Gap between items: pixels on the spacing scale (2, 4, 6, 8, 10, 12, 16, 20, 24, 32) use
+     * its step; any other number is in pixels; a non-numeric string is used as is (e.g.
+     * 'var(--space-4)')
      */
     gap: {
       type: [Number, String],
@@ -87,7 +107,9 @@ export default {
        * @returns {Object} The computed styling object
      */
     getStyle() {
-      const style = { gap: `${this.gap}px` };
+      const px = Number(this.gap);
+      const gap = Number.isNaN(px) ? this.gap : (SPACE_STEPS[px] || `${px}px`);
+      const style = { gap };
       const justify = { justifyContent: 'center' };
       const align = { alignItems: 'center' };
       if (this.centerH) {

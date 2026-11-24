@@ -126,7 +126,7 @@ export default {
 
 <style scoped>
 .media_popup {
-  min-width: 300px;
-  padding: 16px;
+  min-width: var(--widget-width-md);
+  padding: var(--space-7);
 }
 </style>

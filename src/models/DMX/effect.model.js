@@ -267,6 +267,8 @@ class FXFixture {
     this.phase = preset.phase;
     this.active = preset.active;
     this.value = 0;
+    // Whether this fixture plays its channel mirrored (runtime, set by the channel's phasing)
+    this.mirrored = false;
     this.id = fxFixtureId++;
     this.buildTargets();
   }
@@ -406,12 +408,15 @@ class FXChannel {
    * @param {Number} channel.fixturePhaseStop FXChannel fixtures phasing stop interval in degrees
    * @param {Boolean} [channel.cellPhase=false] Whether the phase spreads over every cell of the
    * fixtures rather than over the fixtures
+   * @param {Boolean} [channel.mirror=false] Whether the second half of the fixtures plays the wave
+   * flipped (Min + Max − value)
 
    * @param {Array} fixtures Array of fixture instances
    */
   constructor(channel, fixtures, duration) {
     this.type = channel.type;
     this._cellPhase = channel.cellPhase === true;
+    this._mirror = channel.mirror === true;
     this.width = channel.width;
     this.fixtures = fixtures;
     this.direction = channel.direction;
@@ -442,6 +447,23 @@ class FXChannel {
 
   get cellPhase() {
     return this._cellPhase;
+  }
+
+  /**
+   * Whether the second half of the active fixtures (in effect order, the middle one of an odd
+   * count left out) plays the wave flipped: Min + Max − value. On a Pan channel it mirrors the
+   * movement left to right
+   *
+   * @type {Boolean}
+   */
+  set mirror(mirror) {
+    this._mirror = Boolean(mirror);
+    this.computeFixturesPhasing();
+    this.update(this.time);
+  }
+
+  get mirror() {
+    return this._mirror;
   }
 
   /**
@@ -755,6 +777,7 @@ class FXChannel {
       fixturePhaseStart: this.fixturePhaseStart,
       fixturePhaseStop: this.fixturePhaseStop,
       cellPhase: this.cellPhase,
+      mirror: this.mirror,
     };
   }
 
@@ -773,8 +796,16 @@ class FXChannel {
     const activeFixtures = [];
 
     for (let i = 0; i < fixtures.length; i++) {
+      fixtures[i].mirrored = false;
       if (fixtures[i].active) {
         activeFixtures.push(fixtures[i]);
+      }
+    }
+    // Mirror: the second half of the active fixtures, the middle one of an odd count left out
+    if (this._mirror) {
+      const middle = (activeFixtures.length - 1) / 2;
+      for (let i = 0; i < activeFixtures.length; i++) {
+        if (i > middle) activeFixtures[i].mirrored = true;
       }
     }
 
@@ -1015,6 +1046,9 @@ class FXChannel {
     }
     if (rephase) this.computeFixturesPhasing();
 
+    // A mirrored fixture plays Min + Max − value
+    const flip = this.min + this.max;
+
     for (let i = 0; i < fixtures.length; i++) {
       const fixture = fixtures[i];
 
@@ -1023,16 +1057,20 @@ class FXChannel {
         continue;
       }
 
-      const value = this.getValue(this.time, fixture.phase) || 0;
+      const raw = this.getValue(this.time, fixture.phase) || 0;
+      const value = fixture.mirrored ? flip - raw : raw;
       fixture.value = value;
       this.DMXData += value;
 
       const { targets } = fixture;
       for (let k = 0; k < targets.length; k++) {
         const target = targets[k];
-        fixture.writeTarget(target, this._cellPhase && target.cell
-          ? this.getValue(this.time, target.phase) || 0
-          : value);
+        if (this._cellPhase && target.cell) {
+          const cellValue = this.getValue(this.time, target.phase) || 0;
+          fixture.writeTarget(target, fixture.mirrored ? flip - cellValue : cellValue);
+        } else {
+          fixture.writeTarget(target, value);
+        }
       }
     }
   }

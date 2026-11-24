@@ -31,6 +31,8 @@
         class="popup_validation"
         :gap="8"
       >
+        <!-- @slot Extra footer buttons, on the left -->
+        <slot name="actions" />
         <uk-spacer />
         <uk-button
           v-if="cancelable"
@@ -38,6 +40,7 @@
           @click="cancel()"
         />
         <uk-button
+          class="popup_ok"
           :disabled="!valid"
           :label="validateTxt"
           @click="submit()"
@@ -390,16 +393,16 @@ export default {
   user-select: none;
   overflow: hidden;
   box-shadow: -2px 2px 20px 2px var(--primary-dark);
-  border: 1px solid var(--secondary-darker);
-  border-radius: 5px;
+  border: var(--border-width) solid var(--secondary-darker);
+  border-radius: var(--radius-md);
   z-index: 200;
   height: auto;
   transform-origin: 50% 50%;
 }
 .header {
-  min-height: 30px;
+  min-height: var(--widget-header-height);
   width: 100%;
-  padding: 0 10px;
+  padding: 0 var(--space-5);
   align-items: center;
   background: var(--secondary-darker);
   user-select: none;
@@ -409,12 +412,12 @@ export default {
   background: var(--secondary-darker);
 }
 .popup_close_icon {
-  width: 16px !important;
-  height: 16px !important;
+  width: var(--icon-md) !important;
+  height: var(--icon-md) !important;
   fill: var(--accent-red);
   opacity: .8;
   transform: rotate(45deg);
-  margin-left: 16px;
+  margin-left: var(--space-7);
 }
 .popup_close_icon:hover {
   cursor: pointer;
@@ -424,10 +427,14 @@ export default {
   align-items: center;
   height: 100%;
 }
+/* OK stands out from the other buttons */
+.popup_validation .popup_ok:not(.disabled) {
+  background: var(--secondary-light) !important;
+}
 .popup_validation {
   width: 100%;
-  padding: 8px;
-  border-top: 1px solid var(--primary-dark);
+  padding: var(--space-4);
+  border-top: var(--border-width) solid var(--primary-dark);
 }
 .popup_backdrop {
   position: fixed;

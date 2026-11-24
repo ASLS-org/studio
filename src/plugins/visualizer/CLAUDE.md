@@ -38,6 +38,10 @@ Three.js r170 WebGL renderer for the rig. It is instantiated by
 - The only write back is the gizmo: `FixtureHandle` setters emit `fixture_transformed`, and the
   fragment applies it to the fixture (`position` / `rotation` setters). Nothing else here writes
   into models.
+- An edit pose (`fixture_pose` with `reattach`, e.g. `Fixture.setPose`) puts the gizmo back on the
+  whole selection, so editing several fixtures keeps them all attached.
+- Gizmo keys (T, R, H, Escape, Ctrl+Z) are `Controls.handlesKey` / `handleKey`, registered by the
+  visualizer fragment with `$keyboard.addShortcut`: no `window` listener.
 - Per-frame code (`update(t)`, setters called each tick) must not allocate: reuse vectors, colours
   and materials. Dispose geometries, materials and textures when removing instances.
 - Render on demand: `Visualizer.render()` draws only when `needsRender` is set (DMX change, camera

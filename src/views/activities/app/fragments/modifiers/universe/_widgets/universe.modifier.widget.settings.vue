@@ -18,17 +18,23 @@
             style="width: 100%"
           />
           <uk-num-input
-            :key="idFieldKey"
             :model-value="universe.id"
+            readonly
             style="width: 60px"
             label="ID"
-            @update:model-value="setUniverseId"
           />
         </uk-flex>
+        <uk-select-input
+          label="Color"
+          color="var(--accent-blue)"
+          :model-value="getIndexFromColor(universe.color)"
+          :options="colorOptions"
+          @input="setUniverseColor"
+        />
         <uk-flex
           gap="10"
           center-both
-          style="width:100%;"
+          style="width:100%"
         >
           <uk-select-input
             :model-value="universe?.stream?.client?.name ?? null"
@@ -44,18 +50,11 @@
           />
           <uk-button
             square
-            label="config"
-            style="height:25px; min-width: 75px; margin-top:22px"
+            label="add"
+            style="height: var(--control-height); min-width: 75px; margin-top: 22px"
             @click="connectionsPopupState = true"
           />
         </uk-flex>
-        <uk-select-input
-          label="Color"
-          color="var(--accent-blue)"
-          :model-value="getIndexFromColor(universe.color)"
-          :options="colorOptions"
-          @input="setUniverseColor"
-        />
       </uk-flex>
     </template>
     <h3
@@ -97,10 +96,6 @@ export default {
       },
       universe: this.modelValue,
       output: null,
-      /**
-       * Re-mounts the ID field, so a refused id shows the current one again
-       */
-      idFieldKey: 0,
     };
   },
   computed: {
@@ -123,23 +118,6 @@ export default {
     },
   },
   methods: {
-    /**
-     * Changes the universe's id (its fixtures follow), unless another universe uses it. The
-     * view (and its memory of the universe) follows the new id.
-     *
-     * @public
-     * @param {Number} id new id
-     */
-    setUniverseId(id) {
-      const previous = this.universe.id;
-      if (Number(id) === previous) return;
-      if (!this.$show.universePool.changeId(this.universe, id)) {
-        this.idFieldKey += 1;
-        return;
-      }
-      this.$view.moveUniverse(previous, this.universe.id);
-      this.$show.refreshSaveState();
-    },
     setUniverseColor(colorIndex) {
       this.universe.color = this.getColorFromIndex(colorIndex);
     },
@@ -153,12 +131,12 @@ export default {
 
 <style scoped>
 .universe_settings_wrapper{
-  min-width: 250px;
+  min-width: var(--widget-width-sm);
 }
 .universe_settings {
   height: 100%;
-  padding: 10px;
-  min-width: 250px;
+  padding: var(--space-5);
+  min-width: var(--widget-width-sm);
 }
 .empty_text {
   display: flex;

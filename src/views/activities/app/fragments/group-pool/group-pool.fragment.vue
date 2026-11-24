@@ -8,14 +8,13 @@
       <uk-spacer />
       <uk-button
         icon="new"
-        style="margin-right: 8px"
+        style="margin-right: var(--space-4)"
         label="new"
         @click="displayGroupPopup"
       />
     </uk-flex>
     <uk-flex
       class="group_pool_body"
-      resizable
     >
       <div
         ref="groups"
@@ -39,6 +38,12 @@
           @select-chase="selectChase"
         />
       </div>
+      <!-- The groups' right border: drag it to make the groups wider or narrower -->
+      <uk-resize-handle
+        v-if="!expand"
+        class="groups_resize"
+        axis="x"
+      />
       <uk-spacer />
       <uk-cue-container
         class="group_pool_master"
@@ -56,9 +61,9 @@
     >
       <uk-flex
         col
-        style="max-width: 350px"
+        style="max-width: var(--widget-width-lg)"
       >
-        <p style="padding: 16px">
+        <p style="padding: var(--space-7)">
           The group will be permanently removed from your project. Do you wish to continue ?
         </p>
       </uk-flex>
@@ -236,16 +241,16 @@ export default {
   width: 100%;
   min-width: 200px;
   overflow: hidden;
-  border-left: 1px solid var(--primary-dark);
-  border-right: 1px solid var(--primary-dark);
+  border-left: var(--border-width) solid var(--primary-dark);
+  border-right: var(--border-width) solid var(--primary-dark);
   background: var(--primary-light);
   flex: 1;
 }
 .group_pool_header {
-  min-height: 40px;
+  min-height: var(--header-height);
   width: 100%;
-  padding: 0 8px;
-  border-bottom: 1px solid var(--primary-dark);
+  padding: 0 var(--space-4);
+  border-bottom: var(--border-width) solid var(--primary-dark);
 }
 .group_pool_body {
   height: calc(100% - 40px);
@@ -254,16 +259,15 @@ export default {
 .group_pool_groups {
   display: flex;
   width: 480px;
-  max-width: calc(100vw - 920px);
+  /* leaves room for the patch bay (--patch-bay-width, app.activity.vue) and the visualizer */
+  max-width: calc(100vw - 720px - var(--patch-bay-width, 200px));
   min-width: 240px;
   overflow: hidden;
   overflow-x: auto;
-  resize: horizontal
 }
 .group_pool_groups.expand {
-  max-width: calc(100vw - 359px);
-  width: 100%;
-  resize: unset;
+  max-width: calc(100vw - 159px - var(--patch-bay-width, 200px));
+  width: 100% !important;
 }
 .group_pool_master {
   width: 0px;

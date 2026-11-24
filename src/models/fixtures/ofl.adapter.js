@@ -1,6 +1,7 @@
 import Capability from '../DMX/capabilityManager.model';
 import { PROFILE_SOURCES, buildCapabilityLookup } from './fixture.profile';
 import { FINE_CHANNEL_TERMINOLOGY, deriveTypeKey, deriveAttribute } from './channel.types';
+import capabilityLabel from './capability.labels';
 
 /**
  * OFL (Open Fixture Library) JSON to fixture profile adapter.
@@ -30,11 +31,14 @@ const UNSET_CHANNEL_TYPE = 'Unset';
  * @param {?Object} channelData OFL channel data
  * @param {Array<Object>} capabilityData OFL capability data, fine retyping applied
  * @param {?String} [pixel] Pixel key or pixel group of a matrix channel, null otherwise
+ * @param {Object} [wheels={}] Wheels of the fixture (for range labels)
  * @returns {Object} Profile channel without fine pairing and qaIndex
  */
-function buildChannel(name, isFine, channelData, capabilityData, pixel = null) {
+function buildChannel(name, isFine, channelData, capabilityData, pixel = null, wheels = {}) {
   const derived = deriveTypeKey(name, isFine, capabilityData);
-  const capabilities = capabilityData.map((capability) => new Capability(capability));
+  const capabilities = capabilityData.map((capability) => new Capability({
+    ...capability, label: capabilityLabel(capability, wheels, name),
+  }));
   // Pixel channels keep their name as type key, as before they had capabilities, so saved
   // scenes still find them
   const type = pixel === null ? derived.type : name;
@@ -188,9 +192,10 @@ function expandTemplates(templateChannels, keys) {
  * @param {Object} availableChannels OFL available channels
  * @param {Object} mode OFL mode
  * @param {Object} matrix Matrix pixels, groups and expanded template channels
+ * @param {Object} [wheels={}] Wheels of the fixture (for range labels)
  * @returns {Object} Profile mode
  */
-function buildMode(availableChannels, mode, matrix) {
+function buildMode(availableChannels, mode, matrix, wheels = {}) {
   const retyped = new Set();
   const entries = expandEntries(mode.channels, matrix.pixels, matrix.groups);
   const channels = entries.map((entry) => {
@@ -214,7 +219,7 @@ function buildMode(availableChannels, mode, matrix) {
     } else if (channelData && channelData.capabilities) {
       capabilityData = channelData.capabilities;
     }
-    return buildChannel(channelName, isFine, channelData, capabilityData, pixel);
+    return buildChannel(channelName, isFine, channelData, capabilityData, pixel, wheels);
   });
 
   channels.forEach((channel) => {
@@ -272,7 +277,7 @@ export default function profileFromOFL(manufacturer, model, data) {
     physical: data.physical || {},
     wheels: data.wheels || {},
     modes: (data.modes || []).map((mode) => ({
-      ...buildMode(availableChannels, mode, matrix),
+      ...buildMode(availableChannels, mode, matrix, data.wheels || {}),
       geometry: null,
     })),
     matrix: pixels.length ? { pixels, groups } : null,

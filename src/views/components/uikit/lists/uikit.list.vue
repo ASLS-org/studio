@@ -8,7 +8,7 @@
       toggleable
       :disabled="disabled"
       :item="checkAllItem(visibleRows)"
-      style="padding: 6px 8px;"
+      style="padding: var(--space-3) var(--space-4)"
       @click="checkAll(visibleRows)"
       @toggle="checkAll(visibleRows)"
     />
@@ -64,7 +64,7 @@
                     toggleable
                     :disabled="disabled"
                     :item="checkAllItem(row.children)"
-                    style="padding: 6px 6px 6px 16px;"
+                    style="padding: var(--space-3) var(--space-3) var(--space-3) var(--space-7)"
                     @click="checkAll(row.children)"
                     @toggle="checkAll(row.children)"
                   />
@@ -127,7 +127,7 @@
       class="uikit_list_body_empty"
     >
       <h3>
-        Nothing to display
+        {{ emptyText }}
       </h3>
     </div>
     <uk-popup
@@ -139,7 +139,7 @@
     >
       <uk-flex
         col
-        style="max-width: 350px;min-width:350px"
+        style="max-width: var(--widget-width-lg);min-width:var(--widget-width-lg)"
       >
         <p class="uikit_list_delete_text">
           Are you sure you want to delete
@@ -270,6 +270,11 @@ export default {
     },
     /** Only one parent unfolded at a time; the open one fills the list and scrolls */
     accordion: Boolean,
+    /** What the list says when it has no rows (or none match its search) */
+    emptyText: {
+      type: String,
+      default: 'Nothing to display',
+    },
   },
   emits: ['unfold', 'focused', 'highlight', 'toggle', 'select', 'selection', 'reorder', 'delete'],
   data() {
@@ -1056,7 +1061,7 @@ export default {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-4);
   min-height: 60px;
   align-items: center;
   justify-content: center;
@@ -1064,7 +1069,7 @@ export default {
   text-transform: uppercase;
   font-family: roboto-regular;
   background: var(--primary-light) var(--idle-stripes);
-  border-bottom: 1px solid var(--primary-dark);
+  border-bottom: var(--border-width) solid var(--primary-dark);
 }
 .uikit_list_body_empty > h3 {
   color: var(--secondary-light);
@@ -1072,13 +1077,13 @@ export default {
   font-family: roboto-regular;
 }
 .uikit_sublist_body {
-  padding-left: 16px !important;
+  padding-left: var(--space-7) !important;
 }
 .uikit_list_dragged {
   position: relative;
   z-index: 2;
   opacity: 1 !important;
-  outline: 1px solid var(--accent-blue);
+  outline: var(--border-width) solid var(--accent-blue);
   outline-offset: -1px;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
 }
@@ -1086,14 +1091,14 @@ export default {
   cursor: grabbing;
 }
 .uikit_list_delete_text {
-  padding: 16px 16px 8px;
+  padding: var(--space-7) var(--space-7) var(--space-4);
 }
 .uikit_list_delete_items {
-  padding: 0 16px 16px;
-  gap: 4px;
+  padding: 0 var(--space-7) var(--space-7);
+  gap: var(--space-2);
 }
 .uikit_list_delete_items > p {
-  gap: 8px;
+  gap: var(--space-4);
 }
 .uikit_list_delete_more {
   color: var(--secondary-light-alt);

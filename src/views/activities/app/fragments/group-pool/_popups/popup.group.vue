@@ -165,11 +165,11 @@ export default {
 }
 .fixture_list {
   height: 100%;
-  width: 300px;
-  border-right: 1px solid var(--primary-dark);
+  width: var(--widget-width-md);
+  border-right: var(--border-width) solid var(--primary-dark);
 }
 .group_settings{
-  padding: 10px;
+  padding: var(--space-5);
   min-width: 150px;
 }
 </style>

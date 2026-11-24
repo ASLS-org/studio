@@ -17,7 +17,16 @@ views/
   components/uikit/      `uk-*` design system, registered globally in main.js
   mixins/                popup.mixin.js (v-model open/close), modal.mixin.js (named popup
                          state in $view), keys.mixin.js (keyboard block), color.mixin.js
-  utils/                 palette, setCapture (exposed as this.$utils)
+  utils/                 palette, setCapture (exposed as this.$utils); channel.icons.js and
+                         channel.presets.js (channels widget: icon per function, range menu);
+                         dmx.js (addresses shown 1-512, stored from 0); placement.js (pure
+                         pose maths: line, grid, circle, arc, align, distribute, fan,
+                         aim for the Arrange popup; mounts, turn and tilt for the
+                         Position Tool; patchPoses for where the patch popup puts new
+                         fixtures); effect.scope.js (an effect's waves sampled over one loop
+                         and matched per fixture, colour mixing, pan/tilt angle ranges
+                         from profiles and the degree view, speed, absolute shapes,
+                         spreads and colour presets: the Pan/Tilt and Colour scopes)
 ```
 
 ## Ground rules
@@ -48,8 +57,12 @@ views/
   element); app-wide shortcuts use `$keyboard.addShortcut(match, handler)`. Fields keep their
   keys, and nothing behind an open popup gets any.
 - Styling: `<style scoped>` plain CSS using the design tokens in `src/assets/styles/tokens.css`
-  (`--primary-*`, `--secondary-*`, `--accent-*`; shared with the user manual). No new hard-coded
-  colours; palette lives in `uikit/colors/uikit.colors.js` and `views/utils/palette.js`.
+  (colours `--primary-*`, `--secondary-*`, `--accent-*`; the design scale `--space-*`, `--font-*`,
+  `--icon-*`, `--radius-*`, `--border-width` and the role sizes; shared with the user manual). No
+  raw spacing, type or radius values and no new hard-coded colours; palette lives in
+  `uikit/colors/uikit.colors.js` and `views/utils/palette.js`. Fixed geometry (sizes the code
+  computes with) has its own variable plus a constant in `views/utils/geometry.js`, and is never a
+  scale step: see skill `vue-ui-change` § Design scale.
 - The user manual mounts real widgets and panels as live previews
   (`docs/manual/.vitepress/theme/previews/presets.js`). Renaming or moving a widget, or changing
   its props, breaks them: update the preset (`npm run docs:manual:check` mounts all of them).

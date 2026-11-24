@@ -41,7 +41,7 @@
           <uk-num-input
             :model-value="getAddr('port')"
             label="Port"
-            style="max-width: 60px;"
+            style="max-width: 60px"
             @update:model-value="setAddr('port', $event)"
           />
         </uk-flex>
@@ -106,7 +106,7 @@
           :label="universe?.stream?.state ? 'Stop streaming':'Start streaming'"
           toggleable
           square
-          style="height:25px; margin-top: 22px"
+          style="height: var(--control-height); margin-top: 22px"
           color="var(--accent-blue)"
           :disabled="(
             !universe.stream?.connectionHandle?.client
@@ -306,7 +306,7 @@ export default {
 }
 .universe_connection_settings {
   height: 100%;
-  padding: 10px;
+  padding: var(--space-5);
   min-width: 200px;
 }
 .empty_text {

@@ -11,7 +11,8 @@ const isField = (el) => !!el && (el.isContentEditable
  * @class Keyboard
  * @classdesc The app's one keyboard path. A key goes to exactly one place, the first of:
  * 1. the top popup (the view state's layers): Escape closes it, Enter submits it, and keys aimed
- *    outside it are dropped (typing in a field still works);
+ *    outside it are dropped (typing in a field still works). An element marked `data-own-keys`
+ *    (an open select) keeps its keys;
  * 2. the focused block: the innermost registered element holding the focus (lists and fields
  *    handle their own keys on their elements first);
  * 3. the global shortcuts.
@@ -44,6 +45,8 @@ export default class Keyboard {
   onCapture(e) {
     const top = this.view.topLayer;
     if (!top) return;
+    // An element that owns its keys for now (an open select's list) keeps them
+    if (e.target && e.target.closest && e.target.closest('[data-own-keys]')) return;
     const inside = !!top.el && top.el.contains(e.target);
     if (e.key === 'Escape' && !e.repeat) {
       e.preventDefault();

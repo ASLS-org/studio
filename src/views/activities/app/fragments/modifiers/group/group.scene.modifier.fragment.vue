@@ -48,6 +48,7 @@
 </template>
 
 <script>
+import { sameRanges } from '@/views/utils/channel.presets';
 import WidgetCurve from '../_widgets/modifier.widget.curve.vue';
 import WidgetColorPicker from '../_widgets/modifier.widget.colorpicker.vue';
 import WidgetPanTilt from '../_widgets/modifier.widget.pantilt.vue';
@@ -162,6 +163,10 @@ export default {
             const row = {
               type: channel.cell ? channel.kind : channel.type,
               color: channel.color,
+              attribute: channel.attribute,
+              name: channel.name,
+              isFine: channel.isFine,
+              capabilities: channel.capabilities,
               value: entry.value,
               active: entry.active,
               targets: [],
@@ -169,7 +174,10 @@ export default {
             byKey.set(key, row);
             rows.push(row);
           }
-          byKey.get(key).targets.push({ fixtureValue, type: entry.type, qaIndex: entry.qaIndex });
+          const row = byKey.get(key);
+          // Presets only when every fixture behind the fader has the same ranges
+          if (!sameRanges(row.capabilities, channel.capabilities)) row.capabilities = null;
+          row.targets.push({ fixtureValue, type: entry.type, qaIndex: entry.qaIndex });
         });
       });
       return rows;

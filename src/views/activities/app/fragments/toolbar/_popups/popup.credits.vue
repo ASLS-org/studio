@@ -47,7 +47,7 @@ export default {
 <style scoped>
 
 .body {
-  padding: 10px;
+  padding: var(--space-5);
   overflow: scroll;
   overflow-x: hidden;
   height: 400px;
@@ -57,20 +57,20 @@ export default {
 }
 :deep(h1) {
   font-family: Roboto-Regular;
-  font-size: 24px;
+  font-size: var(--font-xl);
   color: var(--secondary-lighter);
 }
 
 :deep(h2) {
   font-family: Roboto-Regular;
-  font-size: 16px;
+  font-size: var(--font-lg);
   color: var(--secondary-lighter);
 }
 
 :deep(h3) {
   font-family: Roboto-Bold;
   text-transform: uppercase;
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--secondary-lighter);
   margin: 0;
   padding: 0;
@@ -79,7 +79,7 @@ export default {
 
 :deep(h4) {
   font-family: Roboto-Bold;
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--secondary-lighter);
   margin: 0;
   padding: 0;
@@ -98,13 +98,13 @@ export default {
   line-height: 16px;
   display: flex;
   align-items: center;
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--secondary-lighter);
   margin: 0;
 }
 :deep(a){
   font-family: Roboto-Medium;
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--accent-blue)
 }
 </style>

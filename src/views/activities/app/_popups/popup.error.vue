@@ -57,14 +57,14 @@ export default {
 
 .error_body {
   width: 100%;
-  padding: 16px;
+  padding: var(--space-7);
 }
 .error_message {
   color: var(--accent-red);
 }
 .error_buttons {
   display: flex;
-  padding: 8px;
-  border-top: 1px solid var(--primary-dark);
+  padding: var(--space-4);
+  border-top: var(--border-width) solid var(--primary-dark);
 }
 </style>

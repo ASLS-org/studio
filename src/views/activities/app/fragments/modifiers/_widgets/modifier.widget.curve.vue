@@ -2,7 +2,7 @@
   <uk-widget
     dockable
     class="widget_curve"
-    :header="{ title: `Fade ${fade.direction ? 'out' : 'in'}` }"
+    :header="{ title }"
   >
     <uk-flex
       col
@@ -11,8 +11,9 @@
     >
       <uk-select-input
         v-model="fade.type"
+        class="widget_curve_type"
         label="Type"
-        :options="fade.availabelEasingFunctions"
+        :options="presetOptions"
       />
       <uk-flex :gap="8">
         <uk-num-input
@@ -24,7 +25,8 @@
         <uk-num-input
           v-model="fade.controlPoints[0].y"
           :precision="2"
-          :max="1"
+          :min="CP_Y_MIN"
+          :max="CP_Y_MAX"
           label="CP1 Y"
         />
       </uk-flex>
@@ -38,7 +40,8 @@
         <uk-num-input
           v-model="fade.controlPoints[1].y"
           :precision="2"
-          :max="1"
+          :min="CP_Y_MIN"
+          :max="CP_Y_MAX"
           label="CP2 Y"
         />
       </uk-flex>
@@ -76,6 +79,57 @@
 
 <script>
 import LiveMixin from '@/views/mixins/live.mixin';
+import Fade, { FADE_PRESETS, FADE_PRESET_NAMES } from '@/models/DMX/fade.model';
+
+/**
+ * Values the canvas shows, bottom to top: room above 1 and below 0 for overshooting curves
+ *
+ * @constant {Number} VIEW_MIN
+ * @constant {Number} VIEW_MAX
+ */
+const VIEW_MIN = -0.25;
+const VIEW_MAX = 1.25;
+
+/**
+ * Range of a control point's Y (X stays within 0 to 1)
+ *
+ * @constant {Number} CP_Y_MIN
+ * @constant {Number} CP_Y_MAX
+ */
+const CP_Y_MIN = -1;
+const CP_Y_MAX = 2;
+
+/**
+ * A small picture of a curve, for the type select's options (inline SVG, drawn in the text colour,
+ * with the canvas' headroom so overshooting curves fit)
+ *
+ * @param {Array<Object>} points the two control points
+ * @returns {String} SVG markup
+ */
+function curveIcon([cp1, cp2]) {
+  const x = (value) => (1 + value * 14).toFixed(2);
+  const y = (value) => (1 + ((VIEW_MAX - value) / (VIEW_MAX - VIEW_MIN)) * 14).toFixed(2);
+  const path = `M${x(0)} ${y(0)}C${x(cp1.x)} ${y(cp1.y)} ${x(cp2.x)} ${y(cp2.y)} ${x(1)} ${y(1)}`;
+  return '<svg class="curve_icon" viewBox="0 0 16 16" width="14" height="14" '
+    + 'style="flex-shrink:0;margin-right:6px;overflow:visible" aria-hidden="true">'
+    + `<path d="${path}" fill="none" stroke="currentColor" stroke-width="1.6" `
+    + 'stroke-linecap="round"/></svg>';
+}
+
+/**
+ * Preset options with their curve (all but Custom, whose curve is the fade's own)
+ *
+ * @constant {Array<String>} PRESET_OPTIONS
+ */
+const PRESET_OPTIONS = Object.values(FADE_PRESETS)
+  .map((points, index) => `${curveIcon(points)}${FADE_PRESET_NAMES[index]}`);
+
+/**
+ * Half the size of a handle (12 px, border included), to centre it on its point
+ *
+ * @constant {Number} HANDLE_HALF
+ */
+const HANDLE_HALF = 6;
 
 export default {
   name: 'ModifierWidgetCurve',
@@ -86,25 +140,11 @@ export default {
   mixins: [LiveMixin],
   props: {
     /**
-     * Handle to Fade instance
+     * Handle to Fade instance (an idle linear fade when no scene is selected)
      */
     fade: {
       type: Object,
-      default: () => ({
-        type: 0,
-        controlPoints: [
-          {
-            x: 0,
-            y: 0,
-          },
-          {
-            x: 0,
-            y: 0,
-          },
-        ],
-        direction: 0,
-        availabelEasingFunctions: [],
-      }),
+      default: () => new Fade({ type: 0 }),
     },
   },
   emits: ['input'],
@@ -114,13 +154,6 @@ export default {
        * Canvas handle
        */
       canvas: {
-        width: 0,
-        height: 0,
-      },
-      /**
-       * Canvas dimensions
-       */
-      canvasDimensions: {
         width: 0,
         height: 0,
       },
@@ -136,41 +169,42 @@ export default {
   },
   computed: {
     /**
+     * Widget title: which fade it edits
+     */
+    title() {
+      return `Fade ${this.fade.direction ? 'out' : 'in'}`;
+    },
+    /**
+     * Type select options: each preset's curve and name; Custom shows the fade's own curve
+     */
+    presetOptions() {
+      const [cp1, cp2] = this.fade.controlPoints;
+      const custom = `${curveIcon([{ ...cp1 }, { ...cp2 }])}${FADE_PRESET_NAMES[0]}`;
+      return [custom, ...PRESET_OPTIONS.slice(1)];
+    },
+    /**
      * Control Point 1 css positioning
      */
     cp1Style() {
-      const bottomOffset = !this.fade.direction
-        ? this.fade.controlPoints[0].y * this.canvasDimensions.height - 18
-        : (1.0 - this.fade.controlPoints[0].y) * this.canvasDimensions.height - 18;
-      return {
-        left: `${Math.max(this.fade.controlPoints[0].x * this.canvasDimensions.width - 14, 0)}px`,
-        bottom: `${Math.max(bottomOffset, 0)}px`,
-      };
+      return this.handleStyle(this.fade.controlPoints[0]);
     },
     /**
      * Control Point 2 css positioning
      */
     cp2Style() {
-      const bottomOffset = !this.fade.direction
-        ? this.fade.controlPoints[1].y * this.canvasDimensions.height - 18
-        : (1.0 - this.fade.controlPoints[1].y) * this.canvasDimensions.height - 18;
-      return {
-        left: `${Math.max(this.fade.controlPoints[1].x * this.canvasDimensions.width - 14, 0)}px`,
-        bottom: `${Math.max(bottomOffset, 0)}px`,
-      };
+      return this.handleStyle(this.fade.controlPoints[1]);
     },
     /**
      * Control Point 3 (play state) css positioning
      */
     cp3Style() {
-      // fade.value and fade.x are written by playback outside Vue: refresh with the ticker
-      const value = this.live(this.fade.value);
-      const bottomOffset = !this.fade.direction
-        ? value
-        : (1.0 - value);
+      // fade.t (progress) is written by playback outside Vue: refresh with the ticker. The point
+      // comes from the current control points, so the dot stays on the drawn curve after an edit.
+      // The canvas fills the box, so fractions of the box are points of the curve.
+      const point = this.fade.pointAt(this.live(this.fade.t));
       return {
-        bottom: `calc(${(Math.min(bottomOffset, 1) % 1) * 100}% - 6px)`,
-        left: `calc(${(Math.min(this.fade.x, 1) % 1) * (this.canvasDimensions.width / this.canvasDimensions.height) * 100}% - 6px)`,
+        top: `calc(${this.topOf(point.y) * 100}% - 6px)`,
+        left: `calc(${point.x * 100}% - 6px)`,
       };
     },
   },
@@ -181,6 +215,10 @@ export default {
         this.update();
       },
     },
+  },
+  created() {
+    this.CP_Y_MIN = CP_Y_MIN;
+    this.CP_Y_MAX = CP_Y_MAX;
   },
   mounted() {
     this.prepareCanvas();
@@ -210,34 +248,47 @@ export default {
     dragCp(e, controlPointId) {
       this.fade.type = 0;
       const rect = this.canvas.getBoundingClientRect();
-      this.canvasDimensions = {
-        width: rect.width,
-        height: rect.height,
-      };
-      const posX = e.clientX - rect.left;
-      const posY = e.clientY - rect.top;
-      const cpY = !this.fade.direction
-        ? 1.0 - posY / rect.height
-        : posY / rect.height;
-      this.fade.controlPoints[controlPointId].x = parseFloat(
-        Math.min(
-          Math.max(
-            posX / this.canvas.width,
-            0,
-          ),
-          1.0,
-        ).toFixed(2),
-      );
-      this.fade.controlPoints[controlPointId].y = parseFloat(
-        Math.min(
-          Math.max(
-            cpY,
-            0,
-          ),
-          1.0,
-        ).toFixed(2),
-      );
+      const x = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
+      const value = this.valueAt((e.clientY - rect.top) / rect.height);
+      const y = Math.min(Math.max(value, CP_Y_MIN), CP_Y_MAX);
+      this.fade.controlPoints[controlPointId].x = parseFloat(x.toFixed(2));
+      this.fade.controlPoints[controlPointId].y = parseFloat(y.toFixed(2));
       this.$emit('input', this.fade);
+    },
+    /**
+     * Where a curve value sits on the canvas, as a fraction of its height from the top (a fade
+     * out is drawn upside down)
+     *
+     * @public
+     * @param {Number} value curve value (0 = start, 1 = end)
+     * @returns {Number} fraction from the top
+     */
+    topOf(value) {
+      const shown = this.fade.direction ? 1 - value : value;
+      return (VIEW_MAX - shown) / (VIEW_MAX - VIEW_MIN);
+    },
+    /**
+     * The curve value at a fraction of the canvas height from the top (inverse of topOf)
+     *
+     * @public
+     * @param {Number} top fraction from the top
+     * @returns {Number} curve value
+     */
+    valueAt(top) {
+      const shown = VIEW_MAX - top * (VIEW_MAX - VIEW_MIN);
+      return this.fade.direction ? 1 - shown : shown;
+    },
+    /**
+     * A control point handle's position, kept inside the canvas when the point is beyond it
+     *
+     * @public
+     * @param {Object} point control point { x, y }
+     * @returns {Object} css position
+     */
+    handleStyle(point) {
+      const size = HANDLE_HALF * 2;
+      const at = (fraction) => `clamp(0px, calc(${fraction * 100}% - ${HANDLE_HALF}px), calc(100% - ${size}px))`;
+      return { left: at(point.x), top: at(this.topOf(point.y)) };
     },
     /**
      * Terminate control point dragging procedure.
@@ -255,8 +306,6 @@ export default {
     prepareCanvas() {
       this.canvas = this.$refs.curveModifier;
       this.context = this.canvas.getContext('2d');
-      this.canvasDimensions.width = this.canvas.width;
-      this.canvasDimensions.height = this.canvas.height;
       this.update();
     },
     /**
@@ -265,66 +314,43 @@ export default {
      * @public
      */
     update() {
-      this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-      this.context.strokeStyle = '#b6b7b5';
-      this.context.lineWidth = 2;
+      const ctx = this.context;
+      const { width, height } = this.canvas;
+      const [cp1, cp2] = this.fade.controlPoints;
+      const px = (x) => x * width;
+      const py = (value) => this.topOf(value) * height;
+      ctx.clearRect(0, 0, width, height);
 
-      this.context.setLineDash([0, 0]);
+      // Start (0) and end (1) levels
+      ctx.setLineDash([2, 4]);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#ffffff40';
+      [0, 1].forEach((value) => {
+        ctx.beginPath();
+        ctx.moveTo(0, py(value));
+        ctx.lineTo(width, py(value));
+        ctx.stroke();
+      });
 
-      this.context.beginPath();
-      this.context.moveTo(0, !this.fade.direction ? this.canvas.height : 0);
-      this.context.bezierCurveTo(
-        this.fade.controlPoints[0].x * this.canvas.width,
-        (
-          !this.fade.direction
-            ? 1.0 - this.fade.controlPoints[0].y
-            : this.fade.controlPoints[0].y
-        ) * this.canvas.height,
-        this.fade.controlPoints[1].x * this.canvas.width,
-        (
-          !this.fade.direction
-            ? 1.0 - this.fade.controlPoints[1].y
-            : this.fade.controlPoints[1].y
-        ) * this.canvas.height,
-        this.canvas.width,
-        !this.fade.direction ? 0 : this.canvas.height,
-      );
-      this.context.stroke();
+      // The curve
+      ctx.setLineDash([]);
+      ctx.strokeStyle = '#b6b7b5';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, py(0));
+      ctx.bezierCurveTo(px(cp1.x), py(cp1.y), px(cp2.x), py(cp2.y), width, py(1));
+      ctx.stroke();
 
-      this.context.beginPath();
-      this.context.setLineDash([5, 3]);
-
-      this.context.strokeStyle = '#bb2d9880';
-      this.context.lineWidth = 2;
-      this.context.moveTo(0, !this.fade.direction ? this.canvas.height : 0);
-      this.context.lineTo(
-        Math.max(this.fade.controlPoints[0].x * this.canvas.width - 7, 6),
-        Math.min(
-          (
-            !this.fade.direction
-              ? 1.0 - this.fade.controlPoints[0].y
-              : this.fade.controlPoints[0].y
-          ) * (this.canvas.height + 18),
-          this.canvas.height - 6,
-        ),
-      );
-      this.context.stroke();
-
-      this.context.beginPath();
-      this.context.strokeStyle = '#1e45b980';
-      this.context.lineWidth = 2;
-      this.context.moveTo(this.canvas.width, !this.fade.direction ? 0 : this.canvas.height);
-      this.context.lineTo(
-        Math.max(this.fade.controlPoints[1].x * this.canvas.width - 7, 6),
-        Math.max(
-          (
-            !this.fade.direction
-              ? 1.0 - this.fade.controlPoints[1].y
-              : this.fade.controlPoints[1].y) * (this.canvas.height + 18),
-          6,
-        ),
-      );
-      this.context.stroke();
+      // Each control point's arm, from its end of the curve
+      ctx.setLineDash([5, 3]);
+      ctx.lineWidth = 2;
+      [[0, 0, cp1, '#bb2d9880'], [1, 1, cp2, '#1e45b980']].forEach(([x, value, cp, color]) => {
+        ctx.strokeStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(px(x), py(value));
+        ctx.lineTo(px(cp.x), Math.min(Math.max(py(cp.y), 0), height));
+        ctx.stroke();
+      });
     },
   },
 };
@@ -336,7 +362,7 @@ export default {
   flex-direction: column;
   height: 100%;
   width: 100%;
-  padding: 10px;
+  padding: var(--space-5);
   width: 150px;
 }
 .widget_curve_modifier {
@@ -372,7 +398,7 @@ export default {
   width: 12px;
   height: 12px;
   background: var(--accent-blue);
-  border-radius: 50%;
+  border-radius: var(--radius-round);
   border: 2px solid var(--secondary-light);
   opacity: 0.8;
   cursor: pointer;
@@ -381,7 +407,7 @@ export default {
 .widget_curve_cp:after {
   content: inherit;
   font-family: Roboto-medium;
-  font-size: 12px;
+  font-size: var(--font-sm);
   color: var(--secondary-lighter);
   text-align: center;
   position: absolute;
@@ -389,7 +415,7 @@ export default {
   left: -12px;
   background: inherit;
   padding: 1px 5px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   opacity: inherit;
   content: "CP2";
 }
@@ -403,7 +429,7 @@ export default {
 }
 .widget_curve_picker {
   border: none !important;
-  background: #b6b7b5;
+  background: var(--curve-handle);
 }
 .widget_curve_cp:active {
   cursor: move;

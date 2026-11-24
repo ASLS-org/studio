@@ -131,13 +131,13 @@ export default {
 }
 .uikit_txt_input_textbox_wrapper {
   display: flex;
-  height: 25px;
+  height: var(--control-height);
 }
 .uikit_txt_input_textbox_wrapper.outlined {
-  border: 1px solid var(--secondary-dark);
+  border: var(--border-width) solid var(--secondary-dark);
 }
 .uikit_txt_input_textbox_wrapper:focus-within {
-  outline: 1px solid var(--accent-blue) !important;
+  outline: var(--border-width) solid var(--accent-blue) !important;
   outline-offset: -1px;
 }
 .uikit_txt_input_textbox {
@@ -145,11 +145,11 @@ export default {
   border: none;
   background: var(--primary-dark);
   color: var(--secondary-lighter);
-  font-size: 10px;
+  font-size: var(--font-xs);
   display: flex;
   width: 100%;
   padding: 0;
-  padding-left: 5px;
+  padding-left: var(--space-2);
   -moz-appearance: textfield;
 }
 .disabled .uikit_txt_input_textbox {
@@ -166,6 +166,6 @@ export default {
   outline: none;
 }
 .uikit_txt_input_textbox::placeholder {
-  font-size: 10px;
+  font-size: var(--font-xs);
 }
 </style>

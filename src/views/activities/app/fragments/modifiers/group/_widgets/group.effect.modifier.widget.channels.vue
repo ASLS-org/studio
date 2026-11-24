@@ -12,20 +12,21 @@
       filterable
       deletable
       :items="channels"
+      :selection="selected ? [selected] : []"
       @select="selectChannel"
       @delete="deleteChannel"
     />
-    <popup-fx-preset
+    <popup-fx-channels
       v-model="fxPopupDisplayState"
       :effect="effect"
-      @change="updateEffect"
+      @added="(types) => selectChannel({ type: types[0] })"
     />
   </uk-widget>
 </template>
 
 <script>
 import modal from '@/views/mixins/modal.mixin';
-import PopupFxPreset from '../_popups/group.effect.modifier.popup.channels.vue';
+import PopupFxChannels from '../_popups/group.effect.modifier.popup.channels.vue';
 
 const POPUP_DISPLAY_STATES = {
   HIDDEN: false,
@@ -39,7 +40,7 @@ export default {
     MODE: 3,
   },
   components: {
-    PopupFxPreset,
+    PopupFxChannels,
   },
   props: {
     effect: {
@@ -48,6 +49,13 @@ export default {
         id: 0,
         listableChannels: [],
       }),
+    },
+    /**
+     * Type of the selected channel (the panel's), null for none
+     */
+    selected: {
+      type: String,
+      default: null,
     },
   },
   emits: ['select', 'delete'],
@@ -60,15 +68,23 @@ export default {
         title: 'Modulated Channels',
         icon: 'mixer',
       },
-      channels: this.effect.listableChannels || [],
       id: this.effect.id || -1,
     };
   },
   computed: {
     /**
-     * Effect preset popup display state
+     * Add Modulated Channel popup display state
      */
     fxPopupDisplayState: modal('effect.channels', 'group'),
+    /**
+     * The effect's channels, read live: a channel added elsewhere (a scope preset) shows at once
+     *
+     * @type {Array<Object>}
+     */
+    channels() {
+      // Keyed by type: the selection names the channel
+      return (this.effect.listableChannels || []).map((item) => ({ ...item, id: item.type }));
+    },
   },
   watch: {
     effect: {
@@ -79,7 +95,6 @@ export default {
   },
   methods: {
     updateEffect(effect) {
-      this.channels = effect.listableChannels;
       this.id = effect.id;
     },
     /**
@@ -110,7 +125,6 @@ export default {
       channels.forEach((channel) => {
         this.effect.deleteChannel(channel);
       });
-      this.channels = this.effect.listableChannels;
       this.$emit('delete', channels);
     },
   },
@@ -120,7 +134,7 @@ export default {
 <style scoped>
 
 .modifier_widget_effect_channels {
-  min-width: 300px;
+  min-width: var(--widget-width-md);
 }
 .modifier_widget_effect_channels_body {
   width: 100%;

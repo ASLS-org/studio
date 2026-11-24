@@ -15,18 +15,12 @@ class FixturePool {
   /**
    * Pool's listable data
    *
-   * @todo remove this ? Am I even using it ?
+   * Rows of the patch bay and fixture pools (see Fixture.listable)
    * @readonly
    * @type {Array}
    */
   get listable() {
-    return this.fixtures.map((fixture) => ({
-      name: fixture.name,
-      icon: 'movinghead',
-      id: fixture.id,
-      universe: fixture.universe,
-      more: `U${fixture.universe} - CH${fixture.chStart}`,
-    }));
+    return this.fixtures.map((fixture) => fixture.listable);
   }
 
   /**

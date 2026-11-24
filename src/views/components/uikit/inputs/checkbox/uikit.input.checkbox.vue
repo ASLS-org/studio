@@ -123,7 +123,7 @@ export default {
   flex-direction: row;
   cursor: pointer;
   opacity: 0.8;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
 }
 .uikit_checkbox_tickbox_tick {
   display: flex;
@@ -133,8 +133,8 @@ export default {
   stroke: var(--primary-light);
 }
 .uikit_checkbox_label {
-  font-size: 12px;
-  padding-left: 8px;
+  font-size: var(--font-sm);
+  padding-left: var(--space-4);
   color: var(--secondary-light);
 }
 .uikit_checkbox_tickbox.active {

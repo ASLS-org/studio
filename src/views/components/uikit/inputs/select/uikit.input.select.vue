@@ -2,6 +2,7 @@
   <uk-flex
     col
     class="uikit_select"
+    :class="{ with_trigger: !!$slots.trigger }"
   >
     <div
       v-if="label"
@@ -15,9 +16,21 @@
       class="uikit_select_box"
       tabindex="0"
       :class="{ disabled: disabled }"
+      :data-own-keys="displayed || null"
       @focusout="hide"
+      @keydown="onKeydown"
     >
+      <!-- A trigger slot replaces the text box: the list opens from what it holds (an icon) -->
+      <div
+        v-if="$slots.trigger"
+        class="uikit_select_trigger"
+        :class="{ selected: displayed }"
+        @click="show()"
+      >
+        <slot name="trigger" />
+      </div>
       <uk-flex
+        v-else
         class="uikit_select_textbox_wrapper"
         :class="{ selected: displayed }"
         @click="show()"
@@ -37,23 +50,51 @@
         </span>
       </uk-flex>
       <Teleport to="body">
+        <!-- Built only while open: a strip of selects (channels) stays cheap to mount -->
         <uk-flex
-          v-show="displayed"
+          v-if="displayed"
           ref="options"
           tabindex="0"
           col
           class="uikit_select_option_list"
+          :class="{ with_trigger: !!$slots.trigger }"
           :style="optionListStyle"
+          @focusout="onListFocusOut"
         >
-          <!--eslint-disable vue/no-v-html-->
-          <h4
-            v-for="(option, index) in options"
-            :key="index"
-            class="uikit_select_option"
-            @click="select(index)"
-            v-html="option"
+          <!-- A trigger's list: a header (what it is about), then a real uk-list of `items` -->
+          <div
+            v-if="$slots.header"
+            class="uikit_select_header"
+          >
+            <slot name="header" />
+          </div>
+          <uk-list
+            v-if="$slots.trigger"
+            ref="list"
+            class="uikit_select_list"
+            no-highlight
+            :filterable="searchable"
+            :items="items"
+            :selection="marked > -1 ? [marked] : []"
+            :empty-text="emptyText || undefined"
+            :style="{ height: listHeight, flex: 'none' }"
+            @select="(item) => select(item.id)"
+            @keydown.capture="onListKeydown"
           />
-          <!--eslint-enable vue/no-v-html-->
+          <template v-else>
+            <!--eslint-disable vue/no-v-html-->
+            <h4
+              v-for="(option, index) in options"
+              :key="index"
+              :ref="(el) => { optionEls[index] = el; }"
+              class="uikit_select_option"
+              :class="{ current: index === selected, marked: index === marked }"
+              @click="select(index)"
+              @mouseenter="marked = index"
+              v-html="option"
+            />
+            <!--eslint-enable vue/no-v-html-->
+          </template>
         </uk-flex>
       </Teleport>
     </div>
@@ -61,6 +102,29 @@
 </template>
 
 <script>
+import { SELECT_OPTION_HEIGHT, SELECT_VISIBLE_OPTIONS } from '@/views/utils/geometry';
+
+/**
+ * Widest a trigger's option list gets (px)
+ *
+ * @constant {Number} SELECT_TRIGGER_LIST_MAX_WIDTH
+ */
+const SELECT_TRIGGER_LIST_MAX_WIDTH = 360;
+
+/**
+ * Narrowest a trigger's option list gets (px)
+ *
+ * @constant {Number} SELECT_TRIGGER_LIST_MIN_WIDTH
+ */
+const SELECT_TRIGGER_LIST_MIN_WIDTH = 200;
+
+/**
+ * Rows a trigger's list always has room for (it scrolls past them, idle below fewer)
+ *
+ * @constant {Number} SELECT_TRIGGER_LIST_ROWS
+ */
+const SELECT_TRIGGER_LIST_ROWS = 6;
+
 /**
   * @component Select A multiple-choices input with customisable option list.
   * @namespace uikit/inputs/selects
@@ -114,6 +178,34 @@ export default {
       type: Boolean,
       default: false,
     },
+    /**
+     * Whether choosing the current option emits again (an action menu, e.g. channel presets)
+     */
+    reselect: {
+      type: Boolean,
+      default: false,
+    },
+    /**
+     * A trigger's list rows (`uk-list` items, `id` = option index): shown instead of `options`
+     */
+    items: {
+      type: Array,
+      default: () => [],
+    },
+    /**
+     * Whether a trigger's list has its search box
+     */
+    searchable: {
+      type: Boolean,
+      default: false,
+    },
+    /**
+     * What an empty trigger list says (default: the list's own)
+     */
+    emptyText: {
+      type: String,
+      default: '',
+    },
   },
   emits: ['update:modelValue', 'input'],
   data() {
@@ -130,9 +222,20 @@ export default {
        * Convey optionList styling properties
        */
       optionListStyle: {},
+      /**
+       * Option the keys (or the pointer) point at in the open list
+       */
+      marked: -1,
     };
   },
   computed: {
+    /**
+     * Height of a trigger's list: its search box, if any, and a fixed number of rows
+     */
+    listHeight() {
+      const rows = `${SELECT_TRIGGER_LIST_ROWS} * var(--row-height)`;
+      return this.searchable ? `calc(var(--control-height) + ${rows})` : `calc(${rows})`;
+    },
     value: {
       get() {
         return this.isEmpty
@@ -153,7 +256,9 @@ export default {
   },
   watch: {
     modelValue(newValue) {
-      this.select(parseInt(newValue, 10));
+      // An action menu only follows the value: choosing is the operator's, never the parent's
+      if (this.reselect) this.selected = parseInt(newValue, 10);
+      else this.select(parseInt(newValue, 10));
     },
     displayed(displayed) {
       if (displayed) {
@@ -163,6 +268,10 @@ export default {
         this.removeListeners();
       }
     },
+  },
+  created() {
+    /** Option elements by index (to keep the marked one in view) */
+    this.optionEls = [];
   },
   beforeUnmount() {
     this.removeListeners();
@@ -176,7 +285,7 @@ export default {
     select(index) {
       const previous = this.selected;
 
-      if (!this.disabled && index !== previous) {
+      if (!this.disabled && (index !== previous || this.reselect)) {
         this.selected = index;
         /**
          * Selected value changed
@@ -186,6 +295,8 @@ export default {
         this.$emit('update:modelValue', index);
         this.$emit('input', index);
       }
+      // Choosing from the list: the select gets the focus back
+      if (this.$slots.trigger && this.displayed) this.$refs.select_box?.focus();
       this.hide();
     },
     /**
@@ -212,7 +323,123 @@ export default {
       if (!this.disabled) {
         this.displayed = !this.displayed;
         if (this.displayed) {
-          this.$nextTick(this.computeOptionListStyle);
+          this.marked = this.isEmpty ? 0 : this.selected;
+          this.$nextTick(() => {
+            this.computeOptionListStyle();
+            if (this.searchable) this.searchBox()?.focus();
+            // the list is built on opening and sized by that style: scroll once it applies
+            this.$nextTick(this.revealMarked);
+          });
+        }
+      }
+    },
+    /**
+     * Closes the list when the focus leaves it for something else than the select
+     *
+     * @param {FocusEvent} e focusout event
+     */
+    onListFocusOut(e) {
+      const to = e.relatedTarget;
+      const list = this.$refs.options?.$el;
+      if (to && (list?.contains(to) || this.$refs.select_box?.contains(to))) return;
+      this.displayed = false;
+    },
+    /**
+     * Keys typed in a trigger list's search box (it keeps its keys from bubbling, so they're
+     * caught on the way down); the list body's own keys are left to the list
+     *
+     * @param {KeyboardEvent} e keydown event
+     */
+    onListKeydown(e) {
+      if (e.target === this.searchBox()) this.onKeydown(e);
+    },
+    /**
+     * The search box of a trigger's list
+     *
+     * @returns {?HTMLInputElement} search input
+     */
+    searchBox() {
+      return this.$refs.list?.$el.querySelector('.uikit_list_searchbox input') || null;
+    },
+    /**
+     * Option indexes shown, in order: every option, or a trigger list's rows left by its search
+     *
+     * @returns {Array<Number>} option indexes
+     */
+    shownIndexes() {
+      if (this.$refs.list) return this.$refs.list.visibleRows.map((row) => row.value.id);
+      return this.options.map((_, index) => index);
+    },
+    /**
+     * Keeps the marked option in view in the open list
+     */
+    revealMarked() {
+      const el = this.$refs.list
+        ? this.$refs.list.$el.querySelector(`[data-key="id:${this.marked}"]`)
+        : this.optionEls[this.marked];
+      if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest' });
+    },
+    /**
+     * Marks an option and keeps it in view
+     *
+     * @param {Number} index option index
+     */
+    mark(index) {
+      this.marked = index;
+      this.$nextTick(this.revealMarked);
+    },
+    /**
+     * Keys on the focused select: Up and Down open the list, then move the mark (wrapping);
+     * Enter or Space choose the marked option (or open the list); Escape closes it unchanged;
+     * a letter marks the next option that starts with it
+     *
+     * @param {KeyboardEvent} e keydown event
+     */
+    onKeydown(e) {
+      if (this.disabled || e.ctrlKey || e.metaKey || e.altKey) return;
+      const shown = this.shownIndexes();
+      const count = shown.length;
+      const inSearch = !!this.$refs.list && e.target === this.searchBox();
+      if (e.key === 'Escape') {
+        if (!this.displayed) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (inSearch) this.$refs.select_box?.focus();
+        this.displayed = false;
+        return;
+      }
+      if (!count) return;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (!this.displayed) {
+          this.show();
+          return;
+        }
+        const step = e.key === 'ArrowDown' ? 1 : -1;
+        let at = shown.indexOf(this.marked);
+        if (at < 0) at = step > 0 ? -1 : 0;
+        this.mark(shown[(at + step + count) % count]);
+      } else if (e.key === 'Enter' || (e.key === ' ' && !inSearch)) {
+        e.preventDefault();
+        if (this.displayed) this.select(shown.includes(this.marked) ? this.marked : shown[0]);
+        else this.show();
+      } else if (e.key.length === 1 && !inSearch) {
+        if (this.searchable && this.displayed) {
+          // typing on the select goes to the search field
+          this.searchBox()?.focus();
+          return;
+        }
+        const letter = e.key.toLowerCase();
+        const text = (option) => String(option).replace(/<[^>]*>/g, '').trim().toLowerCase();
+        const from = this.displayed ? this.marked : this.selected;
+        for (let i = 1; i <= count; i += 1) {
+          const index = (from + i + count) % count;
+          if (text(this.options[index]).startsWith(letter)) {
+            e.preventDefault();
+            if (!this.displayed) this.show();
+            this.mark(index);
+            return;
+          }
         }
       }
     },
@@ -231,15 +458,34 @@ export default {
      */
     computeOptionListStyle() {
       const selectBoxEl = this.$refs.select_box;
-      const optionListEl = this.$refs.options.$el;
+      const optionListEl = this.$refs.options?.$el;
       if (selectBoxEl && optionListEl) {
         const box = selectBoxEl.getBoundingClientRect();
+        // A trigger is narrower than its options: the list fits them, opens upwards from the
+        // trigger with its header and search on top, and stays inside the window
+        if (this.$slots.trigger) {
+          this.optionListStyle = {
+            width: 'max-content',
+            minWidth: `${Math.max(box.width, SELECT_TRIGGER_LIST_MIN_WIDTH)}px`,
+            maxWidth: `${Math.min(SELECT_TRIGGER_LIST_MAX_WIDTH, window.innerWidth - 8)}px`,
+            left: `${box.left}px`,
+            top: 'auto',
+            bottom: `${window.innerHeight - box.top}px`,
+            height: 'auto',
+          };
+          this.$nextTick(() => {
+            const width = optionListEl.offsetWidth;
+            const left = Math.max(4, Math.min(box.left, window.innerWidth - width - 4));
+            this.optionListStyle = { ...this.optionListStyle, left: `${left}px` };
+          });
+          return;
+        }
         this.optionListStyle = {
           width: `${selectBoxEl.clientWidth}px`,
-          top: `${box.top - Math.min(this.options.length * 25, 100)}px`,
+          top: `${box.top - Math.min(this.options.length, SELECT_VISIBLE_OPTIONS) * SELECT_OPTION_HEIGHT}px`,
           left: `${box.left}px`,
-          height: `${this.options.length * 25}px`,
-          maxHeight: '100px',
+          height: `${this.options.length * SELECT_OPTION_HEIGHT}px`,
+          maxHeight: `${SELECT_VISIBLE_OPTIONS * SELECT_OPTION_HEIGHT}px`,
         };
       }
     },
@@ -257,21 +503,50 @@ export default {
 .uikit_select_box {
   position: relative;
 }
+.uikit_select_trigger {
+  display: flex;
+  cursor: pointer;
+}
+/* The look of a trigger box (an icon and a text), for callers' trigger slots */
+:slotted(.uikit_select_trigger_box) {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  height: var(--control-height);
+  padding: 0 var(--space-3);
+  box-sizing: border-box;
+  background: var(--secondary-darker);
+  border: var(--border-width) solid var(--secondary-dark);
+  color: var(--secondary-lighter);
+  font-family: Roboto-Regular;
+  font-size: var(--font-xs);
+}
+:slotted(.uikit_select_trigger_box:hover) {
+  background: var(--secondary-dark);
+}
+:slotted(.uikit_select_trigger_text) {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
 .uikit_select_box.disabled:focus {
   outline: unset;
 }
 .uikit_select_textbox_wrapper {
-  height: 25px;
-  border: 1px solid var(--secondary-dark);
+  height: var(--control-height);
+  border: var(--border-width) solid var(--secondary-dark);
 }
 .uikit_select_textbox {
   font-family: Roboto-Regular;
   background: var(--primary-dark);
   color: var(--secondary-lighter);
-  font-size: 10px;
+  font-size: var(--font-xs);
   width: 100%;
   padding: 0;
-  padding-left: 5px;
+  padding-left: var(--space-2);
   -moz-appearance: none;
   -webkit-appearance: none;
   outline: 0;
@@ -326,7 +601,7 @@ export default {
   height: fit-content;
   width: inherit;
   background: var(--primary-dark);
-  outline: 1px solid var(--secondary-light);
+  outline: var(--border-width) solid var(--secondary-light);
   border-bottom: none;
   box-shadow: 0px -5px 10px -2px var(--primary-dark);
 }
@@ -334,18 +609,48 @@ export default {
   display: flex;
   flex-direction: row;
   align-items: center;
-  min-height: 25px;
-  max-height: 25px;
-  padding: 0 5px;
+  min-height: var(--select-option-height);
+  max-height: var(--select-option-height);
+  padding: 0 var(--space-2);
   width: inherit;
-  background: var(--secondary-darker);
+  /* a tint over a solid base: the idle stripes under a short list never show through */
+  background:
+    linear-gradient(var(--secondary-darker), var(--secondary-darker)),
+    var(--primary-dark);
 }
-.uikit_select_option:hover {
-  background: var(--secondary-dark);
+/* A trigger's list: header, then a uk-list of fixed height (see listHeight) */
+.uikit_select_option_list.with_trigger {
+  overflow: hidden;
+}
+.uikit_select_header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex-shrink: 0;
+  gap: var(--space-2);
+  min-height: var(--select-option-height);
+  padding: 0 var(--space-2);
+  background: var(--primary-dark);
+  color: var(--secondary-lighter);
+  border-bottom: var(--border-width) solid var(--secondary-dark);
+  font-family: Roboto-Bold;
+  font-size: var(--font-xs);
+  white-space: nowrap;
+}
+.uikit_select_option:hover,
+.uikit_select_option.marked {
+  background: linear-gradient(var(--secondary-dark), var(--secondary-dark)), var(--primary-dark);
   cursor: pointer;
 }
+/* The current value, in the list: styled like a selected list row, hovered or marked too */
+.uikit_select_option.current,
+.uikit_select_option.current:hover,
+.uikit_select_option.current.marked {
+  color: var(--secondary-lighter);
+  background: var(--accent-blue);
+}
 .selected {
-  outline: 1px solid var(--accent-blue);
+  outline: var(--border-width) solid var(--accent-blue);
   outline-offset: -1px;
 }
 </style>

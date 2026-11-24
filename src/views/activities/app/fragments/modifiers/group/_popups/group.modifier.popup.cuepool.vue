@@ -119,7 +119,7 @@ export default {
 .cue_popup {
   height: 100%;
   width: 100%;
-  padding: 10px;
+  padding: var(--space-5);
   min-width: 220px;
 }
 </style>
