@@ -237,6 +237,18 @@ const FXPresets = [{
 }];
 
 /**
+ * DMX value of a fixture channel, with its fine channel as the fraction
+ *
+ * @param {Object} channel fixture channel
+ * @returns {Number}
+ */
+function channelValue(channel) {
+  if (!channel) return 0;
+  const fine = channel.fineChannels && channel.fineChannels[0];
+  return channel.value.DMX + (fine ? fine.value.DMX / MAX_DMX : 0);
+}
+
+/**
  * @class FXFixture
  * @classdesc Effect fixture instance
  */
@@ -305,6 +317,29 @@ class FXFixture {
     });
     this.targets = [...groups.values()].filter(Boolean);
     this._channels = channels;
+    // Values to fade from and back to (Relative effects), one per driven channel
+    for (let k = 0; k < this.targets.length; k++) {
+      const target = this.targets[k];
+      target.start = new Float64Array(target.direct.length + target.inverted.length);
+    }
+    this.recordStart();
+  }
+
+  /**
+   * Records the current value of every channel the targets drive (the fine channel as the
+   * fraction), for a Relative effect to fade from and back to
+   *
+   * @public
+   */
+  recordStart() {
+    const channels = this.handle.channels || [];
+    for (let k = 0; k < this.targets.length; k++) {
+      const { direct, inverted, start } = this.targets[k];
+      for (let i = 0; i < direct.length; i++) start[i] = channelValue(channels[direct[i]]);
+      for (let i = 0; i < inverted.length; i++) {
+        start[direct.length + i] = channelValue(channels[inverted[i]]);
+      }
+    }
   }
 
   /**
@@ -353,6 +388,27 @@ class FXFixture {
     for (let i = 0; i < target.direct.length; i++) handle.setChannel(target.direct[i], value);
     for (let i = 0; i < target.inverted.length; i++) {
       handle.setChannel(target.inverted[i], MAX_DMX - value);
+    }
+  }
+
+  /**
+   * Writes a value to a target's channels, blended with the values recorded at the start:
+   * `start + (value - start) * factor`
+   *
+   * @public
+   * @param {Object} target one of the targets
+   * @param {Number} value effect value
+   * @param {Number} factor fade factor, 0 (recorded values) to 1 (the effect)
+   */
+  writeTargetBlend(target, value, factor) {
+    const { handle } = this;
+    const { direct, inverted, start } = target;
+    for (let i = 0; i < direct.length; i++) {
+      handle.setChannel(direct[i], start[i] + (value - start[i]) * factor);
+    }
+    for (let i = 0; i < inverted.length; i++) {
+      const from = start[direct.length + i];
+      handle.setChannel(inverted[i], from + (MAX_DMX - value - from) * factor);
     }
   }
 
@@ -429,6 +485,8 @@ class FXChannel {
     this.fixturePhaseStop = channel.fixturePhaseStop;
     this.time = 0;
     this.duration = duration;
+    // Fade factor of the effect (runtime): below 1, values blend with the recorded ones
+    this.fadeFactor = 1;
     this.update(0);
     this.DMXData = 0;
   }
@@ -1048,6 +1106,7 @@ class FXChannel {
 
     // A mirrored fixture plays Min + Max − value
     const flip = this.min + this.max;
+    const factor = this.fadeFactor;
 
     for (let i = 0; i < fixtures.length; i++) {
       const fixture = fixtures[i];
@@ -1065,12 +1124,13 @@ class FXChannel {
       const { targets } = fixture;
       for (let k = 0; k < targets.length; k++) {
         const target = targets[k];
+        let targetValue = value;
         if (this._cellPhase && target.cell) {
           const cellValue = this.getValue(this.time, target.phase) || 0;
-          fixture.writeTarget(target, fixture.mirrored ? flip - cellValue : cellValue);
-        } else {
-          fixture.writeTarget(target, value);
+          targetValue = fixture.mirrored ? flip - cellValue : cellValue;
         }
+        if (factor < 1) fixture.writeTargetBlend(target, targetValue, factor);
+        else fixture.writeTarget(target, targetValue);
       }
     }
   }
@@ -1334,16 +1394,73 @@ class FX extends Cue {
     this.time = time;
     this.DMXActivity = 0;
     const percent = time / this.durationMS;
+    const factor = this.fadeFactor;
 
     const { channels } = this;
     let activity = 0;
 
     for (let i = 0; i < channels.length; i++) {
+      channels[i].fadeFactor = factor;
       channels[i].update(percent);
       activity += channels[i].DMXData;
     }
 
     this.DMXActivity = activity;
+  }
+
+  /**
+   * Records each driven channel's current value, for a Relative effect to fade from and back to
+   *
+   * @public
+   * @override
+   */
+  prepareStartValues() {
+    const { channels } = this;
+    for (let i = 0; i < channels.length; i++) {
+      const fixtures = channels[i]._fixtures || [];
+      for (let j = 0; j < fixtures.length; j++) fixtures[j].recordStart();
+    }
+  }
+
+  /**
+   * Effects fade only in Relative
+   *
+   * @readonly
+   * @type {Boolean}
+   */
+  get fades() {
+    return !!this.relative;
+  }
+
+  /**
+   * Stops at once; the channels go back to full strength (edits while stopped write the effect)
+   *
+   * @private
+   * @override
+   */
+  stopNow() {
+    super.stopNow();
+    this.resetChannelFades();
+  }
+
+  /**
+   * Ends a chase item; the channels go back to full strength
+   *
+   * @public
+   * @override
+   */
+  endItem() {
+    super.endItem();
+    this.resetChannelFades();
+  }
+
+  /**
+   * Puts every channel back to full strength
+   *
+   * @private
+   */
+  resetChannelFades() {
+    for (let i = 0; i < this.channels.length; i++) this.channels[i].fadeFactor = 1;
   }
 }
 

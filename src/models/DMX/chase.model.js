@@ -235,8 +235,8 @@ class Chase {
     } else if (this.animationId != null) {
       this.elapsed = 0;
       this.cues.forEach((cueItemPool) => {
-        cueItemPool.cue.state = 0;
         cueItemPool.cue.chaseActive = false;
+        cueItemPool.cue.itemActive = false;
         cueItemPool.cue.cue(false);
       });
       Live.remove(this.animationId);
@@ -265,32 +265,33 @@ class Chase {
           this.deltaStart = time;
           break;
         case CHASE_TRIGGER_STYLES.ONE_SHOT:
+          // The items still playing reach their end (their Fade Out done) before the chase stops
+          this.cues.forEach((cueItemPool) => cueItemPool.cue.endItem());
           this.cue(false);
           return;
         default: break;
       }
     }
-    /**
-     * TODO: Check this whole routine, it does not seem efficient.
-     * Also, setting cue state to 1 for scenes when cue item is running seems to
-     * break a lot of things. Have a look into it.
-     */
-    this.cues.forEach((cueItemPool) => {
+    // Each cue plays the item under the playhead (its fades within the item); leaving its item
+    // plays the item's end once
+    const { cues } = this;
+    for (let i = 0; i < cues.length; i++) {
+      const cueItemPool = cues[i];
+      const { cue, items } = cueItemPool;
       let active = false;
-      cueItemPool.items.forEach((item) => {
-        if (
-          t >= item.tick * this.tickDuration
-          && t <= (item.tick + item.length) * this.tickDuration
-        ) {
-          item.update(t - (item.tick * this.tickDuration));
+      for (let j = 0; j < items.length; j++) {
+        const item = items[j];
+        const start = item.tick * this.tickDuration;
+        if (t >= start && t < (item.tick + item.length) * this.tickDuration) {
+          item.update(t - start);
           active = true;
-        } else {
-          cueItemPool.cue.state = 0;
+          break;
         }
-      });
-      // Play indicator and activity meter: `state` can't be used (see Scene relative fades)
-      cueItemPool.cue.chaseActive = active;
-    });
+      }
+      if (!active && cue.itemActive) cue.endItem();
+      // Play indicator and activity meter
+      cue.chaseActive = active;
+    }
   }
 
   /**

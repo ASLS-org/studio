@@ -1,19 +1,7 @@
 import Cue from './cue.model';
-import Fade from './fade.model';
 import {
   readColor, writeColor, readPanTilt, writePanTilt,
 } from './cell.access';
-
-/**
- * Enumeration of scene's running directions
- *
- * @constant {Object} SCENE_DIRECTIONS
- * @enum {Number}
- */
-const SCENE_DIRECTIONS = {
-  IN: 0,
-  OUT: 1,
-};
 
 /**
  * Deep-clones the {type: [channel, ...]} accessor map without going through
@@ -338,23 +326,43 @@ class Scene extends Cue {
   constructor(sceneData) {
     super(sceneData);
 
-    this.direction = SCENE_DIRECTIONS.IN;
     this.fixtures = sceneData.fixtures;
     this.fixtureValues = sceneData.fixtureValues;
+    // A scene saved before fades had their own time faded in over its Duration; a new scene fades
+    // in over a bar
+    this.fadeIn = Cue.buildFade(sceneData.fadeIn, 0, sceneData.duration ?? 1);
+  }
 
-    this.fadeIn = new Fade({
-      direction: 0,
-      // duration: sceneData.duration
-      ...sceneData.fadeIn,
-    });
+  /**
+   * A scene ends by itself once faded in, whatever its Loop Style
+   *
+   * @readonly
+   * @type {Boolean}
+   */
+  // eslint-disable-next-line class-methods-use-this
+  get endsAfterDuration() {
+    return true;
+  }
 
-    this.fadeOut = new Fade({
-      direction: 1,
-      // duration: sceneData.duration
-      ...sceneData.fadeOut,
-    });
+  /**
+   * A scene ends when its fade in is done
+   *
+   * @readonly
+   * @type {Number}
+   */
+  get endMS() {
+    return this.fadeInMS;
+  }
 
-    this.duration = sceneData.duration;
+  /**
+   * At its end, a scene stops and its look stays (its Fade Out plays when stopped before)
+   *
+   * @readonly
+   * @type {Boolean}
+   */
+  // eslint-disable-next-line class-methods-use-this
+  get fadesOutAtEnd() {
+    return false;
   }
 
   /**
@@ -413,42 +421,6 @@ class Scene extends Cue {
   }
 
   /**
-   * Scene running direction (in/out)
-   *
-   * @type {Number}
-   */
-  set direction(direction) {
-    this._direction = direction;
-  }
-
-  get direction() {
-    return this._direction;
-  }
-
-  /**
-   * Cue duration in bars
-   *
-   * @type {Number}
-   */
-  set duration(duration) {
-    super.duration = duration;
-
-    if (this.fadeIn) {
-      this.fadeIn.duration = this.duration;
-      this.fadeOut.duration = this.duration;
-    }
-  }
-
-  /**
-   * Cue duration in bars
-   *
-   * @type {Number}
-   */
-  get duration() {
-    return super.duration;
-  }
-
-  /**
    * Scene's listable fixtures data
    *
    * @readonly
@@ -481,8 +453,6 @@ class Scene extends Cue {
         },
         channelValues: fv.channelValues,
       })),
-      fadeIn: this.fadeIn.showData,
-      fadeOut: this.fadeOut.showData,
     });
   }
 
@@ -582,48 +552,21 @@ class Scene extends Cue {
   }
 
   /**
-   * Updates scene over time
+   * Writes the scene with the cue's fade factor: from 0 (Absolute) or from the values recorded
+   * when it started (Relative) at factor 0, to the scene's values at factor 1
    *
    * @public
    * @override
-   *
-   * @param {Number} time update time
-   * @param {Number} duration update duration
+   * @param {Number} time time since cued (or within the chase item), in ms
    */
-  update(time, duration = null) {
+  update(time) {
     this.time = time;
-    this.DMXActivity = 0;
-
-    const { relative } = this;
-
-    if (
-      (!this.state && relative)
-      || (time === 0 && relative)
-    ) {
-      this.prepareStartValues();
-      this.state = 1;
-    }
-
-    // Preserve the existing fallback behavior.
-    duration = duration || this.durationMS;
-
-    const directionIn = this.direction === SCENE_DIRECTIONS.IN;
-    const fade = directionIn ? this.fadeIn : this.fadeOut;
-
-    // Fade is calculated exactly once per Scene update.
-    const fadeFactor = time < duration
-      ? fade.getValue(time, duration)
-      : 1;
-
+    const relative = !!this.relative;
+    const factor = this.fadeFactor;
     const fixtureValues = this._fixtureValues;
-
     let activity = 0;
 
-    // Hot path:
-    // - no Object.keys()
-    // - no nested Object.keys()
-    // - no forEach callbacks
-    // - no repeated fixtureValues getter
+    // Hot path: no Object.keys(), no callbacks, no repeated getters
     for (let i = 0; i < fixtureValues.length; i++) {
       const fixtureValue = fixtureValues[i];
       const { channels } = fixtureValue;
@@ -637,14 +580,8 @@ class Scene extends Cue {
           continue;
         }
 
-        const finalValue = directionIn
-          ? channelValue.value
-          : 0;
-
-        const raw = relative
-          ? channelValue.startValue
-            + (finalValue - channelValue.startValue) * fadeFactor
-          : finalValue * fadeFactor;
+        const from = relative ? channelValue.startValue || 0 : 0;
+        const raw = from + (channelValue.value - from) * factor;
         // An overshooting fade curve goes past its target: DMX stays within 0-255
         // eslint-disable-next-line no-nested-ternary
         const value = raw < 0 ? 0 : (raw > 255 ? 255 : raw);
@@ -659,10 +596,6 @@ class Scene extends Cue {
     }
 
     this.DMXActivity = activity;
-
-    if (time >= duration) {
-      this.state = this.direction;
-    }
   }
 
   /**
