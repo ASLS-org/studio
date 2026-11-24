@@ -9,8 +9,8 @@
  * Usage: npm run app:check [-- --url http://localhost:5173] [--only <scenario> ...]
  *   --url    use a running dev server instead of starting one
  *   --only   run only these scenarios (repeatable): panels, playing, textscroll, select, resize,
- *            widgets, curves, repatch, position, scopes, presets, memory, shared, highlight,
- *            deletes, keys, popups
+ *            widgets, curves, repatch, position, scopes, fxfades, presets, memory, shared,
+ *            highlight, deletes, keys, popups
  * Chrome: CHROME_PATH, else the usual install path for the system.
  */
 /* eslint-disable no-console -- a command-line report */
@@ -364,6 +364,7 @@ const PAGE_MODULES = {
   placement: '/src/views/utils/placement.js',
   palette: '/src/views/utils/palette.js',
   scope: '/src/views/utils/effect.scope.js',
+  live: '/src/models/DMX/live.model.js',
 };
 /** Text of a channel preset option: its span and label */
 const presetText = (r) => `${r.label} ${r.start === r.end ? r.start : `${r.start}–${r.end}`}`;
@@ -846,14 +847,14 @@ const SCENARIOS = {
     await page.evaluate(() => window.__check.show.refreshSaveState());
 
     // The picker: a standard select of named presets, each with a picture of its curve
-    await click(page, '.widget_curve .widget_curve_type .uikit_select_textbox_wrapper');
+    await click(page, '.scene_fade_in .widget_curve_type .uikit_select_textbox_wrapper');
     const options = await page.evaluate(() => [...document.querySelectorAll(
       '.uikit_select_option_list .uikit_select_option',
     )].map((o) => ({ name: o.textContent.trim(), curve: !!o.querySelector('svg path') })));
     await click(page, '.uikit_select_option_list .uikit_select_option', 'Expo out');
     const picked = await fadeOf();
     const box = await page.evaluate(() => {
-      const t = document.querySelector('.widget_curve_type .uikit_select_textbox');
+      const t = document.querySelector('.scene_fade_in .widget_curve_type .uikit_select_textbox');
       return { text: t?.textContent.trim(), curve: !!t?.querySelector('svg path') };
     });
     const unsaved = await page.evaluate(() => {
@@ -884,7 +885,12 @@ const SCENARIOS = {
       const read = () => fv.fixture.getQuickAccessor(channel).value.DMX;
       const at = (type, fraction) => {
         cue.fadeIn.type = type;
-        cue.update(fraction * 1000, 1000);
+        // The scene's own fade-in at that fraction of its time
+        cue.fadeIn.duration = 1;
+        cue.fadeStart = 0;
+        cue.fadeFrom = 0;
+        cue.computeFadeFactor(fraction * cue.fadeInMS);
+        cue.update(0);
         return read();
       };
       const easeIn = at(3, 0.5);
@@ -2341,6 +2347,513 @@ const SCENARIOS = {
       scene.entries.length === 2 && scene.entries.every((e) => e.value === row.start && e.active)
         && scene.saved === false,
       { ...scene, start: row.start },
+    );
+  },
+
+  /** Cue fades: effects (Relative only), scenes (hold, fade out), chase items and their preview */
+  async fxfades(page) {
+    const d = await demo(page);
+    // Errors Vue reports (watchers, renders) go to the app's error bus, not to window
+    await page.evaluate(async () => {
+      // The app's own instance: the URL it was loaded from
+      const url = performance.getEntriesByType('resource').map((e) => e.name)
+        .find((n) => n.includes('/plugins/eventbus.js'));
+      const bus = (await import(url)).default;
+      window.__appErrors = [];
+      bus.on('app_error', (e) => window.__appErrors.push(String((e && e.message) || e)));
+    });
+    const found = await page.evaluate(() => {
+      for (const group of window.__check.show.groupPool.groups) {
+        const fx = group.cuePool.cues.find((c) => c.type === 1
+          && c.channels.some((ch) => ch.type === 'Pan'));
+        if (fx) return { group: group.id, fx: fx.id };
+      }
+      return null;
+    });
+    if (!found) {
+      check('the demo has an effect with a Pan wave', false, found);
+      return;
+    }
+    const group = d.groups.find((g) => g.id === found.group);
+    const fxName = group.cues.find((c) => c.id === found.fx).name;
+    const fadesShown = () => page.evaluate(() => ['.effect_fade_in', '.effect_fade_out']
+      .map((s) => [...document.querySelectorAll(s)].some((e) => e.getClientRects().length)));
+    const setFx = (fields) => page.evaluate((gid, cid, f) => {
+      const fx = window.__check.show.groupPool.getFromId(gid).cuePool.cues
+        .find((c) => c.id === cid);
+      Object.assign(fx, f);
+    }, found.group, found.fx, fields);
+
+    await openGroup(page, group.name);
+    await selectCueTile(page, fxName);
+    await setFx({ relative: 0 });
+    await wait(SETTLE_MS);
+    const absolute = await fadesShown();
+    await setFx({ relative: 1 });
+    await wait(SETTLE_MS);
+    const relative = await fadesShown();
+    check(
+      'Fade In and Fade Out widgets show only when Start is Relative',
+      absolute.every((v) => !v) && relative.every(Boolean),
+      { absolute, relative },
+    );
+
+    // Played by hand (Live's tick replaced by a no-op) so the times are exact
+    const run = await page.evaluate(async (gid, cid, modules) => {
+      const Live = (await import(modules.live)).default;
+      const fx = window.__check.show.groupPool.getFromId(gid).cuePool.cues
+        .find((c) => c.id === cid);
+      const pan = fx.channels.find((ch) => ch.type === 'Pan');
+      const fxFixture = pan._fixtures.find((f) => f.active);
+      const fixture = fxFixture.handle;
+      const index = fxFixture.targets[0].direct[0];
+      const value = () => fixture.channels[index].value.DMX;
+      const effectValue = () => Math.floor(fxFixture.value);
+      const hold = (v) => {
+        fixture.setChannel(index, v);
+        fxFixture.recordStart();
+      };
+      const start = (relativeStart) => {
+        fx.relative = relativeStart;
+        fx.cue(true);
+        // A no-op in place of the effect's tick: the test drives update() itself
+        Live.remove(fx.animationId);
+        fx.animationId = Live.add(() => {});
+        fx.deltaStart = 0;
+      };
+      // One tick of the cue's own playback at a time since cued
+      const tick = (t) => fx._update(t);
+      const bar = Live.barDuration;
+      fx.fadeIn.duration = 2;
+      fx.fadeOut.duration = 1;
+      const out = {};
+
+      // Absolute: full strength on the first frame
+      hold(10);
+      start(0);
+      tick(0);
+      out.absolute = { value: value(), effect: effectValue() };
+      fx.cue(false);
+
+      // Relative: from the held value, to the effect after the Fade In
+      hold(10);
+      start(1);
+      tick(0);
+      out.first = value();
+      tick(bar);
+      out.half = { value: value(), effect: effectValue(), factor: fx.fadeFactor };
+      tick(2 * bar + 1);
+      out.full = { value: value(), effect: effectValue(), factor: fx.fadeFactor };
+
+      // Stop: shown stopped at once, back to the held value after the Fade Out
+      fx.cue(false);
+      out.stopped = { state: fx.state, running: fx.animationId != null };
+      tick(2 * bar + 1 + bar / 2);
+      out.mid = value();
+      tick(3 * bar + 2);
+      out.end = { value: value(), running: fx.animationId != null, factor: fx.fadeFactor };
+
+      // Cued again halfway through a fade-out: no jump
+      hold(10);
+      start(1);
+      tick(2 * bar + 1);
+      fx.cue(false);
+      tick(2 * bar + 1 + bar / 2);
+      const before = value();
+      fx.cue(true);
+      tick(2 * bar + 1 + bar / 2);
+      out.again = { before, after: value(), state: fx.state };
+      fx.fadeOut.duration = 0;
+      fx.cue(false);
+      fx.fadeOut.duration = 1;
+
+      // Saved with the show; an older effect without fades has none
+      const data = JSON.parse(JSON.stringify(fx.showData));
+      const Fx = fx.constructor;
+      const copy = new Fx({ ...data, fixtures: [], channels: [] });
+      const older = new Fx({
+        ...data, fadeIn: undefined, fadeOut: undefined, fixtures: [], channels: [],
+      });
+      out.saved = {
+        fadeIn: data.fadeIn,
+        copy: [copy.fadeIn.duration, copy.fadeOut.duration],
+        older: [older.fadeIn.duration, older.fadeOut.duration],
+      };
+      const { show } = window.__check;
+      show.refreshSaveState();
+      out.unsaved = !show.isSaved;
+      return out;
+    }, found.group, found.fx, PAGE_MODULES);
+    check(
+      'Absolute: the effect writes at full strength on its first frame',
+      run.absolute.value === run.absolute.effect,
+      run.absolute,
+    );
+    check(
+      'Relative: starts at the held value, blends halfway, reaches the effect after the Fade In',
+      run.first === 10 && run.half.factor > 0 && run.half.factor < 1
+        && run.full.factor === 1 && run.full.value === run.full.effect,
+      run,
+    );
+    check(
+      'Stop: shown stopped at once, still running, then back to the held value and removed',
+      run.stopped.state === 0 && run.stopped.running && run.mid !== 10
+        && run.end.value === 10 && !run.end.running && run.end.factor === 1,
+      run,
+    );
+    check(
+      'Cued again while fading out: no jump, running again',
+      Math.abs(run.again.after - run.again.before) <= 1 && run.again.state === 1,
+      run.again,
+    );
+    check(
+      'Fades are saved (with their time), older effects load with none, the show is unsaved',
+      run.saved.fadeIn.duration === 2 && run.saved.copy[0] === 2 && run.saved.copy[1] === 1
+        && run.saved.older[0] === 0 && run.saved.older[1] === 0 && run.unsaved,
+      run.saved,
+    );
+
+    // An effect in a chase item: fades by its times in Relative, full strength in Absolute
+    const fxItem = await page.evaluate(async (gid, cid, modules) => {
+      const Live = (await import(modules.live)).default;
+      const fx = window.__check.show.groupPool.getFromId(gid).cuePool.cues
+        .find((c) => c.id === cid);
+      const bar = Live.barDuration;
+      const at = (t) => {
+        fx.playItem(t, 4 * bar);
+        return Number(fx.fadeFactor.toFixed(3));
+      };
+      fx.fadeIn.duration = 1;
+      fx.fadeOut.duration = 1;
+      fx.relative = 1;
+      fx.itemActive = false;
+      const faded = [at(bar / 2), at(2 * bar), at(3.5 * bar)];
+      fx.endItem();
+      fx.relative = 0;
+      const full = at(0);
+      fx.endItem();
+      return { relative: faded, absolute: full };
+    }, found.group, found.fx, PAGE_MODULES);
+    check(
+      'Effect in a chase item: Relative fades in, holds, fades out; Absolute plays at full strength',
+      fxItem.relative[0] > 0 && fxItem.relative[0] < 1 && fxItem.relative[1] === 1
+        && fxItem.relative[2] > 0 && fxItem.relative[2] < 1 && fxItem.absolute === 1,
+      fxItem,
+    );
+
+    // In the app, with the clock running: tiles toggle, Temporary holds, delete stops at once
+    const ids = await page.evaluate((gid) => {
+      const g = window.__check.show.groupPool.getFromId(gid);
+      g.cuePool.cues.forEach((c) => { if (c.animationId != null) c.stopNow(); });
+      const sc = g.cuePool.cues.find((c) => c.type === 0 && c.fixtureValues.length);
+      const fx = g.cuePool.cues.find((c) => c.type === 1);
+      sc.relative = 0;
+      sc.fadeIn.duration = 1;
+      sc.fadeOut.duration = 0.25;
+      fx.relative = 0;
+      return { scene: sc.id, fx: fx.id };
+    }, found.group);
+    const cueState = (id) => page.evaluate((gid, cid) => {
+      const c = window.__check.show.groupPool.getFromId(gid).cuePool.cues.find((q) => q.id === cid);
+      return {
+        state: c.state, running: c.animationId != null, releasing: c.releasing,
+      };
+    }, found.group, id);
+    const tileOf = (id) => `.cuepool_widget .grid_item[data-cue="${id}"]`;
+    await page.evaluate((gid, list) => {
+      const g = window.__check.show.groupPool.getFromId(gid);
+      [...document.querySelectorAll('.cuepool_widget .grid_item:not(.empty)')].forEach((el) => {
+        const name = el.querySelector('.grid_item_footer')?.textContent.trim();
+        const c = g.cuePool.cues.find((q) => (q.name || '') === name);
+        if (c && list.includes(c.id)) el.dataset.cue = c.id;
+      });
+    }, found.group, [ids.scene, ids.fx]);
+    const playTile = async (id) => {
+      const box = await page.evaluate((s) => {
+        const r = document.querySelector(s).getBoundingClientRect();
+        return { x: r.x + r.width / 2, y: r.y + r.height / 3 };
+      }, tileOf(id));
+      await page.mouse.click(box.x, box.y);
+      return box;
+    };
+    await openGroup(page, group.name);
+    await wait(SETTLE_MS);
+    await playTile(ids.scene);
+    await wait(600);
+    const sceneOn = await cueState(ids.scene);
+    await playTile(ids.scene);
+    const sceneStopping = await cueState(ids.scene);
+    await wait(900);
+    const sceneOff = await cueState(ids.scene);
+    check(
+      'Clicking a scene fading in stops it: shown stopped at once, fades out, then off Live',
+      sceneOn.state === 1 && sceneOn.running && sceneStopping.state === 0
+        && sceneStopping.releasing && !sceneOff.running && sceneOff.state === 0,
+      { sceneOn, sceneStopping, sceneOff },
+    );
+    await page.evaluate((gid, cid) => {
+      const c = window.__check.show.groupPool.getFromId(gid).cuePool.cues.find((q) => q.id === cid);
+      c.fadeIn.duration = 0.25;
+    }, found.group, ids.scene);
+    await playTile(ids.scene);
+    await wait(1000);
+    const sceneEnded = await cueState(ids.scene);
+    check(
+      'A scene ends by itself once faded in',
+      sceneEnded.state === 0 && !sceneEnded.running,
+      sceneEnded,
+    );
+    await page.evaluate((gid, cid) => {
+      const c = window.__check.show.groupPool.getFromId(gid).cuePool.cues.find((q) => q.id === cid);
+      c.fadeIn.duration = 1;
+    }, found.group, ids.scene);
+    await playTile(ids.fx);
+    await wait(400);
+    const fxOn = await cueState(ids.fx);
+    await playTile(ids.fx);
+    const fxOff = await cueState(ids.fx);
+    check(
+      'Clicking a playing Absolute effect stops it at once',
+      fxOn.state === 1 && fxOn.running && fxOff.state === 0 && !fxOff.running,
+      { fxOn, fxOff },
+    );
+    // Temporary: plays while held, fades out on release, pressed again while fading comes back
+    await page.evaluate((gid, cid) => {
+      window.__check.show.groupPool.getFromId(gid).cuePool.cues
+        .find((q) => q.id === cid).triggerStyle = 1;
+    }, found.group, ids.scene);
+    const box = await page.evaluate((s) => {
+      const r = document.querySelector(s).getBoundingClientRect();
+      return { x: r.x + r.width / 2, y: r.y + r.height / 3 };
+    }, tileOf(ids.scene));
+    await page.mouse.move(box.x, box.y);
+    await page.mouse.down();
+    await wait(600);
+    const held = await cueState(ids.scene);
+    await page.mouse.up();
+    const released = await cueState(ids.scene);
+    await page.mouse.down();
+    await wait(100);
+    const pressedAgain = await cueState(ids.scene);
+    await page.mouse.up();
+    await wait(900);
+    const temporaryOff = await cueState(ids.scene);
+    check(
+      'Temporary: plays while held, fades out on release, comes back when pressed during the fade-out, then stops',
+      held.state === 1 && released.state === 0 && released.releasing
+        && pressedAgain.state === 1 && !pressedAgain.releasing && !temporaryOff.running,
+      {
+        held, released, pressedAgain, temporaryOff,
+      },
+    );
+    // A One Shot cue reaching its end stops (Absolute at once; with a Fade Out, after it)
+    const ends = await page.evaluate(async (gid, cid) => {
+      const pause = (ms) => new Promise((res) => { setTimeout(res, ms); });
+      const fx = window.__check.show.groupPool.getFromId(gid).cuePool.cues
+        .find((c) => c.id === cid);
+      const look = () => ({
+        state: fx.state, running: fx.animationId != null, releasing: fx.releasing,
+      });
+      const saved = { loopStyle: fx.loopStyle, duration: fx.duration, relative: fx.relative };
+      fx.loopStyle = 0;
+      fx.duration = 0.5;
+      fx.relative = 0;
+      fx.cue(true);
+      await pause(1400);
+      const atOnce = look();
+      fx.relative = 1;
+      fx.fadeIn.duration = 0;
+      fx.fadeOut.duration = 0.25;
+      fx.cue(true);
+      await pause(1150);
+      const fading = look();
+      await pause(700);
+      const faded = look();
+      Object.assign(fx, saved);
+      return { absolute: atOnce, fading, faded };
+    }, found.group, ids.fx);
+    check(
+      'A One Shot effect at its end stops; a Relative one with a Fade Out fades out first, then stops',
+      ends.absolute.state === 0 && !ends.absolute.running
+        && ends.fading.state === 0 && ends.fading.releasing && ends.fading.running
+        && !ends.faded.running,
+      ends,
+    );
+    const errors = await page.evaluate(() => [...window.__check.errors, ...window.__appErrors]);
+    check('No app error while cues are started and stopped', errors.length === 0, errors);
+    // Deleting a cue that fades out stops it at once
+    const deleted = await page.evaluate((gid, cid) => {
+      const g = window.__check.show.groupPool.getFromId(gid);
+      const c = g.cuePool.cues.find((q) => q.id === cid);
+      c.triggerStyle = 0;
+      c.cue(true);
+      c.cue(false);
+      const { releasing } = c;
+      g.cuePool.delete(c);
+      return { releasing, running: c.animationId != null };
+    }, found.group, ids.scene);
+    check(
+      'Deleting a cue while it fades out takes it off Live at once',
+      deleted.releasing && !deleted.running,
+      deleted,
+    );
+
+    // Scenes: own fade times, hold until stopped, fade out (to 0, or back in Relative)
+    const scene = await page.evaluate(async (gid, modules) => {
+      const Live = (await import(modules.live)).default;
+      const g = window.__check.show.groupPool.getFromId(gid);
+      const sc = g.cuePool.cues.find((c) => c.type === 0 && c.fixtureValues.length);
+      if (!sc) return null;
+      const fv = sc._fixtureValues.find((v) => v.channels.some((c) => c.active && !c.isFine));
+      const ch = fv.channels.find((c) => c.active && !c.isFine);
+      const accessor = fv.fixture.getQuickAccessor(ch);
+      const value = () => Math.round(accessor.value.DMX);
+      const target = Math.round(ch.value);
+      const bar = Live.barDuration;
+      const start = (mode) => {
+        sc.relative = mode;
+        sc.cue(true);
+        Live.remove(sc.animationId);
+        sc.animationId = Live.add(() => {});
+        sc.deltaStart = 0;
+      };
+      const tick = (t) => sc._update(t);
+      sc.fadeIn.duration = 2;
+      sc.fadeOut.duration = 1;
+      const out = { target, name: sc.name };
+      fv.fixture.setQuickAccessor(ch, 10);
+      start(0);
+      tick(0);
+      out.absStart = value();
+      tick(2 * bar + 1);
+      out.ended = { value: value(), state: sc.state, running: sc.animationId != null };
+      // Stopped during its fade in: fades out to 0
+      start(0);
+      tick(bar);
+      sc.cue(false);
+      out.stopState = sc.state;
+      tick(2 * bar + 1);
+      out.absEnd = { value: value(), running: sc.animationId != null };
+      fv.fixture.setQuickAccessor(ch, 10);
+      start(1);
+      tick(0);
+      out.relStart = value();
+      tick(bar);
+      sc.cue(false);
+      tick(2 * bar + 1);
+      out.relEnd = value();
+      // An older scene: its Duration becomes its Fade In
+      const S = sc.constructor;
+      const data = JSON.parse(JSON.stringify(sc.showData));
+      delete data.fadeIn.duration;
+      delete data.fadeOut;
+      const older = new S({
+        ...data, duration: 4, fixtures: [], fixtureValues: [],
+      });
+      out.older = [older.fadeIn.duration, older.fadeOut.duration];
+      // In a chase item: fades by their own times, shrunk in a short item
+      sc.relative = 0;
+      sc.fadeIn.duration = 1;
+      sc.fadeOut.duration = 1;
+      const factorAt = (t, length) => {
+        sc.playItem(t, length);
+        return Number(sc.fadeFactor.toFixed(3));
+      };
+      sc.itemActive = false;
+      out.item = {
+        twoBars: factorAt(bar / 2, 2 * bar),
+        eightBars: factorAt(bar / 2, 8 * bar),
+        heldInEight: factorAt(4 * bar, 8 * bar),
+        shortIn: sc.itemFades(bar).fadeIn / bar,
+        shortOut: sc.itemFades(bar).fadeOut / bar,
+      };
+      sc.endItem();
+      out.itemEnd = value();
+      return out;
+    }, found.group, PAGE_MODULES);
+    if (!scene) {
+      check('the demo group has a scene with values', false, scene);
+      return;
+    }
+    check(
+      'Scene (Absolute): fades in from 0 and ends once faded in, its look kept; stopped during its fade in, fades out to 0',
+      scene.absStart === 0 && scene.ended.value === scene.target && scene.ended.state === 0
+        && !scene.ended.running && scene.stopState === 0 && scene.absEnd.value === 0
+        && !scene.absEnd.running,
+      scene,
+    );
+    check(
+      'Scene (Relative): fades in from the held value, and back to it when stopped during its fade in',
+      scene.relStart === 10 && scene.relEnd === 10,
+      scene,
+    );
+    check(
+      'An older scene takes its Duration as its Fade In',
+      scene.older[0] === 4 && scene.older[1] === 0,
+      scene.older,
+    );
+    check(
+      'Chase item: the fade follows the cue\'s time whatever the item length, holds, shrinks in a short item, ends at 0',
+      scene.item.twoBars === scene.item.eightBars && scene.item.twoBars > 0
+        && scene.item.twoBars < 1 && scene.item.heldInEight === 1
+        && scene.item.shortIn === 0.5 && scene.item.shortOut === 0.5 && scene.itemEnd === 0,
+      scene.item,
+    );
+
+    // Cue Settings: no Duration or Loop Style for a scene
+    await selectCueTile(page, scene.name);
+    await wait(SETTLE_MS);
+    const labels = await page.evaluate(() => [...document.querySelectorAll('.modifier_widget_cue_settings .label')]
+      .filter((e) => e.getClientRects().length).map((e) => e.textContent.trim()));
+    const sceneFades = await page.evaluate(() => ['.scene_fade_in', '.scene_fade_out']
+      .map((s) => [...document.querySelectorAll(s)].some((e) => e.getClientRects().length)));
+    check(
+      'A scene shows no Duration or Loop Style, and both fade widgets',
+      !labels.some((l) => /Duration|Loop Style/.test(l)) && sceneFades.every(Boolean),
+      { labels, sceneFades },
+    );
+
+    // The chase item preview draws the fades as played
+    const chase = await page.evaluate(() => {
+      const { show } = window.__check;
+      for (const grp of show.groupPool.groups) {
+        const ch = grp.chasePool.chases.find((c) => c.cues.some((p) => p.items.length));
+        if (ch) {
+          ch.cues.forEach((p) => {
+            p.cue.fadeIn.duration = 1;
+            p.cue.fadeOut.duration = 0.5;
+          });
+          const expected = ch.cues.flatMap((p) => p.items.map((it) => {
+            const f = p.cue.itemFades(it.lengthMS);
+            return [f.fadeIn / it.lengthMS, f.fadeOut / it.lengthMS];
+          }));
+          const view = document.querySelector('#app').__vue_app__.config.globalProperties.$view;
+          view.openChase(grp.id, ch.id);
+          return { expected };
+        }
+      }
+      return null;
+    });
+    if (!chase) {
+      check('the demo has a chase with items', false, chase);
+      return;
+    }
+    await wait(800);
+    const drawn = await page.evaluate(() => [...document.querySelectorAll('.widget_pool_timeline_item_cue_body_curve path')]
+      .map((p) => p.getAttribute('d') || ''));
+    const ratios = drawn.map((pathData) => {
+      const m = /^M 0,[\d.]+ (?:C [^,]+, [^,]+, ([\d.]+) 0|L 0,0) L ([\d.]+),0/.exec(pathData);
+      const end = /([\d.]+)[ ,]([\d.]+) Z$/.exec(pathData);
+      if (!m || !end) return null;
+      const width = Number(end[1]);
+      return [Number(m[1] || 0) / width, (width - Number(m[2])) / width];
+    });
+    check(
+      'Each chase item draws its Fade In and Fade Out over their played widths',
+      ratios.length === chase.expected.length && ratios.every((r, i) => r
+        && Math.abs(r[0] - chase.expected[i][0]) < 0.02
+        && Math.abs(r[1] - chase.expected[i][1]) < 0.02),
+      { ratios, expected: chase.expected, drawn: drawn.slice(0, 2) },
     );
   },
 
