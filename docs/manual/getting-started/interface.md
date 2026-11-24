@@ -33,8 +33,8 @@ The **show's name** in the middle gets a `*` when it has changes you haven't sav
 
 ## Patch Bay
 
-Lists the universes, each unfolding to its fixtures with their address (`U0 - CH14`: universe 0,
-address 14). Unfold a universe to open it in the modifier strip; click a fixture to select it
+Lists the universes, each unfolding to its fixtures with their address (`U0 - CH15`: universe 0,
+address 15). Unfold a universe to open it in the modifier strip; click a fixture to select it
 there and outline it in the visualizer. Type in **Search items** to find fixtures across
 universes. **New** adds a universe; select fixtures and press <kbd>Delete</kbd> to remove them
 from the show. Drag its right border to widen it, up to twice its width. More in

@@ -18,8 +18,8 @@ Read `src/views/CLAUDE.md` for the folder map.
 | New screen region | `activities/app/fragments/<area>/` | `<area>.fragment.vue` |
 
 Reuse before creating. List the existing kit with
-`ls -R src/views/components/uikit | grep .vue`: buttons, inputs (checkbox, select, textbox
-num/str, range fader/knob/gauge/vumeter), lists, menus, popups, widgets, cues, containers
+`ls -R src/views/components/uikit | grep .vue`: buttons, inputs (checkbox, color, select,
+textbox num/str, range fader/knob/gauge/vumeter), lists, menus, popups, widgets, cues, containers
 (`uk-flex`, `uk-spacer`), icons, loaders.
 
 ## Component skeleton (match existing files)
@@ -108,7 +108,7 @@ export default {
   | Spacing (padding, margin, gap) | `--space-1`…`--space-10` = 2, 4, 6, 8, 10, 12, 16, 20, 24, 32 px |
   | Type | `--font-xs/sm/md/lg/xl` = 10, 12, 14, 16, 24 px |
   | Icons | `--icon-xs/sm/md/lg` = 10, 14, 16, 24 px |
-  | Roles | `--control-height` (fields, selects, buttons beside them), `--button-height`, `--row-height`, `--row-height-tall`, `--header-height` (toolbar, panels), `--widget-header-height` (widgets, popups), `--widget-width-sm/md/lg` |
+  | Roles | `--control-height` (fields, selects, buttons beside them), `--button-height`, `--row-height`, `--row-height-tall`, `--header-height` (toolbar, panels), `--widget-header-height` (widgets, popups), `--widget-width-sm/md/lg/xl` (250 to 400 px), `--channel-column-width` (64 px) |
   | Radius, border | `--radius-sm/md/lg`, `--radius-round` (circles), `--radius-pill`; `--border-width` |
   | Colour roles | `--on-color-text`, `--on-color-surface` (on cue/chase colours, both themes), `--curve-handle` |
 
@@ -129,10 +129,20 @@ export default {
   copy the gradient.
 - **Popups** (`uk-popup`) attach to the injected `popupHost` when a parent provides one (the
   manual's previews), else to the body; don't append popups to `document.body` yourself.
+  Extra footer buttons go in its `#actions` slot (left of the footer, e.g. Arrange's *Apply*);
+  *OK* is the one light button, every other `uk-button` is `--secondary-dark`.
+- **Toggle buttons** (`uk-button toggleable`) start from `modelValue` and light in `color`; for a
+  button group showing a state (Position Tool mounts), bind `modelValue` and key each button by
+  its state so a click on the lit one keeps it lit.
 - **List rows** (`uk-list-item`): `tall` (40px) and `large` (40px, 16px padding, 14px labels,
   16px icons) are opt-in modes; defaults stay as in the app. `large` is for lists people read
   (the user manual's navigation). Extend components with opt-in props like these rather than
   restyling them from outside.
+- **DMX addresses** are shown 1–512 through `views/utils/dmx.js` (`dmxAddress`, `chStartOf`);
+  the engine stores them from 0.
+- **Rows over idle stripes stay solid:** `--secondary-dark/-darker` are see-through tints, so a row
+  or option lays its tint over a solid base (`linear-gradient(tint, tint), var(--primary-light)`),
+  never at reduced opacity.
 - **Lists** (`uk-list`): rows are keyed by item `id`, else `name`, and their selection, checks
   and unfolded state follow that key across item changes. So give items a stable `id` (or a
   unique `name`), and rebuild `items` freely (a getter like `pool.listable` is fine): the list
@@ -143,7 +153,32 @@ export default {
 - **Icons in `icons/images/`** need a `viewBox` and no `width`/`height` attributes (the SVG loader
   drops the `viewBox` when both are there, so the icon is clipped when scaled).
 - **Icons.** `<uk-icon name="...">` maps to `components/uikit/icons/images/*.svg`. Add new SVGs
-  there.
+  there. A missing name shows `close.svg` (an "x"). Channel icons come only from
+  `views/utils/channel.icons.js` (`channelIcon(channel)`: GDTF attribute families, then legacy
+  type keys, then name words, then `channel`); it only returns existing files.
+- **Number fields** (`uk-num-input`): `readonly` shows a value the operator can't change (the
+  disabled look with the label not dimmed, like read-only text and selects); `relative` is for a
+  field standing for several values: a `null` value shows the `placeholder` (`--`), and the arrows
+  and arrow keys emit `step` (±1 precision unit) instead of changing the value (Position Tool).
+- **View switches** in a widget (the Pan/Tilt Scope's Deg, Fit) sit among its fields as square
+  `uk-button toggleable color="var(--accent-blue)"`, keyed by state, never in the header.
+- **Colour fields** (`uk-color-input`): `v-model` `#rrggbb`; a swatch opening the system picker
+  (reports live while dragging) and an editable hex code (Enter or blur; anything else reverts).
+  Use it for any colour a field sets, never a bare `<input type="color">`.
+- **Lists' `selection` event** sends the selected items (the caller's objects), the `selection`
+  prop takes ids: map `items.map((i) => i.id)` when storing what was picked.
+- **Selects** (`uk-select-input`): options are HTML strings. The option list is teleported and
+  built only while open. A `#trigger` slot replaces the text box (the list opens upwards from it,
+  sized to its options), `#header` heads the list, whose body is then a real `uk-list` of `items`
+  (`id` = option index; `searchable` turns on its search box, keys work from it; `emptyText` goes to
+  its empty state; always 6 rows high and 200 to 360 px wide). Never hand-roll rows or a list:
+  reuse `uk-list`. Trigger slots
+  use the shared look `uikit_select_trigger_box` / `uikit_select_trigger_text` (styled by the
+  select through `:slotted`): the channel box does. A plain select's options can carry inline SVG (the
+  fade type shows each curve). and `reselect` makes it an action menu that emits on
+  every pick, current option included, and follows `modelValue` silently. The channels widget's
+  channel box uses all of them (`views/utils/channel.presets.js` caches options per capability
+  array).
 - **Keyboard.** One path, `views/keyboard.js` (`$keyboard`): the top popup, then the focused
   block, then global shortcuts. A widget that reacts to keys while focused uses
   `mixins/keys.mixin.js` (`handleKeys(e)` → true when handled; focusable element via

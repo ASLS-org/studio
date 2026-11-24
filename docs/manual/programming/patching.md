@@ -16,7 +16,7 @@ copying that into Studio. If Studio and the lights disagree on a mode or an addr
 react to the wrong channels: a dimmer fader moves the pan, a colour comes out wrong.
 
 **In the demo show:** universe *Stage* holds four *MAC Aura* in *Standard* mode (14 channels) at
-addresses 0, 14, 28 and 42, so 56 addresses in use and 456 free.
+addresses 1, 15, 29 and 43, so 56 addresses in use and 456 free.
 
 ## Patching a Fixture
 
@@ -26,10 +26,14 @@ addresses 0, 14, 28 and 42, so 56 addresses in use and 456 free.
 4. Choose its **Fixture mode**. The mode sets how many channels the fixture uses.
 5. Check the **Address** (Studio proposes the first free one) and, to patch several identical
    fixtures one after another, the **Amount**.
-6. Press **OK**. The fixtures appear in the fixture pool, in the patch bay and in the visualizer.
+6. Press **OK**. The fixtures appear in the fixture pool, in the patch bay and in the visualizer,
+   in a line 1 m apart, centred left to right. They are hung 4 m up on the first row that is
+   still free (3 m in front of the stage's centre, then over it, behind it, further out); smoke
+   machines, hazers and fans stand on the floor at the back instead. Adjust them with the
+   **Position Tool** ([below](#fixture-settings-and-position)).
 
-The preview adds a *Generic PAR RGBW* to the demo rig: it takes the first free address, 56, and
-hangs 4 m up, 3 m in front of the heads (**Pos Y** −3, **Pos Z** 4, **°Rot X** 180).
+The preview adds a *Generic PAR RGBW* to the demo rig: it takes the first free address, 57, and
+is hung 4 m up, 3 m in front of the heads.
 
 <LivePreview preset="patch-add" />
 
@@ -45,17 +49,12 @@ file: [Fixture Library](/rig/fixtures).
 | --- | --- |
 | **Name** | The fixture's name in lists |
 | **Fixture mode** | The fixture's DMX mode: it sets the channels it uses |
-| **Address** | First address, 0 to 511. The fixture uses the addresses from there on |
-| **Amount** | How many fixtures to patch, one after another |
+| **Address** | First address, 1 to 512, as your DMX equipment counts. The fixture uses the addresses from there on. The map below shows the new fixtures as faint ghost blocks where they would go, red when the range is taken or runs past 512 |
+| **Amount** | How many fixtures to patch, one after another. Several are numbered after their name: *Spot 1*, *Spot 2*… |
 | **Stop** | The last address the fixtures use (read only) |
-| **Pos X/Y/Z**, **°Rot X/Y/Z** | Position (meters) and rotation (degrees) of the first fixture |
-| **Offset X/Y/Z**, **°Offset X/Y/Z** | Added to the position and rotation of each next fixture, to lay out a row |
 
-A fixture is placed with Z up: a rotation of 180° on X hangs it with its beam pointing down.
-
-> **Note:** Studio counts addresses from 0, as its lists show (`U0 - CH14` is universe 0, address
-> 14). Address 0 is the channel your DMX equipment calls 1, so a fixture set to address 1 on its
-> display goes at address 0 in Studio.
+When the range can't be patched, a message under the map says why: the fixtures already holding
+those addresses, the range running past 512, or no free range that large in the universe.
 
 ### Importing GDTF fixtures
 
@@ -68,7 +67,8 @@ doesn't have opens with a **Missing fixtures** prompt first: see
 
 Click a fixture in the **Fixture Pool** (or the patch bay) to select it: the universe view shows its
 settings and controls, and the visualizer outlines it, so you can tell which light on stage is
-which. Hold <kbd>Ctrl</kbd> and click to select several. Type in **Search items** to show only the
+which. The fixture pool widens to show long names whole, up to a limit; past it, hover a name to
+read it. Hold <kbd>Ctrl</kbd> and click to select several. Type in **Search items** to show only the
 fixtures whose name matches. The universe keeps its selection while you work elsewhere: open it
 again and the same fixtures are selected.
 
@@ -104,14 +104,15 @@ and the rig on stage loses its right-hand head.
 | Setting | Description |
 | --- | --- |
 | **Name** | The universe's name |
-| **ID** | The universe's number, unique in the show (a number another universe uses is refused). Its fixtures follow it |
+| **ID** | The universe's number, given when it is created and fixed from then on (shown greyed out). Its output sends to this universe number |
 | **Output** | The connection this universe is sent through: see [Outputs](/rig/outputs#_3-send-a-universe) |
 | **Color** | The universe's colour in the patch bay |
 
 ## Fixture Settings and Position
 
-The **Fixture Settings** widget renames the selected fixture, moves its **Address** and changes
-its **Mode**. The **Model** is shown for reference.
+The **Fixture Settings** widget renames the selected fixture and changes its **Mode**. The **Model**
+is shown for reference; next to them, **Ch Start**, **Ch Stop** and **Ch Count** give the addresses it
+uses. To move it, press **Edit** in the widget's header ([Repatching](#repatching)).
 
 <LivePreview preset="fixture-settings" />
 
@@ -120,14 +121,73 @@ keep their value and new channels start at 0. If the new mode needs more address
 after the fixture, or goes past the end of the universe, the change is refused and the fixture keeps
 its mode.
 
-The **Position Tool** places the fixture on stage for the visualizer: **Position X/Y/Z** in meters
-(to the centimetre) and **Rotation X/Y/Z** in degrees. You can also drag fixtures in the
-[visualizer](/interface/visualizer/).
+### Repatching
 
-Stage axes: **X** runs left to right as the audience sees it, **Y** from the audience (negative)
-to the back of the stage (positive), **Z** up from the floor. The demo heads sit at Y 0, Z 6: on a
-truss 6 m up, across the middle of the stage. Change *MAC Aura 1*'s **Position Z** below and watch
-it move.
+**Edit** opens the **Repatch** popup: a map of a universe's 512 addresses, 32 per row, each
+fixture a block over the addresses it uses, with its name and its first and last address. The
+selected fixtures are outlined on the map and highlighted in the visualizer.
+
+- **Drag** a block to move the fixture. Click to select one, <kbd>Ctrl</kbd>/<kbd>⌘</kbd> or
+  <kbd>Shift</kbd>-click to select several, and drag them together. A block never lands on
+  another fixture (it stays where it last fitted) and stops at address 1 and 512; click an empty
+  address to clear the selection.
+- **Selection** picks a fixture of the universe shown from a list.
+- **Move to free range** puts the selected fixtures, back to back, at the first free addresses of
+  the universe shown. Pick another **Universe** first to move them there; their groups, scenes
+  and effects keep them.
+- **Remove gaps** slides the universe's fixtures down to address 1, in their order, closing the
+  gaps between them.
+- **Reset** puts every fixture back where it is patched.
+
+The side of the popup lists the **Changes**, each fixture's addresses before and after (click one
+to select it); a fixture moving to another universe gets a warning below. Nothing moves until you
+press **OK**; **Cancel** keeps every address.
+
+### Position Tool
+
+The **Position Tool** places the selected fixtures on stage for the visualizer. You can also drag
+them in the [visualizer](/interface/visualizer/).
+
+- **The stage map**, on the left, shows the stage from above: the back at the top, the audience
+  at the bottom, a dot per fixture of the universe (fixtures of other universes are faint). A
+  short line shows where a beam points when it isn't straight up or down. Click a dot to select
+  its fixture (<kbd>Ctrl</kbd>/<kbd>⌘</kbd> or <kbd>Shift</kbd> to add or remove one), and drag
+  it to move the whole selection on a 0.25 m grid; hold <kbd>Alt</kbd> to drag freely.
+- **X**, **Y** and **Height** give the position in meters, to the centimetre. **X** runs left (−)
+  to right (+) as the audience sees it, **Y** from the audience (−) to the back of the stage (+),
+  **Height** up from the floor.
+- **Mount** says how the fixture hangs: on the **floor** (beam up), **hung** from a truss (beam
+  down), on the **left** or **right wall**, on the **back wall** (beam toward the audience) or at
+  the **front** (beam toward the back). **Turn** spins it on its base and **Tilt** leans its beam,
+  in degrees. Changing the mount keeps the turn and the tilt.
+
+With several fixtures selected (the header shows how many), a field shows their value when they
+share it and **--** when they differ; a mount is lit only when they all share it. Typing a value
+sets it on all of them; the arrows move each one a step from where it is, so a row keeps its
+spacing.
+
+**Arrange** (in the header, or <kbd>A</kbd>) places the whole selection at once, in the fixture
+pool's order. Pick a mode on the left (type in **Search items** to find one) and set it on the
+right; a value you type applies when you press <kbd>Enter</kbd> or leave the field.
+
+| Mode | Places the fixtures |
+|---|---|
+| **Line** | Evenly along X, Y or Z, at a spacing, around a centre |
+| **Grid** | In rows of a number of columns on the floor, around a centre |
+| **Circle** | Evenly on a circle, on the floor or upright facing the audience; they can face its centre or away from it |
+| **Arc** | As Circle, from a start to an end angle (0° to the right, turning towards the back) |
+| **Align** | All at the lowest, middle or highest value of the selection on one axis |
+| **Distribute** | Even gaps between the two outermost fixtures on one axis |
+| **Fan** | Rotations spread from −angle to +angle about one axis |
+| **Aim** | Each fixture turned to point its beam at one point |
+
+The fixtures move in the visualizer as you change the settings. **Apply** keeps the result and
+leaves the popup open, so you can combine modes: a **Line**, **Apply**, then **Aim** them all at
+one point. **OK** keeps the result and closes; **Cancel** puts every fixture back where it was
+when you opened the popup or last pressed **Apply**.
+
+The demo heads hang at Y 0, height 6: on a truss 6 m up, across the middle of the stage. Change
+*MAC Aura 1*'s **Height** below, or drag its dot, and watch it move.
 
 <LivePreview preset="fixture-position" />
 
@@ -143,6 +203,18 @@ controls drive *MAC Aura 2* on the demo rig.
 ### Channels
 
 One fader per channel, with its value (DMX 0–255) above it. Type a value or drag the fader.
+
+Under each value is the channel's box: an icon for its function (a half-filled circle for a dimmer,
+**R**, **G**, **B**, **W**, **A** (amber) or **UV** for a colour, a thermometer for colour
+temperature, a lightning bolt for a strobe…) and either what the current value does (*Closed*,
+*Strobe fast → slow*, *Gobo 3*) or, on a channel with a single range, its name. Hover it to read
+the full name and range.
+
+Click the box to see the channel's full name and its ranges: each shows its values and what it
+does, and the one holding the current value is highlighted. Pick one to set the channel to the
+start of that range, or use <kbd>↑</kbd> <kbd>↓</kbd> and <kbd>Enter</kbd>; <kbd>Esc</kbd> closes
+the list without a change. Type in the list's search field to keep only the matching ranges.
+Range names come from the fixture's definition.
 
 <LivePreview preset="fixture-channels" />
 

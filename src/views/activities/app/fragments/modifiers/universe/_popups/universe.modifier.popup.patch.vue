@@ -74,14 +74,15 @@
               label="Fixture mode"
               :options="fixture.modeNames"
             />
+            <!-- DMX address (1-512); chStart stays 0-based -->
             <uk-num-input
-              v-model="chStart"
+              :model-value="dmxAddress(chStart)"
               :disabled="!fixture.loaded || loading"
               class="field"
               label="Address"
-              :min="0"
+              :min="1"
               :max="512"
-              @input="checkPatch"
+              @update:model-value="setAddress"
             />
             <uk-num-input
               v-model="amount"
@@ -112,141 +113,29 @@
               label="Fixture type"
             />
           </uk-flex>
-          <uk-flex
-            :gap="8"
-            class="patch_form_section"
-          >
-            <div style="margin-right: var(--space-7)">
-              <uk-flex
-                :gap="8"
-                class="patch_form_subsection"
-              >
-                <uk-num-input
-                  v-model="fixture.position.x"
-                  label="Pos X"
-                  :min="-1000"
-                  :max="1000"
-                  :disabled="!fixture.loaded || loading"
-                  class="field"
-                />
-                <uk-num-input
-                  v-model="fixture.position.y"
-                  label="Pos Y"
-                  :min="-1000"
-                  :max="1000"
-                  :disabled="!fixture.loaded || loading"
-                  class="field"
-                />
-                <uk-num-input
-                  v-model="fixture.position.z"
-                  label="Pos Z"
-                  :min="-1000"
-                  :max="1000"
-                  :disabled="!fixture.loaded || loading"
-                  class="field"
-                />
-              </uk-flex>
-            </div>
-            <div>
-              <uk-flex
-                :gap="8"
-                class="patch_form_subsection"
-              >
-                <uk-num-input
-                  v-model="positionOffsets.x"
-                  label="Offset X"
-                  :min="-1000"
-                  :max="1000"
-                  :disabled="!fixture.loaded || loading || amount <= 1"
-                  class="field"
-                />
-                <uk-num-input
-                  v-model="positionOffsets.y"
-                  label="Offset Y"
-                  :min="-1000"
-                  :max="1000"
-                  :disabled="!fixture.loaded || loading || amount <= 1"
-                  class="field"
-                />
-                <uk-num-input
-                  v-model="positionOffsets.z"
-                  label="Offset Z"
-                  :min="-1000"
-                  :max="1000"
-                  :disabled="!fixture.loaded || loading || amount <= 1"
-                  class="field"
-                />
-              </uk-flex>
-            </div>
-          </uk-flex>
-          <uk-flex
-            :gap="8"
-            class="patch_form_section"
-          >
-            <div style="margin-right: var(--space-7)">
-              <uk-flex
-                :gap="8"
-                class="patch_form_subsection"
-              >
-                <uk-num-input
-                  v-model="fixture.rotation.x"
-                  label="°Rot X"
-                  :max="360"
-                  :disabled="!fixture.loaded || loading"
-                  class="field"
-                />
-                <uk-num-input
-                  v-model="fixture.rotation.y"
-                  label="°Rot Y"
-                  :max="360"
-                  :disabled="!fixture.loaded || loading"
-                  class="field"
-                />
-                <uk-num-input
-                  v-model="fixture.rotation.z"
-                  label="°Rot Z"
-                  :max="360"
-                  :disabled="!fixture.loaded || loading"
-                  class="field"
-                />
-              </uk-flex>
-            </div>
-            <div>
-              <uk-flex
-                :gap="8"
-                class="patch_form_subsection"
-              >
-                <uk-num-input
-                  v-model="rotationOffsets.x"
-                  label="°Offset X"
-                  :max="360"
-                  :disabled="!fixture.loaded || loading || amount <= 1"
-                  class="field"
-                />
-                <uk-num-input
-                  v-model="rotationOffsets.y"
-                  label="°Offset Y"
-                  :max="360"
-                  :disabled="!fixture.loaded || loading || amount <= 1"
-                  class="field"
-                />
-                <uk-num-input
-                  v-model="rotationOffsets.z"
-                  label="°Offset Z"
-                  :max="360"
-                  :disabled="!fixture.loaded || loading || amount <= 1"
-                  class="field"
-                />
-              </uk-flex>
-            </div>
-          </uk-flex>
-          <uk-spacer />
-          <p
-            v-show="patchError"
+          <!-- What the universe holds, and the range the new fixtures would take -->
+          <universe-map
+            v-if="universe && universe.fixturePool"
+            readonly
+            :labels="false"
+            class="patch_map"
+            style="--universe-map-row: 20px"
+            :fixtures="patchedFixtures"
+            :color="universe.color"
+            :highlight="fixture.loaded ? {
+              chStart,
+              count: chStop - chStart,
+              error: patchError,
+              name: fixture.name,
+              size: modeChannels,
+            } : null"
+          />
+          <universe-message
+            v-if="fixture.loaded && patchError"
             class="patch_error"
           >
-            Patch error: The provided fixture settings are out of universe's range
-          </p>
+            {{ patchErrorText }}
+          </universe-message>
         </div>
         <uk-spacer />
       </uk-flex>
@@ -259,6 +148,10 @@ import PopupMixin from '@/views/mixins/popup.mixin';
 import EventBus from '@/plugins/eventbus';
 import FixtureLibrary from '@/models/fixtures/fixture.library';
 import { PROFILE_SOURCES } from '@/models/fixtures/fixture.profile';
+import { dmxAddress, chStartOf } from '@/views/utils/dmx';
+import { patchPoses } from '@/views/utils/placement';
+import UniverseMap from '../_widgets/universe.modifier.map.vue';
+import UniverseMessage from '../_widgets/universe.modifier.message.vue';
 
 const NO_FIXTURE_STR = 'No fixture model selected';
 const DEFAULT_FIXTURE_AMOUNT = 1;
@@ -269,14 +162,16 @@ const DEFAULT_FIXTURE_DATA = {
   modes: [{}],
   chStart: 0,
   universe: 0,
-  position: { x: 0, y: 0, z: 0 },
-  rotation: { x: 0, y: 0, z: 0 },
   mode: 0,
   loaded: false,
 };
 
 export default {
   name: 'UkPopupPatch',
+  components: {
+    UniverseMap,
+    UniverseMessage,
+  },
   mixins: [PopupMixin],
   compatConfig: {
     // or, for full vue 3 compat in this component:
@@ -294,8 +189,6 @@ export default {
       fixtures: [],
       fixture: JSON.parse(JSON.stringify(DEFAULT_FIXTURE_DATA)),
       amount: DEFAULT_FIXTURE_AMOUNT,
-      positionOffsets: { x: 0, y: 0, z: 0 },
-      rotationOffsets: { x: 0, y: 0, z: 0 },
       chStop: 0,
       chStart: 0,
       patchError: false,
@@ -305,6 +198,44 @@ export default {
     };
   },
   computed: {
+    /**
+     * Channels of one fixture in the chosen mode
+     */
+    modeChannels() {
+      return this.fixture.modes[this.fixture.mode]?.channels?.length || 0;
+    },
+    /**
+     * Why the range can't be patched: past 512, or the fixtures already there
+     */
+    patchErrorText() {
+      const chCount = this.fixture.modes[this.fixture.mode]?.channels?.length || 0;
+      const count = chCount * this.amount;
+      if (this.universe.findChStartAutoPatch(chCount, this.amount) < 0) {
+        return `No free range of ${count} addresses in ${this.universe.name}: free some, or patch `
+          + 'fewer fixtures or another universe.';
+      }
+      const range = `${dmxAddress(this.chStart)}–${dmxAddress(this.chStart + count - 1)}`;
+      if (this.chStart + count > 512) {
+        return `${this.amount > 1 ? `${this.amount} fixtures need` : 'This fixture needs'} `
+          + `addresses ${range}: past address 512 of ${this.universe.name}.`;
+      }
+      const taken = this.universe.fixturePool.fixtures
+        .filter((f) => f.chStart < this.chStart + count && this.chStart < f.chStart + f.chCount)
+        .map((f) => `${f.name} (${dmxAddress(f.chStart)}–${dmxAddress(f.chStart + f.chCount - 1)})`);
+      if (taken.length) {
+        return `Addresses ${range} are taken by ${taken.join(', ')}. Pick another address or `
+          + 'fewer fixtures.';
+      }
+      return `Addresses ${range} can't be patched.`;
+    },
+    /**
+     * Fixtures of the universe, for the map
+     */
+    patchedFixtures() {
+      return this.universe.fixturePool.fixtures.map((fixture) => ({
+        id: fixture.id, name: fixture.name, chStart: fixture.chStart, count: fixture.chCount,
+      }));
+    },
     count() {
       if (this.fixture.modes[this.fixture.mode]) {
         return this.fixture.modes[this.fixture.mode].length - 1;
@@ -323,6 +254,17 @@ export default {
     this.init();
   },
   methods: {
+    dmxAddress,
+    /**
+     * Sets the start from a typed DMX address and checks the range
+     *
+     * @public
+     * @param {Number} address DMX address, 1 to 512
+     */
+    setAddress(address) {
+      this.chStart = chStartOf(address);
+      this.checkPatch();
+    },
     /**
      * Initialise popup variables
      *
@@ -332,8 +274,6 @@ export default {
       this.refreshFixtures();
       this.fixture = JSON.parse(JSON.stringify(DEFAULT_FIXTURE_DATA));
       this.amount = DEFAULT_FIXTURE_AMOUNT;
-      this.positionOffsets = { x: 0, y: 0, z: 0 };
-      this.rotationOffsets = { x: 0, y: 0, z: 0 };
       this.chStop = 0;
       this.patchError = false;
     },
@@ -349,34 +289,24 @@ export default {
         const fixtures = [];
         if (this.checkPatch()) {
           try {
-            const position_tmp = {};
-            const rotation_tmp = {};
             const chCount = this.fixture.modes[this.fixture.mode].channels.length;
-            Object.assign(position_tmp, this.fixture.position);
-            Object.assign(rotation_tmp, this.fixture.rotation);
+            // Hung in a line on a free truss row (smoke and fans on the floor)
+            const { fixtures: onStage } = this.$show.fixturePool;
+            const poses = patchPoses(this.amount, this.fixture.category, onStage);
             for (let i = 0; i < this.amount; i++) {
               this.fixture.chStart = i * chCount + this.chStart;
-              this.fixture.position = {
-                x: position_tmp.x + this.positionOffsets.x * i,
-                y: position_tmp.y + this.positionOffsets.y * i,
-                z: position_tmp.z + this.positionOffsets.z * i,
-              };
-              this.fixture.rotation = {
-                x: rotation_tmp.x + this.rotationOffsets.x * i,
-                y: rotation_tmp.y + this.rotationOffsets.y * i,
-                z: rotation_tmp.z + this.rotationOffsets.z * i,
-              };
               const fixture = this.$show.fixturePool.addRaw({
                 profile: this.fixture.profile,
                 manufacturer: this.fixture.manufacturer,
                 model: this.fixture.model,
-                name: this.fixture.name,
+                // identical fixtures are told apart by a number: "Spot 1", "Spot 2"...
+                name: this.amount > 1 ? `${this.fixture.name} ${i + 1}` : this.fixture.name,
                 category: this.fixture.category,
                 mode: this.fixture.modeNames[this.fixture.mode],
                 universe: this.fixture.universe,
                 chStart: this.fixture.chStart,
-                position: { ...this.fixture.position },
-                rotation: { ...this.fixture.rotation },
+                position: poses[i].position,
+                rotation: poses[i].rotation,
               });
               this.universe.patchFixture(fixture);
             }
@@ -424,9 +354,9 @@ export default {
      */
     checkPatch() {
       const chCount = this.fixture.modes[this.fixture.mode].channels.length;
+      this.chStop = chCount * this.amount + this.chStart;
       if (this.universe.canPatchMany(this.chStart, chCount, this.amount)) {
         this.patchError = false;
-        this.chStop = chCount * this.amount + this.chStart;
         return true;
       }
       this.patchError = true;
@@ -440,13 +370,13 @@ export default {
     autoPatch() {
       const chCount = this.fixture.modes[this.fixture.mode].channels.length;
       const chStart = this.universe.findChStartAutoPatch(chCount, this.amount);
-      this.chStop = chCount * this.amount + chStart;
       if (chStart > -1) {
         this.patchError = false;
         this.chStart = chStart;
       } else {
         this.patchError = true;
       }
+      this.chStop = chCount * this.amount + this.chStart;
     },
     /**
      * Lists the fixtures to patch: imported GDTF fixtures (this device's library), bundled GDTF
@@ -541,7 +471,10 @@ export default {
 .patch_form_subsection {
   margin-bottom: unset;
 }
+/* Takes no height of its own: the form sets the popup's height and the list fills it */
 .fixture_sources {
+  align-self: stretch;
+  contain: size;
   width: var(--widget-width-md);
   border-right: var(--border-width) solid var(--primary-dark);
 }
@@ -549,10 +482,11 @@ export default {
   outline: var(--border-width) dashed var(--accent-blue);
   outline-offset: -2px;
 }
+/* Fills the popup's height, whatever the form beside it takes */
 .fixture_list {
-  height: 350px;
+  flex: 1;
+  min-height: 0;
   width: var(--widget-width-md);
-  max-height: 350px;
   overflow: hidden;
 }
 .import_bar {
@@ -571,8 +505,12 @@ export default {
 .patch_button {
   margin-left: var(--space-4);
 }
+.patch_map {
+  margin-top: var(--space-4);
+}
 .patch_error {
-  color: var(--accent-red);
+  margin-top: var(--space-4);
+  max-width: 340px;
 }
 h4 {
   margin-bottom: var(--space-4);

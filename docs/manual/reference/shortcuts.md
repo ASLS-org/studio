@@ -67,6 +67,12 @@ Fixture pools, the patch bay, a popup's lists, an effect's channels.
 | <kbd>↑</kbd> <kbd>↓</kbd> | In a number field: one step up or down |
 | Arrow keys | On the colour picker's hue ring or colour square: move it; with <kbd>Shift</kbd>, ten steps at a time |
 
+## Universe View
+
+| Keys | Action |
+| --- | --- |
+| <kbd>A</kbd> | Arrange the selected fixtures ([Position Tool](/programming/patching#position-tool)) |
+
 ## Cue Pool, Group Pool, Chases
 
 | Action | Result |

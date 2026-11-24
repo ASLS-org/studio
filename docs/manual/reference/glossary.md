@@ -4,7 +4,7 @@ The terms this manual uses, in alphabetical order.
 
 | Term | Meaning |
 | --- | --- |
-| **Address** | Where a fixture listens in its universe: the first of its channels. Studio counts from 0, so address 0 is the one a fixture's display calls 1. [Patching](/programming/patching#patch-settings) |
+| **Address** | Where a fixture listens in its universe: the first of its channels, from 1 to 512 as on the fixture's display. [Patching](/programming/patching#patch-settings) |
 | **Art-Net** | A protocol that carries DMX universes over a computer network. Studio's gateway sends it; an Art-Net node turns it back into DMX on a cable. [Outputs](/rig/outputs) |
 | **Bar** | Four beats. Cue and chase durations are counted in bars, so they follow the tempo: at 120 BPM a bar lasts 2 s. [Timing](/concepts/timing) |
 | **BPM** | Beats per minute: the show's tempo, set in the toolbar or with **Tap Tempo**. [Timing](/concepts/timing) |

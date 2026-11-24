@@ -1,7 +1,7 @@
 <template>
   <div
     class="uikit_num_input"
-    :class="{ disabled: disabled }"
+    :class="{ disabled: disabled || readonly }"
   >
     <div
       v-if="label"
@@ -13,12 +13,16 @@
     <div
       class="uikit_num_input_textbox_wrapper"
       :class="{color: color !== null}"
-      :style="{ borderColor: !disabled && color ? `color-mix(in srgb,${color} 70%,#0000)` : '' }"
+      :style="{
+        borderColor: !disabled && !readonly && color
+          ? `color-mix(in srgb,${color} 70%,#0000)`
+          : ''
+      }"
     >
       <input
         v-model="content"
         class="uikit_num_input_textbox"
-        :disabled="disabled"
+        :disabled="disabled || readonly"
         :placeholder="placeholder"
         @keydown.up="incrementValue"
         @keydown.down="decrementValue"
@@ -34,7 +38,7 @@
       <span
         class="uikit_num_input_button"
         :style="{
-          backgroundColor: !disabled && color
+          backgroundColor: !disabled && !readonly && color
             ? `color-mix(in srgb,${color} 70%,#0000)`
             : ''
         }"
@@ -69,6 +73,8 @@
  * and/or by hitting the UP/DOWN arrow keys.
  * @namespace uikit/inputs/textboxes
  * @story Default {"value": 10, "label":"default", "min": 0, "max":100}
+ * @story Mixed {"value": null, "label":"mixed", "placeholder": "--", "relative": true}
+ * @story "Read Only" {"value": 10, "label":"default", "readonly": true}
  */
 export default {
   name: 'UkNumInput',
@@ -124,6 +130,10 @@ export default {
      */
     disabled: Boolean,
     /**
+     * Looks disabled, but the label isn't dimmed (like the text and select inputs)
+     */
+    readonly: Boolean,
+    /**
      * Apply aleternative color styling
      */
     color: {
@@ -131,6 +141,11 @@ export default {
       default: null,
       // default: 'var(--secondary-dark)',
     },
+    /**
+     * The arrows and arrow keys emit `step` (+/- one precision unit) instead of changing the
+     * value, for a field standing for several values (a null value shows the placeholder)
+     */
+    relative: Boolean,
     /**
      * Whether value should be automatically updated on each keystroke or not
      * value is updated on input blur or keydown "enter" otherwise
@@ -140,7 +155,7 @@ export default {
       default: false,
     },
   },
-  emits: ['update:modelValue', 'input'],
+  emits: ['update:modelValue', 'input', 'step'],
   data() {
     return {
       /**
@@ -151,6 +166,10 @@ export default {
   },
   watch: {
     modelValue(value) {
+      if (value == null) {
+        this.content = '';
+        return;
+      }
       this.content = parseFloat(value);
       this.updateValue(false);
     },
@@ -182,8 +201,13 @@ export default {
      *
      */
     incrementValue() {
+      if (this.disabled || this.readonly) return;
+      if (this.relative) {
+        this.$emit('step', 10 ** -this.precision);
+        return;
+      }
       const increment = parseFloat(this.content) + parseFloat(10 ** -this.precision);
-      if (increment <= this.max && !this.disabled) {
+      if (increment <= this.max && !this.disabled && !this.readonly) {
         this.content = increment.toFixed(this.precision);
         this.updateValue(true);
       }
@@ -193,8 +217,13 @@ export default {
      *
      */
     decrementValue() {
+      if (this.disabled || this.readonly) return;
+      if (this.relative) {
+        this.$emit('step', -(10 ** -this.precision));
+        return;
+      }
       const decrement = parseFloat(this.content) - parseFloat(10 ** -this.precision);
-      if (decrement >= this.min && !this.disabled) {
+      if (decrement >= this.min && !this.disabled && !this.readonly) {
         this.content = decrement.toFixed(this.precision);
         this.updateValue(true);
       }
@@ -205,6 +234,14 @@ export default {
      * @param {Boolean} doEmit whether or not to emit changes back to parent element.
      */
     updateValue(doEmit = true) {
+      // Nothing typed over a null value (several values): keep showing the placeholder
+      if (this.content === '' || this.content == null) {
+        if (this.modelValue == null) {
+          this.content = '';
+          return;
+        }
+        this.content = this.modelValue;
+      }
       const val = parseFloat(this.content).toFixed(this.precision);
       this.content = val;
       if (val < this.min || Number.isNaN(val)) {

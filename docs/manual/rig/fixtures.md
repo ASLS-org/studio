@@ -74,7 +74,7 @@ Open Fixture Library and bundled fixtures are never missing: they're part of Stu
 ## Fixtures in 3D
 
 Every patched fixture shows in the [visualizer](/interface/visualizer/), placed by its
-**Position** and **Rotation** (see [Fixture settings and position](/programming/patching#fixture-settings-and-position)):
+**Position Tool** settings (see [Fixture settings and position](/programming/patching#fixture-settings-and-position)):
 
 - **Bodies** follow the fixture's parts: a base, yoke and head for moving heads, a can for PARs
   and profiles, a bar or a panel, each sized like the real fixture. GDTF files with their own 3D

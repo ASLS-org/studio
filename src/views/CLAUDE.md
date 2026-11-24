@@ -17,7 +17,16 @@ views/
   components/uikit/      `uk-*` design system, registered globally in main.js
   mixins/                popup.mixin.js (v-model open/close), modal.mixin.js (named popup
                          state in $view), keys.mixin.js (keyboard block), color.mixin.js
-  utils/                 palette, setCapture (exposed as this.$utils)
+  utils/                 palette, setCapture (exposed as this.$utils); channel.icons.js and
+                         channel.presets.js (channels widget: icon per function, range menu);
+                         dmx.js (addresses shown 1-512, stored from 0); placement.js (pure
+                         pose maths: line, grid, circle, arc, align, distribute, fan,
+                         aim for the Arrange popup; mounts, turn and tilt for the
+                         Position Tool; patchPoses for where the patch popup puts new
+                         fixtures); effect.scope.js (an effect's waves sampled over one loop
+                         and matched per fixture, colour mixing, pan/tilt angle ranges
+                         from profiles and the degree view, speed, absolute shapes,
+                         spreads and colour presets: the Pan/Tilt and Colour scopes)
 ```
 
 ## Ground rules

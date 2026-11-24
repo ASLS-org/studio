@@ -3,45 +3,65 @@
     class="fixture_settings"
     dockable
     :header="header"
+    :action="fixture ? action : null"
   >
     <uk-flex
       v-if="fixture"
       :gap="8"
-      col
       class="fixture_settings_body"
     >
-      <uk-flex :gap="8">
+      <uk-flex
+        :gap="8"
+        col
+        class="fixture_settings_main"
+      >
         <uk-txt-input
           v-model.lazy="fixture.name"
-          style="flex: 1"
           label="Name"
         />
-        <uk-num-input
-          v-model.lazy="fixture.chStart"
-          style="width: 70px"
-          class="field"
-          label="Address"
+        <uk-select-input
+          v-if="fixture.modeIndex != null"
+          :key="modeSelectKey"
+          :model-value="fixture.modeIndex"
+          label="Mode"
+          :options="fixture.modeNames"
+          @update:model-value="changeMode"
+        />
+        <uk-txt-input
+          v-model="fixture.model"
+          readonly
+          label="Model"
         />
       </uk-flex>
-      <uk-txt-input
-        v-model="fixture.model"
-        readonly
-        label="Model"
-      />
-      <uk-select-input
-        v-if="fixture.modeIndex != null"
-        :key="modeSelectKey"
-        :model-value="fixture.modeIndex"
-        label="Mode"
-        :options="fixture.modeNames"
-        @update:model-value="changeMode"
-      />
+      <!-- Where it is patched, 1-512; moves go through Edit (header): the repatch popup -->
+      <uk-flex
+        :gap="8"
+        col
+        class="fixture_settings_patch"
+      >
+        <uk-num-input
+          :model-value="start"
+          readonly
+          label="Ch Start"
+        />
+        <uk-num-input
+          :model-value="stop"
+          readonly
+          label="Ch Stop"
+        />
+        <uk-num-input
+          :model-value="fixture.chCount"
+          readonly
+          label="Ch Count"
+        />
+      </uk-flex>
     </uk-flex>
   </uk-widget>
 </template>
 
 <script>
 import EventBus from '@/plugins/eventbus';
+import { dmxAddress } from '@/views/utils/dmx';
 
 export default {
   name: 'UniverseModifierWidgetFixtureSettings',
@@ -58,6 +78,7 @@ export default {
       default: null,
     },
   },
+  emits: ['repatch'],
   data() {
     return {
       /**
@@ -71,7 +92,29 @@ export default {
        * Re-renders the mode select so it shows the current mode after a refused change
        */
       modeSelectKey: 0,
+      /**
+       * Header button: opens the repatch popup
+       */
+      action: {
+        text: 'Edit',
+        icon: 'patch',
+        callback: () => this.$emit('repatch', this.fixture),
+      },
     };
+  },
+  computed: {
+    /**
+     * First address, 1-based
+     */
+    start() {
+      return dmxAddress(this.fixture.chStart);
+    },
+    /**
+     * Last address, 1-based
+     */
+    stop() {
+      return dmxAddress(this.fixture.chStart + this.fixture.chCount - 1);
+    },
   },
   methods: {
     /**
@@ -95,22 +138,23 @@ export default {
 
 <style scoped>
 .fixture_settings {
-  max-width: 200px;
-  min-width: 200px;
+  flex-shrink: 0;
+  width: var(--widget-width-md);
 }
 .fixture_settings_body {
+  /* top-aligned, like the other widgets (the widget body centres by default) */
+  align-self: stretch;
   height: 100%;
   width: 100%;
   padding: var(--space-5);
-  max-width: 200px;
-  min-width: 200px;
+  box-sizing: border-box;
 }
-.empty_text {
-  display: flex;
+.fixture_settings_main {
   flex: 1;
-  flex-direction: row;
-  align-items: center;
-  color: var(--secondary-light);
-  justify-content: center;
+  min-width: 0;
+}
+.fixture_settings_patch {
+  width: 64px;
+  flex-shrink: 0;
 }
 </style>

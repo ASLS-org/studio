@@ -641,10 +641,13 @@ class Scene extends Cue {
           ? channelValue.value
           : 0;
 
-        const value = relative
+        const raw = relative
           ? channelValue.startValue
             + (finalValue - channelValue.startValue) * fadeFactor
           : finalValue * fadeFactor;
+        // An overshooting fade curve goes past its target: DMX stays within 0-255
+        // eslint-disable-next-line no-nested-ternary
+        const value = raw < 0 ? 0 : (raw > 255 ? 255 : raw);
 
         // This condition patches fine channels not updating automatically.
         if (!channelValue.isFine) {

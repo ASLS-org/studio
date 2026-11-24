@@ -1,4 +1,4 @@
-import Universe from './universe.model';
+import Universe, { DMX_UNIVERSE_LENGTH } from './universe.model';
 import Live from './live.model';
 import EventBus from '../../plugins/eventbus';
 
@@ -60,6 +60,52 @@ class UniversePool {
   }
 
   /**
+   * Moves fixtures to new addresses, in their universe or another, all at once. The whole result
+   * is checked first (no overlap with the fixtures that stay or move, nothing past address 512):
+   * when it isn't valid nothing changes. Moved fixtures are unpatched before any is patched again,
+   * so two fixtures can trade places. A fixture keeps its id, so groups and scenes keep it.
+   *
+   * @public
+   * @param {Array<Object>} moves `{ fixture, universe, chStart }`: the fixture, its target universe
+   * id and its target start address (0-based)
+   * @throws {Error} When the result would overlap or pass the end of a universe
+   */
+  repatch(moves) {
+    const changed = moves.filter(({ fixture, universe, chStart }) => (
+      Number(fixture.universe) !== Number(universe) || fixture.chStart !== chStart));
+    if (!changed.length) return;
+    const movedIds = new Set(changed.map(({ fixture }) => fixture.id));
+    // Ranges each target universe would hold
+    const ranges = new Map();
+    const add = (universeId, start, count) => {
+      const key = Number(universeId);
+      if (!ranges.has(key)) ranges.set(key, []);
+      ranges.get(key).push([start, start + count]);
+    };
+    changed.forEach(({ universe, chStart, fixture }) => {
+      add(universe, chStart, fixture.chCount);
+    });
+    ranges.forEach((list, universeId) => {
+      this.getFromId(universeId).fixturePool.fixtures
+        .filter((fixture) => !movedIds.has(fixture.id))
+        .forEach((fixture) => list.push([fixture.chStart, fixture.chStop]));
+    });
+    ranges.forEach((list, universeId) => {
+      const sorted = [...list].sort((a, b) => a[0] - b[0]);
+      sorted.forEach(([start, stop], i) => {
+        if (start < 0 || stop > DMX_UNIVERSE_LENGTH || (i && start < sorted[i - 1][1])) {
+          throw new Error(`The new patch overlaps or passes the end of universe ${universeId}`);
+        }
+      });
+    });
+    changed.forEach(({ fixture }) => this.getFromId(fixture.universe).unpatchFixture(fixture));
+    changed.forEach(({ fixture, universe, chStart }) => {
+      fixture.chStart = chStart;
+      this.getFromId(universe).patchFixture(fixture);
+    });
+  }
+
+  /**
    * Pushes existing universe into the pool
    *
    * @public
@@ -111,23 +157,6 @@ class UniversePool {
     for (let i = this.universes.length - 1; i >= 0; i--) {
       this.delete(this.universes[i]);
     }
-  }
-
-  /**
-   * Changes a universe's id, refusing one another universe uses. Its fixtures follow.
-   *
-   * @public
-   * @param {Object} universe universe instance
-   * @param {Number} id new id
-   * @returns {Boolean} whether the id changed
-   */
-  changeId(universe, id) {
-    const next = parseInt(id, 10);
-    if (Number.isNaN(next)) return false;
-    if (this.universes.some((u) => u !== universe && Number(u.id) === next)) return false;
-    universe.id = next;
-    EventBus.emit('patch_changed');
-    return true;
   }
 
   /**

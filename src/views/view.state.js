@@ -283,23 +283,6 @@ export default class ViewState {
   }
 
   /**
-   * Follows a universe whose id changed: the view and its memory of it move to the new id
-   *
-   * @public
-   * @param {Number} oldId previous id
-   * @param {Number} newId new id
-   */
-  moveUniverse(oldId, newId) {
-    const from = Number(oldId);
-    const to = Number(newId);
-    if (this.universeId === from) this.universeId = to;
-    if (this.memory.universes[from]) {
-      this.memory.universes[to] = this.memory.universes[from];
-      delete this.memory.universes[from];
-    }
-  }
-
-  /**
    * Shows a universe with one of its fixtures selected
    *
    * @public

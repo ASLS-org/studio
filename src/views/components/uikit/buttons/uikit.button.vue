@@ -74,7 +74,7 @@ export default {
       /**
        * Button's toggle state.
        */
-      toggled: this.toggleable ? this.value : false,
+      toggled: this.toggleable ? this.modelValue : false,
     };
   },
   watch: {
@@ -124,7 +124,7 @@ export default {
   opacity: .9;
 }
 .uikit_button:not(.disabled):not(.toggleable){
-  background: var(--secondary-light)!important;
+  background: var(--secondary-dark)!important;
 }
 .uikit_button.toggleable{
   background: var(--secondary-darker);
@@ -132,6 +132,7 @@ export default {
 }
 .uikit_button.square{
   border-radius: 0;
+  border: 1px solid var(--secondary-dark)
 }
 .uikit_button_label {
   display: table-cell;
