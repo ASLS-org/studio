@@ -1,13 +1,16 @@
 <template>
   <uk-flex>
-    <widget-curve :fade="scene ? scene.fadeIn : undefined" />
-    <!--
-      TODO: Check if fadeout is necessary in this mode.
-      It seem like t could only be confusing ? Would
-      having a custom blackout or reset position scene with fade
-      make more sense ?
-    -->
-    <!-- <widget-curve :fade="scene ? scene.fadeOut : undefined" /> -->
+    <!-- Fade in when started, then hold; fade out when stopped (to 0, or back in Relative) -->
+    <widget-curve
+      class="scene_fade_in"
+      :fade="scene ? scene.fadeIn : undefined"
+      timed
+    />
+    <widget-curve
+      class="scene_fade_out"
+      :fade="scene ? scene.fadeOut : undefined"
+      timed
+    />
     <widget-scene-fixtures
       v-show="fixtureValue"
       :scene="scene ? scene : undefined"

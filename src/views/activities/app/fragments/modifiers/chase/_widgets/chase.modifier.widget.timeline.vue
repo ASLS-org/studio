@@ -357,23 +357,28 @@ export default {
         cueHeight -= 2; // Accounting for top/bottom borders
 
         const cue = cueItem.handle;
-        const totalWidth = this.cellWidth * cueItem.length;
+        const width = this.cellWidth * cueItem.length;
+        const h = cueHeight;
+        const { lengthMS } = cueItem;
+        if (!cue || !cue.fadeIn || !(lengthMS > 0)) return null;
 
-        if (cue.fadeIn && cue.fadeIn.controlPoints) {
-          // Invert Y control points: (1 - controlPoint.y) * cueHeight
-          const cp0x = cue.fadeIn.controlPoints[0].x * totalWidth;
-          const cp0y = (1 - cue.fadeIn.controlPoints[0].y) * cueHeight;
-
-          const cp1x = cue.fadeIn.controlPoints[1].x * totalWidth;
-          const cp1y = (1 - cue.fadeIn.controlPoints[1].y) * cueHeight;
-
-          // Path Breakdown:
-          // 1. M 0,${cueHeight} -> Move to bottom-left corner
-          // 2. C ... ${totalWidth},0 -> Curve up to top-right corner
-          // 3. L ${totalWidth},${cueHeight} -> Line straight down to bottom-right corner
-          // 4. Z -> Close path back to bottom-left corner to form a filled shape
-          return `M 0,${cueHeight} C ${cp0x} ${cp0y}, ${cp1x} ${cp1y}, ${totalWidth} 0 L ${totalWidth},${cueHeight} Z`;
-        }
+        // The fades as playback plays them (shrunk to fit a short item), in item pixels: the Fade
+        // In curve from the bottom, a flat hold at the top, the Fade Out curve down to the end
+        const { fadeIn, fadeOut } = cue.itemFades(lengthMS);
+        const inW = (fadeIn / lengthMS) * width;
+        const outW = (fadeOut / lengthMS) * width;
+        const outX = width - outW;
+        const [i1, i2] = cue.fadeIn.controlPoints;
+        const [o1, o2] = cue.fadeOut.controlPoints;
+        const n = (v) => Number(v.toFixed(2));
+        let d = inW > 0
+          ? `M 0,${h} C ${n(i1.x * inW)} ${n((1 - i1.y) * h)}, ${n(i2.x * inW)} ${n((1 - i2.y) * h)}, ${n(inW)} 0`
+          : `M 0,${h} L 0,0`;
+        d += ` L ${n(outX)},0`;
+        d += outW > 0
+          ? ` C ${n(outX + o1.x * outW)} ${n(o1.y * h)}, ${n(outX + o2.x * outW)} ${n(o2.y * h)}, ${n(width)} ${h}`
+          : ` L ${n(width)},0 L ${n(width)},${h}`;
+        return `${d} Z`;
       }
       return null;
     },
@@ -455,7 +460,12 @@ export default {
       const gridElBox = gridEl.getBoundingClientRect();
       const leftOffset = gridEl.scrollLeft - gridElBox.left;
       const tick = Math.floor((e.clientX + leftOffset) / this.cellWidth);
-      const requestedDuration = cueItemPool.cue.duration * this.pool.barSubDiv;
+      // An effect's item lasts its Duration; a scene's fits its fades (a bar at least)
+      const { cue } = cueItemPool;
+      const bars = cue.type === 0
+        ? Math.max(1, Math.ceil(cue.fadeIn.duration + cue.fadeOut.duration))
+        : cue.duration;
+      const requestedDuration = bars * this.pool.barSubDiv;
       const tickDuration = this.computeAvailableLength(tick, requestedDuration, cueItemPool.items);
       cueItemPool.addRaw({
         tickStart: tick,

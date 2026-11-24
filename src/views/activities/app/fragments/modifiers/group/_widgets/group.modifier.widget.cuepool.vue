@@ -233,10 +233,14 @@ export default {
      * @returns {Object} css background linear-gradient value
      */
     computeCueLoader(cue) {
-      // Playing directly or through a chase; a chase item can outlast the cue's own duration
-      const perc = this.isPlaying(cue)
-        ? Math.min((cue.time / cue.durationMS) * 100, 100)
-        : 0;
+      // Playing directly or through a chase. A scene shows how far it has faded in (full while
+      // it holds); an effect, its loop (a chase item can outlast it)
+      let perc = 0;
+      if (this.isPlaying(cue)) {
+        perc = cue.type === 0
+          ? this.live(cue.fadeFactor) * 100
+          : Math.min((cue.time / cue.durationMS) * 100, 100);
+      }
       return {
         background: `linear-gradient(90deg ,var(--secondary-light) 0% ,var(--secondary-light) ${perc}% ,transparent ${perc}%,transparent 100% )`,
       };
@@ -305,7 +309,8 @@ export default {
       if (cue.triggerStyle !== CUE_TRIGGER_STYLES.TEMPORARY || e.button !== 0) return;
       this.releaseHeldCue();
       this.selectCue(cue);
-      if (cue.animationId == null) cue.cue(true);
+      // Not playing, or fading out: (re)start it
+      if (cue.animationId == null || cue.releasing) cue.cue(true);
       this.heldCue = cue;
       window.addEventListener('pointerup', this.releaseHeldCue);
       window.addEventListener('pointercancel', this.releaseHeldCue);

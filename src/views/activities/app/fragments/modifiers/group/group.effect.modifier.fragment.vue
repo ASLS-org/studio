@@ -1,5 +1,21 @@
 <template>
   <uk-flex>
+    <!-- Fades of a Relative effect: from the channels' values when cued, back to them when
+      stopped (Absolute starts and stops at once) -->
+    <template v-if="effect && effect.fadeIn && effect.relative">
+      <widget-curve
+        :key="`fade-in-${effect.id}`"
+        class="effect_fade_in"
+        :fade="effect.fadeIn"
+        timed
+      />
+      <widget-curve
+        :key="`fade-out-${effect.id}`"
+        class="effect_fade_out"
+        :fade="effect.fadeOut"
+        timed
+      />
+    </template>
     <widget-FX-channels
       :effect="effect ? effect : undefined"
       :selected="selectedFxChannel ? selectedFxChannel.type : null"
@@ -54,6 +70,7 @@
 <script>
 import { COLOUR_TYPES, waveOf } from '@/views/utils/effect.scope';
 import WidgetWave from './_widgets/group.effect.modifier.widget.wave.vue';
+import WidgetCurve from '../_widgets/modifier.widget.curve.vue';
 import WidgetFXChannels from './_widgets/group.effect.modifier.widget.channels.vue';
 import PanTiltScope from './_widgets/group.effect.modifier.widget.scope.pantilt.vue';
 import ColourScope from './_widgets/group.effect.modifier.widget.scope.colour.vue';
@@ -66,6 +83,7 @@ export default {
   },
   components: {
     WidgetWave,
+    WidgetCurve,
     WidgetFXChannels,
     PanTiltScope,
     ColourScope,

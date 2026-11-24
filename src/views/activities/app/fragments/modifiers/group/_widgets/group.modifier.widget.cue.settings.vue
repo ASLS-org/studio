@@ -24,7 +24,10 @@
           :options="colorOptions"
           @input="setCueColor"
         />
+        <!-- A scene holds until stopped, and its fades have their own times: no Loop Style or
+          Duration -->
         <uk-select-input
+          v-if="isEffect"
           v-model="cue.loopStyle"
           label="Loop Style"
           :options="['One Shot', 'Loop']"
@@ -48,6 +51,7 @@
           :options="['Absolute', 'Relative']"
         />
         <uk-num-input
+          v-if="isEffect"
           v-model="cue.duration"
           label="Duration"
         />
@@ -58,6 +62,7 @@
 
 <script>
 import colorMixin from '@/views/mixins/color.mixin';
+import { CUE_TYPES } from '@/models/DMX/cue.model';
 
 export default {
   name: 'GroupModifierWidgetCueSettings',
@@ -83,6 +88,16 @@ export default {
         icon: 'wrench',
       },
     };
+  },
+  computed: {
+    /**
+     * Whether the cue is an effect (a scene has no Loop Style or Duration)
+     *
+     * @type {Boolean}
+     */
+    isEffect() {
+      return this.cue?.type === CUE_TYPES.EFFECT;
+    },
   },
   methods: {
     /**
