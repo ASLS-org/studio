@@ -82,6 +82,21 @@ Enums live next to their model and are exported: `CUE_TYPES`, `CUE_STATES`,
   Presets are indexed in `FADE_PRESETS` order (stored in showfiles): append, never reorder.
   Control point Y may overshoot (−1 to 2); scenes clamp each written value to 0–255 (the universe
   frame is a `Uint8Array`, which would wrap).
+- **Cue fades:** every `Cue` has `fadeIn` / `fadeOut` (`Fade`, `duration` in bars, 0 = none;
+  `Cue.buildFade`; an older scene's Fade In takes its saved Duration). `fades` says whether it
+  fades (scenes always, `FX` only when `relative`). `Cue._update` computes one `fadeFactor` per
+  tick (`computeFadeFactor`), then the subclass's `update(t)` writes with it: scenes blend
+  `from + (value − from) × factor` (from 0, or the recorded `startValue` in Relative); effects
+  write through `FXFixture.writeTargetBlend` from each target's `start` (`Float64Array` made in
+  `buildTargets`, filled by `recordStart`). `cue(false)` with a Fade Out sets `IDLE` at once and
+  keeps the Live animation until the release ends (`stopNow`). A cue that ends by itself ends at
+  `endMS` (effects: Duration, One Shot only; scenes: once faded in, look kept); it fades out there
+  only when `fadesOutAtEnd` (not scenes). `cue()` on a running cue stops it, whatever the argument
+  (the cue pool toggles with `cue(true)`).
+- **Chase items:** `Chase.update` calls `CueItem.update` → `Cue.playItem(t, lengthMS)` for the item
+  under the playhead (entering records the start values in Relative; the factor comes from
+  `itemFades(lengthMS)`, the fades shrunk to fit), and `cue.endItem()` once when it leaves. Items
+  never call `cue()`. The timeline's item preview uses the same `itemFades`.
 - **Pools:** `addRaw`, `addExisting`, `getFromId` (throws), `delete`, `clearAll`, plus a `listable`
   getter that shapes data for `uk-list`. New pools follow the same API.
 - **Ids:** numeric and unique per pool. Getters coerce with `Number(id)`. A fixture or universe
