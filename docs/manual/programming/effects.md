@@ -4,27 +4,31 @@ An effect moves channels over time: a dimmer pulse, a colour cycle, heads drawin
 **modulated channel** follows a waveform between a minimum and a maximum, and the waveform can be
 offset from fixture to fixture (or pixel to pixel) so the movement travels across the rig.
 
-Here the demo rig plays its two effects. *Rainbow* runs red, green and blue a third of a cycle
-apart, so the colour cycles through the hues, and spreads the heads over the cycle, so the colours
-travel from left to right. *Ballyhoo* moves pan and tilt on two sine waves a quarter cycle apart,
-so the beams draw circles, while its colour channels stay at one value (Min = Max) to keep it
-blue.
+Here the demo rig plays two effects over *Warm wash*'s level. *Rainbow*, a Colour effect, runs red,
+green and blue a third of a cycle apart, so the colour cycles through the hues, and spreads the
+heads over the cycle, so the colours travel from left to right. *Ballyhoo*, a Position effect,
+moves pan and tilt on two sine waves a quarter cycle apart, so the beams draw circles.
 
 <LivePreview preset="effect-stage" />
 
-Create an effect like any cue: double click an empty slot of the group's **Cue Pool** and choose
-**effect** (see [Creating a cue](/programming/scenes#creating-a-cue)). Effects loop by default.
+Create an effect like any cue: click **add** in a column's head in the group's **Cue Pool** and
+choose **Effect** (see [Creating a cue](/programming/scenes#creating-a-cue)). An effect moves its
+column's family only (a **Position** effect: pan and tilt), plus channels of no family (speeds,
+control). To move several families together, as a ballyhoo moving the aim and the dimmer, make an
+effect in each column and start them together in a [chase](/programming/chases). Effects loop by
+default.
 Selecting an effect shows its widgets in the group view: **Modulated Channels**, **Channel
 Fixtures Activity**, the selected channel's scope (**Colour Scope** or **Pan/Tilt Scope**), then
-the **Effect Tool**, from left to right. An effect whose **Start** is **Relative** also shows its
+the **Effect Tool**, from left to right. An effect whose **Mode** is **Layer** also shows its
 **Fade in** and **Fade out** first (see [Fading in and out](#fading-in-and-out)).
 
 ## Modulated Channels
 
 Lists the channels this effect moves. Click one to edit it in the **Effect Tool**.
 
-Press **Add** to add a channel. The **Add Modulated Channel** popup lists every channel the
-effect's fixtures have, each with its icon; the ones the effect already moves say **in use**. Pick
+Press **Add** to add a channel. The **Add Modulated Channel** popup lists every channel of the
+effect's family that its fixtures have, and those of no family, each with its icon; the
+ones the effect already moves say **in use**. Pick
 one (<kbd>Ctrl</kbd>/<kbd>⌘</kbd> or <kbd>Shift</kbd> + click for several) and press **OK**: it
 joins the effect with a plain wave over its whole range, and is selected. To remove a channel,
 select it, press <kbd>Delete</kbd> or <kbd>Backspace</kbd> and confirm.
@@ -32,8 +36,9 @@ select it, press <kbd>Delete</kbd> or <kbd>Backspace</kbd> and confirm.
 Selecting a colour channel shows the [Colour Scope](#colour-scope), selecting Pan or Tilt the
 [Pan/Tilt Scope](#pan-tilt-scope): their presets and shapes set whole looks in one go.
 
-The preview adds Pan and Tilt to *Rainbow* while it plays. They first sweep their whole range, so
-the beams leave the stage; narrowing **Min** and **Max** keeps them on the floor.
+The preview adds White to *Rainbow*'s Colour effect while it plays: as a Colour effect, it lists
+the colour channels only. White first sweeps its whole range, so the colours wash out; narrowing
+**Min** and **Max** keeps them soft.
 
 <LivePreview preset="effect-channel-add" />
 
@@ -209,27 +214,33 @@ the hues every 4 s at 120 BPM. *Ballyhoo*'s pan and tilt have **Freq** 2: a circ
 
 ## Fading in and out
 
-An effect started over a scene usually jumps: the heads snap onto its path, the colours cut to its
-waves. Set its **Start** to **Relative** in **Cue Settings** (the same setting as for
-[scenes](/programming/scenes#cue-settings)) and it blends instead:
+Every effect fades in and out, as a scene does, whatever its **Mode** (in **Cue Settings**, the
+same setting as for [scenes](/programming/scenes#cue-settings)):
 
-- **Starting** it, the effect takes the values its channels hold at that moment and moves from them
-  into the running effect over its **Fade in**. The effect keeps moving all along.
-- **Stopping** it, its tile shows stopped at once, and the effect blends back to those values over
-  its **Fade out**, then lets go.
-- **Starting it again** while it fades out blends in from wherever the channels are, with no jump.
+- **Starting** it, the effect blends from what is underneath it (the scene, or a cue still playing,
+  even a moving one) into the running effect over its **Fade in**. The effect keeps moving all
+  along. In **Replace** (new effects), the cue underneath turns off once the effect has faded in;
+  in **Layer**, it stays on underneath, its row striped.
+- **Stopping** it, its row shows it stopped at once, and the effect blends back into what is
+  underneath (a Layer effect's scene) over its **Fade out**, then lets go. With nothing
+  underneath, the dimmers go back to where they were before you played anything, and the aim and
+  colour stay where the effect left them.
+- **Starting it again** while it fades out blends back in from wherever it got to, with no jump.
 
-With **Relative**, a **Fade in** and a **Fade out** widget come first among the effect's widgets.
+An effect takes a fixture's whole colour, or both pan and tilt, so two effects never mix: the one
+started last holds the family (see [What plays together](/concepts/timing#what-plays-together)).
+
+A **Fade in** and a **Fade out** widget come first among the effect's widgets.
 Each has a **Type** (the same curves as a [scene's fade](/programming/scenes#how-a-scene-fades)),
 the curve's control points, and **Bars**: how long the fade lasts, 0 to 64 bars. 0 means no fade.
 
 <LivePreview preset="effect-fade" />
 
-With **Absolute** (the default), the fade widgets are hidden and the effect starts and stops at
-once.
+A new effect's fades are 0 bars: it starts and stops at once, the heads snapping onto its path.
+Give it a **Fade in** to glide onto it.
 
-In a [chase](/programming/chases#the-timeline), a Relative effect fades the same way inside each
-item: in from the item's start, out up to its end.
+In a [chase](/programming/chases#the-timeline), an effect fades the same way inside each item: in
+from the item's start, out up to its end.
 
 ## Recipes
 

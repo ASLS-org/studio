@@ -394,7 +394,7 @@ const PANELS = [
     id: 'color', chapter: 'control', width: 560, height: 250, x: 0.38, y: -0.42, yaw: -10, pitch: -5,
   },
   {
-    id: 'cues', chapter: 'cues', width: 452, height: 300, x: -0.4, y: -0.04, yaw: 14, pitch: 2,
+    id: 'cues', chapter: 'cues', width: 772, height: 300, x: -0.4, y: -0.04, yaw: 14, pitch: 2,
   },
   {
     id: 'chase', chapter: 'chase', width: 1040, height: 240, x: 0.02, y: -0.5, yaw: -4, pitch: -10,
@@ -460,6 +460,9 @@ export default {
       id: cue.id,
       name: cue.name,
       type: cue.type,
+      // Each in its family's column; nothing holds the stage here
+      family: cue.family,
+      heldFamilies: [false, false, false, false],
       color: tokenColor(cue.token),
       state: false,
       chaseActive: false,
@@ -830,7 +833,9 @@ export default {
           ...panel, x: 0, y: -0.58, yaw: 0, pitch: 0, maxWidth: vw - 24,
         };
       }
-      return { ...panel, maxWidth: panel.id === 'chase' ? vw * 0.74 : vw * 0.56 };
+      // The cue pool's five columns are wide: a narrower share keeps it clear of the copy
+      const share = { chase: 0.74, cues: 0.5 }[panel.id] || 0.56;
+      return { ...panel, maxWidth: vw * share };
     },
     /**
      * How present a panel is, 0..1 (it fades with its chapter; phones skip the pan/tilt panel)

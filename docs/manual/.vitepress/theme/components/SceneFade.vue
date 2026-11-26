@@ -10,7 +10,7 @@
         class="scene_fade_row"
       >
         <div class="scene_fade_label">
-          <h3>Start: {{ row.start }}</h3>
+          <h3>{{ row.start }}</h3>
           <p>{{ row.text }}</p>
         </div>
         <svg
@@ -90,7 +90,8 @@ const ease = (x) => {
 /**
  * Animated illustration of a scene's fade: the value moves from where it starts to the scene's
  * value along the fade curve, over the scene's Fade in (one bar here), and the lights follow.
- * Absolute starts from 0 (dark); Relative from the look already on stage.
+ * A scene always fades from what the lights show: from dark on an empty stage, from the look
+ * already there over another cue.
  * @example <SceneFade />
  */
 export default {
@@ -98,14 +99,14 @@ export default {
   data() {
     return {
       progress: 0.6,
-      caption: 'Sunset, a scene with a 1-bar fade in, played twice: from 0 (Absolute) and from '
-        + 'what\'s on stage, Warm wash (Relative)',
+      caption: 'Sunset, a scene with a 1-bar fade in, played twice: on a dark stage, and over '
+        + 'Warm wash. It fades from what the lights show',
       rows: [
         {
-          start: 'Absolute', from: 0, text: 'Fades from 0: the lights rise from dark to Sunset\'s orange.', color: 'var(--accent-red)',
+          start: 'On a dark stage', from: 0, text: 'Nothing lights the heads yet: they rise from dark to Sunset\'s orange.', color: 'var(--accent-red)',
         },
         {
-          start: 'Relative', from: 1, text: 'Fades from the current values: Warm wash\'s amber turns into Sunset\'s orange.', color: 'var(--accent-gold)',
+          start: 'Over Warm wash', from: 1, text: 'Warm wash\'s amber turns into Sunset\'s orange.', color: 'var(--accent-gold)',
         },
       ],
     };

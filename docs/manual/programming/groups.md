@@ -52,7 +52,7 @@ cue's widgets on the right: see [Scenes](/programming/scenes) and [Effects](/pro
 | Setting | Description |
 | --- | --- |
 | **Name** | The group's name |
-| **Color** | The group's colour in the group pool and on its cues |
+| **Color** | The group's colour in the group pool |
 
 ### Fixture Pool
 

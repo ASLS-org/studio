@@ -4,8 +4,11 @@
  *
  * The demo show is the home page's rig: universe 0 "Stage"; fixtures 0–3 "MAC Aura 1" to
  * "MAC Aura 4" (Standard mode, 14 channels, hung 6 m up at x = −4.5, −1.5, 1.5, 4.5); group 0
- * "Rig" with cues 0 "Warm wash" (scene), 1 "Rainbow" (effect), 2 "Ballyhoo" (effect), 3 "Sunset"
- * (scene) and chase 0 "Story" (8 bars, each cue 2 bars).
+ * "Rig" with cues "Warm wash" (scene), "Rainbow" (effect), "Ballyhoo" (effect), "Sunset" (scene),
+ * saved before cues had one family each, so split per family on load (one cue per family, same
+ * name): Intensity 0 Warm wash, 1 Rainbow, 2 Ballyhoo, 3 Sunset; Colour 4 Warm wash, 7 Rainbow,
+ * 8 Ballyhoo, 10 Sunset; Position 5 Warm wash, 9 Ballyhoo, 11 Sunset; Beam 6 Warm wash, 12 Sunset;
+ * and chase 0 "Story" (8 bars, each cue 2 bars, its lanes copied for each part).
  *
  * Sizes are Studio's, measured in a 1440×900 window: the modifier strip is 239px tall and each
  * widget keeps its own width; the patch bay and the group pool are 620px tall. The preview shows
@@ -41,6 +44,9 @@ const fixture = (show, id) => show.fixturePool.getFromId(id);
 const group = (show) => show.groupPool.getFromId(0);
 const cue = (show, id) => group(show).cuePool.getFromId(id);
 const chase = (show) => group(show).chasePool.getFromId(0);
+/** Plays every cue of a name: an older look, split per family, plays whole */
+const playAll = (show, name) => group(show).cuePool.cues
+  .filter((c) => c.name === name).forEach((c) => c.cue(true));
 const universe = (show) => show.universePool.getFromId(0);
 
 /** Height of Studio's modifier strip, where every widget sits */
@@ -64,8 +70,14 @@ const VisualizerSettings = () => import('@/views/activities/app/fragments/toolba
 const patchRow = (has) => ({ click: '.uikit_list_item.uikit_sublist_body', has });
 /** A row in a widget's list */
 const row = (has) => ({ click: '.uikit_list_item', has });
-/** A cue's body in the cue pool (plays or stops it), by slot */
-const cueBody = (nth) => ({ click: '.grid_item:not(.empty) .grid_item_body', nth });
+/**
+ * A cue's play button in the cue pool (plays or stops it), by its order on screen, column after
+ * column: Intensity 0 Warm wash, 1 Rainbow, 2 Ballyhoo, 3 Sunset; Colour 4 Warm wash, 5 Rainbow,
+ * 6 Ballyhoo, 7 Sunset; Position 8 Warm wash, 9 Ballyhoo, 10 Sunset; Beam 11 Warm wash, 12 Sunset
+ */
+const cueBody = (nth) => ({ click: '.cue_chip .cue_chip_play', nth });
+/** The cue pool's width in Studio (its four family columns) */
+const CUEPOOL = 772;
 /** A popup's button */
 const popupButton = (has) => ({ click: '.popup .uikit_button', has });
 /**
@@ -187,9 +199,9 @@ const PRESETS = {
   },
   'group-cuepool': {
     title: 'Cue Pool',
-    width: 170,
+    width: CUEPOOL,
     height: STRIP,
-    componentWidth: 170,
+    componentWidth: CUEPOOL,
     componentHeight: STRIP,
     stage: true,
     component: CuePool,
@@ -198,32 +210,32 @@ const PRESETS = {
   },
   'cue-settings': {
     title: 'Cue Settings',
-    width: 220,
+    width: 350,
     height: STRIP,
     component: () => import('@/views/activities/app/fragments/modifiers/group/_widgets/group.modifier.widget.cue.settings.vue'),
-    props: (show) => ({ cue: cue(show, 3) }),
+    props: (show) => ({ cue: cue(show, 10) }),
   },
   'scene-curve': {
     title: 'Fade in',
     width: 381,
     height: STRIP,
     component: () => import('@/views/activities/app/fragments/modifiers/_widgets/modifier.widget.curve.vue'),
-    props: (show) => ({ fade: cue(show, 3).fadeIn, timed: true }),
+    props: (show) => ({ fade: cue(show, 10).fadeIn, timed: true }),
   },
   'effect-fade': {
     title: 'Fade in',
     width: 381,
     height: STRIP,
     component: () => import('@/views/activities/app/fragments/modifiers/_widgets/modifier.widget.curve.vue'),
-    props: (show) => ({ fade: cue(show, 2).fadeIn, timed: true }),
-    start: (show) => { cue(show, 2).fadeIn.duration = 2; },
+    props: (show) => ({ fade: cue(show, 9).fadeIn, timed: true }),
+    start: (show) => { cue(show, 9).fadeIn.duration = 2; },
   },
   'effect-wave': {
     title: 'Effect Tool',
     width: 665,
     height: STRIP,
     component: () => import('@/views/activities/app/fragments/modifiers/group/_widgets/group.effect.modifier.widget.wave.vue'),
-    props: (show) => ({ channel: cue(show, 2).channels[0] }),
+    props: (show) => ({ channel: cue(show, 9).channels[0] }),
     clock: true,
   },
   'effect-pantilt-scope': {
@@ -231,7 +243,7 @@ const PRESETS = {
     width: 560,
     height: STRIP,
     component: () => import('@/views/activities/app/fragments/modifiers/group/_widgets/group.effect.modifier.widget.scope.pantilt.vue'),
-    props: (show) => ({ effect: cue(show, 2) }),
+    props: (show) => ({ effect: cue(show, 9) }),
     clock: true,
   },
   'effect-colour-scope': {
@@ -239,7 +251,7 @@ const PRESETS = {
     width: 600,
     height: STRIP,
     component: () => import('@/views/activities/app/fragments/modifiers/group/_widgets/group.effect.modifier.widget.scope.colour.vue'),
-    props: (show) => ({ effect: cue(show, 1) }),
+    props: (show) => ({ effect: cue(show, 7) }),
     clock: true,
   },
   /* ── Panels ── */
@@ -276,7 +288,7 @@ const PRESETS = {
     height: STRIP,
     fit: 'scroll',
     component: () => import('@/views/activities/app/fragments/modifiers/group/group.scene.modifier.fragment.vue'),
-    props: (show) => ({ scene: cue(show, 3) }),
+    props: (show) => ({ scene: cue(show, 10) }),
     clock: true,
   },
   'chase-modifier': {
@@ -318,25 +330,28 @@ const PRESETS = {
   },
   /* ── On stage: a cue pool next to the visualizer, a cursor plays cues ── */
   'scene-stage': {
-    // The rig's two scenes, one after the other: each fades in over its duration
+    // The rig's scenes: Sunset's colour fades in over Warm wash's, then stops and hands it back
     title: 'Cue Pool',
-    width: 170,
+    width: CUEPOOL,
     height: STRIP,
-    componentWidth: 170,
+    componentWidth: CUEPOOL,
     componentHeight: STRIP,
     stage: true,
     component: CuePool,
     props: (show) => ({ group: group(show) }),
     clock: true,
     demo: [
-      { caption: 'Warm wash: fades in over 1 bar' },
+      { caption: 'Warm wash in Intensity: the heads fade up over 1 bar, and stay on' },
       cueBody(0),
+      { wait: 3000 },
+      { caption: 'Warm wash in Colour: its colour fades in' },
+      cueBody(4),
+      { wait: 3000 },
+      { caption: 'Sunset in Colour: fades in over 1 bar, over Warm wash' },
+      cueBody(7),
       { wait: 3800 },
-      { caption: 'Sunset: fades in over 1 bar' },
-      cueBody(3),
-      { wait: 3800 },
-      { caption: 'Warm wash again: the look changes back' },
-      cueBody(0),
+      { caption: 'Stop Sunset: Warm wash\'s colour, still on underneath, comes back' },
+      cueBody(7),
       { wait: 3600 },
       { caption: null },
     ],
@@ -344,9 +359,9 @@ const PRESETS = {
   'effect-stage': {
     // The rig's effects: a hue chase across the heads, then crossing circles in blue
     title: 'Cue Pool',
-    width: 170,
+    width: CUEPOOL,
     height: STRIP,
-    componentWidth: 170,
+    componentWidth: CUEPOOL,
     componentHeight: STRIP,
     stage: true,
     component: CuePool,
@@ -354,14 +369,14 @@ const PRESETS = {
     clock: true,
     demo: [
       cueBody(0),
-      { caption: 'Rainbow: the hue cycles, one head after the other' },
-      cueBody(1),
+      { caption: 'Rainbow in Colour: the hue cycles, one head after the other' },
+      cueBody(5),
       { wait: 7000 },
-      cueBody(1),
-      { caption: 'Ballyhoo: pan and tilt draw crossing circles' },
-      cueBody(2),
+      cueBody(5),
+      { caption: 'Ballyhoo in Position: pan and tilt draw crossing circles' },
+      cueBody(9),
       { wait: 7000 },
-      cueBody(2),
+      cueBody(9),
       { caption: null },
     ],
   },
@@ -485,11 +500,11 @@ const PRESETS = {
     ],
   },
   'cuepool-add': {
-    // A new cue starts empty: played over Warm wash, it changes nothing until it is given values
+    // A new cue starts empty and only opens: programming is blind, the stage doesn't change
     title: 'Cue Pool',
-    width: 480,
+    width: CUEPOOL,
     height: 420,
-    componentWidth: 440,
+    componentWidth: CUEPOOL,
     componentHeight: STRIP,
     stage: true,
     component: CuePool,
@@ -499,27 +514,25 @@ const PRESETS = {
       { caption: 'Warm wash is playing' },
       cueBody(0),
       { wait: 2600 },
-      { caption: 'Double click an empty slot: a new cue' },
-      // Filled cues sit over their slot: the first free one is C-4
-      { dblclick: '.grid_item.empty', has: 'C-4' },
+      { caption: 'add in the Intensity column\'s head: a new Intensity cue' },
+      { click: '.cue_column_intensity .cue_column_add' },
       { wait: 900 },
       { caption: 'Name it' },
       { field: 'Name', text: 'Blackout', within: '.popup' },
-      { caption: 'OK adds it to the pool, after Sunset' },
+      { caption: 'OK adds it to the Intensity column' },
       popupButton('ok'),
       { wait: 1600 },
-      { caption: 'Play it: the rig doesn\'t change, a new cue holds no values yet' },
-      cueBody(4),
+      { caption: 'It opens: the stage doesn\'t change, programming is blind' },
       { wait: 3600 },
-      { caption: 'Its values are set in the scene editor (Scenes)' },
+      { caption: 'Set its values in the scene editor, then press its play button' },
       { wait: 2600 },
       { caption: null },
     ],
   },
 
   'effect-channel-add': {
-    // Rainbow plays (colour only); adding Pan and Tilt from the fixtures' channels sets the beams
-    // moving
+    // Rainbow plays (its Intensity and Colour effects); its Colour effect lists colour channels
+    // only: adding White, then narrowing it, softens the colours
     title: 'Effect',
     width: 760,
     height: 520,
@@ -527,37 +540,30 @@ const PRESETS = {
     componentHeight: STRIP,
     stage: true,
     component: EffectModifier,
-    props: (show) => ({ effect: cue(show, 1) }),
-    start: (show) => cue(show, 1).cue(true),
+    props: (show) => ({ effect: cue(show, 7) }),
+    start: (show) => {
+      cue(show, 1).cue(true);
+      cue(show, 7).cue(true);
+    },
     clock: true,
     demo: [
-      { caption: 'Rainbow plays: it only moves the colour' },
+      { caption: 'Rainbow\'s Colour effect plays: red, green and blue in waves' },
       { wait: 3000 },
-      { caption: 'Add a modulated channel: the fixtures\' own channels are listed' },
+      { caption: 'Add a modulated channel: a Colour effect lists the colour channels' },
       { click: '.uikit_button', has: 'add' },
-      { wait: 900 },
-      { caption: 'Pick Pan' },
-      { click: '.popup .uikit_list_item', has: 'Pan' },
-      popupButton('ok'),
-      { wait: 900 },
-      { caption: 'Then Tilt' },
-      { click: '.uikit_button', has: 'add' },
-      { wait: 700 },
-      { click: '.popup .uikit_list_item', has: 'Tilt' },
+      { wait: 1500 },
+      { caption: 'Pick White' },
+      { click: '.popup .uikit_list_item', has: 'White' },
       popupButton('ok'),
       { wait: 1000 },
-      { caption: 'Pan and Tilt join the effect, over their whole range: beams sweep off stage' },
+      { caption: 'White joins the waves over its whole range: the colours wash out' },
       { wait: 3500 },
-      { caption: 'Narrow Pan: Min and Max bound the wave' },
-      row('Pan'),
-      { field: 'Min', text: '92' },
-      { field: 'Max', text: '164' },
-      { caption: 'Same for Tilt' },
-      row('Tilt'),
-      { field: 'Min', text: '104' },
-      { field: 'Max', text: '152' },
-      { caption: 'The beams now sweep the floor in rainbow colours; the Pan/Tilt Scope shapes it' },
-      { wait: 7000 },
+      { caption: 'Narrow it: Min and Max bound the wave' },
+      row('White'),
+      { field: 'Min', text: '0' },
+      { field: 'Max', text: '90' },
+      { caption: 'Softer colours; the Colour Scope shows what each head gets' },
+      { wait: 6000 },
       { caption: null },
     ],
   },
@@ -684,7 +690,7 @@ const PRESETS = {
     popupInBox: true,
     component: VisualizerSettings,
     props: () => ({ modelValue: true }),
-    start: (show) => cue(show, 3).cue(true),
+    start: (show) => playAll(show, 'Sunset'),
     clock: true,
   },
   /* ── Outputs: demos only, they never connect or stream ── */

@@ -21,16 +21,26 @@ fader you move is sent right away. How bars, BPM and quantize fit together:
 ## Cues
 
 In a group's **Cue Pool** ([Scenes](/programming/scenes#the-cue-pool) describes it), click a
-cue's body to start it, and again to stop it; hold a **Temporary** cue to play it until you
-release the button ([Cue settings](/programming/scenes#cue-settings)). A playing cue
-shows its progress. A scene stops by itself once faded in, and its look stays. A **One Shot** effect
-stops by itself at the end of its **Duration** (fading out first when **Relative**); a **Loop**
-effect runs until you stop it.
+cue's **play** button to start it, and again to turn it off; hold it for a **Temporary** cue
+([Cue settings](/programming/scenes#cue-settings)). A click on the row itself only opens the cue
+([Programming blind](/programming/scenes#programming-blind)). A playing cue's row fills with its
+progress. A scene stays on once faded in. A **One Shot** effect stops by itself at the end of its
+**Duration** (fading out first in **Layer**); a **Loop** effect runs until you stop it.
 
-Several cues of a group can play together; when they set the same channel, the last one to write it
-wins. In the preview, play *Warm wash*, then *Rainbow*: the heads keep Warm wash's aim and zoom,
-and Rainbow takes over their colour. Play *Ballyhoo* too and it takes the aim. Click each again to
-stop it.
+A group plays one cue per family. Each column's **NOW** says what the stage shows of that family
+and where it comes from: a cue, a chase's item, a value kept from a stopped cue, or rest. A striped
+row is on but covered: other cues hold every family it sets, and it comes back when they stop (see
+[What plays together](/concepts/timing#what-plays-together)).
+
+In the preview, play *Warm wash* in Intensity and in Colour: the heads light up amber. Play
+*Rainbow* in Colour: a **Replace** effect, it takes the colour and *Warm wash*'s colour turns off,
+while its level stays. Play *Ballyhoo* in Position: the heads move. Stop it: they stay where it
+left them, NOW reads "kept: Ballyhoo", and its row keeps its fill where it stopped.
+
+Turning a cue off hands its families to the newest cue still playing that uses them, over its
+**Fade out**. A family nobody holds rests: the dimmers go back to where they were before you played
+anything (dark, unless you set them in the universe view), while colour, aim and beam stay put
+until another cue takes them.
 
 <LivePreview preset="group-cuepool" />
 
@@ -67,8 +77,8 @@ Under each group's chases:
 - the **dimmer** knob, **Isolate** and **Blackout** are saved with the show.
 
 > **Note:** In this release, the group **dimmer** knob, **Isolate** and **Blackout** don't change
-> what the group outputs yet, and the master column's knob and buttons do nothing. Stop the group's
-> cues and chases to darken it ([Known limitations](/reference/limitations#programming)).
+> what the group outputs yet, and neither do the master column's knob and **Blackout**. Stop the
+> group's cues and chases to darken it ([Known limitations](/reference/limitations#programming)).
 
 ## Running a Show
 

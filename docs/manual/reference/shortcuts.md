@@ -77,10 +77,11 @@ Fixture pools, the patch bay, a popup's lists, an effect's channels.
 
 | Action | Result |
 | --- | --- |
-| Double click an empty cue slot | Create a cue ([Scenes](/programming/scenes#creating-a-cue)) |
-| Click a cue's body / its name | Play or stop it / select it without playing |
-| Drag a cue to an empty slot | Move it |
-| <kbd>Delete</kbd> or <kbd>Backspace</kbd> | Delete the selected cue (cue pool), the selected group after a confirmation (group pool), or the open chase, at once (chase view). Click in the pool or the chase view first; typing in a field never deletes |
+| **add** in a cue pool column's head | Create a cue of that column's family ([Scenes](/programming/scenes#creating-a-cue)) |
+| Click a cue / its **play** button (over its picture, with the pointer on the row) | Open it, without playing it ([Programming blind](/programming/scenes#programming-blind)) / play or stop it with its fades |
+| Drag a cue's row by its grip | Reorder its column (as in any list; <kbd>Esc</kbd> cancels) |
+| <kbd>↑</kbd> <kbd>↓</kbd> in a cue pool column | Select the next cue, as a click does |
+| <kbd>Delete</kbd> or <kbd>Backspace</kbd> | Delete the selected cue after a confirmation (cue pool), the selected group after a confirmation (group pool), or the open chase, at once (chase view). Click in the pool or the chase view first; typing in a field never deletes |
 | Double click an empty chase slot | Create a chase |
 
 ## Chase Timeline
@@ -91,6 +92,7 @@ Fixture pools, the patch bay, a popup's lists, an effect's channels.
 | Drag an item / its right edge | Move it / resize it |
 | Right click an item | Remove it |
 | Drag up or down on the ruler | Zoom; double click the ruler to reset |
+| Click a family's head | Fold or unfold its lanes |
 
 ## Visualizer
 
