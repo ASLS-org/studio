@@ -1,8 +1,8 @@
 <template>
   <uk-flex>
-    <!-- Fades of a Relative effect: from the channels' values when cued, back to them when
-      stopped (Absolute starts and stops at once) -->
-    <template v-if="effect && effect.fadeIn && effect.relative">
+    <!-- An effect's fades, as a scene's: from what is under it when cued, back into it when
+      stopped -->
+    <template v-if="effect && effect.fadeIn">
       <widget-curve
         :key="`fade-in-${effect.id}`"
         class="effect_fade_in"

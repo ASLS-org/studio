@@ -415,9 +415,11 @@ export default {
     },
   },
   created() {
-    // Not reactive: a pending animation frame and the colour it will apply
+    // Not reactive: a pending animation frame and the colour it will apply, and the pending frame
+    // placing the ticks
     this.rafId = null;
     this.pendingRgb = null;
+    this.positionRafId = null;
   },
   mounted() {
     const [r, g, b] = this.rgbData;
@@ -431,6 +433,10 @@ export default {
     if (this.rafId !== null) {
       cancelAnimationFrame(this.rafId);
       this.rafId = null;
+    }
+    if (this.positionRafId !== null) {
+      cancelAnimationFrame(this.positionRafId);
+      this.positionRafId = null;
     }
   },
   methods: {
@@ -482,12 +488,23 @@ export default {
 
       if (markCustom && this.isCustom) this.swatch = 0;
 
-      if (reposition) {
-        this.positionHueTick();
-        this.positionLightnessTick();
-      }
+      if (reposition) this.schedulePosition();
 
       if (emit) this.scheduleEmit(rr, gg, bb);
+    },
+
+    /**
+     * Places the hue and lightness ticks on the next frame, once whatever the number of colour
+     * changes: placing them measures the pickers, which forced a layout on every change (a colour
+     * effect on the selected fixture changes it on every tick, the picker visible or not)
+     */
+    schedulePosition() {
+      if (this.positionRafId !== null) return;
+      this.positionRafId = requestAnimationFrame(() => {
+        this.positionRafId = null;
+        this.positionHueTick();
+        this.positionLightnessTick();
+      });
     },
 
     scheduleEmit(r, g, b) {
