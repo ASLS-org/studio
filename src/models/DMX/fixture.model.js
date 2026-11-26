@@ -1,5 +1,7 @@
 import { markRaw } from '../utils/reactivity';
 import Channel from './channel.model';
+import Claims from './claims';
+import { familyOf } from './families';
 import { PROFILE_SOURCES, resolveModeName } from '../fixtures/fixture.profile';
 import modeCells from '../fixtures/fixture.cells';
 import {
@@ -403,6 +405,7 @@ class Fixture {
     this.modeName = this.modeNames[modeIndex];
     this.prepareChannels();
     this.setupFineChannels();
+    this.setupFamilies();
     this.setupQuickAccessors();
     this.setupOutput();
     // Channels the old mode didn't have keep their home value. Coarse channels first: writing a
@@ -644,6 +647,11 @@ class Fixture {
    */
   setChannel(id, value) {
     const channel = this.channels[id];
+    // A playing cue's values go to its claim; the merge writes them once the tick's cues ran
+    if (Claims.writer) {
+      Claims.write(channel, value);
+      return;
+    }
     const clampedValue = Math.min(Math.max(Number(value) || 0, 0), MAX_DMX_VALUE);
     if (channel.fineChannels.length > 0) {
       // Fine channel takes the fractional part
@@ -668,6 +676,7 @@ class Fixture {
     this.modes = profile.modes; // Fixture's modes, shared with every fixture of this type
     this.prepareChannels(); // Prepare fixture's channels
     this.setupFineChannels();
+    this.setupFamilies();
     this.setupQuickAccessors();
     this.setupOutput();
   }
@@ -705,6 +714,39 @@ class Fixture {
         this.quickChannelsAccessors[channel.type] = [channel];
       }
     });
+  }
+
+  /**
+   * Sets each channel's family and builds the fixture's slots: one per family it has, the channels
+   * a cue holding that family drives together (see claims.js). Runtime only
+   *
+   * @public
+   */
+  setupFamilies() {
+    const slots = [null, null, null, null];
+    this.channels.forEach((channel) => {
+      channel.family = familyOf(channel);
+      channel.slot = null;
+      if (channel.family < 0) return;
+      if (!slots[channel.family]) {
+        slots[channel.family] = markRaw({
+          family: channel.family,
+          channels: [],
+          cands: [],
+          top: null,
+          under: null,
+          fader: null,
+          live: false,
+          // At its rest values (claims.js): a cue taking it records them; a reset comes back to
+          // them. The cue whose value it keeps once nobody holds it (Colour, Position, Beam)
+          rested: true,
+          keptFrom: null,
+        });
+      }
+      slots[channel.family].channels.push(channel);
+      channel.slot = slots[channel.family];
+    });
+    this.slots = markRaw(slots);
   }
 
   /**

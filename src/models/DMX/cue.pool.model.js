@@ -1,5 +1,6 @@
 import Effect from './effect.model';
 import Scene from './scene.model';
+import { toRaw } from '../utils/reactivity';
 
 /**
  * Cue types enumeration
@@ -17,8 +18,12 @@ const CUE_TYPES = {
  * @classdesc Pool of cue instances
  */
 class CuePool {
-  constructor() {
+  /**
+   * @param {Array<Array>} [stage] the family stacks of the pool's group (claims.js)
+   */
+  constructor(stage = null) {
     this.cues = [];
+    this.stage = stage;
   }
 
   /**
@@ -54,18 +59,20 @@ class CuePool {
    * @param {Object} cue cue instance
    */
   addExisting(cue) {
+    toRaw(cue).stage = this.stage;
     this.cues.push(cue);
   }
 
   /**
-   * Creates a new cue instance from provided configuraion data and pushes it to the pool
+   * Creates a cue instance from configuration data, without adding it to the pool (Group.loadCues
+   * reads an older cue's families before adding it)
    *
    * @public
    * @param {Object} cueData cue configuration object
    * @return {Object} Cue instance
    * @see Cue
    */
-  addRaw(cueData) {
+  build(cueData) {
     let cue;
     switch (cueData.type) {
       case CUE_TYPES.SCENE:
@@ -78,6 +85,20 @@ class CuePool {
         throw new Error('Unsupported cue type provided.');
     }
     cue.id = cueData.id !== undefined ? cueData.id : this.genCueId();
+    cue.stage = this.stage;
+    return cue;
+  }
+
+  /**
+   * Creates a new cue instance from provided configuraion data and pushes it to the pool
+   *
+   * @public
+   * @param {Object} cueData cue configuration object
+   * @return {Object} Cue instance
+   * @see Cue
+   */
+  addRaw(cueData) {
+    const cue = this.build(cueData);
     this.cues.push(cue);
     return cue;
   }
@@ -91,8 +112,9 @@ class CuePool {
   delete(cue) {
     const cueIndex = this.cues.findIndex((item) => item.id === cue.id);
     if (cueIndex > -1) {
-      // A playing cue's Live animation would otherwise keep driving its fixtures (no fade-out)
-      if (cue.animationId != null) cue.stopNow();
+      // Stopped at once (no fade-out), its claims released: playing, and from a chase item
+      cue.stopNow();
+      cue.releaseItem();
       this.cues.splice(cueIndex, 1);
     } else {
       throw new Error('Could not find cue in cue pool');
@@ -117,14 +139,7 @@ class CuePool {
    * @returns {Number} The cue's unique ID
    */
   genCueId() {
-    return this.chases.reduce(
-      (prev, current) => (
-        (prev && prev.id > current.id)
-          ? prev.id
-          : current.id
-      ),
-      -1,
-    ) + 1;
+    return this.cues.reduce((max, cue) => Math.max(max, Number(cue.id)), -1) + 1;
   }
 
   /**

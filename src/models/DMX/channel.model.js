@@ -49,6 +49,14 @@ class Channel {
       DMX: profileChannel.defaultValue || 0,
       model: 0,
     };
+    // Merge state (models/DMX/claims.js), runtime only: its family and its fixture's slot for it
+    // (set by Fixture.setupFamilies), the newest writer of a channel with no family, its value
+    // when its slot changed hands, and the Intensity level it goes back to at rest
+    this.family = -1;
+    this.slot = null;
+    this.owner = null;
+    this.fromValue = 0;
+    this.restValue = 0;
   }
 
   /**

@@ -222,6 +222,7 @@ class Chase {
    *
    * @public
    * @param {Boolean} state chase's cueing state
+   * @param {Function} [onReadyCallback] called when the chase actually starts (after its Quantize)
    */
   cue(state, onReadyCallback = () => {}) {
     this.state = state;
@@ -235,9 +236,11 @@ class Chase {
     } else if (this.animationId != null) {
       this.elapsed = 0;
       this.cues.forEach((cueItemPool) => {
-        cueItemPool.cue.chaseActive = false;
-        cueItemPool.cue.itemActive = false;
-        cueItemPool.cue.cue(false);
+        const { cue } = cueItemPool;
+        cue.chaseActive = false;
+        // Stopped (by hand or at a One Shot's end): its items hand their families back
+        cue.releaseItem();
+        cue.cue(false);
       });
       Live.remove(this.animationId);
       this.onEnd();
@@ -283,14 +286,16 @@ class Chase {
         const item = items[j];
         const start = item.tick * this.tickDuration;
         if (t >= start && t < (item.tick + item.length) * this.tickDuration) {
+          // The chase NOW names when one of its items holds a family
+          cue.itemChase = this;
           item.update(t - start);
           active = true;
           break;
         }
       }
       if (!active && cue.itemActive) cue.endItem();
-      // Play indicator and activity meter
-      cue.chaseActive = active;
+      // Play indicator and activity meter: an item a Replace cue turned off isn't playing
+      cue.chaseActive = active && !cue.itemCut;
     }
   }
 

@@ -4,6 +4,8 @@ import CuePool from './cue.pool.model';
 import ChasePool from './chase.pool.model';
 import Modifier from './modifier.model';
 import FixturePool from './fixture.pool.model';
+import { markRaw } from '../utils/reactivity';
+import { FAMILY_COUNT, FAMILY_KEYS } from './families';
 
 /**
  * List of available modifier types
@@ -36,7 +38,9 @@ class Group {
       this._fixtures = [];
       this.modifiers = [];
       this.fixturePool = new FixturePool();
-      this.cuePool = new CuePool();
+      // One stack per family of the tokens playing it in the group (claims.js), runtime only
+      this.familyStacks = markRaw([[], [], [], []]);
+      this.cuePool = new CuePool(this.familyStacks);
       this.chasePool = new ChasePool();
       this.solo = false;
       this.disabled = false;
@@ -183,6 +187,45 @@ class Group {
   }
 
   /**
+   * Adds the cues of a show file. A cue saved without a family, or as a Look (several families),
+   * is split into one cue per family it sets, in family order, each with only that family's
+   * content: the first keeps its id and the channels of no family, the others get ids after every
+   * saved one; a cue setting no family is an Intensity cue
+   *
+   * @public
+   * @param {Array<Object>} cuesData cue configuration objects
+   * @returns {Map<Number, Array<Object>>} the cues each saved id was loaded as
+   */
+  loadCues(cuesData) {
+    let nextId = cuesData.reduce((max, c) => Math.max(max, Number(c.id) || 0), -1) + 1;
+    const parts = new Map();
+    cuesData.forEach((cueData) => {
+      if (FAMILY_KEYS.includes(cueData.family)) {
+        parts.set(cueData.id, [this.addCue(cueData)]);
+        return;
+      }
+      const whole = this.cuePool.build({ ...cueData, fixtures: this.fixturePool.fixtures });
+      const used = whole.usedFamilies;
+      const families = [];
+      for (let f = 0; f < FAMILY_COUNT; f++) if (used[f]) families.push(f);
+      if (families.length < 2) {
+        parts.set(cueData.id, [this.addCue({ ...cueData, family: FAMILY_KEYS[families[0] || 0] })]);
+        return;
+      }
+      parts.set(cueData.id, families.map((family, i) => {
+        // The first part also keeps the channels of no family, and the waves of a family the
+        // cue doesn't use (on inactive fixtures)
+        const keeps = i === 0
+          ? (f) => f === family || f < 0 || !used[f]
+          : (f) => f === family;
+        const id = i === 0 ? cueData.id : nextId++;
+        return this.addCue({ ...whole.familyData(keeps), id, family: FAMILY_KEYS[family] });
+      }));
+    });
+    return parts;
+  }
+
+  /**
    * Removes a cue from the group's cue pool
    *
    * @public
@@ -200,13 +243,18 @@ class Group {
    *
    * @public
    * @param {Object} chase handle to chase to be added
+   * @param {Map<Number, Array<Object>>} [parts] the cues each loaded cue id became (loadCues): a
+   * split cue's lane is copied for each part, with the same items
    */
-  addChase(chase) {
+  addChase(chase, parts) {
     chase.color = chase.color || this.color;
-    chase.cues = chase.cues ? chase.cues.map((cue) => ({
-      cue: this.cuePool.getFromId(cue.cue),
-      items: cue.items,
-    })) : this.cuePool.cues;
+    chase.cues = chase.cues ? chase.cues.flatMap((lane) => {
+      const cues = (parts && parts.get(lane.cue)) || [this.cuePool.getFromId(lane.cue)];
+      return cues.map((cue, i) => ({
+        cue,
+        items: i === 0 ? lane.items : (lane.items || []).map((item) => ({ ...item })),
+      }));
+    }) : this.cuePool.cues;
 
     return this.chasePool.addRaw(chase);
   }
