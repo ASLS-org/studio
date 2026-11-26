@@ -17,6 +17,8 @@ context: |
   - Group: a set of fixtures; owns the cues and chases.
   - Cue: a Scene (static channel values + fade in/out curves) or an Effect (waveform modulation
     with frequency, phase and spread). Trigger style toggle or temporary; loop or one-shot.
+    Made for a family (Intensity, Colour, Position, Beam, or Custom); mode Replace or Layer;
+    priority 0-200. A group plays one cue per family at a time (playback capability).
   - Chase: a bar-grid timeline of cue items per group, with quantize, BPM sync, loop or one-shot.
   - Master: triggers chase rows across groups.
   - Live: the global clock (BPM, tap tempo, play/pause/stop) driving every animation.
@@ -57,8 +59,8 @@ rules:
       (e.g. 'n/a: refactor, nothing users see changes')."
   specs:
     - "Capabilities are organised by product area. Reuse these paths before inventing new ones:
-      patching, fixtures, grouping, scenes, effects, chases, live-engine, master, showfile,
-      undo-redo, output-wsc, visualizer, desktop-app, uikit."
+      patching, fixtures, grouping, scenes, effects, chases, playback, live-engine, master,
+      showfile, undo-redo, output-wsc, visualizer, desktop-app, uikit."
     - Requirements describe user-observable behaviour (what the operator sees or the hardware
       receives), not class or file names.
     - Use DMX/show terms from the context vocabulary consistently. Give units (bars, BPM, DMX 0-255,

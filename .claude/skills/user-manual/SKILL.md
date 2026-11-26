@@ -55,8 +55,9 @@ change touches: the pages are what the proposal's **Manual** line names, and the
 | `F/modifiers/group/_widgets/group.modifier.widget.cue.settings.vue`, `M/DMX/cue.model.js` | `programming/scenes` | `cue-settings` |
 | `F/modifiers/group/group.scene.modifier.fragment.vue`, `group.scene.modifier.widget.*`, `F/modifiers/_widgets/modifier.widget.curve.vue`, `M/DMX/scene.model.js`, `fade.model.js` | `programming/scenes`, `programming/effects` (effect fades) | `scene-modifier`, `scene-curve`, `effect-fade` |
 | `F/modifiers/group/group.effect.modifier.fragment.vue`, `group.effect.modifier.widget.*`, `group.effect.modifier.popup.channels.vue`, `M/DMX/effect*.model.js` | `programming/effects` | `effect-wave`, `effect-channel-add`, `effect-pantilt-scope`, `effect-colour-scope`, `effect-fade` |
-| `F/modifiers/chase/`, `M/DMX/chase*.model.js`, `cue.item*.model.js` | `programming/chases` | `chase-modifier`, `timeline-add` |
+| `F/modifiers/chase/`, `M/DMX/chase*.model.js`, `cue.item*.model.js`, `V/utils/chase.outcome.js` (lanes by family, who holds what) | `programming/chases` (The Timeline, Who Holds What) | `chase-modifier`, `timeline-add` |
 | `M/DMX/live.model.js`, `src/worker.js` (BPM, bars, quantize, play/pause) | `concepts/timing`, `programming/playback` | `chase-play`, `master-row` |
+| `M/DMX/claims.js`, `M/DMX/families.js`, `M/DMX/channel.model.js`, `V/utils/cue.families.js`, `V/utils/cue.previews.js`, `V/utils/cue.now.js`, `src/views/components/uikit/cues/uikit.cue.picture.vue` (families, one cue per family in a group, Replace and Layer, rest, kept and reset, priority, flashes, on stage and blind, the cue pool columns, NOW, chip pictures and value lines) | `concepts/timing` (What Plays Together), `concepts/index` (Cue), `programming/playback`, `programming/scenes` (Creating a Cue, Cue Settings), `programming/effects` (Fading in and out), `programming/chases` (When an item ends), `getting-started/first-show`, `reference/glossary`, `reference/limitations` | `group-cuepool`, `cuepool-add`, `cue-settings` |
 | `M/DMX/*.pool.model.js`, `universe.model.js`, `fixture.model.js` (what a show holds) | `concepts/index`, `introduction/overview` | none |
 | `F/visualizer/`, `src/views/activities/visualizer/`, `src/plugins/visualizer/` | `interface/visualizer`, `reference/limitations#visualizer` | `visualizer-modes`, every `stage: true` preset (the floating card) |
 | `M/fixtures/`, `public/fixtures/`, `public/gdtf/` | `rig/fixtures`, `programming/patching` | `patch-add` |
@@ -237,15 +238,18 @@ Flows to watch rather than try are **demos**: a cursor plays them on the real co
   under 768 px. Collapsed and sizes are per-viewer conveniences in `localStorage`. It mounts
   `VisualizerPreview` through `host.mountVisualizer` after `host.loadShow(pathname)`.
 - **Illustrations** (global, in `theme/components/`): `<ShowMap />` draws the demo show from its
-  showfile (structure, what owns what); `<SceneFade />` animates a scene's fade (Absolute vs
-  Relative start, Warm wash → Sunset); `<EffectWave />` animates the four heads on a waveform with
+  showfile (structure, what owns what); `<SceneFade />` animates a scene's fade (on a dark
+  stage vs over Warm wash, → Sunset); `<EffectWave />` animates the four heads on a waveform with
   Waveform / Phase stop / Direction switches; `<CellsBar />` a 12-cell pixel bar (scene per cell,
   effect over cells vs over fixtures), since the demo rig has no cells. Diagrams, not pictures of
   the app: tokens and fonts only, animate only on screen, still for reduced motion.
 - **Demo show rules**: the demo show is the home page's rig (see below), so the manual and the
   hero tell one story. Cue and group colours come from Studio's palette (the accent tokens), never
   a custom colour; heads hang pointing down (rotation 180° on X); an effect's pan/tilt range suits
-  hung heads (Ballyhoo pan 92–164, tilt 104–152); scenes start **Relative** (cross-fades).
+  hung heads (Ballyhoo pan 92–164, tilt 104–152); scenes are **Layer** (they play over what they
+  cover), effects **Replace**; no cue saves a family, so each is split per family on load (one
+  cue per family, same name: ids in `presets.js`'s header; `playAll(show, name)` plays a whole
+  look).
 - **Popups** open in an overlay over the preview: `uk-popup` injects `popupHost` (provided by the
   host; Studio itself uses the body). The overlay scales a popup down to fit the frame.
 - **Reset** is enabled by a real reader input in a preview of the page, and disabled again after

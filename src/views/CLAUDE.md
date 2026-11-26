@@ -26,7 +26,13 @@ views/
                          fixtures); effect.scope.js (an effect's waves sampled over one loop
                          and matched per fixture, colour mixing, pan/tilt angle ranges
                          from profiles and the degree view, speed, absolute shapes,
-                         spreads and colour presets: the Pan/Tilt and Colour scopes)
+                         spreads and colour presets: the Pan/Tilt and Colour scopes;
+                         availableChannels by family); cue.families.js (each cue family's
+                         name, icon and hint); cue.previews.js (a cue pool chip's
+                         picture and value line: colour, level, aims, beam, wave or path,
+                         "75%", "Pan 30° Tilt 45°"; waves over one cycle; cached per cue); cue.now.js (NOW: a family's source and value,
+                         the kept cue); chase.outcome.js (who holds what along a
+                         chase's timeline)
 ```
 
 ## Ground rules
@@ -70,6 +76,19 @@ views/
   pan/tilt and cells widgets.
 - `uk-list` keys rows by item `id`, else `name` (row state survives item changes, the list never
   writes to `items`): see skill `vue-ui-change` § Lists.
+- **The cue pool** (`group.modifier.widget.cuepool.vue`) is the group's programming view: one
+  column per family, a head with an **add** button and a read-only NOW (`utils/cue.now.js`),
+  the cues as `uk-list` rows (`row` slot) with a picture (`uk-cue-picture`) and a value line
+  (`utils/cue.previews.js`, `sharedContent`: one cached computed per cue, shared with the chase
+  timeline). Cues show no colour of their own. A click (or Up/Down) only opens a cue
+  (programming is blind); its play button (over the picture, on hover; the stop whenever it
+  plays) plays it with fades, and new cues are Replace; a playing row fills with
+  `cue.progress`, a kept cue's stays at `cue.stopProgress`. The chase timeline groups its lanes
+  the same way (foldable family heads, each family's accent from `cue.families.js` tinting its
+  items, holders and edges) and draws who holds each family
+  (`utils/chase.outcome.js`, a pass over the items by the playback rules).
+  Icons in rows are mask classes (`maskClass`): components or style objects per row pushed
+  panel switches over 50 ms.
 - The patch bay lists top-level media items (DMX universes; other media types later, added
   through its **New** popup, `popup.media.vue`), each unfolding to its fixtures.
 - `uk-popup` opens in the injected `popupHost` element when one is provided (the manual's

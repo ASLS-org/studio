@@ -261,13 +261,18 @@ or Tilt is selected; the list SHALL show a channel a scope adds at once.
 
 ### Requirement: Add modulated channels
 
-The Add Modulated Channel popup SHALL list every channel type the effect's fixtures have (colour
-mixing channels by colour), each with its channel icon, those already modulated marked as in
-use. Picking one or more and OK SHALL add them with default waves and select the first added.
+The Add Modulated Channel popup SHALL list every channel type of the effect's family that its
+fixtures have, and those of no family (colour mixing channels by colour), each with its
+channel icon, those already modulated marked as in use. Picking one or more and OK SHALL add them
+with default waves and select the first added.
 
 #### Scenario: Add Zoom
-- **WHEN** the operator opens Add Modulated Channel on an effect of heads with a zoom
+- **WHEN** the operator opens Add Modulated Channel on a Beam effect of heads with a zoom
 - **THEN** Zoom is listed with its icon; picking it and OK adds it and selects it
+
+#### Scenario: Colour effect
+- **WHEN** the operator opens Add Modulated Channel on a Colour effect of RGB heads
+- **THEN** only Red, Green, Blue and the heads' other colour channels are listed
 
 ### Requirement: A colour field in the uikit
 
@@ -302,71 +307,65 @@ lit while on; the Colour Scope's Preset and Spread SHALL share its first row hal
 - **WHEN** the operator makes the modifier panel taller
 - **THEN** the Pan/Tilt field grows and the fields keep their width
 
-### Requirement: Effect fade-in in Relative mode
-
-An effect whose Start is Relative SHALL fade in from the values its channels held when it was
-cued. Over its Fade In time (in bars, 0 to 64), each channel it drives SHALL go from that value to
-the running effect's value along the Fade In curve, while the effect keeps moving. A Fade In time
-of 0 SHALL start the effect at full strength. An effect whose Start is Absolute SHALL start at
-full strength whatever its Fade In.
-
-#### Scenario: Pan/tilt effect over a scene
-
-- **WHEN** a scene holds moving heads at pan 128, and a Relative circle effect with a Fade In of
-  2 bars is cued
-- **THEN** the heads start at pan 128 and reach the full circle after 2 bars, moving all along
-
-#### Scenario: No fade-in time
-
-- **WHEN** a Relative effect with a Fade In of 0 is cued
-- **THEN** it starts at full strength on its first frame, as an Absolute effect does
-
-#### Scenario: Absolute ignores the fade
-
-- **WHEN** an Absolute effect with a Fade In of 2 bars is cued
-- **THEN** it starts at full strength on its first frame
-
-### Requirement: Effect fade-out in Relative mode
-
-Stopping a Relative effect with a Fade Out time above 0 SHALL keep it running while each channel
-goes back to the value it recorded at the start, along the Fade Out curve, over the Fade Out
-time. The effect SHALL show as stopped at once, and SHALL leave the channels at the recorded
-values when the fade ends. A Fade Out of 0, or Absolute, SHALL stop the effect at once, as before. Cueing the
-effect again during its fade-out SHALL start a new fade-in from the channels' current values.
-
-#### Scenario: Fade back to the scene
-
-- **WHEN** a Relative effect with a Fade Out of 1 bar, started over a scene, is stopped
-- **THEN** after 1 bar its channels hold the scene's values again and the effect is stopped
-
-#### Scenario: One Shot end
-
-- **WHEN** a Relative One Shot effect with a Fade Out reaches the end of its Duration
-- **THEN** it shows stopped, fades back over its Fade Out, then stops
-
-#### Scenario: Clicking a playing effect
-
-- **WHEN** the tile of a playing effect is clicked
-- **THEN** the effect stops: at once when Absolute, over its Fade Out when Relative
-
-#### Scenario: Cued again while fading out
-
-- **WHEN** a fading-out Relative effect is cued again halfway through its fade-out
-- **THEN** it fades in from where its channels are at that moment, with no jump
-
 ### Requirement: Effect fade settings
 
-The effect modifier SHALL show a Fade In widget and a Fade Out widget when the effect's Start is
-Relative, and hide them when it is Absolute. Each widget SHALL have a Bars field (0 to 64)
-and the same curve type, presets and control points as a scene's fade. The fade settings SHALL be
-saved with the show. A showfile without them SHALL load with both times at 0 and play unchanged.
+The effect modifier SHALL show a Fade In widget and a Fade Out widget, whatever the effect's Mode.
+Each widget SHALL have a Bars field (0 to 64) and the same
+curve type, presets and control points as a scene's fade. The fade settings SHALL be saved with the
+show. A showfile without them SHALL load with both times at 0 and play unchanged.
 
 #### Scenario: Switching Start shows the fades
 
-- **WHEN** the selected effect's Start is changed from Absolute to Relative
-- **THEN** the Fade In and Fade Out widgets appear in the effect modifier
+- **WHEN** the selected effect's Mode is changed from Layer to Replace
+- **THEN** its Fade In and Fade Out widgets stay in the effect modifier
 
 #### Scenario: Older showfile
 
 - **WHEN** a showfile saved before this change is loaded
 - **THEN** its effects have Fade In and Fade Out times of 0 and start and stop as before
+
+### Requirement: Effect fade-in
+
+An effect, in either Mode, SHALL fade in from what the fixtures show when it starts: the live value
+of the cue it covers, even a moving one, else the channel's value. Over its Fade In time (in bars, 0
+to 64), each channel it drives SHALL blend into the running effect along the Fade In curve, while
+the effect keeps moving. A Fade In of 0 SHALL start it at full strength. A Replace effect SHALL turn
+off the cue it covers once faded in.
+
+#### Scenario: Pan/tilt effect over a scene
+
+- **WHEN** a scene holds moving heads at pan 128, and a Layer circle effect with a Fade In of 2
+  bars is cued
+- **THEN** the heads start at pan 128 and reach the full circle after 2 bars, moving all along
+
+#### Scenario: No fade-in time
+
+- **WHEN** a Layer effect with a Fade In of 0 is cued
+- **THEN** it starts at full strength on its first frame
+
+#### Scenario: A Replace effect fades too
+
+- **WHEN** a Replace pan effect with a Fade In of 2 bars is cued over a Position scene
+- **THEN** it blends in from the scene's aim over 2 bars, then the scene turns off
+
+### Requirement: Effect fade-out
+
+Stopping an effect, in either Mode, with a Fade Out above 0 SHALL show it stopped at once and keep
+it running while each of its families blends back into the cue it covered, else rests (see
+playback), along the Fade Out curve. A Fade Out of 0 SHALL hand back at once.
+Cueing it again during its fade-out SHALL fade it back in from where the fade-out got to.
+
+#### Scenario: Fade back to the scene
+
+- **WHEN** a Layer effect with a Fade Out of 1 bar, started over a scene, is stopped
+- **THEN** after 1 bar its channels hold the scene's values again and the effect is stopped
+
+#### Scenario: One Shot end
+
+- **WHEN** a One Shot effect with a Fade Out reaches the end of its Duration
+- **THEN** it shows stopped, fades back over its Fade Out, then stops
+
+#### Scenario: Cued again while fading out
+
+- **WHEN** a fading-out effect is cued again halfway through its fade-out
+- **THEN** it fades back in from where its channels are at that moment, with no jump

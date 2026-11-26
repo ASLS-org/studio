@@ -119,26 +119,37 @@ Duration as its Fade In time and 0 as its Fade Out time.
 - **WHEN** a showfile saved before this change, with a scene of Duration 4, is loaded
 - **THEN** that scene's Fade In time is 4 bars and its Fade Out time is 0
 
-### Requirement: Scenes end once faded in
+### Requirement: Scenes stay on while they hold a family
 
-A started scene SHALL fade in over its Fade In time, from 0 in Absolute or from the channels'
-values in Relative, then SHALL end by itself: it shows stopped and its values stay on the
-fixtures. Stopping it before it ends SHALL show it stopped at once and SHALL fade its channels over
-its Fade Out time: to 0 in Absolute, back to the values it started from in Relative. Starting it
-again during its fade-out SHALL fade in from where the fade-out got to.
+A started scene SHALL fade in over its Fade In time from what the fixtures show, then SHALL stay
+on, its row showing it playing, while it holds a family (see playback). Stopping it SHALL show it stopped at
+once and hand its families back over its Fade Out time. Starting it again during its fade-out
+SHALL fade in from where the fade-out got to.
 
-#### Scenario: End
+#### Scenario: Stays on
 
-- **WHEN** a scene with a 2-bar Fade In is started and 2 bars pass
-- **THEN** its channels hold the scene's values and its tile shows it stopped
+- **WHEN** a scene with a 2-bar Fade In is started and 4 bars pass
+- **THEN** its channels hold the scene's values and its row still shows it playing
 
-#### Scenario: Fade out, Absolute
+#### Scenario: Turned off alone
 
-- **WHEN** an Absolute scene with a 1-bar Fade Out is stopped during its Fade In
-- **THEN** its tile shows it stopped at once, and after 1 bar its channels are at 0
+- **WHEN** the only cue on a fixture, a scene with a 1-bar Fade Out setting Dimmer at 255, is
+  turned off
+- **THEN** its row shows it stopped at once, and after 1 bar its Dimmer is 0
 
-#### Scenario: Fade out, Relative
+#### Scenario: Turned off over another scene
 
-- **WHEN** a Relative scene started over another scene, with a 1-bar Fade Out, is stopped during
-  its Fade In
+- **WHEN** a Layer scene started over another scene, with a 1-bar Fade Out, is turned off
 - **THEN** after 1 bar its channels are back at the other scene's values
+
+### Requirement: The scene editor follows the family
+
+A scene SHALL show in its channels widget only the channels of its family and those of no family.
+The colour picker SHALL show for Colour scenes only, and the pan/tilt picker for Position scenes
+only.
+
+#### Scenario: Colour scene
+
+- **WHEN** a Colour scene of moving heads is selected
+- **THEN** the channels widget lists only colour channels, the colour picker shows, and the
+  pan/tilt picker doesn't
