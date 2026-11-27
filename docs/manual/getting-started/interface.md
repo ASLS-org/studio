@@ -21,7 +21,7 @@ The bar across the top: menus on the left, the show's name in the middle, the cl
 | Menu | Entries | Explained in |
 | --- | --- | --- |
 | **File** | **New Showfile**, **Load Showfile**, **Save Showfile Locally**, **Export Showfile** | [Showfiles](/rig/showfiles) |
-| **Preferences** | **Visualizer** (its settings), **Outputs** (connections to your lights) | [Visualizer](/interface/visualizer/#settings), [Outputs](/rig/outputs) |
+| **Preferences** | **Visualizer** (its settings), **Outputs** (gateways and routes to your lights) | [Visualizer](/interface/visualizer/#settings), [Outputs](/rig/outputs) |
 | **About** | **Manual** (this manual), **License** (GPL-3.0), **Credits**, **Contact** | |
 
 Open a menu with a click; with one open, moving over another opens it. Each entry shows its
@@ -29,7 +29,9 @@ shortcut, which works without opening the menu ([Shortcuts](/reference/shortcuts
 
 The **show's name** in the middle gets a `*` when it has changes you haven't saved
 ([Showfiles](/rig/showfiles#where-your-show-lives)). The **clock** on the right holds the
-**BPM**, the play state and **Tap Tempo** ([Playing a show](/programming/playback#the-clock)).
+**BPM**, the play state and **Tap Tempo** ([Playing a show](/programming/playback#the-clock)). **OUTPUT**, at the far right, shows
+whether your universes reach your lights (green: sending, red: a gateway lost) and opens
+**Outputs** ([The OUTPUT indicator](/rig/outputs#the-output-indicator)).
 
 ## Patch Bay
 
@@ -67,7 +69,7 @@ make it taller or shorter.
 
 | You picked | The strip shows | Page |
 | --- | --- | --- |
-| A universe or a fixture | Universe settings and stream, its fixture pool, the fixture's settings, position and controls | [Patching fixtures](/programming/patching) |
+| A universe or a fixture | Universe settings and output, its fixture pool, the fixture's settings, position and controls | [Patching fixtures](/programming/patching) |
 | A group | Group settings, its fixture pool, its cue pool, and the selected cue's widgets | [Groups](/programming/groups), [Scenes](/programming/scenes), [Effects](/programming/effects) |
 | A chase | Chase settings and its timeline | [Chases](/programming/chases) |
 

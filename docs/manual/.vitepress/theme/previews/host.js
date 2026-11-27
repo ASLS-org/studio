@@ -93,10 +93,8 @@ export function loadShow(page, force = false) {
         group.stopAllChases?.();
         group.cuePool.cues.forEach((cue) => { if (cue.animationId != null) cue.cue(false); });
       });
-      // Outputs a demo added: previews never connect them, so drop them before the load clears
-      // the pool (Studio's own clearing throws once an output exists, see Known limitations)
-      show.universePool.universes.forEach((u) => { if (u.stream) u.stream.stop?.(); });
-      show.outputPool.outputs.splice(0);
+      // Gateways and routes a demo added go with the show (previews never connect them)
+      show.outputPool.clearAll();
       await show.loadFromData(data);
     })();
     loading.catch(() => { loading = null; });
