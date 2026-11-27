@@ -27,8 +27,8 @@
     "dist:win": "npm run electron:build && cross-env TARGET_PLATFORM=win32 TARGET_ARCH=x64 electron-builder --win --config ./src/electron/electron-builder.yml"
   },
   "dependencies": {
-    "@asls/wsc-client": "^2.0.5",
-    "@asls/wsc-sdk": "^2.0.5",
+    "@asls/wsc-client": "^2.2.0",
+    "@asls/wsc-sdk": "^2.2.0",
     "@electron-toolkit/utils": "^3.0.0",
     "@vue/compat": "^3.3.0",
     "axios": "^0.26.1",
