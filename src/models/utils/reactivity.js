@@ -6,4 +6,4 @@
  * trigger no Vue work; widgets read live values through the UI ticker instead. When the engine
  * moves to a Worker, this module is what goes away.
  */
-export { markRaw, toRaw } from 'vue';
+export { markRaw, reactive, toRaw } from 'vue';
