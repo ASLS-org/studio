@@ -163,7 +163,7 @@ class Universe {
   }
 
   /**
-   * Copies the patched fixtures' channel values into the universe frame
+   * Copies the patched fixtures' output values (parked, programmer, playback) into the frame
    *
    * @public
    * @returns {Uint8Array} The universe frame
@@ -175,9 +175,12 @@ class Universe {
       const fixture = address === undefined ? undefined : this._patch[address];
       const channel = fixture ? fixture.channels[i - address] : undefined;
       if (channel) {
-        // Invert / swap pan and tilt (Fixture.setupOutput): plain numbers, no allocation
+        // Invert / swap pan and tilt (Fixture.setupOutput): plain numbers, no allocation.
+        // Parked, then the programmer's, then playback's value (models/DMX/programmer.js)
         const source = fixture.channels[channel.outputSource] || channel;
-        const value = source.value.DMX;
+        let value = source.value.DMX;
+        if (source.parked !== null) value = source.parked;
+        else if (source.programmed !== null) value = source.programmed;
         frame[i] = channel.outputInvert ? 255 - value : value;
       } else {
         frame[i] = 0;

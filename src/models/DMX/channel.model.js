@@ -57,6 +57,32 @@ class Channel {
     this.owner = null;
     this.fromValue = 0;
     this.restValue = 0;
+    /**
+     * A value set by hand in the universe view (models/DMX/programmer.js), DMX 0-255, else null.
+     * It goes out instead of what playback writes, until cleared. Runtime only.
+     *
+     * @type {?Number}
+     */
+    this.programmed = null;
+    /**
+     * A parked value (Fixture.park), DMX 0-255, else null: it goes out whatever plays, above the
+     * programmer. Saved with the show by its fixture.
+     *
+     * @type {?Number}
+     */
+    this.parked = null;
+  }
+
+  /**
+   * The value that goes out: parked, else the programmer's, else what playback wrote
+   *
+   * @readonly
+   * @type {Number}
+   */
+  get output() {
+    if (this.parked !== null) return this.parked;
+    if (this.programmed !== null) return this.programmed;
+    return this._value.DMX;
   }
 
   /**
