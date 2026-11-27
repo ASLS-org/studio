@@ -181,6 +181,12 @@ export default {
   disabled look with the label not dimmed, like read-only text and selects); `relative` is for a
   field standing for several values: a `null` value shows the `placeholder` (`--`), and the arrows
   and arrow keys emit `step` (±1 precision unit) instead of changing the value (Position Tool).
+- **Locked controls**: `uk-fader` and `uk-num-input` take `locked` (no input, colour kept; the
+  universe view's parked channels). `disabled` greys them out instead.
+- **Widget header actions**: `uk-widget`'s `actions` (array of `action`-like items plus
+  `disabled`) puts square buttons right after the title, for actions that must stay in reach
+  however wide the widget (the channels widget's Clear programmer, Unpark). The single `action`
+  keeps its place at the right.
 - **View switches** in a widget (the Pan/Tilt Scope's Deg, Fit) sit among its fields as square
   `uk-button toggleable color="var(--accent-blue)"`, keyed by state, never in the header.
 - **Colour fields** (`uk-color-input`): `v-model` `#rrggbb`; a swatch opening the system picker

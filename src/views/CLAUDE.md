@@ -31,8 +31,9 @@ views/
                          name, icon and hint); cue.previews.js (a cue pool chip's
                          picture and value line: colour, level, aims, beam, wave or path,
                          "75%", "Pan 30° Tilt 45°"; waves over one cycle; cached per cue); cue.now.js (NOW: a family's source and value,
-                         the kept cue); chase.outcome.js (who holds what along a
-                         chase's timeline); outputs.js (gateway and route states for
+                         the kept cue); channel.source.js (what drives a channel: parked,
+                         programmer, cue, kept, rest, with its colour); chase.outcome.js
+                         (who holds what along a chase's timeline); outputs.js (gateway and route states for
                          the Outputs views)
 ```
 
@@ -75,6 +76,12 @@ views/
   its props, breaks them: update the preset (`npm run docs:manual:check` mounts all of them).
   `previews/FixtureControl.vue` copies the universe fragment's wiring of the channels, colour,
   pan/tilt and cells widgets.
+- **The universe view writes into the programmer** (`models/DMX/programmer.js`): every handler
+  wraps its writes in `Programmer.run($view.universeFixtures, …)`, so edits reach every selected
+  fixture. The channels widget is in live mode when given `sources` (`channelSource` per channel)
+  and `held`: menu box and fader coloured by source, Park / Clear first in the channel's menu,
+  **Clear programmer** and **Unpark** as `uk-widget` header `actions`. The scene editor passes
+  neither and stays blind.
 - `uk-list` keys rows by item `id`, else `name` (row state survives item changes, the list never
   writes to `items`): see skill `vue-ui-change` § Lists.
 - **The cue pool** (`group.modifier.widget.cuepool.vue`) is the group's programming view: one
