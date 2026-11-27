@@ -1,4 +1,5 @@
 import Worker from '@/worker?worker';
+import Claims from './claims';
 
 /**
  * Live states enumeration
@@ -228,6 +229,8 @@ class Live {
     } else {
       this.pauseTimeOffset = time - this.pauseStartTime;
     }
+    // Merge: the slots cues hold are written once the tick's cues ran
+    Claims.settle();
     // Frame phase: runs on every tick, after the animations and whatever the play state
     for (let i = 0; i < this.frameCallbacks.length; i++) {
       this.frameCallbacks[i].fn(this.time);

@@ -16,6 +16,7 @@
         v-show="!docked"
         :label="action.text"
         :icon="action.icon"
+        :title="action.title || null"
         @click="action.callback"
       />
       <uk-icon
@@ -68,7 +69,8 @@ export default {
     },
     /**
      * An action configuration object:
-     * {text: "String", icon: "String", callback: ()=>{console.log("Hello World")}}
+     * {text: "String", icon: "String", title: "String" (optional tooltip),
+     * callback: ()=>{console.log("Hello World")}}
      */
     action: {
       type: Object,

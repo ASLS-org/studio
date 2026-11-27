@@ -117,7 +117,18 @@
           @click="(e) => clickRow(e, row)"
           @delete="deleteRow(row)"
           @toggle="toggleRow(row)"
-        />
+        >
+          <!-- The caller's own row content (opt-in `row` slot, given the row's item) -->
+          <template
+            v-if="$slots.row"
+            #default
+          >
+            <slot
+              name="row"
+              :item="row.value"
+            />
+          </template>
+        </uk-list-item>
       </template>
       <!-- the space the rows don't fill -->
       <div class="uikit_list_filler" />
@@ -208,7 +219,8 @@ const keysOf = (items, prefix = '') => {
 /**
  * @component List of selectable, checkable, unfoldable, reorderable and deletable rows.
  * Row state (selection, highlights, checks, unfolded rows) is kept by key (item id, else name),
- * so it survives item changes and searches. The list never writes to `items`.
+ * so it survives item changes and searches. The list never writes to `items`. A `row` slot
+ * (scoped with `item`) gives top-level rows their own content, everything else of a row kept.
  * @namespace uikit/lists
  */
 export default {

@@ -1,19 +1,8 @@
 import Cue from './cue.model';
-import Fade from './fade.model';
+import { familyAt, noFamilies } from './families';
 import {
   readColor, writeColor, readPanTilt, writePanTilt,
 } from './cell.access';
-
-/**
- * Enumeration of scene's running directions
- *
- * @constant {Object} SCENE_DIRECTIONS
- * @enum {Number}
- */
-const SCENE_DIRECTIONS = {
-  IN: 0,
-  OUT: 1,
-};
 
 /**
  * Deep-clones the {type: [channel, ...]} accessor map without going through
@@ -66,18 +55,6 @@ class FixtureValue {
    */
   constructor(fixture, channelValues) {
     this.fixture = fixture;
-    // Channel value access by fixture channel index, for cell.access.js
-    this._read = (index) => {
-      const entry = this.entryOf(index);
-      return entry ? entry.value : 0;
-    };
-    this._write = (index, value) => {
-      const entry = this.entryOf(index);
-      if (!entry) return;
-      entry.value = value;
-      entry.active = true;
-      this.setQuickAccessor(entry);
-    };
 
     // Internal flattened representation used by the runtime update loop.
     // Keeping the original quickChannelsAccessors structure intact preserves
@@ -203,7 +180,9 @@ class FixtureValue {
    * @returns {Array<Number>} RGB 0-255
    */
   getColor(cells = null) {
-    return readColor(this.fixture.channels, cells, this._read);
+    // Through the object it's called on: an editor's call reads (and a chip's preview tracks) the
+    // reactive entries
+    return readColor(this.fixture.channels, cells, (index) => this.readEntry(index));
   }
 
   /**
@@ -214,7 +193,8 @@ class FixtureValue {
    * @param {?Array<String>} [cells=null] Cell names, null for all
    */
   setColor(rgbValue, cells = null) {
-    writeColor(this.fixture.channels, rgbValue, cells, this._write);
+    // Through the object it's called on: an editor's write reaches Vue (the chip redraws at once)
+    writeColor(this.fixture.channels, rgbValue, cells, (index, v) => this.writeEntry(index, v));
   }
 
   /**
@@ -225,7 +205,7 @@ class FixtureValue {
    * @returns {Object} `pan`, `panFine`, `tilt`, `tiltFine` (0-255)
    */
   getPanTilt(cells = null) {
-    return readPanTilt(this.fixture.channels, cells, this._read);
+    return readPanTilt(this.fixture.channels, cells, (index) => this.readEntry(index));
   }
 
   /**
@@ -236,7 +216,35 @@ class FixtureValue {
    * @param {?Array<String>} [cells=null] Cell names, null for all
    */
   setPanTilt(value, cells = null) {
-    writePanTilt(this.fixture.channels, value, cells, this._write);
+    writePanTilt(this.fixture.channels, value, cells, (index, v) => this.writeEntry(index, v));
+  }
+
+  /**
+   * This scene's value of a fixture channel, by the channel's index in the fixture (0 when unset)
+   *
+   * @public
+   * @param {Number} index Channel index
+   * @returns {Number}
+   */
+  readEntry(index) {
+    const entry = this.entryOf(index);
+    return entry ? entry.value : 0;
+  }
+
+  /**
+   * Sets this scene's value of a fixture channel, by the channel's index in the fixture, and
+   * activates it
+   *
+   * @public
+   * @param {Number} index Channel index
+   * @param {Number} value DMX value
+   */
+  writeEntry(index, value) {
+    const entry = this.entryOf(index);
+    if (!entry) return;
+    entry.value = value;
+    entry.active = true;
+    this.setQuickAccessor(entry);
   }
 
   /**
@@ -338,23 +346,71 @@ class Scene extends Cue {
   constructor(sceneData) {
     super(sceneData);
 
-    this.direction = SCENE_DIRECTIONS.IN;
     this.fixtures = sceneData.fixtures;
     this.fixtureValues = sceneData.fixtureValues;
+    // A scene saved before fades had their own time faded in over its Duration; a new scene fades
+    // in over a bar
+    this.fadeIn = Cue.buildFade(sceneData.fadeIn, 0, sceneData.duration ?? 1);
+  }
 
-    this.fadeIn = new Fade({
-      direction: 0,
-      // duration: sceneData.duration
-      ...sceneData.fadeIn,
+  /**
+   * A scene stays on until it is turned off, taken over or deleted, whatever its Loop Style
+   *
+   * @readonly
+   * @type {Boolean}
+   */
+  // eslint-disable-next-line class-methods-use-this
+  get endsAfterDuration() {
+    return false;
+  }
+
+  /**
+   * The scene's show data with only some families' channels active (an older Look split into one
+   * cue per family on load): the other entries stay, inactive
+   *
+   * @public
+   * @param {Function} keeps `(family) => Boolean` for a family index, -1 for no family
+   * @returns {Object} show data
+   */
+  familyData(keeps) {
+    const data = this.showData;
+    data.fixtureValues = data.fixtureValues.map((fixtureValue, i) => {
+      const { fixture } = this.fixtureValues[i];
+      // A placeholder's channels are unknown: its values stay with the cue keeping the channels
+      // of no family
+      if (fixture.isPlaceholder) {
+        return keeps(-1) ? fixtureValue : { ...fixtureValue, channelValues: [] };
+      }
+      const channels = fixture.channels || [];
+      return {
+        ...fixtureValue,
+        channelValues: fixtureValue.channelValues.map((entry) => ({
+          ...entry,
+          active: !!entry.active && keeps(familyAt(channels, entry.id - 1)),
+        })),
+      };
     });
+    return data;
+  }
 
-    this.fadeOut = new Fade({
-      direction: 1,
-      // duration: sceneData.duration
-      ...sceneData.fadeOut,
-    });
-
-    this.duration = sceneData.duration;
+  /**
+   * The families of the channels the scene sets (its active channels)
+   *
+   * @readonly
+   * @type {Array<Boolean>}
+   */
+  get usedFamilies() {
+    const used = noFamilies();
+    const fixtureValues = this._fixtureValues || [];
+    for (let i = 0; i < fixtureValues.length; i++) {
+      const { fixture, channels } = fixtureValues[i];
+      for (let j = 0; j < channels.length; j++) {
+        const entry = channels[j];
+        const channel = entry.active && fixture.channels ? fixture.channels[entry.id - 1] : null;
+        if (channel && channel.family > -1) used[channel.family] = true;
+      }
+    }
+    return used;
   }
 
   /**
@@ -413,42 +469,6 @@ class Scene extends Cue {
   }
 
   /**
-   * Scene running direction (in/out)
-   *
-   * @type {Number}
-   */
-  set direction(direction) {
-    this._direction = direction;
-  }
-
-  get direction() {
-    return this._direction;
-  }
-
-  /**
-   * Cue duration in bars
-   *
-   * @type {Number}
-   */
-  set duration(duration) {
-    super.duration = duration;
-
-    if (this.fadeIn) {
-      this.fadeIn.duration = this.duration;
-      this.fadeOut.duration = this.duration;
-    }
-  }
-
-  /**
-   * Cue duration in bars
-   *
-   * @type {Number}
-   */
-  get duration() {
-    return super.duration;
-  }
-
-  /**
    * Scene's listable fixtures data
    *
    * @readonly
@@ -481,8 +501,6 @@ class Scene extends Cue {
         },
         channelValues: fv.channelValues,
       })),
-      fadeIn: this.fadeIn.showData,
-      fadeOut: this.fadeOut.showData,
     });
   }
 
@@ -552,78 +570,19 @@ class Scene extends Cue {
   }
 
   /**
-   * Adds current DMX channel values to every channelValue
-   *
-   * This is used when running scenes in relative mode so
-   * transition from current value to preset value is smooth.
-   *
-   * @public
-   */
-  prepareStartValues() {
-    const fixtureValues = this._fixtureValues;
-
-    for (let i = 0; i < fixtureValues.length; i++) {
-      const fixtureValue = fixtureValues[i];
-      const { channels } = fixtureValue;
-      const { fixture } = fixtureValue;
-
-      for (let j = 0; j < channels.length; j++) {
-        const channel = channels[j];
-
-        if (channel.active) {
-          const accessor = fixture.getQuickAccessor(channel);
-
-          if (accessor) {
-            channel.startValue = accessor.value.DMX;
-          }
-        }
-      }
-    }
-  }
-
-  /**
-   * Updates scene over time
+   * Writes the scene's values. While it plays, they are proposals: the merge blends them with what
+   * is underneath by the cue's fade (claims.js)
    *
    * @public
    * @override
-   *
-   * @param {Number} time update time
-   * @param {Number} duration update duration
+   * @param {Number} time time since cued (or within the chase item), in ms
    */
-  update(time, duration = null) {
+  update(time) {
     this.time = time;
-    this.DMXActivity = 0;
-
-    const { relative } = this;
-
-    if (
-      (!this.state && relative)
-      || (time === 0 && relative)
-    ) {
-      this.prepareStartValues();
-      this.state = 1;
-    }
-
-    // Preserve the existing fallback behavior.
-    duration = duration || this.durationMS;
-
-    const directionIn = this.direction === SCENE_DIRECTIONS.IN;
-    const fade = directionIn ? this.fadeIn : this.fadeOut;
-
-    // Fade is calculated exactly once per Scene update.
-    const fadeFactor = time < duration
-      ? fade.getValue(time, duration)
-      : 1;
-
     const fixtureValues = this._fixtureValues;
-
     let activity = 0;
 
-    // Hot path:
-    // - no Object.keys()
-    // - no nested Object.keys()
-    // - no forEach callbacks
-    // - no repeated fixtureValues getter
+    // Hot path: no Object.keys(), no callbacks, no repeated getters
     for (let i = 0; i < fixtureValues.length; i++) {
       const fixtureValue = fixtureValues[i];
       const { channels } = fixtureValue;
@@ -637,17 +596,7 @@ class Scene extends Cue {
           continue;
         }
 
-        const finalValue = directionIn
-          ? channelValue.value
-          : 0;
-
-        const raw = relative
-          ? channelValue.startValue
-            + (finalValue - channelValue.startValue) * fadeFactor
-          : finalValue * fadeFactor;
-        // An overshooting fade curve goes past its target: DMX stays within 0-255
-        // eslint-disable-next-line no-nested-ternary
-        const value = raw < 0 ? 0 : (raw > 255 ? 255 : raw);
+        const { value } = channelValue;
 
         // This condition patches fine channels not updating automatically.
         if (!channelValue.isFine) {
@@ -659,10 +608,6 @@ class Scene extends Cue {
     }
 
     this.DMXActivity = activity;
-
-    if (time >= duration) {
-      this.state = this.direction;
-    }
   }
 
   /**

@@ -38,30 +38,39 @@ in [Groups](/programming/groups).
 
 ## 4. A Red Scene
 
-1. In the group's **Cue Pool**, double click the first empty slot.
-2. Keep **scene**, name it `Red`, press **OK**. The scene is selected, and its widgets open on the
+A scene sets one family: a colour scene for the red, an intensity scene for the light.
+
+1. In the group's **Cue Pool**, click **add** in the head of the **Colour** column.
+2. Keep **Scene**, name it `Red`, press **OK**. The scene opens, and its widgets appear on the
    right of the group view (scroll the strip sideways to reach them).
 3. In **Scene Fixtures**, click the first PAR.
-4. In **Channels**, tick the box under **CH1** (the dimmer, with the half-filled circle icon), then
-   type `255` above its fader or push it to the top.
-5. In the **Color Picker**, drag the hue to red, or type `0`, `100` and `100` in its **hue**,
+4. In the **Color Picker**, drag the hue to red, or type `0`, `100` and `100` in its **hue**,
    **sat** and **val** fields.
-6. Click the second PAR in **Scene Fixtures** and repeat steps 4 and 5.
+5. Click the second PAR in **Scene Fixtures** and repeat step 4.
+6. Click **add** in the head of the **Intensity** column, keep **Scene**, name it `Full`, press
+   **OK**.
+7. For each PAR in **Scene Fixtures**: in **Channels**, tick the box under **CH1** (the dimmer, with
+   the half-filled circle icon), then type `255` above its fader or push it to the top.
 
-Click the scene's body in the cue pool: both PARs fade to red over one bar (its **Duration**), then
-the scene stops and the red stays. Only ticked channels are part of the scene: anything you leave
-unticked keeps whatever another cue gave it. More in [Scenes](/programming/scenes).
+Programming is blind: the PARs don't change while you set values. Click `Full`'s **play** button in
+the cue pool, then `Red`'s: both PARs fade to red over one bar (their **Fade in**), and the scenes
+stay on until you stop them. Only ticked channels are part of a scene: anything you leave unticked
+keeps whatever another cue gave it. More in [Scenes](/programming/scenes).
 
 ## 5. A Pulsing Effect
 
-1. Double click the next empty slot of the **Cue Pool**, choose **effect** as **Cue type**, name
-   it `Pulse`, press **OK**.
-2. In **Modulated Channels**, press **Add**. In the **Add Modulated Channel** popup, unfold
-   **Dimmer**, pick **dimmer** and press **OK**.
+1. Click **add** in the head of the **Intensity** column, choose **Effect** as its **Type**, name it
+   `Pulse`, press **OK**.
+2. In **Modulated Channels**, press **Add**. The **Add Modulated Channel** popup lists the PARs'
+   intensity channels: pick **Dimmer** and press **OK**.
 3. Click **Dimmer** in **Modulated Channels**, then in the **Effect Tool** set **Phase stop** to
    `180`: the two PARs now pulse in turn.
 
-Play it from the cue pool to see it, then click it again to stop it. With **Phase stop** at `0`
+Click `Pulse`'s **play** button, with `Full` and `Red` still on: `Pulse` takes the PARs' intensity
+and `Full` turns off (a new cue **Replaces** the one it takes over), while `Red` keeps the colour, so
+the PARs pulse red. Stop `Pulse` with its **play** button: the PARs go dark until you play `Full`
+again. (Set `Pulse`'s **Mode** to **Layer** in **Cue Settings** to have `Full` come back by
+itself.) With **Phase stop** at `0`
 both PARs would pulse together; at `180` the second is half a cycle behind the first, so one is
 bright when the other is dark. More in [Effects](/programming/effects).
 
@@ -69,8 +78,8 @@ bright when the other is dark. More in [Effects](/programming/effects).
 
 1. In the group pool, double click the first empty chase slot of `Front`. The chase view opens.
 2. Set its **Duration** to `2` bars.
-3. In the timeline, double click the `Red` lane at its start (**1.0** on the ruler), then the
-   `Pulse` lane at **2.0**. Each item lasts its cue's duration: one bar.
+3. In the timeline, double click the `Full` lane and the `Red` lane at their start (**1.0** on the
+   ruler), then the `Pulse` lane at **2.0**. Each item lasts one bar.
 
 Lanes are the group's cues, in cue pool order. An item plays its cue from its left edge for its
 length; a scene item fades in over its cue's duration and keeps its look until the next item

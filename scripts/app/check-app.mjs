@@ -9,8 +9,8 @@
  * Usage: npm run app:check [-- --url http://localhost:5173] [--only <scenario> ...]
  *   --url    use a running dev server instead of starting one
  *   --only   run only these scenarios (repeatable): panels, playing, textscroll, select, resize,
- *            widgets, curves, repatch, position, scopes, presets, memory, shared, highlight,
- *            deletes, keys, popups
+ *            widgets, curves, repatch, position, scopes, fxfades, families, presets, memory,
+ *            shared, highlight, deletes, keys, popups
  * Chrome: CHROME_PATH, else the usual install path for the system.
  */
 /* eslint-disable no-console -- a command-line report */
@@ -182,6 +182,13 @@ function installProbes() {
   });
   window.__check = {
     show,
+    // An app module, the instance the app runs (the URL it was loaded from: a module edited
+    // while the dev server runs is served with a version query, another URL is another instance)
+    module(modulePath) {
+      const url = performance.getEntriesByType('resource').map((e) => e.name)
+        .find((n) => n.split('?')[0].endsWith(modulePath));
+      return import(url || modulePath);
+    },
     errors,
     longTasks,
     resetLongTasks() { longTasks.length = 0; steps.length = 0; inputs.length = 0; },
@@ -207,7 +214,7 @@ function installProbes() {
     fixturePool() { return listState(panelEl()?.querySelector('.modifier_widget_fixture_pool')); },
     sceneList() { return listState(panelEl()?.querySelector('.scene_fixtures')); },
     selectedCue() {
-      const tile = panelEl()?.querySelector('.cuepool_widget .grid_item.selected:not(.empty) .grid_item_footer');
+      const tile = panelEl()?.querySelector('.cuepool_widget .cue_chip.selected .cue_chip_name');
       return text(tile);
     },
     groupName() {
@@ -346,7 +353,13 @@ async function unfoldUniverse(page, id) {
 /** Clicks a fixture row (by fixture id) in a list of the panel in view */
 const clickRow = (page, list, id, modifiers) => click(page, `${list} .uikit_list_item[data-key="id:${id}"]`, null, { modifiers, within: '.universe_modifier, .group_modifier', x: 40 });
 /** Selects a cue (its name strip) in the group's cue pool */
-const selectCueTile = (page, name) => click(page, '.cuepool_widget .grid_item_footer', name);
+/**
+ * Clicks a cue's row in the cue pool: by its id (a cue `{ id }` or an id: names repeat once older
+ * cues are split per family), else by its name
+ */
+const selectCueTile = (page, cue) => (typeof cue === 'string'
+  ? click(page, '.cuepool_widget .cue_chip .cue_chip_name', cue)
+  : click(page, `.cuepool_widget .cue_chip[data-cue="${cue.id ?? cue}"] .cue_chip_name`));
 /** Presses a key, with modifiers */
 async function press(page, key, modifiers = []) {
   for (const m of modifiers) await page.keyboard.down(m);
@@ -364,6 +377,8 @@ const PAGE_MODULES = {
   placement: '/src/views/utils/placement.js',
   palette: '/src/views/utils/palette.js',
   scope: '/src/views/utils/effect.scope.js',
+  live: '/src/models/DMX/live.model.js',
+  claims: '/src/models/DMX/claims.js',
 };
 /** Text of a channel preset option: its span and label */
 const presetText = (r) => `${r.label} ${r.start === r.end ? r.start : `${r.start}–${r.end}`}`;
@@ -734,7 +749,7 @@ const SCENARIOS = {
     const effectGroup = d.groups.find((g) => g.cues.some((c) => c.type === 1));
     if (effectGroup) {
       await openGroup(page, effectGroup.name);
-      await selectCueTile(page, effectGroup.cues.find((c) => c.type === 1).name);
+      await selectCueTile(page, effectGroup.cues.find((c) => c.type === 1));
       const fields = () => page.evaluate(() => {
         const w = [...document.querySelectorAll('.widget_wave')].find((e) => e.offsetParent);
         if (!w) return null;
@@ -777,7 +792,7 @@ const SCENARIOS = {
     const sceneGroup = d.groups.find((g) => g.cues.some((c) => c.type === 0));
     const scene = sceneGroup.cues.find((c) => c.type === 0);
     await openGroup(page, sceneGroup.name);
-    await selectCueTile(page, scene.name);
+    await selectCueTile(page, scene);
     const onCurve = () => page.evaluate(() => {
       const w = [...document.querySelectorAll('.widget_curve')].find((e) => e.offsetParent);
       const canvas = w.querySelector('canvas');
@@ -833,7 +848,7 @@ const SCENARIOS = {
     const group = d.groups.find((g) => g.cues.some((c) => c.type === 0));
     const scene = group.cues.find((c) => c.type === 0);
     await openGroup(page, group.name);
-    await selectCueTile(page, scene.name);
+    await selectCueTile(page, scene);
     const fadeOf = () => page.evaluate((id) => {
       const cue = window.__check.show.groupPool.groups.flatMap((g) => g.cuePool.cues)
         .find((c) => c.id === id);
@@ -846,14 +861,14 @@ const SCENARIOS = {
     await page.evaluate(() => window.__check.show.refreshSaveState());
 
     // The picker: a standard select of named presets, each with a picture of its curve
-    await click(page, '.widget_curve .widget_curve_type .uikit_select_textbox_wrapper');
+    await click(page, '.scene_fade_in .widget_curve_type .uikit_select_textbox_wrapper');
     const options = await page.evaluate(() => [...document.querySelectorAll(
       '.uikit_select_option_list .uikit_select_option',
     )].map((o) => ({ name: o.textContent.trim(), curve: !!o.querySelector('svg path') })));
     await click(page, '.uikit_select_option_list .uikit_select_option', 'Expo out');
     const picked = await fadeOf();
     const box = await page.evaluate(() => {
-      const t = document.querySelector('.widget_curve_type .uikit_select_textbox');
+      const t = document.querySelector('.scene_fade_in .widget_curve_type .uikit_select_textbox');
       return { text: t?.textContent.trim(), curve: !!t?.querySelector('svg path') };
     });
     const unsaved = await page.evaluate(() => {
@@ -872,7 +887,8 @@ const SCENARIOS = {
     );
 
     // Playback follows the drawn curve: Ease in at half time plays its value at time 0.5
-    const played = await page.evaluate((id) => {
+    const played = await page.evaluate(async (id, modules) => {
+      const Claims = (await window.__check.module(modules.claims)).default;
       const cue = window.__check.show.groupPool.groups.flatMap((g) => g.cuePool.cues)
         .find((c) => c.id === id);
       if (cue.animationId != null) cue.cue(false);
@@ -881,10 +897,20 @@ const SCENARIOS = {
       const channel = fv.channels.find((c) => c.active && !c.isFine);
       const target = 200;
       channel.value = target;
+      // Faded in from what the fixture shows: 0 here
+      fv.fixture.getQuickAccessor(channel).value = 0;
+      const token = Claims.take(cue);
       const read = () => fv.fixture.getQuickAccessor(channel).value.DMX;
       const at = (type, fraction) => {
         cue.fadeIn.type = type;
-        cue.update(fraction * 1000, 1000);
+        // The scene's own fade-in at that fraction of its time
+        cue.fadeIn.duration = 1;
+        cue.fadeStart = 0;
+        cue.fadeFrom = 0;
+        cue.computeFadeFactor(fraction * cue.fadeInMS);
+        // Played under a claim, then merged (the merge blends by the fade)
+        cue.play(token, 0);
+        Claims.settle();
         return read();
       };
       const easeIn = at(3, 0.5);
@@ -896,10 +922,11 @@ const SCENARIOS = {
         max = Math.max(max, at(28, k / 100));
         raw = Math.max(raw, cue.fadeIn.value);
       }
+      Claims.release(token);
       return {
         easeIn, linear, max, raw, back: cue.fadeIn.presetNames[28],
       };
-    }, scene.id);
+    }, scene.id, PAGE_MODULES);
     check(
       'an Ease in fade to 200 plays about 63 at half time (its curve), Linear 100',
       Math.abs(played.easeIn - 63) <= 2 && Math.round(played.linear) === 100,
@@ -1129,23 +1156,27 @@ const SCENARIOS = {
   /** Pan/Tilt and Colour scopes: views, drags, keys, fields, shapes, presets and the editor */
   async scopes(page) {
     const d = await demo(page);
-    // An effect with Pan, Tilt and colour waves, and one with colour waves only
+    // A Position effect (Pan and Tilt waves), a Colour effect and an Intensity effect (Dimmer)
     const found = await page.evaluate(() => {
       const types = (cue) => (cue.channels || []).map((c) => c.type);
       for (const group of window.__check.show.groupPool.groups) {
         const effects = group.cuePool.cues.filter((c) => c.type === 1);
-        const both = effects.find((c) => ['Pan', 'Tilt', 'Red'].every((t) => types(c).includes(t)));
+        const both = effects.find((c) => ['Pan', 'Tilt'].every((t) => types(c).includes(t)));
         const colour = effects.find((c) => !types(c).includes('Pan') && types(c).includes('Red'));
-        if (both && colour) return { group: group.id, both: both.id, colour: colour.id };
+        const dimmer = effects.find((c) => types(c).includes('Dimmer'));
+        if (both && colour && dimmer) {
+          return {
+            group: group.id, both: both.id, colour: colour.id, dimmer: dimmer.id,
+          };
+        }
       }
       return null;
     });
     if (!found) {
-      check('the demo has an effect with Pan, Tilt and colour waves, and a colour-only one', false, found);
+      check('the demo has a Position effect, a Colour effect and an Intensity effect', false, found);
       return;
     }
     const group = d.groups.find((g) => g.id === found.group);
-    const cueName = (id) => group.cues.find((c) => c.id === id).name;
     const waves = (id = found.both) => page.evaluate((gid, cid) => {
       const { cues } = window.__check.show.groupPool.getFromId(gid).cuePool;
       const cue = cues.find((c) => c.id === cid);
@@ -1214,7 +1245,7 @@ const SCENARIOS = {
       await wait(300);
     };
     await openGroup(page, group.name);
-    await selectCueTile(page, cueName(found.both));
+    await selectCueTile(page, found.both);
     await wait(300);
     await selectChannel('Pan');
     const both = await shown();
@@ -1226,12 +1257,18 @@ const SCENARIOS = {
         && both.dots.slice(1).every((text) => text === ''),
       both,
     );
+    await selectCueTile(page, found.colour);
+    await wait(300);
     await selectChannel('Red');
     const red = await shown();
+    await selectCueTile(page, found.dimmer);
+    await wait(300);
     await selectChannel('Dimmer');
     const dimmer = await shown();
+    await selectCueTile(page, found.both);
+    await wait(300);
     check(
-      'Red selected: the Colour Scope alone; Dimmer selected: no scope',
+      'Red selected (a Colour effect): the Colour Scope alone; Dimmer selected (an Intensity effect): no scope',
       red.colour === 1 && red.pantilt === 0 && dimmer.colour === 0 && dimmer.pantilt === 0,
       { red, dimmer },
     );
@@ -1246,12 +1283,12 @@ const SCENARIOS = {
     });
     check('the scope comes before the Effect Tool', order.pantilt >= 0 && order.pantilt < order.wave, order);
 
-    await selectCueTile(page, cueName(found.colour));
+    await selectCueTile(page, found.colour);
     await wait(300);
     await selectChannel('Red');
     const colourOnly = await shown();
     check('a colour-only effect shows the Colour Scope and no Pan/Tilt Scope', colourOnly.pantilt === 0 && colourOnly.colour === 1, colourOnly);
-    await selectCueTile(page, cueName(found.both));
+    await selectCueTile(page, found.both);
     await wait(300);
     await selectChannel('Pan');
 
@@ -1491,6 +1528,9 @@ const SCENARIOS = {
       },
     );
 
+    // The colour channels: on the Colour effect
+    await selectCueTile(page, found.colour);
+    await wait(300);
     await selectChannel('Red');
     // Colour strip: drags snap to 15°, fields, presets
     await reveal('.colour_scope');
@@ -1515,10 +1555,10 @@ const SCENARIOS = {
       await page.mouse.up();
       await wait(SETTLE_MS);
     };
-    const colourBefore = await waves();
+    const colourBefore = await waves(found.colour);
     const colourTypes = ['Red', 'Green', 'Blue'].filter((t) => colourBefore[t]);
     await dragStrip(strip.y + strip.band / 2, strip.width / 4 + 3);
-    const shifted = await waves();
+    const shifted = await waves(found.colour);
     const expectPhase = (t) => {
       const phase = colourBefore[t].phase - 90 * colourBefore[t].frequency;
       return Math.round(((phase % 360) + 360) % 360) % 360;
@@ -1542,7 +1582,7 @@ const SCENARIOS = {
       const canvas = [...document.querySelectorAll('.colour_scope_canvas')].find((e) => e.offsetParent);
       canvas.closest('.colour_scope_field').scrollTop = 0;
     });
-    const spread = await waves();
+    const spread = await waves(found.colour);
     check(
       'dragging the last row changes every colour wave\'s Phase stop',
       colourTypes.every((t) => spread[t].stop !== shifted[t].stop),
@@ -1552,7 +1592,7 @@ const SCENARIOS = {
       const { cues } = window.__check.show.groupPool.getFromId(gid).cuePool;
       return cues.find((c) => c.id === cid).channels.map((c) => c.type)
         .filter((t) => ['Red', 'Green', 'Blue', 'Cyan', 'Magenta', 'Yellow', 'White', 'Amber'].includes(t));
-    }, found.group, found.both);
+    }, found.group, found.colour);
     // Preset and Spread share the first row half and half, nothing else on it
     const head = await page.evaluate(() => {
       const scope = [...document.querySelectorAll('.colour_scope')].find((e) => e.offsetParent);
@@ -1573,7 +1613,7 @@ const SCENARIOS = {
     );
     // Fields: Phase stop 0 on every colour wave
     await typeIn('.colour_scope_fixturePhaseStop', '0');
-    const stopped = await waves();
+    const stopped = await waves(found.colour);
     check('typing Phase stop 0 sets it on every colour wave', colourWaves.every((t) => stopped[t].stop === 0), colourWaves.map((t) => stopped[t].stop));
     // A preset that adds a channel: it shows in Modulated Channels at once
     await page.evaluate((gid, cid) => {
@@ -1581,7 +1621,7 @@ const SCENARIOS = {
       const cue = cues.find((c) => c.id === cid);
       const blue = cue.channels.find((c) => c.type === 'Blue');
       if (blue) cue.deleteChannel(blue);
-    }, found.group, found.both);
+    }, found.group, found.colour);
     await wait(SETTLE_MS);
     const channelNames = () => page.evaluate(() => [...document.querySelectorAll(
       '.modifier_widget_effect_channels .uikit_list_item',
@@ -1606,10 +1646,10 @@ const SCENARIOS = {
       input.value = h;
       input.dispatchEvent(new Event('input', { bubbles: true }));
     }, end, hex);
-    const rainbow = await waves();
+    const rainbow = await waves(found.colour);
     await setColourInput('b', '#ff8000');
     await wait(SETTLE_MS);
-    const warm = await waves();
+    const warm = await waves(found.colour);
     check(
       'Colour B #ff8000 on Rainbow sets the Max of red, green, blue to 255, 128, 0 and keeps their phases',
       warm.Red.max === 255 && warm.Green.max === 128 && warm.Blue.max === 0
@@ -1624,7 +1664,7 @@ const SCENARIOS = {
     await page.keyboard.type('20c0ff');
     await page.keyboard.press('Enter');
     await wait(SETTLE_MS);
-    const typedA = await waves();
+    const typedA = await waves(found.colour);
     const shownA = await colourInputs();
     check(
       'typing 20c0ff in Colour A sets every channel\'s Min (32, 192, 255) and the field shows it',
@@ -1632,7 +1672,8 @@ const SCENARIOS = {
         && shownA[0] === '#20c0ff',
       { red: typedA.Red, shownA },
     );
-    // Add Modulated Channel: the fixtures' channels with icons, in use marked; OK adds and selects
+    // Add Modulated Channel: the Colour effect's channels (colour, and of no family) with icons, in
+    // use marked; OK adds and selects
     await click(page, '.modifier_widget_effect_channels .uikit_button', 'add');
     const offered = await page.evaluate(() => {
       const popup = [...document.querySelectorAll('.popup_fx_channels')].find((e) => e.offsetParent);
@@ -1653,10 +1694,11 @@ const SCENARIOS = {
       const sel = [...document.querySelectorAll('.modifier_widget_effect_channels .uikit_list_item.selected')]
         .filter((e) => e.offsetParent).map((e) => e.textContent.trim());
       return { types, sel };
-    }, found.group, found.both);
+    }, found.group, found.colour);
     check(
-      'Add Modulated Channel lists the fixtures\' channels with icons (Pan in use); OK adds one and selects it',
-      offered.length > 4 && offered.every((o) => o.icon) && offered.some((o) => o.inUse && /^Pan/.test(o.name))
+      'Add Modulated Channel lists a Colour effect\'s channels (colour and of no family) with icons (Red in use, no Pan or Dimmer); OK adds one and selects it',
+      offered.length > 4 && offered.every((o) => o.icon) && offered.some((o) => o.inUse && /^Red/.test(o.name))
+        && !offered.some((o) => /^(Pan|Tilt|Dimmer)/.test(o.name))
         && fresh && afterAdd.types.includes(fresh.name)
         && afterAdd.sel.some((n) => n.startsWith(fresh.name)),
       { offered: offered.map((o) => `${o.name}${o.inUse ? '*' : ''}`), fresh, afterAdd },
@@ -1667,7 +1709,7 @@ const SCENARIOS = {
     const policeInputs = await colourInputs();
     await setColourInput('b', '#4b0082');
     await wait(SETTLE_MS);
-    const police = await waves();
+    const police = await waves(found.colour);
     const swatches = await page.evaluate(
       async (modules) => (await import(modules.palette)).default,
       PAGE_MODULES,
@@ -1684,7 +1726,7 @@ const SCENARIOS = {
     // Chase: a Width field, setting every PWM colour wave
     await pickFrom('.colour_scope_preset', 'Chase');
     await typeIn('.colour_scope_width', '30');
-    const chased = await waves();
+    const chased = await waves(found.colour);
     check(
       'Chase shows a Width field; typing 30 sets every colour wave\'s PWM width',
       ['Red', 'Green', 'Blue'].every((t) => chased[t].width === 30),
@@ -1693,14 +1735,14 @@ const SCENARIOS = {
 
     // Presets are absolute: Strobe and Police, then Fade, equal Fade alone, from Colour A to B
     await pickFrom('.colour_scope_preset', 'Fade');
-    const fadeAlone = await waves();
+    const fadeAlone = await waves(found.colour);
     await pickFrom('.colour_scope_preset', 'Strobe');
     const strobeSpread = await selectText('.colour_scope_spread');
     const strobePreset = await selectText('.colour_scope_preset');
     await page.evaluate((gid, cid) => {
       const { cues } = window.__check.show.groupPool.getFromId(gid).cuePool;
       cues.find((c) => c.id === cid).channels.find((c) => c.type === 'Green').phase = 33;
-    }, found.group, found.both);
+    }, found.group, found.colour);
     await wait(SETTLE_MS);
     const editedPreset = await selectText('.colour_scope_preset');
     check(
@@ -1710,7 +1752,7 @@ const SCENARIOS = {
     );
     await pickFrom('.colour_scope_preset', 'Police');
     await pickFrom('.colour_scope_preset', 'Fade');
-    const fadeAgain = await waves();
+    const fadeAgain = await waves(found.colour);
     const [hexA, hexB] = await colourInputs();
     const rgbOf = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
     const [a, b] = [rgbOf(hexA), rgbOf(hexB)];
@@ -1728,13 +1770,18 @@ const SCENARIOS = {
     const dotsNow = () => page.evaluate(() => [...document.querySelectorAll('.pantilt_scope_dot')]
       .filter((e) => e.getClientRects().length).map((e) => `${e.style.left},${e.style.top}`).join(' '));
     await probe(page, 'resetLongTasks');
-    await page.evaluate((gid, cid) => {
+    // The Colour and Position effects play
+    await page.evaluate((gid, ids) => {
       const { cues } = window.__check.show.groupPool.getFromId(gid).cuePool;
-      const cue = cues.find((c) => c.id === cid);
-      if (cue.animationId == null) cue.cue(true);
-    }, found.group, found.both);
+      ids.forEach((cid) => {
+        const cue = cues.find((c) => c.id === cid);
+        if (cue.animationId == null) cue.cue(true);
+      });
+    }, found.group, [found.colour, found.both]);
     await wait(800);
     const playhead = await page.evaluate(() => [...document.querySelectorAll('.colour_scope_playhead')].some((e) => e.offsetParent));
+    await selectCueTile(page, found.both);
+    await wait(300);
     await selectChannel('Pan');
     const still = await dotsNow();
     await wait(700);
@@ -2278,11 +2325,16 @@ const SCENARIOS = {
       { next, kept },
     );
 
-    // Scene: two fixtures of the same type, an inactive channel: both set, the channel active
+    // Scene: two fixtures of the same type, an inactive channel: both set, the channel active (an
+    // Intensity scene, whose editor shows the shutter)
     const sceneGroup = d.groups.find((g) => g.fixtures.length > 1
       && g.cues.some((c) => c.type === 0));
+    const shutterScene = await page.evaluate((gid) => {
+      const g = window.__check.show.groupPool.getFromId(gid);
+      return g.addCue({ type: 0, name: 'Shutter presets', family: 'intensity' }).id;
+    }, sceneGroup.id);
     await openGroup(page, sceneGroup.name);
-    await selectCueTile(page, sceneGroup.cues.find((c) => c.type === 0).name);
+    await selectCueTile(page, shutterScene);
     const ids = sceneGroup.fixtures.slice(0, 2);
     await page.evaluate((list) => {
       document.querySelector('#app').__vue_app__.config.globalProperties.$view.selectFixtures(list);
@@ -2344,13 +2396,1400 @@ const SCENARIOS = {
     );
   },
 
+  /** Cue fades: effects (Relative only), scenes (hold, fade out), chase items and their preview */
+  async fxfades(page) {
+    const d = await demo(page);
+    // Errors Vue reports (watchers, renders) go to the app's error bus, not to window
+    await page.evaluate(async () => {
+      // The app's own instance: the URL it was loaded from
+      const url = performance.getEntriesByType('resource').map((e) => e.name)
+        .find((n) => n.includes('/plugins/eventbus.js'));
+      const bus = (await import(url)).default;
+      window.__appErrors = [];
+      bus.on('app_error', (e) => window.__appErrors.push(String((e && e.message) || e)));
+    });
+    const found = await page.evaluate(() => {
+      for (const group of window.__check.show.groupPool.groups) {
+        const fx = group.cuePool.cues.find((c) => c.type === 1
+          && c.channels.some((ch) => ch.type === 'Pan'));
+        if (fx) return { group: group.id, fx: fx.id };
+      }
+      return null;
+    });
+    if (!found) {
+      check('the demo has an effect with a Pan wave', false, found);
+      return;
+    }
+    const group = d.groups.find((g) => g.id === found.group);
+    const fadesShown = () => page.evaluate(() => ['.effect_fade_in', '.effect_fade_out']
+      .map((s) => [...document.querySelectorAll(s)].some((e) => e.getClientRects().length)));
+    const setFx = (fields) => page.evaluate((gid, cid, f) => {
+      const fx = window.__check.show.groupPool.getFromId(gid).cuePool.cues
+        .find((c) => c.id === cid);
+      Object.assign(fx, f);
+    }, found.group, found.fx, fields);
+
+    await openGroup(page, group.name);
+    await selectCueTile(page, found.fx);
+    await setFx({ relative: 0 });
+    await wait(SETTLE_MS);
+    const absolute = await fadesShown();
+    await setFx({ relative: 1 });
+    await wait(SETTLE_MS);
+    const relative = await fadesShown();
+    check(
+      'Fade In and Fade Out widgets show in either Mode (every cue fades)',
+      absolute.every(Boolean) && relative.every(Boolean),
+      { absolute, relative },
+    );
+
+    // Played by hand (Live's tick replaced by a no-op) so the times are exact
+    const run = await page.evaluate(async (gid, cid, modules) => {
+      const Live = (await window.__check.module(modules.live)).default;
+      const fx = window.__check.show.groupPool.getFromId(gid).cuePool.cues
+        .find((c) => c.id === cid);
+      const pan = fx.channels.find((ch) => ch.type === 'Pan');
+      const fxFixture = pan._fixtures.find((f) => f.active);
+      const fixture = fxFixture.handle;
+      const index = fxFixture.targets[0].direct[0];
+      const value = () => fixture.channels[index].value.DMX;
+      const effectValue = () => Math.floor(fxFixture.value);
+      const Claims = (await window.__check.module(modules.claims)).default;
+      // A value already on the channel (written outside playback)
+      const hold = (v) => fixture.setChannel(index, v);
+      const start = (relativeStart) => {
+        fx.relative = relativeStart;
+        fx.cue(true);
+        // A no-op in place of the effect's tick: the test drives update() itself
+        Live.remove(fx.animationId);
+        fx.animationId = Live.add(() => {});
+        fx.deltaStart = 0;
+      };
+      // One tick of the cue's own playback at a time since cued, then the merge
+      const tick = (t) => {
+        fx._update(t);
+        Claims.settle();
+      };
+      const bar = Live.barDuration;
+      fx.fadeIn.duration = 2;
+      fx.fadeOut.duration = 1;
+      const out = {};
+
+      // Replace fades too: from the held value on the first frame
+      hold(10);
+      start(0);
+      tick(0);
+      out.absolute = { value: value(), effect: effectValue() };
+      fx.cue(false);
+
+      // Relative: from the held value, to the effect after the Fade In
+      hold(10);
+      start(1);
+      tick(0);
+      out.first = value();
+      tick(bar);
+      out.half = { value: value(), effect: effectValue(), factor: fx.fadeFactor };
+      tick(2 * bar + 1);
+      out.full = { value: value(), effect: effectValue(), factor: fx.fadeFactor };
+
+      // Stop: shown stopped at once; nothing underneath, so Pan rests where it was stopped
+      fx.cue(false);
+      out.stopped = { state: fx.state, running: fx.animationId != null };
+      tick(2 * bar + 1 + bar / 2);
+      out.mid = value();
+      tick(3 * bar + 2);
+      out.end = {
+        value: value(), running: fx.animationId != null, factor: fx.fadeFactor,
+      };
+
+      // Cued again halfway through a fade-out: no jump
+      hold(10);
+      start(1);
+      tick(2 * bar + 1);
+      fx.cue(false);
+      tick(2 * bar + 1 + bar / 2);
+      const before = value();
+      fx.cue(true);
+      tick(2 * bar + 1 + bar / 2);
+      out.again = { before, after: value(), state: fx.state };
+      fx.fadeOut.duration = 0;
+      fx.cue(false);
+      fx.fadeOut.duration = 1;
+
+      // Saved with the show; an older effect without fades has none
+      const data = JSON.parse(JSON.stringify(fx.showData));
+      const Fx = fx.constructor;
+      const copy = new Fx({ ...data, fixtures: [], channels: [] });
+      const older = new Fx({
+        ...data, fadeIn: undefined, fadeOut: undefined, fixtures: [], channels: [],
+      });
+      out.saved = {
+        fadeIn: data.fadeIn,
+        copy: [copy.fadeIn.duration, copy.fadeOut.duration],
+        older: [older.fadeIn.duration, older.fadeOut.duration],
+      };
+      const { show } = window.__check;
+      show.refreshSaveState();
+      out.unsaved = !show.isSaved;
+      return out;
+    }, found.group, found.fx, PAGE_MODULES);
+    check(
+      'Replace fades too: the effect starts at the held value on its first frame',
+      run.absolute.value === 10,
+      run.absolute,
+    );
+    check(
+      'Layer: starts at the held value, blends halfway, reaches the effect after the Fade In',
+      run.first === 10 && run.half.factor > 0 && run.half.factor < 1
+        && run.full.factor === 1 && run.full.value === run.full.effect,
+      run,
+    );
+    check(
+      'Stop: shown stopped at once, still running, Pan rests where it was stopped (nothing underneath), then removed',
+      run.stopped.state === 0 && run.stopped.running
+        && run.end.value === run.full.value && !run.end.running && run.end.factor === 1,
+      run,
+    );
+    check(
+      'Cued again while fading out: no jump, running again',
+      Math.abs(run.again.after - run.again.before) <= 1 && run.again.state === 1,
+      run.again,
+    );
+    check(
+      'Fades are saved (with their time), older effects load with none, the show is unsaved',
+      run.saved.fadeIn.duration === 2 && run.saved.copy[0] === 2 && run.saved.copy[1] === 1
+        && run.saved.older[0] === 0 && run.saved.older[1] === 0 && run.unsaved,
+      run.saved,
+    );
+
+    // An effect in a chase item: fades by its times, in either Mode
+    const fxItem = await page.evaluate(async (gid, cid, modules) => {
+      const Live = (await window.__check.module(modules.live)).default;
+      const fx = window.__check.show.groupPool.getFromId(gid).cuePool.cues
+        .find((c) => c.id === cid);
+      const bar = Live.barDuration;
+      const at = (t) => {
+        fx.playItem(t, 4 * bar);
+        return Number(fx.fadeFactor.toFixed(3));
+      };
+      fx.fadeIn.duration = 1;
+      fx.fadeOut.duration = 1;
+      fx.relative = 1;
+      fx.itemActive = false;
+      const faded = [at(bar / 2), at(2 * bar), at(3.5 * bar)];
+      fx.endItem();
+      fx.relative = 0;
+      fx.itemActive = false;
+      const replaced = [at(bar / 2), at(2 * bar), at(3.5 * bar)];
+      fx.endItem();
+      return { relative: faded, absolute: replaced };
+    }, found.group, found.fx, PAGE_MODULES);
+    check(
+      'Effect in a chase item: fades in, holds, fades out, in Layer and Replace alike',
+      fxItem.relative[0] > 0 && fxItem.relative[0] < 1 && fxItem.relative[1] === 1
+        && fxItem.relative[2] > 0 && fxItem.relative[2] < 1
+        && same(fxItem.absolute, fxItem.relative),
+      fxItem,
+    );
+
+    // In the app, with the clock running: tiles toggle, Temporary holds, delete stops at once
+    const ids = await page.evaluate((gid) => {
+      const g = window.__check.show.groupPool.getFromId(gid);
+      g.cuePool.cues.forEach((c) => {
+        if (c.animationId != null) c.stopNow();
+        // Chase items earlier checks left on stage: a click on their tile would release them first
+        c.releaseItem();
+      });
+      const sc = g.cuePool.cues.find((c) => c.type === 0 && c.fixtureValues.length);
+      const fx = g.cuePool.cues.find((c) => c.type === 1);
+      sc.relative = 0;
+      sc.fadeIn.duration = 1;
+      sc.fadeOut.duration = 0.25;
+      fx.relative = 0;
+      return { scene: sc.id, fx: fx.id };
+    }, found.group);
+    const cueState = (id) => page.evaluate((gid, cid) => {
+      const c = window.__check.show.groupPool.getFromId(gid).cuePool.cues.find((q) => q.id === cid);
+      return {
+        state: c.state, running: c.animationId != null, releasing: c.releasing,
+      };
+    }, found.group, id);
+    // A chip's play button (its row scrolled to it)
+    const tileOf = (id) => `.cuepool_widget .cue_chip[data-cue="${id}"] .cue_chip_play`;
+    const playBox = (id) => page.evaluate((sel) => {
+      const el = document.querySelector(sel);
+      el.closest('.cue_chip').scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      const r = el.getBoundingClientRect();
+      return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+    }, tileOf(id));
+    const playTile = async (id) => {
+      const box = await playBox(id);
+      await page.mouse.click(box.x, box.y);
+      return box;
+    };
+    await openGroup(page, group.name);
+    await wait(SETTLE_MS);
+    await playTile(ids.scene);
+    await wait(600);
+    const sceneOn = await cueState(ids.scene);
+    await playTile(ids.scene);
+    const sceneStopping = await cueState(ids.scene);
+    await wait(900);
+    const sceneOff = await cueState(ids.scene);
+    check(
+      'Clicking a scene fading in stops it: shown stopped at once, fades out, then off Live',
+      sceneOn.state === 1 && sceneOn.running && sceneStopping.state === 0
+        && sceneStopping.releasing && !sceneOff.running && sceneOff.state === 0,
+      { sceneOn, sceneStopping, sceneOff },
+    );
+    await page.evaluate((gid, cid) => {
+      const c = window.__check.show.groupPool.getFromId(gid).cuePool.cues.find((q) => q.id === cid);
+      c.fadeIn.duration = 0.25;
+    }, found.group, ids.scene);
+    await playTile(ids.scene);
+    await wait(1000);
+    const sceneOnAfter = await cueState(ids.scene);
+    await playTile(ids.scene);
+    await wait(900);
+    const sceneOffAfter = await cueState(ids.scene);
+    check(
+      'A scene stays on once faded in; a click turns it off',
+      sceneOnAfter.state === 1 && sceneOnAfter.running
+        && sceneOffAfter.state === 0 && !sceneOffAfter.running,
+      { sceneOnAfter, sceneOffAfter },
+    );
+    await page.evaluate((gid, cid) => {
+      const c = window.__check.show.groupPool.getFromId(gid).cuePool.cues.find((q) => q.id === cid);
+      c.fadeIn.duration = 1;
+    }, found.group, ids.scene);
+    await playTile(ids.fx);
+    await wait(400);
+    const fxOn = await cueState(ids.fx);
+    await playTile(ids.fx);
+    const fxOff = await cueState(ids.fx);
+    check(
+      'Clicking a playing Replace effect stops it at once',
+      fxOn.state === 1 && fxOn.running && fxOff.state === 0 && !fxOff.running,
+      { fxOn, fxOff },
+    );
+    // Temporary: plays while held, fades out on release, pressed again while fading comes back
+    await page.evaluate((gid, cid) => {
+      window.__check.show.groupPool.getFromId(gid).cuePool.cues
+        .find((q) => q.id === cid).triggerStyle = 1;
+    }, found.group, ids.scene);
+    const box = await playBox(ids.scene);
+    await page.mouse.move(box.x, box.y);
+    await page.mouse.down();
+    await wait(600);
+    const held = await cueState(ids.scene);
+    await page.mouse.up();
+    const released = await cueState(ids.scene);
+    await page.mouse.down();
+    await wait(100);
+    const pressedAgain = await cueState(ids.scene);
+    await page.mouse.up();
+    await wait(900);
+    const temporaryOff = await cueState(ids.scene);
+    check(
+      'Temporary: plays while held, fades out on release, comes back when pressed during the fade-out, then stops',
+      held.state === 1 && released.state === 0 && released.releasing
+        && pressedAgain.state === 1 && !pressedAgain.releasing && !temporaryOff.running,
+      {
+        held, released, pressedAgain, temporaryOff,
+      },
+    );
+    // A One Shot cue reaching its end stops (Absolute at once; with a Fade Out, after it)
+    const ends = await page.evaluate(async (gid, cid) => {
+      const pause = (ms) => new Promise((res) => { setTimeout(res, ms); });
+      const fx = window.__check.show.groupPool.getFromId(gid).cuePool.cues
+        .find((c) => c.id === cid);
+      const look = () => ({
+        state: fx.state, running: fx.animationId != null, releasing: fx.releasing,
+      });
+      const saved = { loopStyle: fx.loopStyle, duration: fx.duration, relative: fx.relative };
+      fx.loopStyle = 0;
+      fx.duration = 0.5;
+      fx.relative = 0;
+      fx.fadeIn.duration = 0;
+      fx.fadeOut.duration = 0;
+      fx.cue(true);
+      await pause(1400);
+      const atOnce = look();
+      fx.fadeOut.duration = 0.25;
+      fx.cue(true);
+      await pause(1150);
+      const fading = look();
+      await pause(700);
+      const faded = look();
+      Object.assign(fx, saved);
+      return { absolute: atOnce, fading, faded };
+    }, found.group, ids.fx);
+    check(
+      'A One Shot effect at its end stops; one with a Fade Out fades out first, then stops (Replace too)',
+      ends.absolute.state === 0 && !ends.absolute.running
+        && ends.fading.state === 0 && ends.fading.releasing && ends.fading.running
+        && !ends.faded.running,
+      ends,
+    );
+    const errors = await page.evaluate(() => [...window.__check.errors, ...window.__appErrors]);
+    check('No app error while cues are started and stopped', errors.length === 0, errors);
+    // Deleting a cue that fades out stops it at once
+    const deleted = await page.evaluate((gid, cid) => {
+      const g = window.__check.show.groupPool.getFromId(gid);
+      const c = g.cuePool.cues.find((q) => q.id === cid);
+      c.triggerStyle = 0;
+      c.cue(true);
+      c.cue(false);
+      const { releasing } = c;
+      g.cuePool.delete(c);
+      return { releasing, running: c.animationId != null };
+    }, found.group, ids.scene);
+    check(
+      'Deleting a cue while it fades out takes it off Live at once',
+      deleted.releasing && !deleted.running,
+      deleted,
+    );
+
+    // Scenes: own fade times, from what the fixture shows, stay on, fade out (rest)
+    const scene = await page.evaluate(async (gid, modules) => {
+      const Live = (await window.__check.module(modules.live)).default;
+      const g = window.__check.show.groupPool.getFromId(gid);
+      const sc = g.cuePool.cues.find((c) => c.type === 0 && c.fixtureValues.length);
+      if (!sc) return null;
+      const fv = sc._fixtureValues.find((v) => v.channels.some((c) => c.active && !c.isFine));
+      const ch = fv.channels.find((c) => c.active && !c.isFine);
+      const accessor = fv.fixture.getQuickAccessor(ch);
+      const value = () => Math.round(accessor.value.DMX);
+      const target = Math.round(ch.value);
+      const bar = Live.barDuration;
+      const start = (mode) => {
+        sc.relative = mode;
+        sc.cue(true);
+        Live.remove(sc.animationId);
+        sc.animationId = Live.add(() => {});
+        sc.deltaStart = 0;
+      };
+      const Claims = (await window.__check.module(modules.claims)).default;
+      const frame = (fn) => {
+        fn();
+        Claims.settle();
+      };
+      const tick = (t) => frame(() => sc._update(t));
+      sc.fadeIn.duration = 2;
+      sc.fadeOut.duration = 1;
+      const out = { target, name: sc.name, id: sc.id };
+      fv.fixture.setQuickAccessor(ch, 10);
+      start(0);
+      tick(0);
+      out.absStart = value();
+      tick(2 * bar + 1);
+      out.ended = { value: value(), state: sc.state, running: sc.animationId != null };
+      sc.stopNow();
+      // Stopped during its fade in: fades out, then rests
+      start(0);
+      tick(bar);
+      out.absAtStop = value();
+      sc.cue(false);
+      out.stopState = sc.state;
+      tick(2 * bar + 1);
+      out.absEnd = { value: value(), running: sc.animationId != null };
+      fv.fixture.setQuickAccessor(ch, 10);
+      start(1);
+      tick(0);
+      out.relStart = value();
+      tick(bar);
+      out.relAtStop = value();
+      sc.cue(false);
+      tick(2 * bar + 1);
+      out.relEnd = value();
+      // An older scene: its Duration becomes its Fade In
+      const S = sc.constructor;
+      const data = JSON.parse(JSON.stringify(sc.showData));
+      delete data.fadeIn.duration;
+      delete data.fadeOut;
+      const older = new S({
+        ...data, duration: 4, fixtures: [], fixtureValues: [],
+      });
+      out.older = [older.fadeIn.duration, older.fadeOut.duration];
+      // In a chase item: fades by their own times, shrunk in a short item
+      sc.relative = 0;
+      sc.fadeIn.duration = 1;
+      sc.fadeOut.duration = 1;
+      const factorAt = (t, length) => {
+        frame(() => sc.playItem(t, length));
+        return Number(sc.fadeFactor.toFixed(3));
+      };
+      sc.itemActive = false;
+      out.item = {
+        twoBars: factorAt(bar / 2, 2 * bar),
+        eightBars: factorAt(bar / 2, 8 * bar),
+        heldInEight: factorAt(4 * bar, 8 * bar),
+        shortIn: sc.itemFades(bar).fadeIn / bar,
+        shortOut: sc.itemFades(bar).fadeOut / bar,
+      };
+      frame(() => sc.endItem());
+      out.itemEnd = value();
+      return out;
+    }, found.group, PAGE_MODULES);
+    if (!scene) {
+      check('the demo group has a scene with values', false, scene);
+      return;
+    }
+    check(
+      'Scene (Replace): fades in from what the fixture shows and stays on once faded in; stopped during its fade in, it rests where it was (nothing underneath)',
+      scene.absStart === 10 && scene.ended.value === scene.target && scene.ended.state === 1
+        && scene.ended.running && scene.stopState === 0
+        && scene.absEnd.value === scene.absAtStop && !scene.absEnd.running,
+      scene,
+    );
+    check(
+      'Scene (Layer): fades in from the value on the channel; stopped during its fade in, it rests where it was (nothing underneath)',
+      scene.relStart === 10 && scene.relEnd === scene.relAtStop,
+      scene,
+    );
+    check(
+      'An older scene takes its Duration as its Fade In',
+      scene.older[0] === 4 && scene.older[1] === 0,
+      scene.older,
+    );
+    check(
+      'Chase item: the fade follows the cue\'s time whatever the item length, holds, shrinks in a short item, rests at the end (nothing underneath)',
+      scene.item.twoBars === scene.item.eightBars && scene.item.twoBars > 0
+        && scene.item.twoBars < 1 && scene.item.heldInEight === 1
+        && scene.item.shortIn === 0.5 && scene.item.shortOut === 0.5
+        && scene.itemEnd === scene.target,
+      scene.item,
+    );
+
+    // Cue Settings: no Duration or Loop Style for a scene
+    await selectCueTile(page, scene);
+    await wait(SETTLE_MS);
+    const labels = await page.evaluate(() => [...document.querySelectorAll('.modifier_widget_cue_settings .label')]
+      .filter((e) => e.getClientRects().length).map((e) => e.textContent.trim()));
+    const sceneFades = await page.evaluate(() => ['.scene_fade_in', '.scene_fade_out']
+      .map((s) => [...document.querySelectorAll(s)].some((e) => e.getClientRects().length)));
+    check(
+      'A scene shows no Duration or Loop Style, and both fade widgets',
+      !labels.some((l) => /Duration|Loop Style/.test(l)) && sceneFades.every(Boolean),
+      { labels, sceneFades },
+    );
+
+    // The chase item preview draws the fades as played
+    const chase = await page.evaluate(() => {
+      const { show } = window.__check;
+      for (const grp of show.groupPool.groups) {
+        const ch = grp.chasePool.chases.find((c) => c.cues.some((p) => p.items.length));
+        if (ch) {
+          ch.cues.forEach((p) => {
+            p.cue.fadeIn.duration = 1;
+            p.cue.fadeOut.duration = 0.5;
+          });
+          const expected = ch.cues.flatMap((p) => p.items.map((it) => {
+            const f = p.cue.itemFades(it.lengthMS);
+            return [f.fadeIn / it.lengthMS, f.fadeOut / it.lengthMS];
+          }));
+          const view = document.querySelector('#app').__vue_app__.config.globalProperties.$view;
+          view.openChase(grp.id, ch.id);
+          return { expected };
+        }
+      }
+      return null;
+    });
+    if (!chase) {
+      check('the demo has a chase with items', false, chase);
+      return;
+    }
+    await wait(800);
+    const drawn = await page.evaluate(() => [...document.querySelectorAll('.widget_pool_timeline_item_cue_body_curve path')]
+      .map((p) => p.getAttribute('d') || ''));
+    const ratios = drawn.map((pathData) => {
+      const m = /^M 0,[\d.]+ (?:C [^,]+, [^,]+, ([\d.]+) 0|L 0,0) L ([\d.]+),0/.exec(pathData);
+      const end = /([\d.]+)[ ,]([\d.]+) Z$/.exec(pathData);
+      if (!m || !end) return null;
+      const width = Number(end[1]);
+      return [Number(m[1] || 0) / width, (width - Number(m[2])) / width];
+    });
+    check(
+      'Each chase item draws its Fade In and Fade Out over their played widths',
+      ratios.length === chase.expected.length && ratios.every((r, i) => r
+        && Math.abs(r[0] - chase.expected[i][0]) < 0.02
+        && Math.abs(r[1] - chase.expected[i][1]) < 0.02),
+      { ratios, expected: chase.expected, drawn: drawn.slice(0, 2) },
+    );
+  },
+
+  /** Cue families: one cue per family in a group, Replace and Layer, hand-back and rest,
+   * start order, flashes, shared fixtures, chase items; tiles, Add Cue, Cue Settings and editors.
+   * With the real clock, as in the app */
+  async families(page) {
+    await page.evaluate(async () => {
+      const url = performance.getEntriesByType('resource').map((e) => e.name)
+        .find((n) => n.includes('/plugins/eventbus.js'));
+      const bus = (await import(url)).default;
+      window.__appErrors = [];
+      bus.on('app_error', (e) => window.__appErrors.push(String((e && e.message) || e)));
+      const { show } = window.__check;
+      const g = show.groupPool.groups[0];
+      // Helpers for the checks below (demo group 0)
+      window.fam = {
+        g,
+        // A cue by name, and family when several cues share it (an older Look split per family)
+        cue: (name, family) => show.groupPool.groups.flatMap((x) => x.cuePool.cues)
+          .find((c) => c.name === name && (!family || c.family === family)),
+        fixture: (i) => g.fixturePool.fixtures[i],
+        value: (fx, type) => fx.channels.find((c) => c.type === type).value.DMX,
+        colour: (fx) => fx.channels.filter((c) => c.family === 1).map((c) => c.value.DMX).join('/'),
+        held: (c) => c.heldFamilies.map((b, i) => (b ? 'ICPB'[i] : '')).join(''),
+        // 'Name' or 'Name/family' keys
+        state: (keys) => keys.map((k) => {
+          const c = window.fam.cue(...k.split('/'));
+          return `${k}:${c.state ? 'on' : 'off'}/${window.fam.held(c)}`;
+        }).join(' '),
+        allOff: () => show.groupPool.groups.forEach((x) => x.cuePool.cues.forEach((c) => {
+          c.stopNow();
+          c.releaseItem();
+        })),
+      };
+    });
+    const ev = (fn, ...args) => page.evaluate(fn, ...args);
+
+    // Older show: each cue setting several families is split into one cue per family (the first
+    // keeps its id, the others get new ones), its chase lanes copied; no priority; the show stays
+    // saved; channels get their family from their attribute
+    const loaded = await ev(() => {
+      const { show } = window.__check;
+      const { g } = window.fam;
+      const fx = window.fam.fixture(0);
+      const familyOf = (type) => 'ICPB'[fx.channels.find((c) => c.type === type).family] || '-';
+      const keys = ['intensity', 'colour', 'position', 'beam'];
+      return {
+        cues: g.cuePool.cues.map((c) => `${c.id}:${c.name}:${c.family}`).join(' '),
+        own: g.cuePool.cues.every((c) => c.usedFamilies.filter(Boolean).length === 1
+          && c.usedFamilies[keys.indexOf(c.family)]),
+        priorities: g.cuePool.cues.every((c) => c.priority === undefined
+          && c.showData.priority === undefined),
+        lanes: g.chasePool.chases[0].cues.filter((l) => l.cue.name === 'Cue 4')
+          .map((l) => `${l.cue.family}:${l.items.map((it) => `${it.tick}/${it.length}`).join(',')}`),
+        saved: show.isSaved,
+        families: ['Dimmer', 'Shutter', 'Pan', 'Tilt', 'Zoom', 'Maintenance'].map(familyOf).join(''),
+        colours: fx.channels.filter((c) => /^ColorAdd_/.test(c.attribute || ''))
+          .every((c) => c.family === 1),
+      };
+    });
+    const cue4Items = loaded.lanes.map((l) => l.split(':')[1]);
+    check(
+      'An older show: each Look is split into one cue per family it sets (the first keeps its id), each setting its family only, its chase lanes copied with the same items; no priority, saved; channels get their family from their attribute',
+      loaded.cues === '0:Cue 0:intensity 9:Cue 0:colour 10:Cue 0:position 11:Cue 0:beam '
+        + '4:Cue 4:intensity 12:Cue 4:colour 13:Cue 4:position 14:Cue 4:beam 6:Cue 5:colour '
+        + '15:Cue 5:beam 2:Cue 6:colour 1:Cue 9:position 16:Cue 9:beam 8:Cue 8:colour'
+        && loaded.own && loaded.priorities
+        && same(loaded.lanes.map((l) => l.split(':')[0]), ['intensity', 'colour', 'position', 'beam'])
+        && cue4Items[0] !== '' && cue4Items.every((i) => i === cue4Items[0])
+        && loaded.saved && loaded.families === 'IIPPB-' && loaded.colours,
+      loaded,
+    );
+
+    // The columns: the four families, each cue in its column, an add in each head
+    await openGroup(page, 'Group 0');
+    await wait(SETTLE_MS);
+    const rowsNow = () => ev(() => [...document.querySelectorAll('.cuepool_widget .cue_column')]
+      .map((column) => ({
+        label: column.querySelector('.cue_column_label').textContent.trim(),
+        now: column.querySelector('.cue_column_now_text').textContent.trim(),
+        chips: [...column.querySelectorAll('.cue_chip')].map((c) => {
+          const flags = ['playing', 'covered', 'selected'].filter((f) => c.classList.contains(f));
+          return `${c.querySelector('.cue_chip_name').textContent.trim()}${flags.length ? `(${flags.join(',')})` : ''}`;
+        }),
+        values: [...column.querySelectorAll('.cue_chip')].map((c) => c.querySelector('.cue_chip_value')?.textContent.trim()),
+        add: !!column.querySelector('.cue_column_head .cue_column_add'),
+      })));
+    const rows0 = await rowsNow();
+    const chipNames = (row) => row.chips.map((c) => c.replace(/\(.*\)/, ''));
+    const header0 = await ev(() => ({
+      actions: [...document.querySelectorAll('.cuepool_widget .header .uikit_button')].map((e) => e.textContent.trim()),
+      families: document.querySelectorAll('.cuepool_widget .cue_chip_families').length,
+    }));
+    check(
+      'The cue pool shows one column per family (no Looks), each cue in its column by id, an add in each head, each row its value line; no on stage / blind toggle',
+      same(rows0.map((r) => r.label), ['Intensity', 'Colour', 'Position', 'Beam'])
+        && same(chipNames(rows0[0]), ['Cue 0', 'Cue 4'])
+        && same(chipNames(rows0[1]), ['Cue 6', 'Cue 5', 'Cue 8', 'Cue 0', 'Cue 4'])
+        && same(chipNames(rows0[2]), ['Cue 9', 'Cue 0', 'Cue 4'])
+        && same(chipNames(rows0[3]), ['Cue 0', 'Cue 4', 'Cue 5', 'Cue 9'])
+        && rows0[1].values[0] === 'Green' && rows0[1].values[2] === 'Colour · 1 bar'
+        && rows0.every((r) => r.add && r.values.every((v) => typeof v === 'string'))
+        && header0.actions.length === 0 && header0.families === 0,
+      { rows0, header0 },
+    );
+
+    // The demo walk, with the play buttons: Cue 0's Intensity, Colour and Position effects, Cue 6
+    // (a Layer colour scene) over Cue 0's colour, Cue 4's Replace colour effect over both, then
+    // everything stopped
+    const tile = async (name, family) => {
+      const box = await page.evaluate((n, f) => {
+        const el = [...document.querySelectorAll(`.cuepool_widget ${f ? `.cue_column_${f} ` : ''}.cue_chip`)]
+          .find((e) => e.querySelector('.cue_chip_name')?.textContent.trim() === n);
+        el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        const r = el.querySelector('.cue_chip_play').getBoundingClientRect();
+        return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+      }, name, family);
+      await page.mouse.click(box.x, box.y);
+      await page.mouse.move(2, 2);
+    };
+    await ev(() => {
+      window.fam.cue('Cue 6').fadeIn.duration = 0;
+    });
+    await tile('Cue 0', 'intensity');
+    await tile('Cue 0', 'colour');
+    await tile('Cue 0', 'position');
+    await wait(1200);
+    await tile('Cue 6', 'colour');
+    await wait(1200);
+    const walk1 = await ev(() => window.fam.state(['Cue 0/intensity', 'Cue 0/colour', 'Cue 0/position', 'Cue 6']));
+    const now1 = (await rowsNow()).map((r) => r.now);
+    await tile('Cue 4', 'colour');
+    await wait(1200);
+    const walk2 = await ev(() => window.fam.state(['Cue 0/colour', 'Cue 6', 'Cue 4/colour']));
+    const now2 = (await rowsNow()).map((r) => r.now);
+    await tile('Cue 4', 'colour');
+    await tile('Cue 0', 'intensity');
+    // The Position effect moves pan: read just before it stops
+    const pan = await ev(() => window.fam.value(window.fam.fixture(0), 'Pan'));
+    await tile('Cue 0', 'position');
+    await wait(800);
+    const walk3 = await ev(() => ({
+      state: window.fam.state(['Cue 0/intensity', 'Cue 0/position', 'Cue 4/colour']),
+      dimmers: window.fam.g.fixturePool.fixtures.map((f) => window.fam.value(f, 'Dimmer')),
+      pan: window.fam.value(window.fam.fixture(0), 'Pan'),
+    }));
+    await wait(600);
+    walk3.panLater = await ev(() => window.fam.value(window.fam.fixture(0), 'Pan'));
+    const now3 = (await rowsNow()).map((r) => r.now);
+    check(
+      'Demo walk: each family plays its own cue; a Layer colour scene covers the colour effect without turning it off; NOW names each family\'s cue',
+      walk1 === 'Cue 0/intensity:on/I Cue 0/colour:on/ Cue 0/position:on/P Cue 6:on/C'
+        && same(now1, ['Cue 0', 'Cue 6', 'Cue 0', 'rest']),
+      { walk1, now1 },
+    );
+    check(
+      'Demo walk: a Replace colour effect turns off both colour cues it covers; the other families keep theirs',
+      walk2 === 'Cue 0/colour:off/ Cue 6:off/ Cue 4/colour:on/C'
+        && same(now2, ['Cue 0', 'Cue 4', 'Cue 0', 'rest']),
+      { walk2, now2 },
+    );
+    check(
+      'Demo walk: stopping the last cues rests Intensity (dimmers 0) and keeps Colour and Position (pan); NOW reads rest and kept',
+      walk3.state === 'Cue 0/intensity:off/ Cue 0/position:off/ Cue 4/colour:off/'
+        && walk3.dimmers.every((v) => v === 0) && Math.abs(walk3.pan - pan) <= 40
+        && walk3.panLater === walk3.pan
+        && same(now3, ['rest', 'kept: Cue 4', 'kept: Cue 0', 'rest']),
+      { walk3, panBefore: pan, now3 },
+    );
+
+    // Main thread: four effects and a scene playing
+    await probe(page, 'resetLongTasks');
+    // Every part of four older cues (split per family): eleven cues
+    await ev(() => window.fam.g.cuePool.cues
+      .filter((c) => ['Cue 0', 'Cue 4', 'Cue 8', 'Cue 9'].includes(c.name))
+      .forEach((c) => { c.relative = 1; c.cue(true); }));
+    await wait(3000);
+    const block = await probe(page, 'maxBlock');
+    await ev(() => {
+      window.fam.g.cuePool.cues
+        .filter((c) => ['Cue 0', 'Cue 4', 'Cue 8', 'Cue 9'].includes(c.name))
+        .forEach((c) => { c.relative = c.name === 'Cue 9' ? 1 : 0; });
+      window.fam.allOff();
+    });
+    check('No main-thread block over 50 ms with eleven cues layered (four older cues, split per family)', block <= 50, { block });
+
+    // The rules, with the real clock
+    const rules = await ev(async () => {
+      const pause = (ms) => new Promise((res) => { setTimeout(res, ms); });
+      const f = window.fam;
+      const out = {};
+      const panNow = () => f.value(f.fixture(0), 'Pan');
+      // A scene stays on (Cue 9's Position part)
+      f.allOff();
+      const s9 = f.cue('Cue 9', 'position');
+      s9.fadeIn.duration = 0.25;
+      s9.cue(true);
+      await pause(2500);
+      out.stays = { state: f.state(['Cue 9/position']), pan: panNow() };
+      // Layer gives back, Replace turns off (Cue 0's Position effect)
+      const c0 = f.cue('Cue 0', 'position');
+      c0.relative = 1;
+      c0.fadeIn.duration = 0;
+      c0.fadeOut.duration = 0;
+      c0.cue(true);
+      await pause(900);
+      out.layered = f.state(['Cue 9/position', 'Cue 0/position']);
+      c0.cue(false);
+      await pause(500);
+      out.givenBack = { state: f.state(['Cue 9/position', 'Cue 0/position']), pan: panNow() };
+      c0.relative = 0;
+      c0.cue(true);
+      await pause(900);
+      out.replaced = f.state(['Cue 9/position', 'Cue 0/position']);
+      f.allOff();
+      // No priority: the cue started last takes the family (a priority an older show saved is
+      // ignored)
+      const prioData = { ...c0.showData, id: 61, priority: 150 };
+      const old = f.g.addCue(prioData);
+      old.cue(true);
+      await pause(500);
+      f.cue('Cue 4', 'position').cue(true);
+      await pause(900);
+      out.prioOn = f.state(['Cue 4/position']) + (old.state ? ' old:on' : ' old:off');
+      f.allOff();
+      f.g.deleteCue(old);
+      // A flash covers, then hands back (Cue 0's Colour effect)
+      const c0c = f.cue('Cue 0', 'colour');
+      c0c.cue(true);
+      await pause(500);
+      const flash = f.cue('Cue 6');
+      flash.triggerStyle = 1;
+      flash.fadeOut.duration = 0;
+      flash.cue(true);
+      await pause(700);
+      out.flashOn = f.state(['Cue 0/colour', 'Cue 6']);
+      flash.cue(false);
+      await pause(500);
+      out.flashOff = f.state(['Cue 0/colour', 'Cue 6']);
+      flash.triggerStyle = 0;
+      f.allOff();
+      // Two colour scenes in one group on different fixtures; the colour rule
+      const red = f.g.addCue({
+        id: 40, type: 0, name: 'Red', family: 'colour', color: '#E25D6A',
+      });
+      const blue = f.g.addCue({
+        id: 41, type: 0, name: 'Blue', family: 'colour', color: '#5A71D3',
+      });
+      [red, blue].forEach((c) => { c.fadeIn.duration = 0; c.fadeOut.duration = 0; });
+      red.fixtureValues.forEach((fv) => fv.setColor([255, 0, 0]));
+      blue.fixtureValues.slice(8).forEach((fv) => fv.setColor([0, 0, 255]));
+      red.cue(true);
+      await pause(500);
+      blue.cue(true);
+      await pause(900);
+      out.sameGroup = { state: f.state(['Red', 'Blue']), f9: f.colour(f.fixture(9)) };
+      f.allOff();
+      red.cue(true);
+      await pause(500);
+      c0c.cue(true);
+      await pause(900);
+      const redChannel = f.fixture(0).channels.find((c) => c.attribute === 'ColorAdd_R');
+      out.colourRule = { red: redChannel.value.DMX, state: f.state(['Red', 'Cue 0/colour']) };
+      f.allOff();
+      // Shared fixtures across groups: the newest wins per fixture
+      const g1 = window.__check.show.groupPool.groups[1];
+      f.g.fixturePool.fixtures.slice(0, 8).forEach((fx) => g1.addFixture(fx));
+      const left = g1.addCue({
+        id: 0, type: 0, name: 'Left', family: 'colour', color: '#5A71D3',
+      });
+      left.fadeIn.duration = 0;
+      left.fixtureValues.forEach((fv) => fv.setColor([0, 0, 255]));
+      red.cue(true);
+      await pause(500);
+      left.cue(true);
+      await pause(900);
+      out.shared = {
+        state: f.state(['Red', 'Left']), f0: f.colour(f.fixture(0)), f12: f.colour(f.fixture(12)),
+      };
+      left.cue(false);
+      await pause(500);
+      out.sharedOff = { f0: f.colour(f.fixture(0)), f12: f.colour(f.fixture(12)) };
+      f.allOff();
+      // Layer fade in from the scene and back into it, with no jump
+      s9.fadeIn.duration = 0;
+      s9.cue(true);
+      await pause(500);
+      c0.relative = 1;
+      c0.fadeIn.duration = 1;
+      c0.fadeOut.duration = 1;
+      // Pan on every frame, as written (after the merge), with the frame's time: a busy main thread
+      // spaces frames out and the effect moves between them, so a jump is measured per 20 ms
+      const Live = (await window.__check.module('/src/models/DMX/live.model.js')).default;
+      const samples = [];
+      const times = [];
+      const sampler = Live.onFrame((time) => {
+        const ch = f.fixture(0).channels.find((c) => c.type === 'Pan');
+        samples.push(ch.value.DMX + (ch.fineChannels[0] ? ch.fineChannels[0].value.DMX / 255 : 0));
+        times.push(time);
+      });
+      c0.cue(true);
+      await pause(3000);
+      c0.cue(false);
+      await pause(2600);
+      Live.offFrame(sampler);
+      let jump = 0;
+      for (let i = 1; i < samples.length; i++) {
+        const steps = Math.max(1, (times[i] - times[i - 1]) / 20);
+        jump = Math.max(jump, Math.abs(samples[i] - samples[i - 1]) / steps);
+      }
+      out.fades = {
+        first: Math.round(samples[0]),
+        last: Math.round(samples[samples.length - 1]),
+        jump: Math.round(jump * 10) / 10,
+      };
+      c0.relative = 0;
+      c0.fadeIn.duration = 0;
+      c0.fadeOut.duration = 0;
+      f.allOff();
+      // Chase items: a red then a blue Replace colour scene; stopping releases them
+      const chase = f.g.chasePool.chases[0];
+      chase.cues.forEach((p) => p.items.slice()
+        .forEach((it) => p.items.splice(p.items.indexOf(it), 1)));
+      chase.cues.find((p) => p.cue === red || p.cue.name === 'Red').addRaw({ tickStart: 0, tickDuration: 64 });
+      chase.cues.find((p) => p.cue === blue || p.cue.name === 'Blue').addRaw({ tickStart: 64, tickDuration: 64 });
+      blue.fixtureValues.forEach((fv) => fv.setColor([0, 0, 255]));
+      chase.duration = 2;
+      chase.cue(true);
+      const seen = new Set();
+      for (let k = 0; k < 40; k++) {
+        await pause(200);
+        seen.add(`${f.held(red)}|${f.held(blue)}`);
+      }
+      chase.cue(false);
+      await pause(300);
+      out.chase = { seen: [...seen], released: !red.itemClaim && !blue.itemClaim };
+      // Overlapping Replace items: the second turns the first off, which stays off (no swap)
+      chase.cues.forEach((p) => p.items.slice()
+        .forEach((it) => p.items.splice(p.items.indexOf(it), 1)));
+      chase.cues.find((p) => p.cue === red || p.cue.name === 'Red').addRaw({ tickStart: 0, tickDuration: 128 });
+      chase.cues.find((p) => p.cue === blue || p.cue.name === 'Blue').addRaw({ tickStart: 64, tickDuration: 128 });
+      chase.duration = 3;
+      chase.cue(true);
+      const steps = [];
+      for (let k = 0; k < 100; k++) {
+        await pause(50);
+        const step = `${f.held(red)}|${f.held(blue)}`;
+        if (step !== steps[steps.length - 1]) steps.push(step);
+      }
+      // NOW names the item's cue and its chase
+      const now = document.querySelector('.cuepool_widget .cue_column_colour .cue_column_now_text');
+      out.overlapNow = { text: now ? now.textContent.trim() : null, chase: chase.name };
+      chase.cue(false);
+      await pause(300);
+      out.overlap = steps;
+      return out;
+    });
+    check(
+      'A scene stays on after its fade-in, holding its family',
+      rules.stays.state === 'Cue 9/position:on/P' && rules.stays.pan === 131,
+      rules.stays,
+    );
+    check(
+      'Layer plays over a scene without turning it off, and gives it back when stopped',
+      rules.layered === 'Cue 9/position:on/ Cue 0/position:on/P'
+        && rules.givenBack.state === 'Cue 9/position:on/P Cue 0/position:off/'
+        && rules.givenBack.pan === 131,
+      { layered: rules.layered, givenBack: rules.givenBack },
+    );
+    check('Replace turns off the scene it covers entirely', rules.replaced === 'Cue 9/position:off/ Cue 0/position:on/P', rules.replaced);
+    check(
+      'No priority: a newer Replace cue takes the family from one an older show saved at priority 150, and turns it off',
+      rules.prioOn === 'Cue 4/position:on/P old:off',
+      { on: rules.prioOn },
+    );
+    check(
+      'A flash covers while held, then hands back without turning the effect off',
+      rules.flashOn === 'Cue 0/colour:on/ Cue 6:on/C' && rules.flashOff === 'Cue 0/colour:on/C Cue 6:off/',
+      { on: rules.flashOn, off: rules.flashOff },
+    );
+    check(
+      'One cue per family in a group: a blue scene on fixtures 9-16 turns the red one off',
+      rules.sameGroup.state === 'Red:off/ Blue:on/C' && /\/255\//.test(`/${rules.sameGroup.f9}/`),
+      rules.sameGroup,
+    );
+    check(
+      'Colour moves whole: an effect driving Green and Blue over a red scene puts Red at 0',
+      rules.colourRule.red === 0 && rules.colourRule.state === 'Red:off/ Cue 0/colour:on/C',
+      rules.colourRule,
+    );
+    check(
+      'Shared fixtures: the newer group wins its fixtures, the other keeps the rest, and gets them back',
+      rules.shared.state === 'Red:on/C Left:on/C' && rules.shared.f0 !== rules.shared.f12
+        && rules.sharedOff.f0 === rules.sharedOff.f12,
+      { shared: rules.shared, off: rules.sharedOff },
+    );
+    check(
+      'Layer fades in from the scene and back into it, with no jump (per 20 ms)',
+      rules.fades.first === 131 && rules.fades.last === 131 && rules.fades.jump < 25,
+      rules.fades,
+    );
+    check(
+      'Chase items: one colour item holds Colour at a time; stopping the chase releases them',
+      rules.chase.seen.every((v) => v !== 'C|C') && rules.chase.seen.includes('C|')
+        && rules.chase.seen.includes('|C') && rules.chase.released,
+      rules.chase,
+    );
+    check(
+      'Overlapping Replace chase items: the second turns the first off for good (no swapping back); NOW names the cue and its chase',
+      rules.overlap.filter((v) => v !== '|').join(' ') === 'C| |C'
+        && rules.overlapNow.text === `Blue · ${rules.overlapNow.chase}`,
+      { overlap: rules.overlap, now: rules.overlapNow },
+    );
+
+    // Add Cue from a column's add: a scene of the column's family, named after it, at its end
+    await ev(() => window.fam.allOff());
+    await openGroup(page, 'Group 0');
+    await wait(SETTLE_MS);
+    const addTo = async (label) => {
+      const box = await ev((l) => {
+        const column = [...document.querySelectorAll('.cuepool_widget .cue_column')]
+          .find((r) => r.querySelector('.cue_column_label').textContent.trim() === l);
+        const add = column.querySelector('.cue_column_add');
+        add.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        const r = add.getBoundingClientRect();
+        return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+      }, label);
+      await page.mouse.click(box.x, box.y);
+      await wait(600);
+    };
+    const rowOf = async (label) => (await rowsNow()).find((r) => r.label === label);
+    const colourCount = await ev(() => window.fam.g.cuePool.cues.filter((c) => c.family === 'colour').length);
+    await addTo('Colour');
+    const sceneName = await ev(() => document.querySelector('.cue_popup input')?.value);
+    const popupLabels = await ev(() => [...document.querySelectorAll('.cue_popup .label')]
+      .map((e) => e.textContent.trim().replace(/:$/, '')));
+    await click(page, '.popup .popup_validation .popup_ok');
+    await wait(600);
+    const madeScene = await ev((n) => {
+      const c = window.fam.cue(n);
+      return {
+        cue: c && `${c.family}/type${c.type}/mode${c.relative}`,
+        state: c && c.state,
+        rows: [...document.querySelectorAll('.group_modifier .channels_widget')]
+          .filter((w) => w.offsetParent)
+          .flatMap((w) => [...w.querySelectorAll('.channel_select_text')].map((e) => e.textContent.trim())),
+        colourPicker: [...document.querySelectorAll('.group_modifier .color_picker_widget')].some((e) => e.offsetParent),
+        panTilt: [...document.querySelectorAll('.group_modifier .pantilt_widget')].some((e) => e.offsetParent),
+        familyField: [...document.querySelectorAll('.cue_settings_family .uikit_select_textbox')]
+          .filter((e) => e.offsetParent).map((e) => e.textContent.trim()),
+      };
+    }, sceneName);
+    const colourRow1 = await rowOf('Colour');
+    check(
+      'Add Cue from the Colour column\'s add: a Replace scene named after the column ends it, selected and not playing; its editor shows colour channels, those of no family and the colour picker only',
+      sceneName === `Colour ${colourCount + 1}` && madeScene.cue === 'colour/type0/mode0'
+        && madeScene.state === 0
+        && colourRow1.chips[colourRow1.chips.length - 1] === `${sceneName}(selected)`
+        // The demo heads' six colour rows (four beam colours, two at "No function"), then their
+        // Maintenance channel (no family)
+        && madeScene.rows.length === 7 && madeScene.rows.includes('Beam red')
+        && madeScene.colourPicker && !madeScene.panTilt
+        && same(madeScene.familyField, ['Colour']) && !popupLabels.includes('Color'),
+      {
+        sceneName, madeScene, colourRow1, popupLabels,
+      },
+    );
+
+    // Cue Settings: Name, Family | Trigger Style, Mode, with hints; no Priority
+    const settings = await ev(() => {
+      const w = [...document.querySelectorAll('.modifier_widget_cue_settings')].find((e) => e.offsetParent);
+      const labels = [...w.querySelectorAll('.label')].map((e) => e.textContent.trim());
+      const columns = [...w.querySelector('.modifier_widget_cue_settings_body').children]
+        .map((c) => c.querySelectorAll('.label').length);
+      const hints = ['.cue_settings_family', '.cue_settings_mode']
+        .map((s) => (w.querySelector(s)?.getAttribute('title') || '').length > 0);
+      return {
+        labels, columns, hints, width: Math.round(w.getBoundingClientRect().width),
+      };
+    });
+    const saved = await ev((n) => {
+      const data = window.fam.cue(n).showData;
+      return { family: data.family, priority: data.priority };
+    }, sceneName);
+    check(
+      'Cue Settings: no Color or Priority; Name, Family | Trigger Style, Mode, with hints; the family is saved',
+      settings.labels.join('|').replace(/:/g, '') === 'Name|Family|Trigger Style|Mode'
+        && same(settings.columns, [2, 2]) && settings.hints.every(Boolean)
+        && saved.family === 'colour' && saved.priority === undefined,
+      { settings, saved },
+    );
+
+    // An effect from the Colour column's add: Type is a choice (Right picks Effect), Mode is
+    // Replace, its Add Modulated Channel lists colour channels and those of no family
+    await addTo('Colour');
+    await ev(() => document.querySelector('.cue_popup_type .uikit_choice_row').focus());
+    await page.keyboard.press('ArrowRight');
+    await wait(SETTLE_MS);
+    const keyed = await ev(() => [...document.querySelectorAll('.cue_popup_type .uikit_choice_option.selected')]
+      .map((e) => e.textContent.trim()));
+    const effectName = await ev(() => document.querySelector('.cue_popup input')?.value);
+    await click(page, '.popup .popup_validation .popup_ok');
+    await wait(600);
+    const madeEffect = await ev((n) => {
+      const c = window.fam.cue(n);
+      const mode = [...document.querySelectorAll('.cue_settings_mode .uikit_select_textbox')]
+        .filter((e) => e.offsetParent).map((e) => e.textContent.trim());
+      return { cue: c && `${c.family}/type${c.type}/mode${c.relative}`, mode };
+    }, effectName);
+    await click(page, '.modifier_widget_effect_channels .uikit_button', 'add');
+    const colourOffered = await ev(() => {
+      const popup = [...document.querySelectorAll('.popup_fx_channels')].find((e) => e.offsetParent);
+      return popup ? [...popup.querySelectorAll('.uikit_list_item')]
+        .map((e) => e.querySelector('h4')?.textContent.trim() || e.textContent.trim()) : null;
+    });
+    await page.keyboard.press('Escape');
+    await wait(SETTLE_MS);
+    check(
+      'An effect from the Colour column\'s add: Right picks Effect, named after the column, in Replace mode; Add Modulated Channel lists colour channels and those of no family',
+      same(keyed, ['Effect']) && effectName === `Colour ${colourCount + 2}`
+        && madeEffect.cue === 'colour/type1/mode0'
+        && same(madeEffect.mode, ['Replace']) && Array.isArray(colourOffered) && colourOffered.length > 0
+        && colourOffered.includes('Red') && colourOffered.some((t) => /Maintenance/i.test(t))
+        && !colourOffered.some((t) => /^(Pan|Tilt|Dimmer|Shutter|Zoom)$/.test(t)),
+      {
+        keyed, effectName, madeEffect, colourOffered,
+      },
+    );
+
+    // Dragging the second row of the Colour column by its grip above the first puts it first (the
+    // list's drag: rows slide apart), saved in the show
+    const colourBefore = chipNames(await rowOf('Colour'));
+    const grip = await ev(() => {
+      const column = [...document.querySelectorAll('.cuepool_widget .cue_column')]
+        .find((r) => r.querySelector('.cue_column_label').textContent.trim() === 'Colour');
+      const rows = [...column.querySelectorAll('.uikit_list_item')];
+      rows[0].scrollIntoView({ block: 'nearest' });
+      const handle = rows[1].querySelector('.uikit_list_item_handle').getBoundingClientRect();
+      const first = rows[0].getBoundingClientRect();
+      return {
+        x: handle.x + handle.width / 2, y: handle.y + handle.height / 2, top: first.y + 4,
+      };
+    });
+    await page.mouse.move(grip.x, grip.y);
+    await page.mouse.down();
+    await page.mouse.move(grip.x, grip.y - 10, { steps: 3 });
+    await page.mouse.move(grip.x, grip.top, { steps: 8 });
+    await page.mouse.up();
+    await page.mouse.move(2, 2);
+    await wait(SETTLE_MS);
+    const reordered = (await rowOf('Colour')).chips.map((c) => c.replace(/\(.*\)/, ''));
+    const savedOrder = await ev(() => window.__check.show.showData.groups[0].cues
+      .filter((c) => c.family === 'colour').sort((a, b) => a.id - b.id).map((c) => c.name));
+    const expectedOrder = [colourBefore[1], colourBefore[0], ...colourBefore.slice(2)];
+    check(
+      'Dragging a row by its grip above the first of its column puts it first, and the order is saved',
+      same(reordered, expectedOrder) && same(savedOrder, reordered),
+      { reordered, savedOrder, colourBefore },
+    );
+    // Keys, as in lists: the column has focus after the drag, Down selects the next row
+    const viewCue = () => ev(() => document.querySelector('#app').__vue_app__.config.globalProperties.$view.cue?.name);
+    const beforeKey = await viewCue();
+    await page.keyboard.press('ArrowDown');
+    await wait(SETTLE_MS);
+    const afterKey = await viewCue();
+    check(
+      'Rows are list rows: after the drag the moved row is selected, Down selects the next one',
+      beforeKey === expectedOrder[0] && afterKey === expectedOrder[1],
+      { beforeKey, afterKey },
+    );
+
+    // NOW only shows: a click on it changes nothing, and a held family shows no reset
+    await tile('Cue 6', 'colour');
+    await wait(800);
+    const beforeClick = (await rowOf('Colour')).now;
+    await click(page, '.cuepool_widget .cue_column_colour .cue_column_now_text');
+    await wait(600);
+    const afterClick = await ev(() => ({
+      state: window.fam.cue('Cue 6').state,
+      reset: !!document.querySelector('.cuepool_widget .cue_column_colour .cue_column_reset'),
+    }));
+    afterClick.now = (await rowOf('Colour')).now;
+    await tile('Cue 6', 'colour');
+    await wait(600);
+    check(
+      'NOW only shows: clicking the Colour column\'s NOW naming Cue 6 leaves it playing; no reset while it holds Colour',
+      beforeClick === 'Cue 6' && afterClick.state === 1 && afterClick.now === 'Cue 6' && !afterClick.reset,
+      { beforeClick, afterClick },
+    );
+
+    // A chip shows an edit at once: the scene's colour set as the colour picker does
+    const refreshed = await ev(async (n) => {
+      const chipOf = (name) => [...document.querySelectorAll('.cuepool_widget .cue_chip')]
+        .find((e) => e.querySelector('.cue_chip_name')?.textContent.trim() === name);
+      window.fam.cue(n).fixtureValues.forEach((fv) => fv.setColor([0, 0, 255]));
+      await new Promise((res) => { requestAnimationFrame(() => requestAnimationFrame(res)); });
+      const chip = chipOf(n);
+      return {
+        picture: chip.querySelector('.picture_fill')?.style.background || '',
+        value: chip.querySelector('.cue_chip_value')?.textContent.trim(),
+      };
+    }, sceneName);
+    check(
+      'A chip shows an edit at once: a scene set blue (as the colour picker does) pictures blue and reads "Blue"',
+      refreshed.picture.includes('rgb(0, 0, 255)') && refreshed.value === 'Blue',
+      refreshed,
+    );
+
+    // Programming is blind: a click on a row only opens its cue (the list's selection); the stage
+    // and NOW stay
+    await ev(() => window.fam.allOff());
+    await wait(400);
+    const rowLook = (n) => ev((name) => {
+      const chips = [...document.querySelectorAll('.cuepool_widget .cue_column_colour .cue_chip')];
+      const chip = chips.find((e) => e.querySelector('.cue_chip_name')?.textContent.trim() === name);
+      const row = chip.closest('.uikit_list_item');
+      return {
+        selected: row.classList.contains('selected'),
+        kept: chip.classList.contains('kept'),
+        fill: row.querySelector('.cue_chip_fill')?.style.width || null,
+        play: chip.querySelector('.cue_chip_play').title,
+        plays: chips.map((e) => getComputedStyle(e.querySelector('.cue_chip_play')).opacity),
+        stopProgress: Math.round(window.fam.cue(name).stopProgress * 100),
+      };
+    }, n);
+    const stageColour = () => ev(() => window.fam.colour(window.fam.fixture(0)));
+    const blindBefore = { colour: await stageColour(), now: (await rowOf('Colour')).now };
+    await selectCueTile(page, sceneName);
+    await page.mouse.move(2, 2);
+    await wait(500);
+    const blind = {
+      state: await ev((n) => window.fam.cue(n).state, sceneName),
+      selected: await viewCue(),
+      colour: await stageColour(),
+      now: (await rowOf('Colour')).now,
+      row: await rowLook(sceneName),
+    };
+    check(
+      'Programming is blind: clicking a row opens its cue (the list\'s selection) without playing it; the stage and NOW stay; with the pointer away, no play button shows',
+      blind.state === 0 && blind.selected === sceneName && blind.colour === blindBefore.colour
+        && blind.now === blindBefore.now && blind.row.selected && blind.row.fill === null
+        && blind.row.plays.every((o) => o === '0'),
+      { blindBefore, blind },
+    );
+
+    // The play button plays it with its Fade In: the row fills with its progress
+    await ev((n) => {
+      const c = window.fam.cue(n);
+      c.fadeIn.duration = 2;
+      c.fadeOut.duration = 0;
+    }, sceneName);
+    await tile(sceneName, 'colour');
+    await wait(900);
+    const early = await rowLook(sceneName);
+    const playingNow = (await rowOf('Colour')).now;
+    const playOpacity = await ev((name) => {
+      const chip = [...document.querySelectorAll('.cuepool_widget .cue_column_colour .cue_chip')]
+        .find((e) => e.querySelector('.cue_chip_name')?.textContent.trim() === name);
+      return getComputedStyle(chip.querySelector('.cue_chip_play')).opacity;
+    }, sceneName);
+    check(
+      'A playing row fills with its progress over its Fade In, its stop button shown over its picture with the pointer away; NOW names it',
+      parseInt(early.fill, 10) > 0 && parseInt(early.fill, 10) < 100 && early.play === 'Stop'
+        && playOpacity === '1' && playingNow === sceneName,
+      { early, playOpacity, playingNow },
+    );
+
+    // Kept: stopped before the end of its Fade In, nobody else holding Colour, the fixtures keep
+    // the mix reached and its row keeps its fill where it stopped; a click on NOW changes nothing;
+    // another colour cue takes Colour and the fill goes
+    await wait(900);
+    await tile(sceneName, 'colour');
+    await wait(800);
+    const kept = { now: (await rowOf('Colour')).now, row: await rowLook(sceneName) };
+    await wait(1200);
+    kept.later = await rowLook(sceneName);
+    await click(page, '.cuepool_widget .cue_column_colour .cue_column_now_text');
+    await wait(400);
+    kept.afterClick = (await rowOf('Colour')).now;
+    kept.reset = await ev(() => document.querySelectorAll('.cuepool_widget .cue_column_reset').length);
+    await tile('Cue 6', 'colour');
+    await wait(800);
+    const taken = { now: (await rowOf('Colour')).now, row: await rowLook(sceneName) };
+    await tile('Cue 6', 'colour');
+    await wait(400);
+    const keptFill = parseInt(kept.row.fill, 10);
+    check(
+      'Kept: stopped during its Fade In, NOW reads "kept:" the scene and its row keeps its fill where it stopped, with its play button; a click on NOW changes nothing; no reset; another colour cue takes Colour and the fill goes',
+      kept.now === `kept: ${sceneName}` && kept.row.kept && kept.row.play === 'Play'
+        && keptFill > 5 && keptFill < 95 && keptFill === kept.row.stopProgress
+        && kept.later.fill === kept.row.fill && kept.afterClick === kept.now && kept.reset === 0
+        && taken.now === 'Cue 6' && taken.row.fill === null && !taken.row.kept,
+      { kept, taken },
+    );
+
+    // Hovering a row shows its play button over its dimmed picture; the 3D highlight stays
+    const highlightNow = () => ev(() => {
+      const view = document.querySelector('#app').__vue_app__.config.globalProperties.$view;
+      return view.highlight.ids.join(',');
+    });
+    const highlightBefore = await highlightNow();
+    const hoverBox = await ev(() => {
+      const el = [...document.querySelectorAll('.cuepool_widget .cue_chip')]
+        .find((e) => e.querySelector('.cue_chip_name')?.textContent.trim() === 'Cue 9');
+      el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      const r = el.getBoundingClientRect();
+      return { x: r.x + (r.width * 2) / 3, y: r.y + r.height / 2 };
+    });
+    await page.mouse.move(hoverBox.x, hoverBox.y);
+    await wait(400);
+    const hovered = await ev(() => {
+      const el = [...document.querySelectorAll('.cuepool_widget .cue_chip')]
+        .find((e) => e.querySelector('.cue_chip_name')?.textContent.trim() === 'Cue 9');
+      return {
+        play: getComputedStyle(el.querySelector('.cue_chip_play')).opacity,
+        picture: getComputedStyle(el.querySelector('.uikit_cue_picture')).opacity,
+        preview: document.querySelector('#app').__vue_app__.config.globalProperties.$view.previewIds,
+      };
+    });
+    hovered.highlight = await highlightNow();
+    await page.mouse.move(2, 2);
+    await wait(SETTLE_MS);
+    check(
+      'Hovering a row shows its play button over its dimmed picture; the 3D highlight doesn\'t change',
+      hovered.play === '1' && Number(hovered.picture) < 1 && hovered.preview === null
+        && hovered.highlight === highlightBefore,
+      { hovered, highlightBefore },
+    );
+
+    // Pictures: an effect's wave is drawn over one cycle whatever its frequency, its waves layered
+    // (one line each); a Position effect's path fills its picture
+    const pictures = await ev(async () => {
+      const frame = () => new Promise((res) => {
+        requestAnimationFrame(() => requestAnimationFrame(res));
+      });
+      const chipOf = (id) => document.querySelector(`.cuepool_widget .cue_chip[data-cue="${id}"]`);
+      const lines = (id) => [...chipOf(id).querySelectorAll('.uikit_cue_picture path')]
+        .map((e) => e.getAttribute('d'));
+      const fx = window.fam.cue('Cue 0', 'intensity');
+      const wave = fx.channels[0];
+      const before = wave.frequency;
+      wave.frequency = 1;
+      await frame();
+      const slow = lines(fx.id)[0];
+      wave.frequency = 8;
+      await frame();
+      const fast = lines(fx.id)[0];
+      wave.frequency = before;
+      await frame();
+      const pos = window.fam.cue('Cue 4', 'position');
+      const nums = (lines(pos.id)[0] || '').match(/-?[\d.]+/g).map(Number);
+      const xs = nums.filter((v, i) => i % 2 === 0);
+      const ys = nums.filter((v, i) => i % 2 === 1);
+      const span = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+      return {
+        same: slow === fast,
+        layered: lines(fx.id).length === fx.channels.length,
+        waves: fx.channels.length,
+        span: Math.round(span),
+      };
+    });
+    check(
+      'Pictures: a wave reads the same at 1 and 8 cycles per pass, one line per wave; a Position effect\'s path fills its picture',
+      pictures.same && pictures.layered && pictures.span >= 75 && pictures.span <= 82,
+      pictures,
+    );
+    await ev(() => window.fam.allOff());
+
+    // The chase timeline by family: lanes under family heads, each head draws who holds it, an
+    // item turned off by a Replace item is dimmed from there (Red then an overlapping Blue)
+    await ev(() => {
+      const { g } = window.fam;
+      const chase = g.chasePool.chases[0];
+      document.querySelector('#app').__vue_app__.config.globalProperties.$view.openChase(g.id, chase.id);
+    });
+    await wait(800);
+    const timeline = await ev(() => {
+      const shown = (sel) => [...document.querySelectorAll(sel)].filter((e) => e.offsetParent);
+      const items = shown('.widget_pool_timeline_item_cue');
+      const titleOf = (name) => items.find((e) => e.querySelector('.widget_pool_timeline_item_cue_text')?.textContent.trim() === name);
+      return {
+        heads: shown('.widget_pool_timeline_family').map((e) => e.querySelector('h4').textContent.trim()),
+        colour: shown('.widget_pool_timeline_family_row')
+          .map((row) => [...row.querySelectorAll('.widget_pool_timeline_holder')].map((h) => h.textContent.trim()).join('>'))
+          .find((t) => t.includes('Red')),
+        red: titleOf('Red')?.title.split('\n'),
+        redOff: !!titleOf('Red')?.querySelector('.widget_pool_timeline_item_off'),
+        pictures: items.filter((e) => e.querySelector('.uikit_cue_picture')).length === items.length,
+        lanes: shown('.widget_pool_timeline_item').length,
+        intensity: window.fam.g.chasePool.chases[0].cues.filter((l) => l.cue.family === 'intensity').length,
+      };
+    });
+    // A click on a family's head folds its lanes; another shows them again (the timeline scrolled
+    // to its top: scrolled to the edge, the first head would sit under Fold Cues)
+    const headOf = (name) => ev((n) => {
+      document.querySelectorAll('.widget_pool_timeline_grid_wrapper').forEach((w) => { w.scrollTop = 0; });
+      const head = [...document.querySelectorAll('.widget_pool_timeline_family')]
+        .find((e) => e.querySelector('h4').textContent.trim() === n);
+      const r = head.getBoundingClientRect();
+      return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+    }, name);
+    const intensityHead = await headOf('Intensity');
+    await page.mouse.click(intensityHead.x, intensityHead.y);
+    await wait(SETTLE_MS);
+    const lanesFolded = await ev(() => [...document.querySelectorAll('.widget_pool_timeline_item')]
+      .filter((e) => e.offsetParent).length);
+    await page.mouse.click(intensityHead.x, intensityHead.y);
+    await wait(SETTLE_MS);
+    const lanesBack = await ev(() => [...document.querySelectorAll('.widget_pool_timeline_item')]
+      .filter((e) => e.offsetParent).length);
+    check(
+      'Chase timeline: lanes under family heads; the Colour head draws Red then Blue; Red is turned off by Blue at 2.0, dimmed from there; items show their cue\'s picture',
+      same(timeline.heads, ['Intensity', 'Colour', 'Position', 'Beam']) && timeline.colour === 'Red>Blue'
+        && Array.isArray(timeline.red) && timeline.red.includes('Turned off by Blue at 2.0') && timeline.redOff
+        && timeline.pictures,
+      timeline,
+    );
+    check(
+      'Chase timeline: a click on the Intensity head folds its lanes; another shows them again',
+      timeline.intensity > 0 && lanesFolded === timeline.lanes - timeline.intensity
+        && lanesBack === timeline.lanes,
+      {
+        lanes: timeline.lanes, intensity: timeline.intensity, lanesFolded, lanesBack,
+      },
+    );
+    await openGroup(page, 'Group 0');
+    await wait(SETTLE_MS);
+
+    // A Position effect's Add Modulated Channel lists Pan, Tilt and the channels of no family
+    const position = await ev(() => {
+      const c = window.fam.g.addCue({
+        id: 60, type: 1, name: 'Position 60', family: 'position', color: '#5A71D3',
+      });
+      const view = document.querySelector('#app').__vue_app__.config.globalProperties.$view;
+      view.selectCue(c.id);
+      return c.family;
+    });
+    await wait(600);
+    await click(page, '.modifier_widget_effect_channels .uikit_button', 'add');
+    const offered = await ev(() => {
+      const popup = [...document.querySelectorAll('.popup_fx_channels')].find((e) => e.offsetParent);
+      return popup ? [...popup.querySelectorAll('.uikit_list_item')].map((e) => e.querySelector('h4')?.textContent.trim() || e.textContent.trim()) : null;
+    });
+    await page.keyboard.press('Escape');
+    check(
+      'A Position effect\'s Add Modulated Channel lists Pan, Tilt and the channels of no family only',
+      position === 'position' && Array.isArray(offered) && offered.includes('Pan')
+        && offered.includes('Tilt') && offered.some((t) => /Maintenance/i.test(t))
+        && !offered.some((t) => /^(Dimmer|Shutter|Zoom|Red|Green|Blue|White)$/.test(t)),
+      offered,
+    );
+
+    // The master column keeps Isolate and Blackout like the groups; no HELD tile anywhere
+    const master = await ev(() => ({
+      buttons: [...document.querySelectorAll('.group_pool .uikit_cue_container.master .uikit_button')]
+        .map((e) => e.textContent.trim().toLowerCase()),
+      held: document.querySelectorAll('.master_release').length,
+    }));
+    check(
+      'The master column has Isolate and Blackout as the groups do, and no tile shows HELD',
+      same(master.buttons, ['isolate', 'blackout']) && master.held === 0,
+      master,
+    );
+    const errors = await ev(() => [...window.__check.errors, ...window.__appErrors]);
+    check('No app error', errors.length === 0, errors);
+  },
+
   /** Each group and universe comes back to its last selection */
   async memory(page) {
     const d = await demo(page);
     const [g0, g1] = d.groups;
     await openGroup(page, g0.name);
     const cue = g0.cues[Math.min(2, g0.cues.length - 1)];
-    await selectCueTile(page, cue.name);
+    await selectCueTile(page, cue);
     const [fa, , fb] = g0.fixtures;
     await clickRow(page, '.modifier_widget_fixture_pool', fa);
     await clickRow(page, '.modifier_widget_fixture_pool', fb, ['Meta']);
@@ -2375,7 +3814,7 @@ const SCENARIOS = {
     const g = d.groups.find((gr) => gr.cues.some((c) => c.type === 0)) || d.groups[0];
     await openGroup(page, g.name);
     const scene = g.cues.find((c) => c.type === 0);
-    await selectCueTile(page, scene.name);
+    await selectCueTile(page, scene);
     const target = g.fixtures[Math.min(1, g.fixtures.length - 1)];
     await clickRow(page, '.scene_fixtures', target);
     const sceneList = await probe(page, 'sceneList');
@@ -2411,12 +3850,13 @@ const SCENARIOS = {
     const g = d.groups[0];
     await openGroup(page, g.name);
     const cue = g.cues[Math.min(2, g.cues.length - 1)];
-    await selectCueTile(page, cue.name);
+    await selectCueTile(page, cue);
     await press(page, 'Delete');
     await submitTopPopup(page);
-    const remaining = await page.evaluate((gid) => window.__check.show.groupPool.getFromId(gid).cuePool.cues.map((c) => c.name || `Cue${c.id}`), g.id);
+    // By id: names repeat once older cues are split per family
+    const remaining = await page.evaluate((gid) => window.__check.show.groupPool.getFromId(gid).cuePool.cues.map((c) => ({ id: c.id, name: c.name || `Cue${c.id}` })), g.id);
     const shown = await probe(page, 'selectedCue');
-    check('deleting the cue in view: it is gone and a remaining cue is shown', !remaining.includes(cue.name) && remaining.includes(shown), { remaining, shown });
+    check('deleting the cue in view: it is gone and a remaining cue is shown', !remaining.some((c) => c.id === cue.id) && remaining.some((c) => c.name === shown), { remaining, shown, deleted: cue });
     const victim = d.groups[d.groups.length - 1];
     await openGroup(page, victim.name);
     await press(page, 'Delete');

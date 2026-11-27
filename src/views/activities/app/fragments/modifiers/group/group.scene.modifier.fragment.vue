@@ -1,13 +1,17 @@
 <template>
   <uk-flex>
-    <widget-curve :fade="scene ? scene.fadeIn : undefined" />
-    <!--
-      TODO: Check if fadeout is necessary in this mode.
-      It seem like t could only be confusing ? Would
-      having a custom blackout or reset position scene with fade
-      make more sense ?
-    -->
-    <!-- <widget-curve :fade="scene ? scene.fadeOut : undefined" /> -->
+    <!-- Fade in from what the fixtures show when started, then hold; fade out when turned off,
+      into what takes its families back -->
+    <widget-curve
+      class="scene_fade_in"
+      :fade="scene ? scene.fadeIn : undefined"
+      timed
+    />
+    <widget-curve
+      class="scene_fade_out"
+      :fade="scene ? scene.fadeOut : undefined"
+      timed
+    />
     <widget-scene-fixtures
       v-show="fixtureValue"
       :scene="scene ? scene : undefined"
@@ -49,6 +53,9 @@
 
 <script>
 import { sameRanges } from '@/views/utils/channel.presets';
+import {
+  FAMILIES, familyIndex, familyOfAttribute,
+} from '@/models/DMX/families';
 import WidgetCurve from '../_widgets/modifier.widget.curve.vue';
 import WidgetColorPicker from '../_widgets/modifier.widget.colorpicker.vue';
 import WidgetPanTilt from '../_widgets/modifier.widget.pantilt.vue';
@@ -116,7 +123,8 @@ export default {
      * @type {Boolean}
      */
     colorPickerState() {
-      return this.selectedFixtureValues.some((f) => f.fixture.hasColor);
+      return this.showsFamily(FAMILIES.COLOUR)
+        && this.selectedFixtureValues.some((f) => f.fixture.hasColor);
     },
     /**
      * Whether a selected fixture has pan or tilt
@@ -124,7 +132,8 @@ export default {
      * @type {Boolean}
      */
     panTiltPickerState() {
-      return this.selectedFixtureValues.some((f) => f.fixture.hasPan || f.fixture.hasTilt);
+      return this.showsFamily(FAMILIES.POSITION)
+        && this.selectedFixtureValues.some((f) => f.fixture.hasPan || f.fixture.hasTilt);
     },
     /**
      * Cells the controls apply to, null for all (remembered with the group)
@@ -146,7 +155,8 @@ export default {
         const ranks = new Map();
         fixtureValue.fixture.channels.forEach((channel, index) => {
           const entry = fixtureValue.entryOf(index);
-          if (!entry) return;
+          // A scene shows its family's channels (fine ones included) and those of no family
+          if (!entry || !this.showsFamily(familyOfAttribute(channel.attribute))) return;
           let key;
           if (!channel.cell) {
             key = `fixture|${channel.type}|${channel.color}|${channel.qaIndex}`;
@@ -202,6 +212,17 @@ export default {
     },
   },
   methods: {
+    /**
+     * Whether the scene's editor shows a family: its own, and the channels of no family
+     *
+     * @public
+     * @param {Number} family family index (-1: none)
+     * @returns {Boolean}
+     */
+    showsFamily(family) {
+      const own = this.scene?.family;
+      return !own || family < 0 || familyIndex(own) === family;
+    },
     /**
      * Selects fixtures of the group (a new main fixture shows all its cells again)
      *

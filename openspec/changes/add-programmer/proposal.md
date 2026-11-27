@@ -13,7 +13,7 @@ way to see where a value comes from.
 - **Programmer.**
   - Edits in the universe view (faders, colour picker, pan/tilt, channel presets) go into the
     programmer.
-  - The programmer sits above every cue in the merge from `add-cue-priorities`.
+  - The programmer sits above every cue in the family merge from `add-cue-families`.
   - Programmer values show highlighted on their faders, and each fixture with programmer values
     is marked in the patch bay and the fixture pool.
   - Programmer values are never saved.

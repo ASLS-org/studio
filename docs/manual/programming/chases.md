@@ -14,7 +14,8 @@ tells the same story as the home page: watch it in [Playing a show](/programming
 ## Creating a Chase
 
 Double click an empty chase slot in a group's column of the group pool. The new chase opens in the
-**chase view** at the bottom of the screen, with a lane for each of the group's cues.
+**chase view** at the bottom of the screen, with a lane for each of the group's cues, under the
+same family heads as the cue pool.
 
 Click a chase's name in the group pool to open it later. Below is *Story* in the chase view.
 
@@ -35,31 +36,61 @@ lasts 8 seconds; at 60 BPM, 16 seconds.
 
 ## The Timeline
 
-Each lane is one of the group's cues; the ruler counts bars and beats. A **cue item** on a lane
-plays that cue from where it starts, for as long as it lasts.
+Each lane is one of the group's cues, under its family's head (**Intensity**, **Colour**,
+**Position**, **Beam**, in the cue pool's order), each family in its colour: Intensity gold,
+Colour pink, Position blue, Beam green, on its head, its lanes' edges, its items and the bars
+saying who holds it. The ruler counts bars and beats. A **cue item** on a lane
+plays that cue from where it starts, for as long as it lasts. The item starts the cue with its
+**Fade in** and ends with its **Fade out**, so the cue has faded out when the item ends. The item
+draws these fades: the fade in curve at its start, a flat line while the cue holds, the fade out
+curve at its end.
 
-- **Add** a cue item: double click its lane where it should start. It gets the cue's duration, or
-  less if another item follows.
+Stretching an item makes the cue hold longer; its fades keep their own times. An item shorter than
+both fades together plays them shortened, in proportion, effects as scenes (see
+[Fading in and out](/programming/effects#fading-in-and-out)).
+
+- **Add** a cue item: double click its lane where it should start. An effect's item gets its
+  **Duration**, a scene's is long enough for its fades (one bar at least), or less if another
+  item follows.
 - **Move** it: drag its middle. **Resize** it: drag its right edge.
 - **Remove** it: right click it.
 - **Zoom**: drag up or down on the ruler; double click the ruler to reset.
-- **Fold cues** hides the lanes that have no items.
+- **Fold cues** hides the lanes that have no items, and the families with none.
 
 <LivePreview preset="timeline-add" />
 
-Items on different lanes can overlap: their cues then play together. Overlaps are how you layer:
-put *Rainbow* over the second half of *Warm wash* and the heads keep their warm aim while their
-colour starts cycling, because *Rainbow* only moves colour channels.
+Items on different lanes can overlap: their cues then play together, family by family, as when
+you start them by hand (see [What plays together](/concepts/timing#what-plays-together)). Put
+*Rainbow* over the second half of *Warm wash* and the heads keep their warm aim while their colour
+starts cycling: *Rainbow* takes Colour and Intensity, *Warm wash* keeps Position and Beam. Items
+back to back on a family replace each other, as a colour chase does.
+
+### Who Holds What
+
+The timeline draws what its items do to the stage, by the same rules as playing by hand:
+
+- **Each family's head** shows, along the time, which cue holds that family, with its picture and
+  name. Read it as the chase's NOW over time. Click a family's head to fold its lanes (the head
+  stays); click again to show them.
+- **A striped stretch** of an item is on, but covered: other items hold all of its families
+  there (a **Layer** effect over it). It shows again when they end.
+- **A dimmed stretch** is off: a **Replace** item took all of its families and turned it off. It
+  stays off until its cue's next item.
+- **Rest the pointer on an item** to read its **Mode**, and what covers it or turns it
+  off, from when.
+
+The drawing counts the chase's own items only: cues you play by hand and other groups can still
+change what the lights show (the cue pool's NOW always tells).
 
 ### When an item ends
 
 | Cue | At the item's end |
 | --- | --- |
-| Scene | Its look stays until another item changes the same channels |
-| Effect | It stops; its channels keep the value they had at that moment |
+| A cue with a **Fade out** | It has faded into the cue it hands its families back to (or, with none, they rest) |
+| A cue with no **Fade out** | It keeps its families, its row showing it playing, until another cue takes them, the chase stops, or you press its stop button in the cue pool |
 
-So a chase that ends on an effect leaves the lights wherever the effect was. End on a scene (as
-*Story* does with *Sunset*) for a clean, known look.
+Stopping a chase hands back what its items hold, and so does a **One Shot** chase reaching its
+end. To finish on a known look, start that scene from the cue pool as the chase ends: it stays on.
 
 ## Deleting a Chase
 

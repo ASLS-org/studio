@@ -1,5 +1,6 @@
 import UkColors from '@/views/components/uikit/colors/uikit.colors';
 import Cue, { CUE_LOOP_STYLES } from './cue.model';
+import { familyAt, noFamilies } from './families';
 
 let fxFixtureId = 0;
 
@@ -385,6 +386,24 @@ class FXFixture {
       phase: this.phase,
     };
   }
+}
+
+/**
+ * The family a wave modulates: the family of the first channel it targets on its fixtures
+ *
+ * @param {Object} wave FXChannel
+ * @returns {Number} family index, -1 for none
+ */
+function waveFamily(wave) {
+  for (let i = 0; i < wave.fixtures.length; i++) {
+    const { handle, targets } = wave.fixtures[i];
+    const target = targets && targets.find((t) => t.direct.length || t.inverted.length);
+    if (handle && target) {
+      const index = target.direct.length ? target.direct[0] : target.inverted[0];
+      return familyAt(handle.channels || [], index);
+    }
+  }
+  return -1;
 }
 
 /**
@@ -1065,12 +1084,12 @@ class FXChannel {
       const { targets } = fixture;
       for (let k = 0; k < targets.length; k++) {
         const target = targets[k];
+        let targetValue = value;
         if (this._cellPhase && target.cell) {
           const cellValue = this.getValue(this.time, target.phase) || 0;
-          fixture.writeTarget(target, fixture.mirrored ? flip - cellValue : cellValue);
-        } else {
-          fixture.writeTarget(target, value);
+          targetValue = fixture.mirrored ? flip - cellValue : cellValue;
         }
+        fixture.writeTarget(target, targetValue);
       }
     }
   }
@@ -1159,6 +1178,45 @@ class FX extends Cue {
         id: presetIndex,
       })),
     }));
+  }
+
+  /**
+   * The families of the channels the effect modulates (on its active fixtures)
+   *
+   * @readonly
+   * @type {Array<Boolean>}
+   */
+  get usedFamilies() {
+    const used = noFamilies();
+    const { channels } = this;
+    for (let i = 0; i < channels.length; i++) {
+      const fxFixtures = channels[i].fixtures;
+      for (let j = 0; j < fxFixtures.length; j++) {
+        const fxFixture = fxFixtures[j];
+        const fixtureChannels = fxFixture.active ? fxFixture.handle.channels || [] : [];
+        fxFixture.targets.forEach((target) => {
+          target.direct.concat(target.inverted).forEach((index) => {
+            const channel = fixtureChannels[index];
+            if (channel && channel.family > -1) used[channel.family] = true;
+          });
+        });
+      }
+    }
+    return used;
+  }
+
+  /**
+   * The effect's show data with only the waves of some families (an older Look split into one
+   * cue per family on load)
+   *
+   * @public
+   * @param {Function} keeps `(family) => Boolean` for a family index, -1 for no family
+   * @returns {Object} show data
+   */
+  familyData(keeps) {
+    const data = this.showData;
+    data.channels = data.channels.filter((wave, i) => keeps(waveFamily(this.channels[i])));
+    return data;
   }
 
   /**

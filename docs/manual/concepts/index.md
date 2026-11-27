@@ -89,19 +89,23 @@ Each column of the group pool is one group, with its chases and its play buttons
 
 ## Cue
 
-Something a group does. A group's cues sit in its cue pool, one per slot, and a click on a cue
-plays or stops it. There are two kinds:
+Something a group does. A group's cues sit in its cue pool, in columns by family, and a cue's play
+button plays or stops it. There are two kinds:
 
 | | Scene | Effect |
 | --- | --- | --- |
 | What it does | Brings channels to set values | Moves channels along a waveform |
 | Values | One value per active channel, per fixture (per cell) | A min, a max, a waveform, a phase per fixture |
-| Over its duration | Fades in, along its fade curve | Repeats its waveform **Freq** times |
-| When it ends | Stops; its look stays on stage | Loops by default |
+| Over time | Fades in along its **Fade in** curve, then stays on | Repeats its waveform **Freq** times per **Duration** |
+| Turned off | Fades out along its **Fade out** curve | Stops (fades out when its **Mode** is **Layer**) |
 
-Every cue has a **Duration** in bars and a **Loop Style** (once, or until stopped). Scenes have a
-**Start**: from 0, or from the channels' current values. Durations follow the tempo: double the
-BPM and every fade and every effect runs twice as fast.
+Every cue belongs to one **family** (Intensity, Colour, Position or Beam), and its column in the
+cue pool says which; a [chase](/programming/chases) combines them. It has a **Mode**: **Replace**
+(new cues) turns off the cue it takes over, **Layer** plays over it and gives it back (see
+[What plays together](/concepts/timing#what-plays-together)). A scene has a **Fade in**
+and a **Fade out** in bars; an effect has a **Duration** in bars and a **Loop Style** (once, or
+until stopped), and fades as a scene does. Durations follow the tempo: double the BPM and every
+fade and every effect runs twice as fast.
 
 **In the demo show:** *Rig* has four cues.
 

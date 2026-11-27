@@ -100,3 +100,56 @@ DMX 0–255.
 - **WHEN** it plays
 - **THEN** the drawn curve rises above the top line before settling, and the channel never
   exceeds 255
+
+### Requirement: Scene fade times
+
+A scene SHALL have a Fade In and a Fade Out, each with its own time in bars (0 to 64), set in its
+fade widgets. A time of 0 SHALL apply the change at once. Cue Settings SHALL NOT show a Duration
+or a Loop Style for a scene. A scene from a showfile without fade times SHALL take its saved
+Duration as its Fade In time and 0 as its Fade Out time.
+
+#### Scenario: Scene settings
+
+- **WHEN** a scene is selected
+- **THEN** Cue Settings shows no Duration and no Loop Style, and the Fade In and Fade Out widgets
+  each have a Bars field
+
+#### Scenario: Older scene
+
+- **WHEN** a showfile saved before this change, with a scene of Duration 4, is loaded
+- **THEN** that scene's Fade In time is 4 bars and its Fade Out time is 0
+
+### Requirement: Scenes stay on while they hold a family
+
+A started scene SHALL fade in over its Fade In time from what the fixtures show, then SHALL stay
+on, its row showing it playing, while it holds a family (see playback). Stopping it SHALL show it stopped at
+once and hand its families back over its Fade Out time. Starting it again during its fade-out
+SHALL fade in from where the fade-out got to.
+
+#### Scenario: Stays on
+
+- **WHEN** a scene with a 2-bar Fade In is started and 4 bars pass
+- **THEN** its channels hold the scene's values and its row still shows it playing
+
+#### Scenario: Turned off alone
+
+- **WHEN** the only cue on a fixture, a scene with a 1-bar Fade Out setting Dimmer at 255, is
+  turned off
+- **THEN** its row shows it stopped at once, and after 1 bar its Dimmer is 0
+
+#### Scenario: Turned off over another scene
+
+- **WHEN** a Layer scene started over another scene, with a 1-bar Fade Out, is turned off
+- **THEN** after 1 bar its channels are back at the other scene's values
+
+### Requirement: The scene editor follows the family
+
+A scene SHALL show in its channels widget only the channels of its family and those of no family.
+The colour picker SHALL show for Colour scenes only, and the pan/tilt picker for Position scenes
+only.
+
+#### Scenario: Colour scene
+
+- **WHEN** a Colour scene of moving heads is selected
+- **THEN** the channels widget lists only colour channels, the colour picker shows, and the
+  pan/tilt picker doesn't

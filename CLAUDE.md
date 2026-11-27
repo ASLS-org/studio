@@ -67,6 +67,11 @@ buffer; a `WscConnectionStream` sends the buffer to the gateway every tick.
    Use `addRaw(data)` to construct, `addExisting(instance)` to share, `clearAll()` to reset.
 5. **Real-time budget.** Engine updates and the visualizer share the main thread at 60 fps. No
    allocations, Vue reactivity, or logging inside per-tick code.
+6. **Channel merge.** Cues share the stage by family (Intensity, Colour, Position, Beam): one cue
+   per family in a group, Replace turns off what it covers, Layer gives it back, nobody → rest.
+   While cues play, `Fixture.setChannel` stores values in their claim (`Claims.writer`); holders
+   change on start/stop and `Claims.settle()` writes once per tick. Playback code writes through
+   `Cue.play`, never straight to channel values (models/DMX/CLAUDE.md § Merge).
 
 ## Conventions
 

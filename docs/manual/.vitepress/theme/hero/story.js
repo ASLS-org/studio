@@ -71,21 +71,23 @@ export const CHANNEL_DEFS = [
 ];
 
 /**
- * The group's cues (as the cue pool widget lists them). Colours are Studio accent tokens.
+ * The group's cues (as the cue pool widget lists them, each in its family's column). Colours are
+ * Studio accent tokens.
  * @type {Array<Object>}
  */
 export const CUES = [
   {
-    id: 0, name: 'Warm wash', type: 0, token: '--accent-gold', duration: 1000, relative: true,
+    id: 0, name: 'Warm wash', type: 0, family: 'intensity', token: '--accent-gold', duration: 1000,
+    relative: true,
   },
   {
-    id: 1, name: 'Rainbow', type: 1, token: '--accent-violet',
+    id: 1, name: 'Rainbow', type: 1, family: 'colour', token: '--accent-violet',
   },
   {
-    id: 2, name: 'Ballyhoo', type: 1, token: '--accent-blue',
+    id: 2, name: 'Ballyhoo', type: 1, family: 'position', token: '--accent-blue',
   },
   {
-    id: 3, name: 'Sunset', type: 0, token: '--accent-orange',
+    id: 3, name: 'Sunset', type: 0, family: 'colour', token: '--accent-orange',
   },
 ];
 

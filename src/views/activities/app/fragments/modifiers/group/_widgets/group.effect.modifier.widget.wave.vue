@@ -267,23 +267,26 @@ export default {
      * Prepare HTML canvas instance and start observing its size so the
      * backing bitmap always matches its rendered CSS size (avoids the
      * browser stretching the canvas image, which was throwing the drawn
-     * curve out of alignment with the fixture dots).
+     * curve out of alignment with the fixture dots). The observer reports the first size once the
+     * panel is laid out: measuring here, while the panel mounts, forced its layout in the click
+     * that opened it.
      * @public
      */
     prepareCanvas() {
       this.canvas = this.$refs.waveModifier;
       this.context = this.canvas.getContext('2d');
-      this.resizeObserver = new ResizeObserver(() => this.handleResize());
+      this.resizeObserver = new ResizeObserver((entries) => {
+        this.handleResize(entries[entries.length - 1].contentRect);
+      });
       this.resizeObserver.observe(this.canvas);
-      this.handleResize();
     },
     /**
      * Resize the canvas backing store to match its rendered size and the
      * device pixel ratio, then redraw.
      * @public
+     * @param {DOMRectReadOnly} rect the canvas' content box, as observed
      */
-    handleResize() {
-      const rect = this.canvas.getBoundingClientRect();
+    handleResize(rect) {
       if (!rect.width || !rect.height) return;
       const dpr = window.devicePixelRatio || 1;
       this.canvas.width = Math.round(rect.width * dpr);

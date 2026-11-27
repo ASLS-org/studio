@@ -109,6 +109,8 @@
 
   --border-width: 1px;
 
+  --opacity-dimmed: 0.35; /* an option that can't be picked, a family another cue holds */
+
   --widget-width-sm: 250px;
   --widget-width-md: 300px;
   --widget-width-lg: 350px;
@@ -119,8 +121,6 @@
 /** Fixed geometry: sizes the code computes with. Never part of the scale, never snapped. Each is
     also exported by src/views/utils/geometry.js, which the code reads: change both together. **/
 :root {
-  --cue-tile-width: 100px; /* cue pool grid: group.modifier.widget.cuepool.vue computeCueStyle */
-  --cue-tile-height: 81px;
   --chase-row-height: 26px; /* group pool chase rows: uikit.cue.container.vue, uikit.cue.vue */
   --select-option-height: 25px; /* uk-select options: computeOptionListStyle */
 }

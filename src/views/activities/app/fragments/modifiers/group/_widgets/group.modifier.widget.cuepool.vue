@@ -4,124 +4,123 @@
     dockable
     :header="header"
   >
-    <uk-flex
-      col
-      class="body"
-    >
-      <uk-flex
-        class="body"
+    <!-- One column per family: a group plays one cue per family at a time -->
+    <div class="cue_columns">
+      <div
+        v-for="column in columns"
+        :key="column.key"
+        class="cue_column"
+        :class="`cue_column_${column.key}`"
       >
-        <uk-flex
-          ref="keys"
-          tabindex="0"
-          col
-          class="body"
-        >
-          <div
-            ref="grid"
-            class="grid"
-            @scroll="updateScrollPreview"
-          >
-            <div
-              v-for="(item, index) in 120"
-              :key="item"
-              class="grid_item empty"
-              @dragenter="
-                (e) => {
-                  dragEnter(e, index);
-                }
-              "
-              @dblclick="displayCuepoolPopup(index)"
-            >
-              <div class="grid_item_body">
-                <h4>C-{{ index }}</h4>
-              </div>
-              <div class="grid_item_footer">
-                <h4>-</h4>
-              </div>
-            </div>
-            <div
-              v-for="cue in cues"
-              :key="cue"
-              :ref="`cue-${cue.id}`"
-              :class="{
-                selected: selectedCue === cue.id
-                  || hoveredCueSelector === cue.id
-                  || hoveredCuePlayer === cue.id
-              }"
-              :style="computeCueStyle(cue)"
-              class="grid_item"
-              :draggable="true"
-              @click="playCue(cue)"
-              @pointerdown="pressCue(cue, $event)"
-              @dragstart="
-                (e) => {
-                  releaseHeldCue();
-                  startDrag(e, cue);
-                }
-              "
-              @dragover.prevent
-            >
-              <div
-                class="grid_item_overlay"
-                :style="{ background: cue.color + '!important' }"
-              >
-                <div
-                  class="grid_item_body"
-                  :style="computeCueLoader(cue)"
-                  @mouseenter="hoveredCuePlayer = cue.id"
-                  @mouseleave="hoveredCuePlayer = -1"
-                >
-                  <Transition name="fade">
-                    <uk-flex
-                      v-if="hoveredCuePlayer === cue.id"
-                      center-both
-                      class="grid_item_body_overlay"
-                      style=""
-                    >
-                      <uk-icon
-                        :class="{ playing: isPlaying(cue) }"
-                        :name="isPlaying(cue) ? 'stop' : 'play'"
-                        class="grid_item_body_icon"
-                      />
-                    </uk-flex>
-                    <uk-icon
-                      v-else
-                      :name="cue.type ? 'waveform' : 'mixer'"
-                      class="grid_item_body_icon"
-                    />
-                  </Transition>
-                </div>
-                <div
-                  class="grid_item_footer"
-                  @mouseenter="hoveredCueSelector = cue.id"
-                  @mouseleave="hoveredCueSelector = -1"
-                  @click.stop="selectCue(cue)"
-                >
-                  <p>{{ cue.name || "Cue" + cue.id }}</p>
-                </div>
-              </div>
-            </div>
+        <!-- The family, its add button, and where it comes from now -->
+        <div class="cue_column_head">
+          <div class="cue_column_title">
+            <span
+              class="cue_column_icon"
+              :class="maskIcons[column.icon]"
+            />
+            <h4 class="cue_column_label">
+              {{ column.label }}
+            </h4>
+            <uk-button
+              class="cue_column_add"
+              icon="new"
+              label="add"
+              :title="`Add a cue to ${column.label}`"
+              @click="displayAddPopup(column)"
+            />
           </div>
-        </uk-flex>
-        <div class="scroll_preview">
           <div
-            ref="scroller"
-            class="scroll_preview_scroller"
-          />
-          <div
-            v-for="(cue, index) in cues"
-            :key="index"
-            class="cue_preview"
-            :class="{ playing: isPlaying(cue), selected: cue.id === selectedCue }"
-            :style="computeCuePreviewStyle(cue)"
-          />
+            class="cue_column_now"
+            :class="`now_${nowColumns[column.key].state}`"
+            :title="nowTitle(column)"
+          >
+            <span
+              v-if="nowColumns[column.key].value"
+              class="cue_now_value"
+              :class="`value_${nowColumns[column.key].value.kind}`"
+            >
+              <span
+                class="value_fill"
+                :style="nowColumns[column.key].value.style"
+              />
+            </span>
+            <p class="cue_column_now_text">
+              {{ nowColumns[column.key].text }}
+            </p>
+          </div>
         </div>
-      </uk-flex>
-    </uk-flex>
+        <!-- Its cues as list rows: hover, selection, keys, the grip to reorder, the trash -->
+        <uk-list
+          class="cue_column_list"
+          :items="column.items"
+          :selection="selectionIds"
+          draggable
+          deletable
+          no-highlight
+          tall
+          empty-text="No cues"
+          @select="selectRow"
+          @reorder="(e) => reorder(column, e)"
+          @delete="deleteCues"
+        >
+          <template #row="{ item }">
+            <!-- Playing: a fill grows across the row with its progress, as a playing chase's;
+                 kept (the stage keeps its values): the fill stays where it stopped -->
+            <span
+              v-if="isPlaying(item.cue) || isKept(item.cue)"
+              class="cue_chip_fill"
+              :style="{ width: fillOf(item.cue) }"
+            />
+            <span
+              class="cue_chip"
+              :class="chipClass(item.cue)"
+              :data-cue="item.cue.id"
+              :title="item.cue.name"
+            >
+              <!-- Its picture, its play button over it while the pointer is on the row (its stop
+                   button whenever it plays): plays or stops it with its fades, held down for a
+                   Temporary cue -->
+              <span class="cue_chip_picture">
+                <uk-cue-picture :picture="pictureOf(item.cue)" />
+                <span
+                  class="cue_chip_play"
+                  :title="isPlaying(item.cue) ? 'Stop' : 'Play'"
+                  @click.stop="playCue(item.cue)"
+                  @pointerdown.stop="pressCue(item.cue, $event)"
+                >
+                  <span
+                    class="cue_chip_play_icon"
+                    :class="maskIcons[isPlaying(item.cue) ? 'stop' : 'play']"
+                  />
+                </span>
+              </span>
+              <span class="cue_chip_text">
+                <span class="cue_chip_title">
+                  <span
+                    class="cue_chip_type"
+                    :class="maskIcons[item.cue.type ? 'waveform' : 'mixer']"
+                  />
+                  <h4 class="cue_chip_name">{{ item.cue.name }}</h4>
+                </span>
+                <!-- Its values in words -->
+                <p class="cue_chip_value">
+                  {{ summaryOf(item.cue) }}
+                </p>
+              </span>
+            </span>
+            <!-- On, but every family it sets is held by other cues -->
+            <span
+              v-if="chipClass(item.cue).covered"
+              class="cue_chip_covered"
+            />
+          </template>
+        </uk-list>
+      </div>
+    </div>
     <popup-cue-pool
       v-model="cuePopupDisplayState"
-      :cue-id="newCueId"
+      :family="addFamily"
       :group="group"
       @add="addCue"
     />
@@ -129,13 +128,45 @@
 </template>
 
 <script>
+import { toRaw } from 'vue';
 import modal from '@/views/mixins/modal.mixin';
 import LiveMixin from '@/views/mixins/live.mixin';
-import KeysMixin from '@/views/mixins/keys.mixin';
-import { CUE_TILE_WIDTH, CUE_TILE_HEIGHT, CUE_TILES_PER_ROW } from '@/views/utils/geometry';
 import { CUE_TRIGGER_STYLES } from '@/models/DMX/cue.model';
+import { FAMILY_KEYS, familyIndex } from '@/models/DMX/families';
+import { sharedContent } from '@/views/utils/cue.previews';
+import { familyNow } from '@/views/utils/cue.now';
+import { FAMILY_LOOKS } from '@/views/utils/cue.families';
+import { maskClass } from '@/views/components/uikit/icons/icon.mask';
 import popupCuePool from '../_popups/group.modifier.popup.cuepool.vue';
 
+/**
+ * The columns: the families in their order
+ *
+ * @constant {Array<Object>} COLUMNS
+ */
+const COLUMNS = FAMILY_KEYS.map((key) => ({
+  key,
+  label: FAMILY_LOOKS[key].label,
+  icon: FAMILY_LOOKS[key].icon,
+}));
+
+/**
+ * Icons drawn as masks on the rows and heads, as classes (a component per row slows the panel
+ * down, a style object is set again on every render)
+ *
+ * @constant {Object} MASK_ICONS
+ */
+const MASK_ICONS = Object.fromEntries(['mixer', 'waveform', 'play', 'stop',
+  ...Object.values(FAMILY_LOOKS).map((look) => look.icon)].map((name) => [name, maskClass(name)]));
+
+/**
+ * @component GroupModifierWidgetCuepool The group's cues, one column per family, as list rows:
+ * NOW says where each family comes from (read only); a row pictures what its cue sets and says it
+ * in words; a click (or the keys) opens the cue, never plays it (programming is blind); its play
+ * button plays and stops it with its fades, a fill across the row showing its progress (kept where
+ * it stopped while the stage keeps its values); **add** adds a cue to a column; the grip reorders
+ * a column, the trash deletes
+ */
 export default {
   name: 'GroupModifierWidgetCuepool',
   compatConfig: {
@@ -145,7 +176,7 @@ export default {
   components: {
     popupCuePool,
   },
-  mixins: [LiveMixin, KeysMixin],
+  mixins: [LiveMixin],
   props: {
     /**
      * Handle to group instance
@@ -174,17 +205,13 @@ export default {
         icon: 'grid',
       },
       /**
-       * Cue pool slot a new cue is being created in
+       * Icons of the rows and heads, as mask classes
        */
-      newCueId: null,
+      maskIcons: MASK_ICONS,
       /**
-       * Whether cue's body (player) is seleted
+       * Family of the column a cue is being added to
        */
-      hoveredCuePlayer: -1,
-      /**
-       * Whether cue's footer (selector) is seleted
-       */
-      hoveredCueSelector: -1,
+      addFamily: FAMILY_KEYS[0],
     };
   },
   computed: {
@@ -201,6 +228,44 @@ export default {
       return this.group ? this.group.cuePool.cues : [];
     },
     /**
+     * The columns and their cues, in id order
+     *
+     * @type {Array<Object>}
+     */
+    columns() {
+      return COLUMNS.map((column) => {
+        const cues = this.cues.filter((cue) => cue.family === column.key)
+          .sort((a, b) => a.id - b.id);
+        // The rows of its list: keyed by cue id
+        return { ...column, cues, items: cues.map((cue) => ({ id: cue.id, name: cue.name, cue })) };
+      });
+    },
+    /**
+     * The selected cue's id, for the columns' lists (the one holding it shows it selected)
+     *
+     * @type {Array<Number>}
+     */
+    selectionIds() {
+      return this.selectedCue == null ? [] : [this.selectedCue];
+    },
+    /**
+     * Each cue's picture and value line, by id (recomputed when a cue is edited)
+     *
+     * @type {Object}
+     */
+    contentById() {
+      const byId = {};
+      this.cues.forEach((cue) => {
+        const { previews, summary } = sharedContent(cue);
+        const family = familyIndex(cue.family);
+        byId[cue.id] = {
+          picture: previews.find((p) => p.family === family) || previews[0] || null,
+          summary,
+        };
+      });
+      return byId;
+    },
+    /**
      * Id of the group's selected cue (from the view state)
      *
      * @type {?Number}
@@ -210,71 +275,139 @@ export default {
       if (!this.$view || !this.group || this.$view.group?.id !== this.group.id) return null;
       return this.$view.cue?.id ?? null;
     },
+    /**
+     * What each column's NOW shows, refreshed with the live ticker
+     *
+     * @type {Object}
+     */
+    nowColumns() {
+      // Holders and values change outside Vue (playback): read them with the live ticker
+      this.live(null);
+      const now = {};
+      COLUMNS.forEach((column) => {
+        now[column.key] = familyNow(this.group, familyIndex(column.key));
+      });
+      return now;
+    },
   },
   beforeUnmount() {
     this.releaseHeldCue();
   },
   methods: {
     /**
-     * Whether a cue is playing, triggered directly or by a running chase
+     * Whether a cue is playing: started, played by a chase, or held by an ended chase item
      *
      * @public
      * @param {Object} cue handle to cue instance
      * @returns {Boolean} playing state
      */
     isPlaying(cue) {
-      return this.live(cue.state || cue.chaseActive);
+      return !!this.live(cue.state || cue.chaseActive || cue.holdsItem);
     },
     /**
-     * Computes cue loading gradient baed on cue playtime
+     * A cue's picture
      *
-       * @public
-     * @param {Object} cue handle to cue instance
-     * @returns {Object} css background linear-gradient value
+     * @public
+     * @param {Object} cue
+     * @returns {?Object}
      */
-    computeCueLoader(cue) {
-      // Playing directly or through a chase; a chase item can outlast the cue's own duration
-      const perc = this.isPlaying(cue)
-        ? Math.min((cue.time / cue.durationMS) * 100, 100)
-        : 0;
+    pictureOf(cue) {
+      return this.contentById[cue.id]?.picture || null;
+    },
+    /**
+     * Classes of a cue's picture: its kind, or empty
+     *
+     * @public
+     * @param {Object} cue
+     * @returns {Object}
+     */
+    pictureClass(cue) {
+      const picture = this.pictureOf(cue);
+      return picture ? `picture_${picture.kind}` : 'empty';
+    },
+    /**
+     * A cue's value line
+     *
+     * @public
+     * @param {Object} cue
+     * @returns {String}
+     */
+    summaryOf(cue) {
+      return this.contentById[cue.id]?.summary || '';
+    },
+    /**
+     * A chip's state classes: selected, playing, covered (playing, every family held by other
+     * cues)
+     *
+     * @public
+     * @param {Object} cue
+     * @returns {Object}
+     */
+    chipClass(cue) {
+      const playing = this.isPlaying(cue);
+      const holds = this.live(cue.heldFamilies).some(Boolean);
       return {
-        background: `linear-gradient(90deg ,var(--secondary-light) 0% ,var(--secondary-light) ${perc}% ,transparent ${perc}%,transparent 100% )`,
+        selected: this.selectedCue === cue.id,
+        playing,
+        kept: !playing && this.isKept(cue),
+        covered: playing && !!this.pictureOf(cue) && !holds,
       };
     },
     /**
-     * Computes cue position styling within cuepool grid
+     * Whether the stage keeps a stopped cue's values: nobody holds its family since it stopped
+     * (NOW reads "kept:" it)
      *
-       * @public
-     * @param {Object} cue handle to cue instance
-     * @returns {Object} css left and top cue position
+     * @public
+     * @param {Object} cue
+     * @returns {Boolean}
      */
-    computeCueStyle(cue) {
-      const style = {
-        left: `${(parseInt(cue.id, 10) % CUE_TILES_PER_ROW) * CUE_TILE_WIDTH}px`,
-        top: `${Math.floor(parseInt(cue.id, 10) / CUE_TILES_PER_ROW) * CUE_TILE_HEIGHT}px`,
-      };
-      return style;
+    isKept(cue) {
+      const now = this.nowColumns[cue.family];
+      return !!now && now.state === 'kept' && now.kept === toRaw(cue);
     },
     /**
-     * Computes cue previews position and background styling
+     * Width of a row's fill: a playing cue's progress (a scene's fade, an effect's pass), a kept
+     * cue's where it stopped
      *
-       * @public
-     * @param {Object} cue handle to cue instance
-     * @returns {Object} css left and top cue position and background color
+     * @public
+     * @param {Object} cue
+     * @returns {String} CSS width
      */
-    computeCuePreviewStyle(cue) {
-      const style = {
-        left: `${(parseInt(cue.id, 10) % CUE_TILES_PER_ROW) * 6.9}px`,
-        top: `${Math.floor(parseInt(cue.id, 10) / CUE_TILES_PER_ROW) * 6.11}px`,
-        background: cue.color,
-      };
-      return style;
+    fillOf(cue) {
+      const progress = this.isPlaying(cue) ? cue.progress : cue.stopProgress;
+      return `${Math.round(this.live(progress) * 100)}%`;
     },
     /**
-     * Selects a cue from the pool
+     * Tooltip of a column's NOW: where the family comes from
      *
-       * @public
-     * @param {Object} cue handle to cue instance
+     * @public
+     * @param {Object} column
+     * @returns {String}
+     */
+    nowTitle(column) {
+      const now = this.nowColumns[column.key];
+      if (now.state === 'kept') {
+        return `${column.label} keeps ${now.text.slice('kept: '.length)}'s last value: no cue `
+          + 'holds it';
+      }
+      if (now.state === 'held') return `${column.label} comes from ${now.text}`;
+      return `${column.label} rests: no cue holds it`;
+    },
+    /**
+     * A row selected in a column's list (a click, the keys, or the row a drag moved): opens its
+     * cue, never plays it
+     *
+     * @public
+     * @param {Object} item the row's item
+     */
+    selectRow(item) {
+      this.selectCue(item.cue);
+    },
+    /**
+     * Selects a cue: its editor opens
+     *
+     * @public
+     * @param {?Object} cue handle to cue instance
      */
     selectCue(cue) {
       if (!this.$view) return;
@@ -282,20 +415,22 @@ export default {
       this.$view.selectCue(cue ? cue.id : null);
     },
     /**
-     * Plays a cue from the pool
+     * Plays or stops a cue with its fades (its play button); a cue on stage through an ended
+     * chase item is released
      *
-       * @public
+     * @public
      * @param {Object} cue handle to cue instance
      */
     playCue(cue) {
       // A Temporary cue plays while held (see pressCue): the click after the release is ignored
       if (cue.triggerStyle === CUE_TRIGGER_STYLES.TEMPORARY) return;
-      this.selectCue(cue);
-      cue.cue(true);
+      if (!cue.state && cue.holdsItem) cue.releaseItem();
+      else cue.cue(true);
+      this.$liveTicker.bump();
     },
     /**
-     * Starts a Temporary cue while the pointer is held on it, until the button is released
-     * (anywhere), the press is cancelled or the cue is dragged
+     * Starts a Temporary cue while the pointer is held on its play button, until the button is
+     * released (anywhere) or the press is cancelled
      *
      * @public
      * @param {Object} cue handle to cue instance
@@ -304,8 +439,8 @@ export default {
     pressCue(cue, e) {
       if (cue.triggerStyle !== CUE_TRIGGER_STYLES.TEMPORARY || e.button !== 0) return;
       this.releaseHeldCue();
-      this.selectCue(cue);
-      if (cue.animationId == null) cue.cue(true);
+      // Not playing, or fading out: (re)start it
+      if (cue.animationId == null || cue.releasing) cue.cue(true);
       this.heldCue = cue;
       window.addEventListener('pointerup', this.releaseHeldCue);
       window.addEventListener('pointercancel', this.releaseHeldCue);
@@ -323,19 +458,19 @@ export default {
       if (cue && cue.animationId != null) cue.cue(false);
     },
     /**
-     * Displays cue creation popup
+     * Opens Add Cue for a column
      *
-       * @public
-     * @param {Number} cueId index of the cue to be created
+     * @public
+     * @param {Object} column
      */
-    displayCuepoolPopup(cueId) {
-      this.newCueId = cueId;
+    displayAddPopup(column) {
+      this.addFamily = column.key;
       this.cuePopupDisplayState = true;
     },
     /**
-     * Cue creation callback. selects newly created cue and propagates event.
+     * A cue was added: opens it as a click does, and propagates the event
      *
-       * @public
+     * @public
      * @param {Object} cue handle to cue instance
      */
     addCue(cue) {
@@ -343,273 +478,250 @@ export default {
       this.$emit('add', cue);
     },
     /**
-     * Deletes a cue from the group
-     *
-       * @public
-     */
-    deleteCue() {
-      // The selected cue: once it's gone, the view falls back to the group's first cue
-      const cue = this.cues.find((c) => c.id === this.selectedCue);
-      if (cue) this.group.deleteCue(cue);
-    },
-    /**
-     * Initiates cue dragging procedure
-     *
-       * @public
-     * @param {Object} e mousedown event
-     * @param {Object} cue handle to cue instance
-     */
-    startDrag(e, cue) {
-      this.draggedCue = cue;
-      e.dataTransfer.effectAllowed = 'move';
-    },
-    /**
-     * Callback for drag enter in cuepool slots
-     *
-       * @public
-     * @param {Object} e mousedown event
-     * @param {Number} index cuepool slot index
-     */
-    dragEnter(e, index) {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      if (e.target.classList && index !== this.draggedCue.id) {
-        this.draggedCue.id = index;
-      }
-    },
-    /**
-     * Updates scroll preview's scroller position to match cuepool's scrollTop.
-     *
-       * @public
-     * @param {Object} e scroll event
-     */
-    updateScrollPreview(e) {
-      const scrollingPerc = e.target.scrollTop / (e.target.scrollHeight - e.target.clientHeight);
-      this.$refs.scroller.style.marginTop = `${(e.target.clientHeight - 25) * scrollingPerc}px`;
-    },
-    /**
-     * Element whose focus makes the cue pool the focused block
+     * Deletes cues from the group (a column's trash or Delete, confirmed)
      *
      * @public
-     * @returns {?Element}
+     * @param {Array<Object>} items the rows' items
      */
-    keysElement() {
-      return this.$refs.keys?.$el || null;
+    deleteCues(items) {
+      items.forEach((item) => this.group.deleteCue(item.cue));
     },
     /**
-     * Keys while the cue pool has focus: Delete or Backspace deletes the selected cue
+     * A column's list reordered: the column's ids are given out again in the new order (ids stay
+     * unique, other columns keep theirs), the selection follows its cue
      *
      * @public
-     * @param {KeyboardEvent} e keydown event
-     * @returns {Boolean} whether the key was handled
+     * @param {Object} column
+     * @param {Object} move `{ original, final }` row indexes
      */
-    handleKeys(e) {
-      if (e.key === 'Backspace' || e.key === 'Delete') {
-        this.deleteCue();
-        return true;
-      }
-      return false;
+    reorder(column, { original, final }) {
+      const order = column.cues.slice();
+      const ids = order.map((cue) => cue.id);
+      const selected = this.cues.find((cue) => cue.id === this.selectedCue);
+      const [moved] = order.splice(original, 1);
+      order.splice(final, 0, moved);
+      order.forEach((cue, i) => { cue.id = ids[i]; });
+      if (selected && this.$view) this.$view.selectCue(selected.id);
     },
   },
 };
 </script>
+
 <style scoped>
 .cuepool_widget {
-  width: 440px;
-  max-width: 440px !important;
-  min-width: 440px !important;
+  /* Four columns of list rows */
+  width: 772px;
+  max-width: 772px !important;
+  min-width: 772px !important;
 }
-.body {
-  height: 100%;
-  width: 100%;
-}
-.searchbox {
-  width: 100%;
-}
-.grid {
-  height: 100%;
-  width: 100%;
-  position: relative;
+.cue_columns {
   display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--border-width);
+  height: 100%;
+  width: 100%;
   background: var(--primary-dark);
-  gap: 1px;
-  grid-template-columns: repeat(auto-fill, 99px);
-  overflow: hidden;
-  overflow-y: auto;
-  width: 100%;
 }
-.grid_item {
-  position: absolute;
+/* One surface, heads and rows alike, as a list */
+.cue_column {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  /* the grid pitch minus the 1px between tiles (fixed geometry) */
-  width: calc(var(--cue-tile-width) - 1px);
-  height: calc(var(--cue-tile-height) - 1px);
-  cursor: pointer;
+  min-width: 0;
+  min-height: 0;
   background: var(--primary-light);
-  opacity: 1;
-  z-index: 1;
 }
-.grid_item_overlay {
-  border: var(--border-width) solid var(--secondary-dark);
-  width: 100%;
-  height: 100%;
+.cue_column_head {
   display: flex;
-  border-radius: var(--radius-sm);
   flex-direction: column;
-  opacity: 0.8;
-  transition: opacity 0.15s;
+  flex-shrink: 0;
+  border-bottom: var(--border-width) solid var(--primary-dark);
 }
-.selected .grid_item_overlay {
-  opacity: 1;
-  border: var(--border-width) solid var(--secondary-light);
-}
-.grid_item:not(.empty):active {
-  cursor: move;
-}
-.grid_item.empty {
-  position: relative;
-  border: none;
-  opacity: 0.7;
-}
-.grid_item_body {
-  position: relative;
-  width: 100%;
-  flex: 1;
+/* The title and NOW: two lines a list row high, as the rows under them */
+.cue_column_title,
+.cue_column_now {
   display: flex;
   align-items: center;
-  text-align: center;
-  justify-content: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding: var(--space-4);
-  white-space: initial;
-  border-color: transparent;
-}
-.grid_item_body_overlay {
-  position: absolute;
-  height: 100%;
-  width: 100%;
-  background: var(--secondary-dark);
-}
-.grid_item_body_icon {
-  height: 28px !important;
-  width: 18px !important;
-  fill: var(--on-color-text);
-}
-.grid_item_body_icon.playing {
-  height: 12px !important;
-  width: 12px !important;
-  animation: load linear 0.5s infinite alternate !important;
-}
-.grid_item_footer {
-  background: var(--secondary-darker);
-  width: 100%;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  text-align: center;
-  justify-content: center;
+  gap: var(--space-3);
+  min-width: 0;
+  height: var(--row-height);
   padding: 0 var(--space-4);
-  text-overflow: ellipsis;
+}
+.cue_column_title {
+  gap: var(--space-2);
+}
+.cue_column_icon {
+  flex-shrink: 0;
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+  background-color: var(--secondary-lighter);
+}
+.cue_column_label {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-xs);
+  text-transform: uppercase;
+  color: var(--secondary-lighter);
+}
+.cue_column_add {
+  flex-shrink: 0;
+}
+/* Kept: nobody holds the family, the stage keeps a stopped cue's value */
+.cue_column_now.now_kept {
+  background: var(--idle-stripes);
+}
+.cue_column_now_text {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--font-sm);
+  color: var(--secondary-lighter);
+}
+.now_rest .cue_column_now_text {
+  color: var(--secondary-light);
+}
+.cue_now_value {
+  position: relative;
+  flex-shrink: 0;
+  width: var(--icon-md);
+  height: var(--icon-md);
+  border-radius: var(--radius-sm);
+  background: var(--primary-dark);
+  overflow: hidden;
+}
+.value_swatch .value_fill {
+  position: absolute;
+  inset: 0;
+}
+.value_level .value_fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--secondary-lighter);
+}
+.value_dot .value_fill {
+  position: absolute;
+  width: var(--space-2);
+  height: var(--space-2);
+  margin: 0 0 calc(var(--space-2) / -2) calc(var(--space-2) / -2);
+  border-radius: var(--radius-round);
+  background: var(--secondary-lighter);
+}
+.cue_column_list {
+  flex: 1;
+  min-height: 0;
+}
+/* A row's content (the list's row slot): picture, name and value line, play button */
+.cue_chip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+.cue_chip_text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-1);
+  flex: 1;
+  min-width: 0;
+}
+.cue_chip_title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.cue_chip_type {
+  flex-shrink: 0;
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+  background-color: var(--secondary-lighter);
+}
+.cue_chip_name,
+.cue_chip_value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
-.grid_item_footer:hover:not(.empty) {
-  background: var(--secondary-light) !important;
+.cue_chip_name {
+  font-family: Roboto-medium;
 }
-.grid_item_footer:hover .grid_item_body {
-  border-color: red !important;
+.cue_chip_value {
+  font-size: var(--font-xs);
+  color: var(--secondary-lighter);
 }
-.selected .grid_item_footer {
-  background: var(--secondary-light) !important;
-}
-.grid h4,
-.grid p {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: var(--space-2) var(--space-2);
-  width: 100%;
-  text-align: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.selected .grid_item {
-  background: var(--secondary-light);
-}
-.scroll_preview {
+/* The picture and the play button over it: shown while the pointer is on the row, the picture
+   dimmed under it; the stop button whenever the cue plays */
+.cue_chip_picture {
   position: relative;
-  height: 100%;
-  width: 30px;
-  background-color: var(--primary-dark-alt);
-  background-image:
-    linear-gradient(
-      to right,
-      var(--primary-dark) 0,
-      var(--primary-dark) 1px,
-      transparent 1px,
-      transparent 100%
-    ),
-    linear-gradient(
-      to bottom,
-      var(--primary-dark) 0,
-      var(--primary-dark) 1px,
-      transparent 1px,
-      transparent 100%
-    );
-  background-size: 6.9px 6.11px;
-  top: -1px;
+  display: flex;
+  flex-shrink: 0;
 }
-.scroll_preview_scroller {
+.cue_chip_picture .uikit_cue_picture {
+  transition: opacity 0.15s, filter 0.15s;
+}
+.uikit_list_item:hover .cue_chip_picture .uikit_cue_picture,
+.cue_chip.playing .cue_chip_picture .uikit_cue_picture {
+  opacity: var(--opacity-dimmed);
+  filter: blur(1px);
+}
+.cue_chip_play {
   position: absolute;
-  height: 24px;
-  width: 100%;
-  background: var(--secondary-light);
-  opacity: 0.5;
-  border: var(--border-width) solid var(--secondary-light);
-}
-.cue_preview {
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  opacity: 0.8;
-}
-.cue_preview.selected {
-  opacity: 1;
-  border: var(--border-width) solid var(--secondary-light);
-}
-.cue_preview.playing {
-  animation: playing_animation 0.5s infinite alternate;
-}
-
-/** TRANSITIONS */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.25s;
-}
-.fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
   opacity: 0;
+  transition: opacity 0.15s;
 }
-
-/** ANIMATIONS */
-@keyframes playing_animation {
+.uikit_list_item:hover .cue_chip_play,
+.cue_chip.playing .cue_chip_play {
+  opacity: 1;
+}
+.cue_chip_play_icon {
+  width: var(--icon-sm);
+  height: var(--icon-sm);
+  background-color: var(--secondary-lighter);
+}
+/* Playing: its stop button blinks, as a playing chase's in the group pool */
+.cue_chip.playing .cue_chip_play_icon {
+  animation: cue_blink linear 0.8s infinite alternate;
+}
+/* Playing: the row fills with its progress (a scene's fade in, an effect's pass); kept: the fill
+   stays where it stopped */
+.cue_chip_fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--secondary-light);
+  pointer-events: none;
+}
+.cue_chip_covered {
+  position: absolute;
+  inset: 0;
+  background: var(--idle-stripes);
+  pointer-events: none;
+}
+@keyframes cue_blink {
   from {
-    border: 2px solid var(--secondary-lighter);
+    background-color: var(--secondary-lighter);
   }
   to {
-    border: none;
+    background-color: var(--secondary-light);
   }
 }
-
-@keyframes load {
-  from {
-    fill: var(--secondary-light);
-  }
-  to {
-    fill: var(--secondary-lighter);
+@media (prefers-reduced-motion: reduce) {
+  .cue_chip.playing .cue_chip_play_icon {
+    animation: none;
   }
 }
 </style>

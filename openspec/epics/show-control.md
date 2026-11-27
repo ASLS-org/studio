@@ -12,18 +12,20 @@ strengths stay: tempo-synced effects, live previews and the 3D visualizer.
 
 ## Decisions (2026-11-24, with the user)
 
-- **Merge** (`add-cue-priorities`):
-  - priority per cue (Low, Normal, High, Top);
-  - at equal priority, HTP on Dimmer channels for HTP cues (the default), LTP everywhere else;
-  - "started" means triggered, or the chase playhead entering an item.
-- **Fades** blend with the live value underneath; released channels crossfade into what is
-  underneath, else go to defaults (Dimmer 0, Pan/Tilt centre, the profile's home value).
-- **Ended scenes keep their look** (tracking) until a higher or later cue takes it; **Release** on
-  the master lets go of held looks.
+- **Families** (`add-cue-families`, 2026-11-25, replacing `add-cue-priorities`):
+  - every channel is in a family (Intensity, Colour, Position, Beam); a cue is made for one, or
+    Custom for several;
+  - one cue per family in a group: a new cue takes its families, turning it off hands them back
+    to the newest cue still playing, and a cue left with nothing turns off;
+  - Mode **Replace** turns off what it takes over, **Layer** plays over it and gives it back;
+  - across groups, the newest cue wins a shared fixture; priority (0 to 200) stays on top;
+  - a family nobody holds rests: Intensity back to its level before playback, the rest stays;
+  - tiles show the family icons, lit while held, dimmed once taken. No held looks, no Release.
+- **Fades** are crossfades from what is on stage, and back into what is handed back to.
+- **Scenes** stay on while they hold a family. Chase items play their cues' own fades, and the
+  item's length is the hold (`add-cue-fades`).
 - **Programmer** (`add-programmer`): it sits above every cue, is emptied with **Clear**, and is
   never saved. **Park** sits above the programmer and is saved. Each channel shows its source.
-- **Scenes** end once faded in; their look stays. Chase items play their cues' own fades, and the
-  item's length is the hold (`add-cue-fades`).
 
 ## Show control goes through WSC
 
@@ -65,8 +67,8 @@ Studio never speaks Art-Net, OSC or MIDI itself: the gateway does.
 
 | # | Change | Content | Status |
 |---|---|---|---|
-| 1 | `add-cue-fades` | Fade In / Fade Out for every cue (bars); scenes lose Duration and Loop Style and end once faded in; Relative effects fade; chase items start and end their cues by the cues' fades; the item preview draws the fades | Archived (local, branch `feat/add-cue-fades`) |
-| 2 | `add-cue-priorities` | Merge engine: claims per play, a settle pass per tick, priorities, HTP/LTP and intensity mode, fades with what is underneath, defaults, held looks, Release on the master | Planned (proposal, specs, design, tasks) |
+| 1 | `add-cue-fades` | Fade In / Fade Out for every cue (bars); scenes lose Duration and Loop Style and end once faded in; Relative effects fade; chase items start and end their cues by the cues' fades; the item preview draws the fades | Archived (branch `feat/add-cue-fades`, merged with `add-cue-families` in its PR) |
+| 2 | `add-cue-families` | Four channel families (Intensity, Colour, Position, Beam), one cue per family in a group, newest wins, Replace (default) and Layer, hand-back and rest, kept values; family columns in the cue pool with a read-only NOW line, blind programming, cue pictures, the Add Cue family picker (`uk-choice`), family-filtered editors, family accents in the chase timeline; older cues split per family on load. Replaces `add-cue-priorities` (merge by channel, held looks), which operators found unreadable | Archived (branch `feat/add-cue-families`, PR into `epic/show-control`) |
 | 2b | `fix-wsc-output` | Session reconnection and state (the app reconnects, spec 06), plus the output known issues from skill `wsc-output`: TR+GW flags and transport on every stream packet, `startChannel` base, interface and params (sACN priority, baud, TTL) rebuilding the transport, `OutputPool.delete`/`clearAll`, universe stream settings saved with the show, dead `sendLighting`, the SDK's own compat tables, client error handler; bump to `@asls/wsc-*` 2.2.0. A large event can't run on an output that loses its settings on reload | To propose (before any show) |
 | 3 | `add-programmer` | Programmer above cues, Clear (toolbar, key, per fixture), Park (saved), channel source under each fader, programmer values highlighted | Proposal |
 | 4 | `wire-group-masters` | Grand master and DBO on the master column, a dimmer knob per group (submaster), Blackout and Isolate per group, the output level ring; virtual intensity for fixtures without a dimmer; applied after the merge | Explored (2026-11-24) |

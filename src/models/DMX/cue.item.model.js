@@ -175,8 +175,17 @@ class CueItem {
   }
 
   update(t) {
-    const duration = this.length * (Live.barDuration / 4 / 16);
-    this.handle.update(t, duration);
+    this.handle.playItem(t, this.lengthMS);
+  }
+
+  /**
+   * Item length in ms (ticks of a sixteenth of a beat)
+   *
+   * @readonly
+   * @type {Number}
+   */
+  get lengthMS() {
+    return this.length * (Live.barDuration / 4 / 16);
   }
 
   /**

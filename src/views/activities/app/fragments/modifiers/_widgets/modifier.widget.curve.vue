@@ -8,13 +8,26 @@
       col
       :gap="8"
       class="widget_curve_body"
+      :class="{ timed }"
     >
-      <uk-select-input
-        v-model="fade.type"
-        class="widget_curve_type"
-        label="Type"
-        :options="presetOptions"
-      />
+      <uk-flex :gap="8">
+        <uk-select-input
+          v-model="fade.type"
+          class="widget_curve_type"
+          label="Type"
+          :options="presetOptions"
+        />
+        <!-- An effect's fade has its own time; a scene's lasts the scene's duration -->
+        <uk-num-input
+          v-if="timed"
+          v-model="fade.duration"
+          class="widget_curve_time"
+          label="Bars"
+          :min="0"
+          :max="64"
+          :precision="2"
+        />
+      </uk-flex>
       <uk-flex :gap="8">
         <uk-num-input
           v-model="fade.controlPoints[0].x"
@@ -144,8 +157,13 @@ export default {
      */
     fade: {
       type: Object,
-      default: () => new Fade({ type: 0 }),
+      default: () => Object.assign(new Fade({ type: 0 }), { duration: 0 }),
     },
+    /**
+     * Whether the fade has its own time (bars), shown as a Time field (effect fades; a scene's
+     * fade lasts the scene's duration)
+     */
+    timed: Boolean,
   },
   emits: ['input'],
   data() {
@@ -315,6 +333,8 @@ export default {
      */
     update() {
       const ctx = this.context;
+      // Not drawn yet (not mounted, or unmounted while its fade changes)
+      if (!ctx || !this.canvas) return;
       const { width, height } = this.canvas;
       const [cp1, cp2] = this.fade.controlPoints;
       const px = (x) => x * width;
@@ -364,6 +384,17 @@ export default {
   width: 100%;
   padding: var(--space-5);
   width: 150px;
+}
+.widget_curve_body.timed {
+  width: 190px;
+}
+.widget_curve_type {
+  flex: 1;
+  min-width: 0;
+}
+.widget_curve_time {
+  flex-shrink: 0;
+  width: 64px;
 }
 .widget_curve_modifier {
   overflow: hidden;

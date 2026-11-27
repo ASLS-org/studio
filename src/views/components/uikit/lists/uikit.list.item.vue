@@ -27,27 +27,31 @@
         :disabled="item.value.disabled || disabled"
       />
     </span>
+    <!-- Custom row content (a list's `row` slot) replaces the icon, label and detail -->
+    <slot v-if="$slots.default" />
     <span
-      v-if="!item.value.icon && colored && item.value.color"
+      v-else-if="!item.value.icon && colored && item.value.color"
       class="uikit_list_item_colored_dot"
       :style="{
         backgroundColor: item.unfolded ? item.value.color : 'transparent',
         borderColor: item.value.color
       }"
     />
-    <uk-icon
-      v-if="item.value.icon"
-      class="uikit_list_item_icon"
-      :name="item.value.icon"
-    />
-    <h4>{{ item.value.name }}</h4>
-    <div style="flex: 1" />
-    <h4
-      v-if="item.value.more"
-      class="uikit_list_item_more"
-    >
-      {{ item.value.more }}
-    </h4>
+    <template v-if="!$slots.default">
+      <uk-icon
+        v-if="item.value.icon"
+        class="uikit_list_item_icon"
+        :name="item.value.icon"
+      />
+      <h4>{{ item.value.name }}</h4>
+      <div style="flex: 1" />
+      <h4
+        v-if="item.value.more"
+        class="uikit_list_item_more"
+      >
+        {{ item.value.more }}
+      </h4>
+    </template>
     <span
       v-if="item.value.action"
       @click.stop
@@ -73,7 +77,10 @@
       @pointerdown.stop
       @click.stop="remove"
     >
-      <uk-icon name="trash" />
+      <span
+        class="uikit_list_item_tool_icon"
+        :class="toolIcons.trash"
+      />
     </span>
     <!-- Grip to drag the row (reorderable lists) -->
     <span
@@ -83,12 +90,25 @@
       @pointerdown.stop="$emit('handle', $event)"
       @click.stop
     >
-      <uk-icon name="drag" />
+      <span
+        class="uikit_list_item_tool_icon"
+        :class="toolIcons.drag"
+      />
     </span>
   </div>
 </template>
 
 <script>
+import { maskClass } from '../icons/icon.mask';
+
+/**
+ * The row tools' icons, as mask classes: every row of a deletable or reorderable list has them,
+ * and a component per icon made panels slow to open
+ *
+ * @constant {Object} TOOL_ICONS
+ */
+const TOOL_ICONS = { trash: maskClass('trash'), drag: maskClass('drag') };
+
 export default {
   name: 'UkListItem',
   compatConfig: {
@@ -122,7 +142,16 @@ export default {
     /** Shows a grip at the right of the row; pressing it emits `handle` (drag to reorder) */
     handle: Boolean,
   },
+  // The default slot (opt-in) is the row's own content, in place of its icon, label and detail
   emits: ['click', 'toggle', 'handle', 'delete'],
+  data() {
+    return {
+      /**
+       * The tools' icons, as mask classes
+       */
+      toolIcons: TOOL_ICONS,
+    };
+  },
   methods: {
     /**
      * Reports a click on the checkbox, unless the row is disabled
@@ -243,29 +272,25 @@ export default {
   cursor: grab;
   touch-action: none;
 }
-.uikit_list_item_tool :deep(svg) {
+.uikit_list_item_tool_icon {
   flex-shrink: 0;
   width: var(--icon-sm);
-  min-width: var(--icon-sm);
-  max-width: var(--icon-sm);
   height: var(--icon-sm);
-  min-height: var(--icon-sm);
-  max-height: var(--icon-sm);
-  fill: var(--secondary-light);
-  transition: fill 0.1s;
+  background-color: var(--secondary-light);
+  transition: background-color 0.1s;
 }
 /* Same colour as the row's label when the row is selected or hovered */
-.uikit_list_item:hover .uikit_list_item_tool :deep(svg),
-.selected:not(.noSelect) .uikit_list_item_tool :deep(svg),
-.highlighted:not(.noSelect) .uikit_list_item_tool :deep(svg),
-.uikit_list_item_tool:active :deep(svg) {
-  fill: var(--secondary-lighter);
+.uikit_list_item:hover .uikit_list_item_tool_icon,
+.selected:not(.noSelect) .uikit_list_item_tool_icon,
+.highlighted:not(.noSelect) .uikit_list_item_tool_icon,
+.uikit_list_item_tool:active .uikit_list_item_tool_icon {
+  background-color: var(--secondary-lighter);
 }
 .disabled .uikit_list_item_tool {
   cursor: not-allowed;
 }
-.disabled .uikit_list_item_tool :deep(svg) {
-  fill: var(--secondary-light) !important;
+.disabled .uikit_list_item_tool_icon {
+  background-color: var(--secondary-light) !important;
 }
 @media (prefers-reduced-motion: reduce) {
   .uikit_list_item_arrow {

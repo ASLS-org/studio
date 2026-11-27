@@ -9,6 +9,11 @@
 import { defineAsyncComponent } from 'vue';
 
 const iconMap = new Map();
+/**
+ * Icons already loaded: their SVG component, used directly (no async wrapper, half the component
+ * instances on screens with many icons)
+ */
+const loadedIcons = new Map();
 
 /**
  * @component Icon Display css-customisable SVG icons from a list of pre-defined icons.
@@ -38,17 +43,22 @@ export default {
      * @property svgData
      */
     svgData() {
-      if (!iconMap.has(this.name)) {
-        iconMap.set(this.name, defineAsyncComponent(async () => {
+      const { name } = this;
+      if (loadedIcons.has(name)) return loadedIcons.get(name);
+      if (!iconMap.has(name)) {
+        iconMap.set(name, defineAsyncComponent(async () => {
+          let icon;
           try {
-            return await import(`./images/${this.name}.svg?component`);
+            icon = await import(`./images/${name}.svg?component`);
           } catch (err) {
-            // eslint-disable-next-line no-return-await, import/no-unresolved
-            return await import('./images/close.svg?component');
+            // eslint-disable-next-line import/no-unresolved
+            icon = await import('./images/close.svg?component');
           }
+          loadedIcons.set(name, icon.default || icon);
+          return icon;
         }));
       }
-      return iconMap.get(this.name);
+      return iconMap.get(name);
     },
   },
 };

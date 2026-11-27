@@ -1,10 +1,9 @@
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: Effect fade-in in Relative mode
 
-An effect whose Start is Relative SHALL fade in from what is underneath it: the live value the
-channel would have without it (another cue's, even a moving one), else the channel's default.
-Over its Fade In time (in bars, 0 to 64), each channel it drives SHALL blend from that value to
+An effect whose Start is Relative SHALL fade in from the values its channels held when it was
+cued. Over its Fade In time (in bars, 0 to 64), each channel it drives SHALL go from that value to
 the running effect's value along the Fade In curve, while the effect keeps moving. A Fade In time
 of 0 SHALL start the effect at full strength. An effect whose Start is Absolute SHALL start at
 full strength whatever its Fade In.
@@ -28,11 +27,10 @@ full strength whatever its Fade In.
 ### Requirement: Effect fade-out in Relative mode
 
 Stopping a Relative effect with a Fade Out time above 0 SHALL keep it running while each channel
-blends into what is underneath it (the next cue's live value, else the channel's default), along
-the Fade Out curve, over the Fade Out time. The effect SHALL show as stopped at once and SHALL
-release its channels when the fade ends. A Fade Out of 0, or Absolute, SHALL stop the effect at
-once. Cueing the effect again during its fade-out SHALL fade it back in from where the fade-out got
-to.
+goes back to the value it recorded at the start, along the Fade Out curve, over the Fade Out
+time. The effect SHALL show as stopped at once, and SHALL leave the channels at the recorded
+values when the fade ends. A Fade Out of 0, or Absolute, SHALL stop the effect at once, as before. Cueing the
+effect again during its fade-out SHALL start a new fade-in from the channels' current values.
 
 #### Scenario: Fade back to the scene
 
@@ -42,7 +40,7 @@ to.
 #### Scenario: One Shot end
 
 - **WHEN** a Relative One Shot effect with a Fade Out reaches the end of its Duration
-- **THEN** it shows stopped, fades into what is underneath over its Fade Out, then stops
+- **THEN** it shows stopped, fades back over its Fade Out, then stops
 
 #### Scenario: Clicking a playing effect
 
@@ -52,4 +50,21 @@ to.
 #### Scenario: Cued again while fading out
 
 - **WHEN** a fading-out Relative effect is cued again halfway through its fade-out
-- **THEN** it fades back in from where its channels are at that moment, with no jump
+- **THEN** it fades in from where its channels are at that moment, with no jump
+
+### Requirement: Effect fade settings
+
+The effect modifier SHALL show a Fade In widget and a Fade Out widget when the effect's Start is
+Relative, and hide them when it is Absolute. Each widget SHALL have a Bars field (0 to 64)
+and the same curve type, presets and control points as a scene's fade. The fade settings SHALL be
+saved with the show. A showfile without them SHALL load with both times at 0 and play unchanged.
+
+#### Scenario: Switching Start shows the fades
+
+- **WHEN** the selected effect's Start is changed from Absolute to Relative
+- **THEN** the Fade In and Fade Out widgets appear in the effect modifier
+
+#### Scenario: Older showfile
+
+- **WHEN** a showfile saved before this change is loaded
+- **THEN** its effects have Fade In and Fade Out times of 0 and start and stop as before

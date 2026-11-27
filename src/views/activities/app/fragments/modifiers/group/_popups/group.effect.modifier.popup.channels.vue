@@ -30,6 +30,7 @@
 import PopupMixin from '@/views/mixins/popup.mixin';
 import channelIcon from '@/views/utils/channel.icons';
 import { availableChannels } from '@/views/utils/effect.scope';
+import { familyIndex } from '@/models/DMX/families';
 
 /**
  * @component PopupFxChannels Adds modulated channels to an effect: lists every channel its
@@ -74,13 +75,14 @@ export default {
       return new Set((this.effect?.channels || []).map((channel) => channel.type));
     },
     /**
-     * List rows: every channel type the effect's fixtures have
+     * List rows: every channel type the effect's fixtures have, of its family or of none
      *
      * @type {Array<Object>}
      */
     items() {
       const fixtures = this.effect?.fixtures || [];
-      return availableChannels(fixtures).map(({ type, channel }) => ({
+      const family = familyIndex(this.effect?.family);
+      return availableChannels(fixtures, family).map(({ type, channel }) => ({
         id: type,
         name: type,
         icon: channelIcon(channel),
@@ -94,7 +96,10 @@ export default {
      * @type {String}
      */
     hint() {
-      if (!this.items.length) return 'The effect has no fixtures yet: add some to its group';
+      if (!(this.effect?.fixtures || []).length) {
+        return 'The effect has no fixtures yet: add some to its group';
+      }
+      if (!this.items.length) return 'The group\'s fixtures have no channels of this family';
       return this.picked.length > 1
         ? `${this.picked.length} channels to add`
         : 'Ctrl/⌘ or Shift + click to add several';

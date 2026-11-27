@@ -18,8 +18,8 @@ Read `src/views/CLAUDE.md` for the folder map.
 | New screen region | `activities/app/fragments/<area>/` | `<area>.fragment.vue` |
 
 Reuse before creating. List the existing kit with
-`ls -R src/views/components/uikit | grep .vue`: buttons, inputs (checkbox, color, select,
-textbox num/str, range fader/knob/gauge/vumeter), lists, menus, popups, widgets, cues, containers
+`ls -R src/views/components/uikit | grep .vue`: buttons, inputs (checkbox, choice, color,
+select, textbox num/str, range fader/knob/gauge/vumeter), lists, menus, popups, widgets, cues, containers
 (`uk-flex`, `uk-spacer`), icons, loaders.
 
 ## Component skeleton (match existing files)
@@ -92,6 +92,8 @@ export default {
   Don't swallow errors silently.
 - **Hot paths.** Faders, knobs, timelines and colour pickers fire at pointer rate. Throttle with
   `requestAnimationFrame`, and don't create reactive data for values written every frame.
+  Don't measure the DOM in render: `$forceUpdate` never reaches slot content of child components,
+  so draw in a `viewBox` instead (the chase timeline's fade curves).
 - **Live values.** Playback writes bypass Vue (raw channels, raw cue/chase callbacks), so a widget
   showing channel values, cue state or progress, chase playheads or activity uses
   `views/mixins/live.mixin.js`: read them through `live(value)` (template) or a computed that calls
@@ -114,7 +116,7 @@ export default {
 
   A new value snaps to the nearest step (ties go down). `uk-flex`'s `gap` prop maps scale pixels
   to their step. **Fixed values are never scale steps**: a size the code computes with has its own
-  variable *and* a constant in `views/utils/geometry.js` (`--cue-tile-*`, `--chase-row-height`,
+  variable *and* a constant in `views/utils/geometry.js` (`--chase-row-height`,
   `--select-option-height`: change both together). A border or offset that is part of a pitch or an
   alignment (chase rows, the timeline grid, crosshairs, a button lined up with a labelled field)
   stays raw with a comment, and a one-off size used in one place stays raw: never pull it into a
@@ -150,10 +152,18 @@ export default {
   list; `draggable` rows get a grip handle (drag from it only) and emit
   `reorder({ original, final })`. `deletable` rows show a trash icon at their right (before the
   grip); clicking it confirms and deletes the row, or the highlighted rows when it's one of them.
+  A list that handles Delete itself swallows it (the keyboard path skips handled keys): make it
+  `deletable` rather than catching Delete around it. Rows needing their own content (the cue
+  pool) use the `row` slot (`#row="{ item }"`): everything else of the row (border, hover,
+  selection, keys, tools) stays the list's. Never hand-roll list-looking rows.
 - **Icons in `icons/images/`** need a `viewBox` and no `width`/`height` attributes (the SVG loader
   drops the `viewBox` when both are there, so the icon is clipped when scaled).
 - **Icons.** `<uk-icon name="...">` maps to `components/uikit/icons/images/*.svg`. Add new SVGs
-  there. A missing name shows `close.svg` (an "x"). Channel icons come only from
+  there. In dense places the live ticker re-renders (cue pool rows, chase lanes, list row tools),
+  draw them as CSS masks on a plain element with `:class="maskClass(name)"`
+  (`uikit/icons/icon.mask.js`, the element's `background-color` is the icon's colour): one
+  component per item costs too much there, and a mask *style* object is set again key by key on
+  every render (the older `maskIcon(name)` style is for one-off places only). A missing name shows `close.svg` (an "x"). Channel icons come only from
   `views/utils/channel.icons.js` (`channelIcon(channel)`: GDTF attribute families, then legacy
   type keys, then name words, then `channel`); it only returns existing files.
 - **Number fields** (`uk-num-input`): `readonly` shows a value the operator can't change (the

@@ -12,6 +12,7 @@ import GroupPool from './group.pool.model';
 import UniversePool from './universe.pool.model';
 import FixturePool from './fixture.pool.model';
 import Live from './live.model';
+import Claims from './claims';
 import OutputPool from './output.pool.model';
 import FixtureLibrary, { MissingFixtureError } from '../fixtures/fixture.library';
 import { PROFILE_SOURCES, placeholderProfile } from '../fixtures/fixture.profile';
@@ -277,11 +278,10 @@ class Show extends EventEmitter {
           const fixture = this.fixturePool.getFromId(f.id);
           group.addFixture(fixture);
         });
-        g.cues.forEach((c) => {
-          group.addCue(c);
-        });
+        // Older cues setting several families are split per family: their chase lanes follow
+        const parts = group.loadCues(g.cues);
         g.chases.forEach((c) => {
-          group.addChase(c);
+          group.addChase(c, parts);
         });
       });
     }
@@ -334,6 +334,8 @@ class Show extends EventEmitter {
    */
   clearShowData() {
     this.groupPool.clearAll();
+    // The cleared show's claims on the stage go with it
+    Claims.reset();
     this.universePool.clearAll();
     this.fixturePool.clearAll(true);
     this.outputPool.clearAll();

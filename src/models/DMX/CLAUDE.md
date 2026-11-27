@@ -82,6 +82,62 @@ Enums live next to their model and are exported: `CUE_TYPES`, `CUE_STATES`,
   Presets are indexed in `FADE_PRESETS` order (stored in showfiles): append, never reorder.
   Control point Y may overshoot (−1 to 2); scenes clamp each written value to 0–255 (the universe
   frame is a `Uint8Array`, which would wrap).
+- **Merge (claims.js, families.js):** cues never write channels directly while they play.
+  - **Families.** `familyOf(channel)` sorts channels by GDTF attribute into Intensity, Colour,
+    Position, Beam (else -1: newest writer wins). `Fixture.setupFamilies()` gives each fixture one
+    raw **slot** per family. Family sets are arrays of 4 booleans (lint forbids bitwise ops).
+  - **Tokens.** Each play (`cue(true)`, a chase item entering in `playItem`) takes a raw token
+    (`Claims.take(cue, { layer, temporary })`): start stamp (the newest wins; no priority), fade
+    state, and a `values` Map of what the cue last wrote. `Cue.play` wraps `update(t)` in
+    `Claims.open/close`;
+    `Fixture.setChannel` then only stores values (`Claims.write`), so skipped ticks keep them.
+  - **Events, not ticks.** `close()` places a token in its group's `familyStacks` (newest
+    first) and its slots when what it writes changes; `release()` takes it out. Each slot's
+    `top` = the best group holder reaching that fixture; `under` = what it fades from or hands
+    back to. A Replace token turns off cues it covers entirely once faded in (`pendingOff` →
+    `Cue.letGo`); Layer and Temporary tokens never do.
+  - **Settle.** `Live.update` calls `Claims.settle()` after the animations: one pass over
+    `liveSlots`, blending top with under by the fader's factor; undriven colour channels at 0,
+    other undriven channels at `fromValue`. A slot nobody holds rests (Intensity → `restValue`,
+    others keep what the stage showed, with `keptFrom` = the cue that left, until another cue
+    takes them; there is no reset) and leaves `liveSlots`. `restValue` is recorded only when a
+    `rested` slot is taken, so a kept value never becomes the rest.
+  - **No direct writes.** Writes with no writer (editing, loading) go straight to the channel.
+  - **Programming is blind.** A click on a cue only opens it; only `cue()` and chase items play.
+    There is no preview token and no raise.
+  - **One family per cue.** `Cue.family` (saved key, one of `FAMILY_KEYS`) is its cue pool column.
+    `Group.loadCues` splits an older cue (no family, or `LOOK_FAMILY` `'custom'`) into one cue per
+    family it uses (`familyData(keeps)` on scenes and effects; the first part keeps the id and
+    the channels of no family) and `Group.addChase(data, parts)` copies its lanes.
+  - **Progress.** `Cue.progress` (a scene's fade factor, an effect's pass) fills its row;
+    `stopProgress` records it when a play stops (stop, fade-out start, One Shot end, item let
+    go): a kept cue's row shows it.
+  - **Chips** read `cue.heldFamilies` (set on events), `usedFamilies` (from content),
+    `holdsItem`; NOW (`views/utils/cue.now.js`) reads `group.familyStacks[f][0]`, else the slots'
+    `keptFrom`. `Claims.reset()` runs on show clear; `CuePool.delete` stops and releases.
+- **Cue fades:** every `Cue` has `fadeIn` / `fadeOut` (`Fade`, `duration` in bars, 0 = none;
+  `Cue.buildFade`; an older scene's Fade In takes its saved Duration).
+  - Every cue fades, scenes and effects in either Mode (`relative`, labelled Replace/Layer in
+    the UI); a Replace cue turns off what it covers once faded in.
+  - `Cue._update` computes one `fadeFactor` per tick (`computeFadeFactor`). The token carries it
+    (`factor`, `releasing`), and the merge does the blending. Scenes and effects write plain
+    values.
+  - `cue(false)` with a Fade Out sets `IDLE` at once and keeps the Live animation until the
+    release ends (`stopNow`).
+  - Scenes stay on until turned off (`endsAfterDuration` false). A One Shot effect ends at its
+    Duration, fading out first when it has a Fade Out.
+  - `cue()` on a running cue stops it, whatever the argument (the cue pool toggles with
+    `cue(true)`).
+- **Chase items:** `Chase.update` calls `CueItem.update` → `Cue.playItem(t, lengthMS)` for the item
+  under the playhead, and `cue.endItem()` once the item is left (faded out: released; else its
+  token keeps its families until taken, the chase stops, or NOW naming it is clicked). It tags
+  `cue.itemChase` for NOW.
+  - An item token a Replace cue turns off (`Cue.letGo`) sets `itemCut`: the item stays off until
+    the cue's next item (re-taking at once made two overlapping Replace items swap every tick).
+  - The factor comes from `itemFades(lengthMS)`, the fades shrunk to fit; `itemOut` marks the
+    item's fade-out as releasing.
+  - Items never call `cue()`. The timeline's item preview uses the same `itemFades`.
+  - A chase stopped, by hand or at a One Shot end, releases its items' tokens.
 - **Pools:** `addRaw`, `addExisting`, `getFromId` (throws), `delete`, `clearAll`, plus a `listable`
   getter that shapes data for `uk-list`. New pools follow the same API.
 - **Ids:** numeric and unique per pool. Getters coerce with `Number(id)`. A fixture or universe

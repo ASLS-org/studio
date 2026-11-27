@@ -799,17 +799,21 @@ const MIXING = /^Color(Add|Sub|RGB)_/;
 
 /**
  * Channel types an effect can modulate on its fixtures: each fixture channel that isn't fine,
- * by its colour for colour mixing, else by its kind; in the fixtures' order, once each
+ * by its colour for colour mixing, else by its kind; in the fixtures' order, once each. An effect
+ * made for a family gets that family's channels and those of no family (speeds, control)
  *
  * @public
  * @param {Array<Object>} fixtures Fixtures (with their runtime `channels`)
+ * @param {Number} [family=-1] family index (models/DMX/families.js), -1 for every channel
  * @returns {Array<Object>} `{ type, channel }` (channel: one that has it, for its icon)
  */
-export function availableChannels(fixtures) {
+export function availableChannels(fixtures, family = -1) {
   const seen = new Map();
   fixtures.forEach((fixture) => {
     (fixture.channels || []).forEach((channel) => {
-      if (channel.isFine) return;
+      if (channel.isFine || (family > -1 && channel.family > -1 && channel.family !== family)) {
+        return;
+      }
       const type = channel.color && MIXING.test(channel.attribute || '')
         ? channel.color : channel.kind || channel.type;
       if (type && !seen.has(type)) seen.set(type, { type, channel });

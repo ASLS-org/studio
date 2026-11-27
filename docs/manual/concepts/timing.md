@@ -12,12 +12,13 @@ explains the units; how to set the tempo and play the show is in
 | Beat | 60 ÷ BPM seconds: 0.5 s at 120 BPM |
 | Bar | 4 beats: 2 s at 120 BPM, 4 s at 60 BPM |
 
-Cue and chase durations are whole numbers of bars. An effect's **Freq** counts waveform cycles per
+Effect and chase durations are whole numbers of bars; fade times are in bars too, in steps of a
+hundredth. An effect's **Freq** counts waveform cycles per
 duration, so its speed follows the tempo too.
 
 | At 120 BPM | Lasts |
 | --- | --- |
-| A scene with **Duration** 1 | 2 s fade |
+| A scene with a **Fade in** of 1 bar | 2 s fade |
 | An effect with **Duration** 2 and **Freq** 1 | one cycle every 4 s |
 | A chase with **Duration** 4 | 8 s per pass |
 
@@ -36,20 +37,53 @@ next half bar, beat or half beat (**1/2**, **1/4**, **1/8**), or at once (**None
 
 ## How Cues End
 
-A cue's **Loop Style** decides what happens at the end of its duration:
+A scene fades in, then stays on until you turn it off, which fades it out (see
+[Fade In and Fade Out](/programming/scenes#fade-in-and-fade-out)). An effect's **Loop Style**
+decides what happens at the end of its duration:
 
-| | **One Shot** | **Loop** |
-| --- | --- | --- |
-| Scene | Fades in over its duration, stops; its look stays | Stays on after its fade, until stopped |
-| Effect | Runs its duration once, stops | Repeats until stopped (the default) |
+| **One Shot** | **Loop** |
+| --- | --- |
+| Runs its duration once, stops | Repeats until stopped (the default) |
 
-A scene's **Start** sets where its fade begins, from 0 or from the current values: see
-[How a scene fades](/programming/scenes#how-a-scene-fades).
+Fades start from what the fixtures show and end on what takes over: see
+[How a scene fades](/programming/scenes#how-a-scene-fades) and
+[Fading in and out](/programming/effects#fading-in-and-out).
 
 ## What Plays Together
 
-- Several cues of a group can play at once; when they set the same channel, the last one to write
-  it wins.
+Every channel belongs to a **family**: **Intensity** (dimmer, shutter, strobe), **Colour**
+(colour mixing, colour wheels, colour temperature), **Position** (pan and tilt) or **Beam** (zoom,
+focus, gobos, prisms, iris, frost). A cue sets one family: the cue pool has a column per family,
+and each column's **NOW** says where it comes from. Channels of no family (speeds, control) follow
+the cue started last.
+
+- **One cue per family in a group.** Starting a cue gives it each family it uses in its group,
+  whatever fixtures each cue covers. A colour scene and a movement effect play together; a second
+  colour scene takes Colour from the first. Fixtures you want to control apart go in their own
+  groups.
+- **Replace or Layer.** A cue's **Mode** says what happens to the cue it takes over. **Replace**
+  turns that cue off once it has faded in; it doesn't come back. **Layer** plays over it and gives
+  its families back when you stop it.
+- **Turning a cue off** hands each of its families to the newest cue still playing that uses it.
+- **A cue left with nothing turns off** by itself: its row shows it stopped. A chase item turned off this
+  way stays off until its cue's next item.
+- **A family nobody holds rests.** Intensity goes back to its level from before playback (0, unless
+  you set it in the universe view); colour, position and beam stay as they were when their last
+  cue stopped (even half way through a fade, or on an effect's last step) until another cue takes
+  them, and NOW reads "kept:" with that cue.
+- **The cue started last wins** its family; there is no priority. To keep a cue on top of a
+  running chase, hold it as a flash.
+- **Flashes.** A **Temporary** cue covers what it reaches while you hold it, then hands it back; it
+  never turns a cue off.
+- **Groups sharing fixtures**: on a fixture two groups share, the cue started last wins that
+  family.
+
+**In the demo show:** start *Warm wash* in Intensity, Colour and Position. Start *Rainbow* in
+Colour (Replace): it takes the colour, and *Warm wash*'s colour, left with nothing, turns off; its
+level and aim play on. Start *Ballyhoo* in Position (Replace): the heads move, and *Warm wash*'s
+aim turns off. Stop *Ballyhoo*: nothing holds Position any more, so the heads stay where it left
+them ("kept: Ballyhoo").
+
 - A group plays one chase at a time: starting one stops the other.
 - A master row starts a chase in every group at once.
 - Pausing freezes every cue and chase where it is; output keeps running.
