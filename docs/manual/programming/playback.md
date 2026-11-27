@@ -38,11 +38,45 @@ while its level stays. Play *Ballyhoo* in Position: the heads move. Stop it: the
 left them, NOW reads "kept: Ballyhoo", and its row keeps its fill where it stopped.
 
 Turning a cue off hands its families to the newest cue still playing that uses them, over its
-**Fade out**. A family nobody holds rests: the dimmers go back to where they were before you played
-anything (dark, unless you set them in the universe view), while colour, aim and beam stay put
-until another cue takes them.
+**Fade out**. A family nobody holds rests: the dimmers go back to 0 (dark), while colour, aim and
+beam stay put until another cue takes them. Values you set by hand never become the rest: they
+are in the [programmer](#the-programmer) until you clear them.
 
 <LivePreview preset="group-cuepool" />
+
+## The Programmer
+
+Whatever you set in the [universe view](/programming/patching#trying-a-fixture) (a fader, a
+value, a range, the colour picker, pan and tilt) goes into the **programmer**. It wins over every
+cue, in every group, playing or not: take a light by hand during a show, and it stays where you put
+it while the cues carry on with everything else. The programmer isn't saved with the show.
+
+In the universe view's **Channels** widget, each channel says where its value comes from: its box
+and fader turn violet in the programmer, blue while a cue drives it (or holds the value a cue
+left), and keep their usual look at rest. Hover the box or the fader to read the source:
+*Programmer*, *Colour cue: Warm wash*, *Kept from: Ballyhoo*, *Rest*. In the **Fixture Pool**,
+fixtures in the programmer read **· prog** after their address.
+
+**Clear** gives the channels back to playback at once:
+
+- **Clear programmer** in the Channels widget's header clears the selected fixtures;
+- **Clear** in a channel's menu clears that channel on the selected fixtures;
+- **Preferences → Clear programmer** (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd>) clears every
+  fixture.
+
+Hand values never become the base cues come back to: with nothing playing, a cleared dimmer goes
+back to 0. To keep a look, make it a [scene](/programming/scenes).
+
+### Parking a Channel
+
+A parked channel stays at its value whatever happens: above the cues, above the programmer, and
+**Clear** leaves it alone. Use it for a hazer's output, a fixture's fan, or a light that must stay
+on. Open the channel's menu (its box under the value) and pick **Park at …** (the current value) at the top: the
+channel locks at that value on every selected fixture, turns red, and its fader and value
+no longer move. Pick **Unpark** in the same place to free it, or press **Unpark** in the Channels
+widget's header to free every parked channel of the selected fixtures.
+
+Parked channels are saved with the show, and the fixtures read **· parked** in the Fixture Pool.
 
 ## Chases
 

@@ -69,6 +69,15 @@ Enums live next to their model and are exported: `CUE_TYPES`, `CUE_STATES`,
 - **Output remap:** `Universe.packFrame` writes each address from
   `channels[channel.outputSource]`, as `255 - value` when `channel.outputInvert`; `Fixture.setupOutput`
   sets both from `invertPan` / `invertTilt` / `swapPanTilt` (saved). Programmed values never change.
+- **Programmer and Park (programmer.js):** two runtime fields per `Channel`, `programmed` and
+  `parked` (DMX or `null`), applied only in `Universe.packFrame` (parked, else programmed, else
+  `value.DMX`; `Channel.output` is the same). Playback keeps writing `value` underneath, so Clear
+  is `programmed = null`. Hand edits go through `Programmer.run(fixtures, write)`: while
+  `Programmer.writing`, `Fixture.setChannel` stores into `programmed` (checked before
+  `Claims.writer`). Park is `Fixture.park` / `unpark`, saved as `showData.parked` (index → value);
+  the programmer is never saved and `Programmer.reset()` runs on show clear. The UI reads
+  `Programmer.state` (reactive id lists), not the channels. Unit 4's masters and blackout must
+  scale the merged value before the parked check.
 - **Frames:** `Live.onFrame(fn)` callbacks run after the animations on every tick, also while
   paused or stopped. `UniversePool` uses one to pack each universe's persistent `frame`
   (`Uint8Array(512)`) and hand it to `UniversePool.sink` (the output pool, raw), which sends it on
@@ -104,7 +113,8 @@ Enums live next to their model and are exported: `CUE_TYPES`, `CUE_STATES`,
     others keep what the stage showed, with `keptFrom` = the cue that left, until another cue
     takes them; there is no reset) and leaves `liveSlots`. `restValue` is recorded only when a
     `rested` slot is taken, so a kept value never becomes the rest.
-  - **No direct writes.** Writes with no writer (editing, loading) go straight to the channel.
+  - **No direct writes.** Writes with no writer (scene editing, loading) go straight to the
+    channel; the universe view writes into the programmer, so hand values never become the rest.
   - **Programming is blind.** A click on a cue only opens it; only `cue()` and chase items play.
     There is no preview token and no raise.
   - **One family per cue.** `Cue.family` (saved key, one of `FAMILY_KEYS`) is its cue pool column.

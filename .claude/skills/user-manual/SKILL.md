@@ -58,6 +58,7 @@ change touches: the pages are what the proposal's **Manual** line names, and the
 | `F/modifiers/chase/`, `M/DMX/chase*.model.js`, `cue.item*.model.js`, `V/utils/chase.outcome.js` (lanes by family, who holds what) | `programming/chases` (The Timeline, Who Holds What) | `chase-modifier`, `timeline-add` |
 | `M/DMX/live.model.js`, `src/worker.js` (BPM, bars, quantize, play/pause) | `concepts/timing`, `programming/playback` | `chase-play`, `master-row` |
 | `M/DMX/claims.js`, `M/DMX/families.js`, `M/DMX/channel.model.js`, `V/utils/cue.families.js`, `V/utils/cue.previews.js`, `V/utils/cue.now.js`, `src/views/components/uikit/cues/uikit.cue.picture.vue` (families, one cue per family in a group, Replace and Layer, rest, kept and reset, priority, flashes, on stage and blind, the cue pool columns, NOW, chip pictures and value lines) | `concepts/timing` (What Plays Together), `concepts/index` (Cue), `programming/playback`, `programming/scenes` (Creating a Cue, Cue Settings), `programming/effects` (Fading in and out), `programming/chases` (When an item ends), `getting-started/first-show`, `reference/glossary`, `reference/limitations` | `group-cuepool`, `cuepool-add`, `cue-settings` |
+| `M/DMX/programmer.js`, `V/utils/channel.source.js`, the universe fragment's write handlers, `Fixture.park` (the programmer, Clear, Park, each channel's source colour) | `programming/playback` (The Programmer), `programming/patching` (Trying a Fixture), `concepts/timing`, `reference/shortcuts`, `reference/glossary` | `fixture-channels` |
 | `M/DMX/*.pool.model.js`, `universe.model.js`, `fixture.model.js` (what a show holds) | `concepts/index`, `introduction/overview` | none |
 | `F/visualizer/`, `src/views/activities/visualizer/`, `src/plugins/visualizer/` | `interface/visualizer`, `reference/limitations#visualizer` | `visualizer-modes`, every `stage: true` preset (the floating card) |
 | `M/fixtures/`, `public/fixtures/`, `public/gdtf/` | `rig/fixtures`, `programming/patching` | `patch-add` |
@@ -432,6 +433,8 @@ outlined pills, no coloured shadows: plain type and Studio's solid round buttons
 - Use `> **Note:**` for behaviour that surprises users (BPM sync, quantization).
 - Link related pages with absolute paths: `[cues](/programming/scenes)`. Never link to a stub.
 - Second person, present tense, short sentences, the UI's exact labels in **bold**.
+- Never write placeholders in angle brackets (`Park at <value>`) outside code: VitePress compiles
+  them as HTML tags and the whole page renders empty. Write `Park at …` or a real example.
 - Link the <ResourceLink to="demo">live demo</ResourceLink> where readers are invited to try
   something in Studio (it hides itself while `MANUAL_URL_DEMO` is unset).
 

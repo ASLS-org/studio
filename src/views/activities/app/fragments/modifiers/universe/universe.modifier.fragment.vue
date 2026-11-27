@@ -40,7 +40,13 @@
       ref="channels"
       class="fixture_channels"
       :channels="liveChannels"
+      :sources="liveSources"
+      :held="selectionHeld"
       @input="setChannel"
+      @park="toggleParked"
+      @clear-channel="clearChannel"
+      @clear="clearSelection"
+      @unpark="unparkSelection"
     />
     <widget-color-picker
       v-if="selectedFixture && selectedFixture.hasColor"
@@ -75,6 +81,9 @@
 <script>
 import modal from '@/views/mixins/modal.mixin';
 import LiveMixin from '@/views/mixins/live.mixin';
+import Programmer from '@/models/DMX/programmer';
+import { channelSource } from '@/views/utils/channel.source';
+import { angleRange } from '@/views/utils/effect.scope';
 import FixturePoolWidget from '../_widgets/modifier.widget.fixture.pool.vue';
 import FixtureChannelsWidget from '../_widgets/modifier.widget.fixture.channels.vue';
 import WidgetColorPicker from '../_widgets/modifier.widget.colorpicker.vue';
@@ -185,6 +194,27 @@ export default {
         .filter((channel) => !cells || !channel.cell || cells.includes(channel.cell)));
     },
     /**
+     * What drives each shown channel (parked, programmer, a cue, kept, rest), refreshed by the
+     * live ticker: the channels widget colours and titles its faders from it
+     */
+    liveSources() {
+      const fixture = this.selectedFixture;
+      return this.live(this.liveChannels.map((row) => channelSource(fixture
+        ? fixture.channels[row.id - fixture.chStart - 1] : null)));
+    },
+    /**
+     * What the selected fixtures hold by hand: programmer values, parked channels
+     *
+     * @type {{programmer: Boolean, parked: Boolean}}
+     */
+    selectionHeld() {
+      const { held, parked } = Programmer.state;
+      return {
+        programmer: this.selectedFixtures.some((fixture) => held.includes(fixture.id)),
+        parked: this.selectedFixtures.some((fixture) => parked.includes(fixture.id)),
+      };
+    },
+    /**
      * Selected fixture's colour (selected cells), refreshed by the live ticker
      */
     liveColor() {
@@ -240,42 +270,137 @@ export default {
       this.patchPopupDisplayState = true;
     },
     /**
-     * Sets the selected fixture channel value
+     * The cells an edit reaches on a fixture: the selected cells it has, else all of it
      *
      * @public
-     * @param {Object} channel the channel to be update
+     * @param {Object} fixture
+     * @returns {?Array<String>} cell names, null for all
+     */
+    cellsFor(fixture) {
+      const cells = this.selectedCells;
+      return cells && fixture.cells.some((cell) => cells.includes(cell.name)) ? cells : null;
+    },
+    /**
+     * Sets a channel on every selected fixture that has it, in the programmer
+     *
+     * @public
+     * @param {Object} channel the channel row the widget edited (type, qaIndex, value)
      */
     setChannel(channel) {
-      this.selectedFixture.setQuickAccessor(channel, channel.value);
+      Programmer.run(this.selectedFixtures, (fixture) => {
+        fixture.setQuickAccessor(channel, channel.value);
+      });
       this.$liveTicker.bump();
     },
     /**
-     * Sets the selected fixture color intensity value
+     * Sets a colour on every selected fixture, each mixing it on its own channels, in the
+     * programmer
      *
      * @public
-     * @param {Array} color an array containing [R,G,B] values.
+     * @param {Array} color [R, G, B] 0-255
      */
     setFixtureColor(color) {
-      if (this.selectedFixture) {
-        this.selectedFixture.setColor(color, this.selectedCells);
-        this.$liveTicker.bump();
-      }
+      Programmer.run(this.selectedFixtures, (fixture) => {
+        fixture.setColor(color, this.cellsFor(fixture));
+      });
+      this.$liveTicker.bump();
     },
     /**
-     * Sets the selected fixture pan & tilt values
+     * Sets pan and tilt on every selected fixture, in the programmer: the same angle as the main
+     * fixture's where both ranges are known, else the same values
      *
      * @public
-     * @param {Object} panTilt a panTilt object containing pan(fine)/tilt(fine) values
-     * @param {Number} panTilt.pan the fixture's new pan value
-     * @param {Number} panTilt.panFine the fixture's new pan fine value
-     * @param {Number} panTilt.tilt the fixture's new tilt value
-     * @param {Number} panTilt.tiltFine the fixture's new tilt fine value
+     * @param {Object} panTilt pan, panFine, tilt, tiltFine (0-255) of the main fixture
      */
     setFixturePanTilt(panTilt) {
-      if (this.selectedFixture) {
-        this.selectedFixture.setPanTilt(panTilt, this.selectedCells);
-        this.$liveTicker.bump();
-      }
+      const main = this.selectedFixture;
+      if (!main) return;
+      Programmer.run(this.selectedFixtures, (fixture) => {
+        const value = fixture === main ? panTilt : this.sameAngle(main, fixture, panTilt);
+        fixture.setPanTilt(value, this.cellsFor(fixture));
+      });
+      this.$liveTicker.bump();
+    },
+    /**
+     * Pan and tilt values giving another fixture the same angles as a reference fixture
+     *
+     * @public
+     * @param {Object} from the reference fixture
+     * @param {Object} to the other fixture
+     * @param {Object} panTilt pan, panFine, tilt, tiltFine (0-255) on the reference
+     * @returns {Object} pan, panFine, tilt, tiltFine (0-255) for the other fixture
+     */
+    sameAngle(from, to, panTilt) {
+      const result = { ...panTilt };
+      [['Pan', 'pan'], ['Tilt', 'tilt']].forEach(([kind, key]) => {
+        const rangeFrom = angleRange(from, kind);
+        const rangeTo = angleRange(to, kind);
+        if (!rangeFrom || !rangeTo) return;
+        const value = (panTilt[key] || 0) + (panTilt[`${key}Fine`] || 0) / 255;
+        const degrees = (value / 255 - 0.5) * rangeFrom;
+        const next = Math.min(255, Math.max(0, (degrees / rangeTo + 0.5) * 255));
+        result[key] = Math.floor(next);
+        result[`${key}Fine`] = Math.round((next % 1) * 255);
+      });
+      return result;
+    },
+    /**
+     * Parks a channel on every selected fixture at the value its menu item reads (the main
+     * fixture's), or unparks it when the main fixture's is parked
+     *
+     * @public
+     * @param {Object} channel the channel row (type, qaIndex)
+     * @param {Number} value DMX 0-255
+     */
+    toggleParked(channel, value) {
+      const main = this.selectedFixture;
+      const mainChannel = main && main.getQuickAccessor(channel);
+      if (!mainChannel) return;
+      const unpark = mainChannel.parked !== null;
+      this.selectedFixtures.forEach((fixture) => {
+        const target = fixture.getQuickAccessor(channel);
+        if (!target) return;
+        if (unpark) fixture.unpark(target);
+        else fixture.park(target, value);
+      });
+      this.$show.refreshSaveState();
+      this.$liveTicker.bump();
+    },
+    /**
+     * Clears the selected fixtures from the programmer: they follow playback again
+     *
+     * @public
+     */
+    clearSelection() {
+      Programmer.clear(this.selectedFixtures);
+      this.$liveTicker.bump();
+    },
+    /**
+     * Frees every parked channel of the selected fixtures
+     *
+     * @public
+     */
+    unparkSelection() {
+      this.selectedFixtures.forEach((fixture) => {
+        fixture.channels.forEach((channel) => {
+          if (!channel.isFine && channel.parked !== null) fixture.unpark(channel);
+        });
+      });
+      this.$show.refreshSaveState();
+      this.$liveTicker.bump();
+    },
+    /**
+     * Clears a channel from the programmer on every selected fixture
+     *
+     * @public
+     * @param {Object} channel the channel row (type, qaIndex)
+     */
+    clearChannel(channel) {
+      this.selectedFixtures.forEach((fixture) => {
+        const target = fixture.getQuickAccessor(channel);
+        if (target) Programmer.clearChannel(fixture, target);
+      });
+      this.$liveTicker.bump();
     },
     /**
      * Deletes one or many fixtures from the universe's fixture list.

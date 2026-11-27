@@ -10,7 +10,7 @@
  *   --url    use a running dev server instead of starting one
  *   --only   run only these scenarios (repeatable): panels, playing, textscroll, select, resize,
  *            widgets, curves, repatch, position, scopes, fxfades, families, presets, memory,
- *            shared, highlight, deletes, keys, popups
+ *            shared, highlight, deletes, keys, popups, programmer, outputs
  * Chrome: CHROME_PATH, else the usual install path for the system.
  */
 /* eslint-disable no-console -- a command-line report */
@@ -2257,9 +2257,10 @@ const SCENARIOS = {
     const dimmerList = await openList();
     await press(page, 'Escape');
     check(
-      'every channel has a menu; a dimmer\'s shows its full name and its one range',
+      'every channel has a menu; a dimmer\'s shows its full name, Park first, then its one range',
       before.every((c) => c.menu) && before[target.dimmer]?.text === target.dimmerName
-        && dimmerList?.header === target.dimmerName && dimmerList.options.length === 1,
+        && dimmerList?.header === target.dimmerName && dimmerList.options.length === 2
+        && /^Park at/.test(dimmerList.options[0]),
       { dimmer: before[target.dimmer], dimmerList },
     );
     const triggerSel = triggerOf(target.index);
@@ -2278,9 +2279,10 @@ const SCENARIOS = {
     );
     await click(page, triggerSel);
     await pickPreset(page, target);
+    // The universe view writes into the programmer: what is sent is the channel's output
     const picked = await page.evaluate((t) => {
       const fixture = window.__check.show.fixturePool.getFromId(t.fixtureId);
-      return fixture.channels[t.index].value.DMX;
+      return fixture.channels[t.index].output;
     }, target);
     await click(page, triggerSel);
     const marked = (await openList())?.current;
@@ -2295,15 +2297,15 @@ const SCENARIOS = {
     const shown = (await columns())[target.index];
     check(
       'the channel\'s box shows the current range, its tooltip the name and range',
-      shown.text === target.label && shown.title === `${target.name}: ${target.label}`,
+      shown.text === target.label && shown.title === `${target.name}: ${target.label} · Programmer`,
       shown,
     );
 
     // Keys: Down then Enter picks the next range, Escape leaves it
     const expected = await page.evaluate((t) => {
       const ch = window.__check.show.fixturePool.getFromId(t.fixtureId).channels[t.index];
-      const at = ch.capabilities.findIndex((c) => ch.value.DMX >= c.range[0]
-        && ch.value.DMX <= c.range[1]);
+      const at = ch.capabilities.findIndex((c) => ch.output >= c.range[0]
+        && ch.output <= c.range[1]);
       return ch.capabilities[(at + 1) % ch.capabilities.length].range[0];
     }, target);
     await click(page, triggerSel);
@@ -2311,14 +2313,14 @@ const SCENARIOS = {
     await press(page, 'Enter');
     const next = await page.evaluate((t) => {
       const fixture = window.__check.show.fixturePool.getFromId(t.fixtureId);
-      return { value: fixture.channels[t.index].value.DMX };
+      return { value: fixture.channels[t.index].output };
     }, target);
     next.expected = expected;
     await click(page, triggerSel);
     await press(page, 'ArrowDown');
     await press(page, 'Escape');
     const kept = await page.evaluate((t) => window.__check.show.fixturePool
-      .getFromId(t.fixtureId).channels[t.index].value.DMX, target);
+      .getFromId(t.fixtureId).channels[t.index].output, target);
     check(
       'Down and Enter pick the next range; Escape closes the menu unchanged',
       next.value === next.expected && kept === next.value,
@@ -3971,6 +3973,200 @@ const SCENARIOS = {
       'opening a group closes the universe patch popup',
       before.length === 1 && afterSwitch.length === 0,
       { before, after: afterSwitch },
+    );
+  },
+
+  /** The programmer above cues, Clear, Park, and what each channel shows of its source */
+  async programmer(page) {
+    const d = await demo(page);
+    const u = d.universes[0];
+    const [fa, fb] = u.fixtures;
+    await openUniverse(page, u.id);
+    await clickRow(page, '.modifier_widget_fixture_pool', fa);
+    await clickRow(page, '.modifier_widget_fixture_pool', fb, ['Meta']);
+    // Each selected fixture's Dimmer: what is sent and what lies under it
+    const dimmers = () => page.evaluate((ids) => ids.map((id) => {
+      const { show } = window.__check;
+      const f = show.fixturePool.getFromId(id);
+      const index = f.channels.findIndex((c) => c.attribute === 'Dimmer' && !c.isFine);
+      const ch = f.channels[index];
+      const universe = show.universePool.universes.find((x) => x.id === f.universe);
+      return {
+        index,
+        value: ch.value.DMX,
+        programmed: ch.programmed,
+        parked: ch.parked,
+        frame: universe.frame[f.chStart + index],
+      };
+    }), [fa, fb]);
+    // The shown Dimmer column: its box colour, its tooltips, whether its fader is locked
+    const dimmerName = await page.evaluate((id) => window.__check.show.fixturePool.getFromId(id)
+      .channels.find((c) => c.attribute === 'Dimmer' && !c.isFine).name, fa);
+    const column = () => page.evaluate((name) => {
+      const w = [...document.querySelectorAll('.channels_widget')].find((e) => e.offsetParent);
+      const cols = [...w.querySelectorAll('.channels_channel')];
+      const read = (c) => ({
+        held: c.querySelector('.channel_select_box').classList.contains('held'),
+        color: c.querySelector('.channel_select_box').style.getPropertyValue('--held-color'),
+        menu: c.querySelector('.channel_select').getAttribute('title'),
+        fader: c.querySelector('.uikit_fader')?.closest('[title]')?.getAttribute('title') ?? null,
+        locked: !!c.querySelector('.uikit_fader_slider.locked'),
+      });
+      const i = cols.findIndex((c) => c.querySelector('.channel_select').getAttribute('title')
+        .startsWith(`${name}:`));
+      return { i, dimmer: read(cols[i]), other: read(cols[cols.length - 1]) };
+    }, dimmerName);
+    const header = () => page.evaluate(() => Object.fromEntries([...document
+      .querySelectorAll('.channels_widget .widget_header_actions .uikit_button')]
+      .filter((b) => b.offsetParent)
+      .map((b) => [b.textContent.trim().toLowerCase(), !b.classList.contains('disabled')])));
+    const rows = () => page.evaluate((ids) => ids.map((id) => ({
+      pool: document.querySelector(`.modifier_widget_fixture_pool .uikit_list_item[data-key="id:${id}"]`)?.textContent.replace(/\s+/g, ' ').trim(),
+      bay: document.querySelector(`.patch_bay .uikit_list_item[data-key="id:${id}"]`)?.textContent.replace(/\s+/g, ' ').trim(),
+    })), [fa, fb]);
+    const saved = () => page.evaluate(() => {
+      window.__check.show.refreshSaveState();
+      return window.__check.show.isSaved;
+    });
+    const openMenu = async () => {
+      const { i } = await column();
+      await click(page, `.channels_widget .channels_channel:nth-child(${i + 1}) .uikit_select_trigger`);
+      return page.evaluate(() => {
+        const list = [...document.querySelectorAll('.uikit_select_option_list.with_trigger')]
+          .find((e) => e.style.display !== 'none');
+        return list ? [...list.querySelectorAll('.uikit_list_item')]
+          .map((o) => o.textContent.replace(/\s+/g, ' ').trim()) : [];
+      });
+    };
+    const pickMenu = (re) => click(page, '.uikit_select_option_list.with_trigger .uikit_list_item', re);
+    const typeDimmer = async (value) => {
+      const { i } = await column();
+      const input = `.channels_widget .channels_channel:nth-child(${i + 1}) .channel_value input`;
+      await page.evaluate((sel) => document.querySelector(sel).scrollIntoView({ inline: 'center' }), input);
+      const box = await (await page.$(input)).boundingBox();
+      await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2, { clickCount: 3 });
+      await page.keyboard.type(String(value));
+      await page.keyboard.press('Enter');
+      await wait(SETTLE_MS * 2);
+    };
+    await unfoldUniverse(page, u.id);
+    const start = await dimmers();
+    const savedAtStart = await saved();
+
+    // At rest: default look, "Rest", nothing to clear or unpark
+    const atRest = await column();
+    const idle = await header();
+    check(
+      'at rest a channel keeps the default look and reads "Rest"; Clear programmer and Unpark are disabled',
+      !atRest.dimmer.held && /Rest$/.test(atRest.dimmer.menu) && atRest.dimmer.fader === 'Rest'
+        && idle['clear programmer'] === false && idle.unpark === false,
+      { atRest, idle },
+    );
+
+    // A typed value reaches both selected fixtures, in the programmer only
+    await typeDimmer(200);
+    const typed = await dimmers();
+    const prog = await column();
+    const marks = await rows();
+    check(
+      'a value typed with two fixtures selected goes to both, in the programmer: sent, the value underneath unchanged, the show still saved',
+      typed.every((x, k) => x.programmed === 200 && x.frame === 200 && x.value === start[k].value)
+        && await saved() === savedAtStart,
+      typed,
+    );
+    check(
+      'a programmed channel\'s box and fader turn violet and read "Programmer"; a channel at rest stays default',
+      prog.dimmer.held && /violet/.test(prog.dimmer.color) && prog.dimmer.fader === 'Programmer'
+        && !prog.other.held,
+      prog,
+    );
+    check(
+      'fixture pool rows read "· prog", patch bay rows show the address only; Clear programmer is enabled',
+      marks.every((r) => /· prog$/.test(r.pool) && r.bay && !/·/.test(r.bay))
+        && (await header())['clear programmer'] === true,
+      marks,
+    );
+
+    // A cue plays underneath: the programmer wins
+    const group = d.groups.find((g) => g.fixtures.includes(fa) && g.fixtures.includes(fb));
+    const cueId = await page.evaluate((gid) => {
+      const g = window.__check.show.groupPool.getFromId(gid);
+      const cue = g.cuePool.cues.find((c) => c.family === 'intensity' && c.type === 0)
+        || g.cuePool.cues.find((c) => c.family === 'intensity');
+      window.__programmerCue = cue;
+      cue.cue(true);
+      return cue.id;
+    }, group.id);
+    await wait(2500);
+    const under = await dimmers();
+    check(
+      'an Intensity cue playing underneath doesn\'t move a programmed Dimmer',
+      cueId !== undefined && under.every((x) => x.frame === 200 && x.programmed === 200),
+      under,
+    );
+
+    // Clear programmer in the header: playback's value at once, its source named, blue
+    await click(page, '.channels_widget .widget_header_actions .uikit_button', /clear programmer/i);
+    await wait(SETTLE_MS);
+    const cleared = await dimmers();
+    const cueCol = await column();
+    check(
+      'Clear programmer gives both fixtures the cue\'s value at once; the channel turns blue and names the cue',
+      cleared.every((x) => x.programmed === null && x.frame === x.value)
+        && /blue/.test(cueCol.dimmer.color) && /^Intensity cue: /.test(cueCol.dimmer.fader)
+        && (await header())['clear programmer'] === false,
+      { cleared, cueCol },
+    );
+
+    // Park through the menu: first item, on both fixtures, red and locked, above the cue, saved
+    const menu = await openMenu();
+    await pickMenu(/^Park at/);
+    const parked = await dimmers();
+    const parkedCol = await column();
+    check(
+      'a channel\'s menu starts with Park at <value>; picking it parks both fixtures at the same value, red and locked',
+      /^Park at \d+/.test(menu[0]) && !menu.some((o) => /^Clear/.test(o))
+        && parked.every((x) => x.parked === parked[0].parked && x.frame === x.parked)
+        && parkedCol.dimmer.fader === `Parked at ${parked[0].parked}`
+        && /red/.test(parkedCol.dimmer.color) && parkedCol.dimmer.locked,
+      { menu, parked, parkedCol },
+    );
+    await press(page, 'KeyC', ['Control', 'Shift']);
+    await page.evaluate(() => window.__programmerCue.cue(false));
+    await wait(1500);
+    const kept = await dimmers();
+    check(
+      'a parked channel survives Ctrl+Shift+C and the cue stopping; Park marks the show unsaved; rows read "· parked"',
+      kept.every((x, k) => x.parked === parked[k].parked && x.frame === parked[k].parked)
+        && await saved() === false
+        && (await rows()).every((r) => /· parked$/.test(r.pool)),
+      kept,
+    );
+    const data = await page.evaluate((id) => window.__check.show.fixturePool
+      .getFromId(id).showData.parked, fa);
+    check('the parked channel is in the show\'s data', !!data && data[kept[0].index] === kept[0].parked, data);
+
+    // Unpark in the header; then a hand value cleared from the menu is not the rest
+    await click(page, '.channels_widget .widget_header_actions .uikit_button', /unpark/i);
+    await typeDimmer(128);
+    const clearMenu = await openMenu();
+    await pickMenu(/^Clear/);
+    await page.evaluate(() => window.__programmerCue.cue(true));
+    await wait(2000);
+    await page.evaluate(() => window.__programmerCue.cue(false));
+    await page.waitForFunction((id) => {
+      const f = window.__check.show.fixturePool.getFromId(id);
+      const ch = f.channels.find((c) => c.attribute === 'Dimmer' && !c.isFine);
+      return !ch.slot?.top;
+    }, { timeout: 15000, polling: 100 }, fa).catch(() => {});
+    await wait(500);
+    const rested = await dimmers();
+    check(
+      'Unpark frees both; the menu offers Clear while programmed; a hand value cleared is not where the Dimmer rests',
+      clearMenu.some((o) => /^Clear/.test(o)) && /^Park at/.test(clearMenu[0])
+        && rested.every((x, k) => x.parked === null && x.programmed === null
+          && x.value === start[k].value && x.frame === start[k].value),
+      { clearMenu, rested, start },
     );
   },
 

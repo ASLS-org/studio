@@ -19,6 +19,7 @@ is open, nothing behind it reacts to keys.
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> | Export the show as a file |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd> | Visualizer settings |
 | <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>O</kbd> | Outputs |
+| <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> | Clear the programmer ([Playing a show](/programming/playback#the-programmer)) |
 | <kbd>Space</kbd> | Pause or resume the show ([Playing a show](/programming/playback#the-clock)) |
 
 ## Popups

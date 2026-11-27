@@ -44,7 +44,11 @@ class UniversePool {
       id: universe.id,
       name: universe.name,
       color: universe.color,
-      unfold: universe.fixturePool.listable,
+      // The patch bay is narrow: its fixture rows keep the address only (no held marks)
+      unfold: universe.fixturePool.fixtures.map((fixture) => ({
+        ...fixture.listable,
+        more: fixture.addressLabel,
+      })),
     }));
   }
 

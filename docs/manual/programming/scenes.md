@@ -44,7 +44,7 @@ zoom) and where it comes from. NOW only shows; a click on it does nothing.
 | a cue's name | That cue holds the family |
 | a cue and a chase (*Red · Verse*) | An item of that chase holds it |
 | "kept:" a cue's name | No cue holds it: the fixtures keep that cue's colour, aim or beam as it was when it stopped, until another cue takes the family |
-| rest | Nothing holds it: the dimmers are back where they were before you played anything |
+| rest | Nothing holds it: the dimmers are back to 0 (or the fixture's home value) |
 
 Under its head, a column lists its cues as rows, like any list in Studio; when it has more than the
 strip shows, scroll it (or make the bottom strip taller by dragging its top border).
@@ -121,8 +121,7 @@ A scene has no **Loop Style** or **Duration**: it stays on until you turn it off
 cue takes all of its families.
 
 > **Note:** Turning a scene off fades it out over its **Fade out**, into the cue it hands its
-> families back to. With nothing there, the dimmers go back to where they were before you played
-> anything, and colour, aim and beam stay as they were (NOW reads "kept:") until another cue
+> families back to. With nothing there, the dimmers go back to 0, and colour, aim and beam stay as they were (NOW reads "kept:") until another cue
 > takes them. Rest the
 > pointer on any setting in **Cue Settings** to see what it does. See
 > [What plays together](/concepts/timing#what-plays-together).

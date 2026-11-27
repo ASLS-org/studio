@@ -71,6 +71,7 @@
 import modal from '@/views/mixins/modal.mixin';
 import EventBus from '@/plugins/eventbus';
 import { OUTPUT_STATE } from '@/models/DMX/output.pool.model';
+import Programmer from '@/models/DMX/programmer';
 import { GATEWAY_STATUS } from '@/plugins/wsc.connection';
 import VisualizerPopup from './_popups/popup.visualizer.vue';
 import LicensePopup from './_popups/popup.license.vue';
@@ -185,6 +186,14 @@ export default {
               icon: 'zoom',
               callback: () => {
                 this.connectionsPopupState = true;
+              },
+            },
+            {
+              name: 'Clear programmer',
+              shortcut: 'Ctrl+Shift+c',
+              icon: 'close',
+              callback: () => {
+                this.clearProgrammer();
               },
             },
           ],
@@ -337,6 +346,15 @@ export default {
       this.saveStateTimer = setTimeout(() => {
         this.$show.refreshSaveState();
       }, SAVE_STATE_REFRESH_DELAY);
+    },
+    /**
+     * Empties the programmer: every fixture follows playback again
+     *
+     * @public
+     */
+    clearProgrammer() {
+      Programmer.clear();
+      this.$liveTicker?.bump();
     },
     /**
      * Toggle between show's play & pause states

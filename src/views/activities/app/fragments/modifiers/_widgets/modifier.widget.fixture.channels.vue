@@ -2,6 +2,7 @@
   <uk-widget
     dockable
     :header="headerData"
+    :actions="headerActions"
     :disabled="!channels || !channels.length"
     class="channels_widget"
   >
@@ -19,6 +20,7 @@
           :max="255"
           :default="0"
           :disabled="!channel.active"
+          :locked="isParked(index)"
           @input="update(channel)"
         />
         <!-- The channel's function and range: opens its full name and ranges -->
@@ -26,16 +28,18 @@
           class="channel_select"
           reselect
           searchable
-          :title="channelTitle(channel)"
-          :items="presetItems(channel.capabilities)"
-          :model-value="rangeIndex(channel.capabilities, channel.value)"
+          :title="menuTitle(channel, index)"
+          :items="menuItems(channel, index)"
+          :model-value="menuIndex(channel, index)"
           :empty-text="channel.capabilities ? '' : 'Ranges differ between fixtures'"
-          @input="applyPreset(channel, $event)"
+          @input="applyPreset(channel, $event, index)"
         >
           <template #trigger>
+            <!-- The box holding the channel's menu shows what drives it (rest: none) -->
             <div
               class="uikit_select_trigger_box channel_select_box"
-              :class="{ inactive: !channel.active }"
+              :class="{ inactive: !channel.active, held: !!sourceOf(index)?.color }"
+              :style="sourceOf(index)?.color ? { '--held-color': sourceOf(index).color } : null"
             >
               <uk-icon
                 class="channel_icon"
@@ -60,7 +64,9 @@
           :max="255"
           :label="`CH${index + 1}`"
           :disabled="!channel.active"
-          color="var(--accent-blue)"
+          :locked="isParked(index)"
+          :color="sourceOf(index)?.color || 'var(--accent-blue)'"
+          :title="sourceOf(index)?.text"
           @input="update(channel)"
         />
         <uk-checkbox
@@ -96,8 +102,23 @@ export default {
      * Whether the channels are toggleable or not (checkbox displayed)
      */
     toggleable: Boolean,
+    /**
+     * The universe view's live mode: what drives each channel (views/utils/channel.source.js),
+     * one per channel, colouring its fader and value; its menu then offers Park / Unpark
+     */
+    sources: {
+      type: Array,
+      default: null,
+    },
+    /**
+     * Live mode: what the selected fixtures hold, `{ programmer, parked }` (enables the buttons)
+     */
+    held: {
+      type: Object,
+      default: () => ({ programmer: false, parked: false }),
+    },
   },
-  emits: ['input'],
+  emits: ['input', 'park', 'clear-channel', 'clear', 'unpark'],
   data() {
     return {
       /**
@@ -109,9 +130,119 @@ export default {
       },
     };
   },
+  computed: {
+    /**
+     * Live mode's header actions for the selected fixtures: Clear programmer, Unpark
+     */
+    headerActions() {
+      if (!this.sources) return [];
+      return [
+        {
+          text: 'clear programmer',
+          icon: 'close',
+          title: "The selected fixtures' hand-set values go back to playback",
+          disabled: !this.held.programmer,
+          callback: () => this.$emit('clear'),
+        },
+        {
+          text: 'unpark',
+          icon: 'key',
+          title: "Frees the selected fixtures' parked channels",
+          disabled: !this.held.parked,
+          callback: () => this.$emit('unpark'),
+        },
+      ];
+    },
+  },
   methods: {
     presetItems,
     rangeIndex,
+    /**
+     * What drives a channel, in live mode
+     *
+     * @public
+     * @param {Number} index
+     * @returns {?Object} `{ kind, text, color }`
+     */
+    sourceOf(index) {
+      return this.sources ? this.sources[index] || null : null;
+    },
+    /**
+     * Whether a channel is parked (its fader and value locked), in live mode
+     *
+     * @public
+     * @param {Number} index
+     * @returns {Boolean}
+     */
+    isParked(index) {
+      return this.sourceOf(index)?.kind === 'parked';
+    },
+    /**
+     * The actions heading a channel's menu in live mode: Park / Unpark, then Clear when the
+     * programmer holds the channel
+     *
+     * @public
+     * @param {Object} channel a channel description object
+     * @param {Number} index
+     * @returns {Array<Object>} `{ live, name, icon, more }` (`live`: 'park' or 'clear')
+     */
+    menuActions(channel, index) {
+      if (!this.sources) return [];
+      const parked = this.isParked(index);
+      const actions = [parked
+        ? { live: 'park', name: 'Unpark', icon: 'key' }
+        : {
+          live: 'park', name: `Park at ${Math.round(channel.value)}`, icon: 'key', more: 'locks it',
+        }];
+      if (this.sourceOf(index)?.kind === 'programmer') {
+        actions.push({
+          live: 'clear', name: 'Clear', icon: 'close', more: 'back to playback',
+        });
+      }
+      return actions;
+    },
+    /**
+     * A channel's menu: the live actions first, then its ranges
+     *
+     * @public
+     * @param {Object} channel a channel description object
+     * @param {Number} index
+     * @returns {Array<Object>} uk-list items (`id` = option index)
+     */
+    menuItems(channel, index) {
+      const ranges = presetItems(channel.capabilities);
+      const actions = this.menuActions(channel, index);
+      if (!actions.length) return ranges;
+      return [
+        ...actions.map((item, i) => ({ ...item, id: i })),
+        ...ranges.map((item) => ({ ...item, id: item.id + actions.length })),
+      ];
+    },
+    /**
+     * The menu row matching the channel's value (after the live actions)
+     *
+     * @public
+     * @param {Object} channel a channel description object
+     * @param {Number} index
+     * @returns {Number}
+     */
+    menuIndex(channel, index) {
+      const range = rangeIndex(channel.capabilities, channel.value);
+      return range < 0 ? range : range + this.menuActions(channel, index).length;
+    },
+    /**
+     * Tooltip of a channel's menu box: its name and range, and what holds it by hand
+     *
+     * @public
+     * @param {Object} channel a channel description object
+     * @param {Number} index
+     * @returns {String}
+     */
+    menuTitle(channel, index) {
+      const source = this.sourceOf(index);
+      const title = this.channelTitle(channel);
+      return source ? `${title} · ${source.text}` : title;
+    },
     /**
      * Text of a channel's select: its current range when it has several, else its name
      *
@@ -142,9 +273,19 @@ export default {
      *
      * @public
      * @param {Object} channel a channel description object
-     * @param {Number} index index of the range in the channel's capabilities
+     * @param {Number} option the menu row picked: the live actions first (Park / Unpark, Clear),
+     * then the channel's ranges in order
+     * @param {Number} column the channel's place in the widget
      */
-    applyPreset(channel, index) {
+    applyPreset(channel, option, column) {
+      const actions = this.menuActions(channel, column);
+      if (option < actions.length) {
+        // Park sets the value its item reads on every selected fixture, as any edit does
+        if (actions[option].live === 'park') this.$emit('park', channel, Math.round(channel.value));
+        else this.$emit('clear-channel', channel);
+        return;
+      }
+      const index = option - actions.length;
       const capability = channel.capabilities && channel.capabilities[index];
       if (!capability) return;
       [channel.value] = capability.range;
@@ -219,6 +360,10 @@ export default {
 }
 .channel_select {
   width: 100%;
+}
+.channel_select_box.held {
+  border-color: var(--held-color);
+  background: color-mix(in srgb, var(--held-color) 25%, transparent);
 }
 .channel_select_box.inactive {
   color: var(--secondary-light);

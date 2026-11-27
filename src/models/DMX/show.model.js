@@ -13,6 +13,7 @@ import UniversePool from './universe.pool.model';
 import FixturePool from './fixture.pool.model';
 import Live from './live.model';
 import Claims from './claims';
+import Programmer from './programmer';
 import OutputPool from './output.pool.model';
 import FixtureLibrary, { MissingFixtureError } from '../fixtures/fixture.library';
 import { PROFILE_SOURCES, placeholderProfile } from '../fixtures/fixture.profile';
@@ -337,6 +338,7 @@ class Show extends EventEmitter {
       .find((u) => u.fixturePool.checkIfExists(fixtureHandle.id))
       || this.universePool.universes.find((u) => u.id === Number(fixtureHandle.universe));
     if (universe) universe.unpatchFixture(fixtureHandle);
+    Programmer.drop(fixtureHandle);
     this.fixturePool.delete(fixtureHandle, true);
   }
 
@@ -347,8 +349,9 @@ class Show extends EventEmitter {
    */
   clearShowData() {
     this.groupPool.clearAll();
-    // The cleared show's claims on the stage go with it
+    // The cleared show's claims on the stage and its programmer go with it
     Claims.reset();
+    Programmer.reset();
     this.universePool.clearAll();
     this.fixturePool.clearAll(true);
     this.outputPool.clearAll();

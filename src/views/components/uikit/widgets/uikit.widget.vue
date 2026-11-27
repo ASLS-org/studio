@@ -10,6 +10,23 @@
         :name="header.icon"
       />
       <h3>{{ header.title }}</h3>
+      <!-- Opt-in: header actions right after the title, in reach however wide the widget -->
+      <div
+        v-if="actions.length"
+        v-show="!docked"
+        class="widget_header_actions"
+      >
+        <uk-button
+          v-for="item in actions"
+          :key="item.text"
+          square
+          :label="item.text"
+          :icon="item.icon"
+          :title="item.title || null"
+          :disabled="!!item.disabled"
+          @click="item.callback"
+        />
+      </div>
       <span style="flex: 1" />
       <uk-button
         v-if="action"
@@ -77,6 +94,14 @@ export default {
       default: null,
     },
     /**
+     * Opt-in: several header actions right after the title, square buttons, each like `action`
+     * plus `disabled`
+     */
+    actions: {
+      type: Array,
+      default: () => [],
+    },
+    /**
      * Whether the widget should be docked by default
      */
     defaultDocked: Boolean,
@@ -142,7 +167,12 @@ export default {
   min-width: 30px !important;
   max-width: 30px !important;
 }
-.docked .widget_action {
+.widget_header_actions {
+  display: flex;
+  gap: var(--space-4);
+  margin-left: var(--space-5);
+}
+.widget_action {
   margin: unset !important;
   transform: rotate(180deg);
 }

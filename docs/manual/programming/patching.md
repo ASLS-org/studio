@@ -192,8 +192,15 @@ The demo heads hang at Y 0, height 6: on a truss 6 m up, across the middle of th
 
 ## Trying a Fixture
 
-The universe view controls the selected fixture directly, so you can check it responds: these
-values go out live but are **not saved**. To keep a look, make a [scene](/programming/scenes).
+The universe view controls the selected fixtures directly, so you can check they respond: what you
+set goes into the [programmer](/programming/playback#the-programmer), above every cue, and is
+**not saved**. To keep a look, make a [scene](/programming/scenes).
+
+With several fixtures selected, every control sets all of them: a channel goes to the same kind of
+channel on each fixture that has one (fixtures without it are left alone), the colour picker mixes
+the colour on each fixture's own colour channels, and pan/tilt aims each moving head at the same
+angle when its range is known (else the same values). The widgets show the first selected
+fixture.
 
 This is the first thing to do after patching real lights: bring each one's dimmer up, move its
 pan and tilt, and check the right light answers the right way. In the previews below, the
@@ -213,7 +220,13 @@ Click the box to see the channel's full name and its ranges: each shows its valu
 does, and the one holding the current value is highlighted. Pick one to set the channel to the
 start of that range, or use <kbd>↑</kbd> <kbd>↓</kbd> and <kbd>Enter</kbd>; <kbd>Esc</kbd> closes
 the list without a change. Type in the list's search field to keep only the matching ranges.
-Range names come from the fixture's definition.
+Range names come from the fixture's definition. At the top of the list, **Park at …** (the current value) locks
+the channel ([Parking a channel](/programming/playback#parking-a-channel)), and **Clear** gives a
+channel you set back to playback.
+
+The box and the fader are coloured by what drives the channel: violet for your own values, blue for
+a cue, red for a parked channel. **Clear programmer** and **Unpark** in the widget's header act on
+the selected fixtures ([The programmer](/programming/playback#the-programmer)).
 
 <LivePreview preset="fixture-channels" />
 

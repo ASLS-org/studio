@@ -223,8 +223,8 @@ same setting as for [scenes](/programming/scenes#cue-settings)):
   in **Layer**, it stays on underneath, its row striped.
 - **Stopping** it, its row shows it stopped at once, and the effect blends back into what is
   underneath (a Layer effect's scene) over its **Fade out**, then lets go. With nothing
-  underneath, the dimmers go back to where they were before you played anything, and the aim and
-  colour stay where the effect left them.
+  underneath, the dimmers go back to 0, and the aim and colour stay where the effect left
+  them.
 - **Starting it again** while it fades out blends back in from wherever it got to, with no jump.
 
 An effect takes a fixture's whole colour, or both pan and tilt, so two effects never mix: the one

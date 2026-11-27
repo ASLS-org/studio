@@ -1,6 +1,7 @@
 import { markRaw } from '../utils/reactivity';
 import Channel from './channel.model';
 import Claims from './claims';
+import Programmer from './programmer';
 import { familyOf } from './families';
 import { PROFILE_SOURCES, resolveModeName } from '../fixtures/fixture.profile';
 import modeCells from '../fixtures/fixture.cells';
@@ -118,6 +119,13 @@ class Fixture {
       this._swapPanTilt = !!data.swapPanTilt;
       // Channels start at their home value (GDTF Default, 0 for OFL)
       this.parseFromProfile();
+      // Parked channels (absent in showfiles saved before Park): channel index → DMX value. A
+      // placeholder keeps them as saved, to save them back unchanged
+      this._savedParked = data.parked || null;
+      Object.entries(data.parked || {}).forEach(([index, value]) => {
+        const channel = this.channels[Number(index)];
+        if (channel) this.park(channel, value);
+      });
     }
   }
 
@@ -139,9 +147,79 @@ class Fixture {
       icon: 'movinghead',
       id: this.id,
       universe: this.universe,
-      // DMX addresses read 1 to 512 (stored from 0)
-      more: `U${this.universe} - CH${this.chStart + 1}`,
+      // Held fixtures say so after their address
+      more: `${this.addressLabel}${this.heldMark}`,
     };
+  }
+
+  /**
+   * The fixture's address as rows show it, `U0 - CH1` (DMX addresses read 1 to 512, stored from 0)
+   *
+   * @readonly
+   * @type {String}
+   */
+  get addressLabel() {
+    return `U${this.universe} - CH${this.chStart + 1}`;
+  }
+
+  /**
+   * What a fixture row adds when the fixture is held by hand: " · prog", " · parked", both, or ''
+   *
+   * @readonly
+   * @type {String}
+   */
+  get heldMark() {
+    let mark = '';
+    if (Programmer.holds(this)) mark += ' · prog';
+    if (Programmer.state.parked.includes(this.id)) mark += ' · parked';
+    return mark;
+  }
+
+  /**
+   * How many of its channels are parked (fine channels not counted)
+   *
+   * @readonly
+   * @type {Number}
+   */
+  get parkedCount() {
+    return this.channels.filter((channel) => !channel.isFine && channel.parked !== null).length;
+  }
+
+  /**
+   * Parks a channel: it outputs the value whatever plays, above the programmer, until unparked
+   * (the fine channel takes the fraction). Saved with the show.
+   *
+   * @public
+   * @param {Channel} channel
+   * @param {Number} [value] DMX 0-255, its current output by default
+   */
+  park(channel, value = channel.output) {
+    // Written through this fixture's own list, so a change made from the UI reaches the views
+    const own = this.channels[this.channels.indexOf(channel)];
+    if (!own) return;
+    const clamped = Math.min(Math.max(Number(value) || 0, 0), MAX_DMX_VALUE);
+    const fine = own.fineChannels.length ? this.channels[own.fineChannels[0].id - 1] : null;
+    if (fine) {
+      fine.parked = Math.round((clamped % 1) * MAX_DMX_VALUE);
+      own.parked = Math.floor(clamped);
+    } else {
+      own.parked = Math.round(clamped);
+    }
+    Programmer.trackParked(this);
+  }
+
+  /**
+   * Frees a parked channel (and its fine channel)
+   *
+   * @public
+   * @param {Channel} channel
+   */
+  unpark(channel) {
+    const own = this.channels[this.channels.indexOf(channel)];
+    if (!own) return;
+    own.parked = null;
+    if (own.fineChannels.length) this.channels[own.fineChannels[0].id - 1].parked = null;
+    Programmer.trackParked(this);
   }
 
   /**
@@ -167,7 +245,28 @@ class Fixture {
       invertPan: this.invertPan,
       invertTilt: this.invertTilt,
       swapPanTilt: this.swapPanTilt,
+      ...this.parkedData,
     };
+  }
+
+  /**
+   * Parked channels as saved, `{ parked: { <channel index>: <value> } }`, or nothing
+   *
+   * @readonly
+   * @type {Object}
+   */
+  get parkedData() {
+    if (this.isPlaceholder) return this._savedParked ? { parked: this._savedParked } : {};
+    const parked = {};
+    this.channels.forEach((channel, index) => {
+      if (!channel.isFine && channel.parked !== null) {
+        const fine = channel.fineChannels[0];
+        parked[index] = fine && fine.parked !== null
+          ? channel.parked + fine.parked / MAX_DMX_VALUE
+          : channel.parked;
+      }
+    });
+    return Object.keys(parked).length ? { parked } : {};
   }
 
   /**
@@ -426,8 +525,9 @@ class Fixture {
   }
 
   /**
-   * Plain channel rows for the channels widget: value, type, colour, attribute, name and the
-   * channel's ranges (shared profile capabilities, read only)
+   * Plain channel rows for the universe view's channels widget: the value that goes out (parked,
+   * programmer or playback), type, colour, attribute, name and the channel's ranges (shared profile
+   * capabilities, read only)
    *
    * @type {Object}
    */
@@ -442,7 +542,7 @@ class Fixture {
       color: channel.color,
       type: channel.type,
       id: channel.id + this.chStart,
-      value: channel.value.DMX,
+      value: channel.output,
       active: channel.active,
       qaIndex: channel.qaIndex,
       cell: channel.cell,
@@ -480,14 +580,15 @@ class Fixture {
   }
 
   /**
-   * Reads the colour of the first of some cells (see cell.access.js)
+   * Reads the colour that goes out (parked, programmer or playback) of the first of some cells
+   * (see cell.access.js)
    *
    * @public
    * @param {?Array<String>} [cells=null] Cell names, null for all
    * @returns {Array<Number>} RGB 0-255
    */
   getColor(cells = null) {
-    return readColor(this.channels, cells, (i) => this.channels[i].value.DMX);
+    return readColor(this.channels, cells, (i) => this.channels[i].output);
   }
 
   /**
@@ -502,14 +603,15 @@ class Fixture {
   }
 
   /**
-   * Reads the pan&tilt of the first of some cells (see cell.access.js)
+   * Reads the pan&tilt that goes out (parked, programmer or playback) of the first of some cells
+   * (see cell.access.js)
    *
    * @public
    * @param {?Array<String>} [cells=null] Cell names, null for all
    * @returns {Object} `pan`, `panFine`, `tilt`, `tiltFine` (0-255)
    */
   getPanTilt(cells = null) {
-    return readPanTilt(this.channels, cells, (i) => this.channels[i].value.DMX);
+    return readPanTilt(this.channels, cells, (i) => this.channels[i].output);
   }
 
   /**
@@ -647,6 +749,11 @@ class Fixture {
    */
   setChannel(id, value) {
     const channel = this.channels[id];
+    // A hand edit from the universe view goes to the programmer, above playback
+    if (Programmer.writing) {
+      Programmer.program(this, channel, value);
+      return;
+    }
     // A playing cue's values go to its claim; the merge writes them once the tick's cues ran
     if (Claims.writer) {
       Claims.write(channel, value);
