@@ -123,4 +123,7 @@
 :root {
   --chase-row-height: 26px; /* group pool chase rows: uikit.cue.container.vue, uikit.cue.vue */
   --select-option-height: 25px; /* uk-select options: computeOptionListStyle */
+  --output-head-height: 30px; /* Outputs flow: a column's header (a widget header's height) */
+  --output-column-width: 170px; /* Outputs flow: the universes and gateways columns */
+  --output-wire-gap: 48px; /* Outputs flow: the room the wires cross between columns */
 }

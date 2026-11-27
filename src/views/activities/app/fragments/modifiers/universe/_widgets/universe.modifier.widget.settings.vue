@@ -31,30 +31,6 @@
           :options="colorOptions"
           @input="setUniverseColor"
         />
-        <uk-flex
-          gap="10"
-          center-both
-          style="width:100%"
-        >
-          <uk-select-input
-            :model-value="universe?.stream?.client?.name ?? null"
-            label="Output"
-            :placeholder="
-              $show.outputPool.outputs.length
-                ? 'No output selected'
-                : 'No available outputs'
-            "
-            :options="outputOptions"
-            :disabled="!$show.outputPool.outputs.length"
-            @input="setOutput"
-          />
-          <uk-button
-            square
-            label="add"
-            style="height: var(--control-height); min-width: 75px; margin-top: 22px"
-            @click="connectionsPopupState = true"
-          />
-        </uk-flex>
       </uk-flex>
     </template>
     <h3
@@ -63,23 +39,17 @@
     >
       No Universe Selected
     </h3>
-    <connections-popup v-model="connectionsPopupState" />
   </uk-widget>
 </template>
 
 <script>
-import modal from '@/views/mixins/modal.mixin';
 import colorMixin from '@/views/mixins/color.mixin';
-import ConnectionsPopup from '@/views/activities/app/fragments/toolbar/_popups/popup.connections.vue';
 
 export default {
   name: 'UniverseModifierSettings',
   compatConfig: {
     // or, for full vue 3 compat in this component:
     MODE: 3,
-  },
-  components: {
-    ConnectionsPopup,
   },
   mixins: [colorMixin],
   props: {
@@ -98,20 +68,6 @@ export default {
       output: null,
     };
   },
-  computed: {
-    /**
-     * Connections popup display state (opened by Config)
-     */
-    connectionsPopupState: modal('universe.connections', 'universe'),
-    /**
-     * Returns an array of HTML-formated strings s to be fed into uikit select inputs
-     *
-     * @returns {Array<String>} An array of HTML-formated strings
-     */
-    outputOptions() {
-      return this.$show.outputPool.outputs.map((o) => o.name);
-    },
-  },
   watch: {
     modelValue(value) {
       this.universe = value;
@@ -120,10 +76,6 @@ export default {
   methods: {
     setUniverseColor(colorIndex) {
       this.universe.color = this.getColorFromIndex(colorIndex);
-    },
-    setOutput(outputIndex) {
-      const output = this.$show.outputPool.outputs[outputIndex];
-      this.universe.setupConnection(output);
     },
   },
 };
