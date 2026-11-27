@@ -69,7 +69,7 @@ Studio never speaks Art-Net, OSC or MIDI itself: the gateway does.
 |---|---|---|---|
 | 1 | `add-cue-fades` | Fade In / Fade Out for every cue (bars); scenes lose Duration and Loop Style and end once faded in; Relative effects fade; chase items start and end their cues by the cues' fades; the item preview draws the fades | Archived (branch `feat/add-cue-fades`, merged with `add-cue-families` in its PR) |
 | 2 | `add-cue-families` | Four channel families (Intensity, Colour, Position, Beam), one cue per family in a group, newest wins, Replace (default) and Layer, hand-back and rest, kept values; family columns in the cue pool with a read-only NOW line, blind programming, cue pictures, the Add Cue family picker (`uk-choice`), family-filtered editors, family accents in the chase timeline; older cues split per family on load. Replaces `add-cue-priorities` (merge by channel, held looks), which operators found unreadable | Archived (branch `feat/add-cue-families`, PR into `epic/show-control`) |
-| 2b | `fix-wsc-output` | Session reconnection and state (the app reconnects, spec 06), plus the output known issues from skill `wsc-output`: TR+GW flags and transport on every stream packet, `startChannel` base, interface and params (sACN priority, baud, TTL) rebuilding the transport, `OutputPool.delete`/`clearAll`, universe stream settings saved with the show, dead `sendLighting`, the SDK's own compat tables, client error handler; bump to `@asls/wsc-*` 2.2.0. A large event can't run on an output that loses its settings on reload | To propose (before any show) |
+| 2b | `rework-outputs` | One Outputs workspace (signal flow: universes → gateways → destinations, wires, inspector) replacing the connections popup, the universe Output select and the Stream widget; gateways (Connect on load, state, round-trip time, system information, log) and DMX routes (protocol, interface, destination, universe number, params, On; several per universe) saved with the show; packets per WSC (TR+GW, transport, channels from 1, Art-Net port-address); keepalive, reconnection with backoff, `STATE_ERROR` shown; toolbar OUTPUT indicator; `@asls/wsc-*` 2.2.0 | Archived (branch `feat/rework-outputs`, PR into `epic/show-control`) |
 | 3 | `add-programmer` | Programmer above cues, Clear (toolbar, key, per fixture), Park (saved), channel source under each fader, programmer values highlighted | Proposal |
 | 4 | `wire-group-masters` | Grand master and DBO on the master column, a dimmer knob per group (submaster), Blackout and Isolate per group, the output level ring; virtual intensity for fixtures without a dimmer; applied after the merge | Explored (2026-11-24) |
 | 5 | `add-cue-lists` | Cue lists: numbered cues with GO, Back and Pause; per-cue fade, delay, follow and wait; tracking; a list as a playback on the group pool | To explore |
@@ -94,6 +94,18 @@ Studio never speaks Art-Net, OSC or MIDI itself: the gateway does.
 - 7b (addresses) comes before 8, 9 and 10b: inbound and outbound controls target those addresses.
 - Each inbound unit checks the target gateway's support first.
 - 10 to 12 are otherwise independent and can be done when a show needs them.
+
+## Upstream WSC wishlist
+
+Found while building `rework-outputs`; work for the WSC spec and `asls-server`, not Studio:
+
+- A `STATE_QUERY` capability query: which protocols, interfaces, NICs and serial ports a gateway
+  has, so Studio offers only those.
+- `STATE_ERROR NO_ROUTE` (or `INCOMPATIBLE_PROTOCOL`) instead of dropping a stream the gateway
+  can't send (sACN today).
+- Wire the existing sACN, serial and USB DMX forwarders into the stream gateway.
+- `WscClientManager.createClient` passes `onError` into the `onClose` slot.
+- A query id on `STATE_QUERY`, echoed by `STATE_ANSWER`, to time keepalives exactly.
 
 ## Candidates (not planned yet)
 

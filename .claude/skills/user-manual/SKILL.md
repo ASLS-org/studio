@@ -39,11 +39,11 @@ change touches: the pages are what the proposal's **Manual** line names, and the
 | --- | --- | --- |
 | `F/toolbar/toolbar.fragment.vue` (menus, show name, clock) | `getting-started/interface#toolbar`, `reference/shortcuts` | `toolbar-menus`, `toolbar-file` |
 | `F/toolbar/_popups/popup.newshow.vue`, `popup.saveas.vue`, `M/DMX/show.model.js` (save, load, export, templates) | `rig/showfiles` | `toolbar-file` |
-| `F/toolbar/_popups/popup.connections.vue`, `F/modifiers/universe/_widgets/universe.modifier.widget.connection.vue`, `src/plugins/wsc.connection.js`, `M/DMX/output.pool.model.js`, the bundled gateway (`src/electron/`) | `rig/outputs`, `reference/troubleshooting`, `reference/limitations` | `outputs-popup`, `universe-stream` |
+| `F/toolbar/_popups/outputs/` (Outputs workspace), `F/toolbar/toolbar.fragment.vue` (OUTPUT indicator), `F/modifiers/universe/_widgets/universe.modifier.widget.output.vue`, `src/plugins/wsc.connection.js`, `M/DMX/output.pool.model.js`, `M/DMX/route.model.js`, `V/utils/outputs.js`, the bundled gateway (`src/electron/`) | `rig/outputs`, `reference/troubleshooting`, `reference/limitations`, `reference/glossary` | `outputs-popup`, `universe-output` |
 | `F/toolbar/_popups/popup.visualizer.vue` | `interface/visualizer#settings` | `visualizer-settings` |
 | `F/toolbar/_popups/popup.license.vue`, `popup.credits.vue` | `introduction/license` | none |
 | `F/patch-bay/` (fragment, `_popups/popup.media.vue`) | `getting-started/interface#patch-bay`, `programming/patching` | `patch-bay`, `patch-bay-new`, `patch-bay-select`, `patch-bay-filter`, `visualizer-modes` |
-| `F/modifiers/universe/universe.modifier.fragment.vue`, `_popups/universe.modifier.popup.patch.vue` | `programming/patching`, `rig/fixtures` | `patch-add`, `universe-stream` |
+| `F/modifiers/universe/universe.modifier.fragment.vue`, `_popups/universe.modifier.popup.patch.vue` | `programming/patching`, `rig/fixtures` | `patch-add`, `universe-output` |
 | `F/modifiers/universe/_widgets/universe.modifier.widget.settings.vue` | `programming/patching` | `universe-settings` |
 | `F/modifiers/universe/_widgets/universe.modifier.widget.fixture.settings.vue`, `_popups/universe.modifier.popup.repatch.vue`, `_widgets/universe.modifier.map.vue`, `V/utils/dmx.js` (addresses shown 1–512, also `getting-started/interface`, `concepts`, `rig/outputs`, `reference/glossary`, `reference/troubleshooting`) | `programming/patching` | `fixture-settings`, `patch-add` |
 | `F/modifiers/universe/_widgets/universe.modifier.widget.fixture.position.tool.vue` | `programming/patching`, `interface/visualizer#placing-fixtures` | `fixture-position` |
@@ -125,9 +125,8 @@ gives steps and links; Reference pages look things up.
 - Mark a protocol as working only after streaming it end to end (gateway + a receiver, e.g. a
   UDP listener for Art-Net on 6454).
 - Update **What's verified** on `rig/outputs` when the gateway (`WSC_VERSION`) changes.
-- Output demos never press **connect** or **Start streaming**.
-- The preview host drops demo outputs before reloading the show (`OutputPool.clearAll` throws
-  once an output exists).
+- Output demos never press **Connect** (the demo show's gateway and route stay disconnected).
+- The preview host clears gateways and routes (`OutputPool.clearAll`) before reloading the show.
 
 ### Theme: the manual is built from Studio's interface
 

@@ -32,7 +32,8 @@ views/
                          picture and value line: colour, level, aims, beam, wave or path,
                          "75%", "Pan 30° Tilt 45°"; waves over one cycle; cached per cue); cue.now.js (NOW: a family's source and value,
                          the kept cue); chase.outcome.js (who holds what along a
-                         chase's timeline)
+                         chase's timeline); outputs.js (gateway and route states for
+                         the Outputs views)
 ```
 
 ## Ground rules
@@ -89,10 +90,18 @@ views/
   (`utils/chase.outcome.js`, a pass over the items by the playback rules).
   Icons in rows are mask classes (`maskClass`): components or style objects per row pushed
   panel switches over 50 ms.
+- **Outputs** (`toolbar/_popups/outputs/`): one workspace (Preferences → Outputs, Ctrl+Shift+O,
+  the toolbar OUTPUT indicator, a universe's Output widget), laid out as the Arrange popup: the
+  signal flow left (universes, gateways, destinations as three `uk-list`s under widget-like
+  headers with **Add**, joined by SVG wires drawn from row indexes, `OUTPUT_*` in
+  `utils/geometry.js`, never measured), the page of the item clicked last right
+  (`outputs.page.vue`, `outputs.row.vue`, `outputs.side.*`). Each list keeps its marked row
+  (`{universe, gateway, route}`, the popup's own, not `$view`'s): a route is added from the marked
+  universe through the marked gateway.
 - The patch bay lists top-level media items (DMX universes; other media types later, added
   through its **New** popup, `popup.media.vue`), each unfolding to its fixtures.
 - `uk-popup` opens in the injected `popupHost` element when one is provided (the manual's
   previews), else on the body. Idle surfaces (empty lists, the modifier strip, the group pool)
   use `var(--idle-stripes)` over their base colour.
 - File names: `<area>.<kind>.<thing>.vue`, e.g. `group.modifier.widget.cuepool.vue`,
-  `popup.connections.vue`, `uikit.input.select.vue`.
+  `popup.outputs.vue`, `uikit.input.select.vue`.

@@ -1,12 +1,13 @@
 ---
 name: wsc-output
-description: Everything about sending show data to hardware over WSC (Web Show Control), using @asls/wsc-client, @asls/wsc-sdk, plugins/wsc.connection.js, OutputPool, universe streams, the connection widgets/popups, and the gateway bundled with Electron. Use for any output, protocol, transport, Art-Net/sACN/DMX512/OSC/MIDI, gateway or connection work, or when upgrading the WSC packages.
+description: Everything about sending show data to hardware over WSC (Web Show Control), using @asls/wsc-client, @asls/wsc-sdk, plugins/wsc.connection.js (gateways, sessions), OutputPool and DMX routes, the Outputs workspace and the universe Output widget, and the gateway bundled with Electron. Use for any output, protocol, transport, Art-Net/sACN/DMX512/OSC/MIDI, gateway or connection work, or when upgrading the WSC packages.
 ---
 
 # WSC output
 
-Reference baseline: **@asls/wsc-client 2.2.0 / @asls/wsc-sdk 2.2.0** (latest on npm on
-2026-11-03; SDK `src/` is identical to 2.1.0). Before relying on any API below, check the
+Reference baseline: **@asls/wsc-client 2.2.0 / @asls/wsc-sdk 2.2.0**, installed since change
+`rework-outputs` (2026-11-27; SDK `src/` identical to 2.1.0, the client's manager singleton is
+created lazily). Before relying on any API below, check the
 installed version: `npm ls @asls/wsc-client @asls/wsc-sdk`, and read
 `node_modules/@asls/wsc-*/README.md` plus `src/`. If a newer version is out, diff its `src/`
 against this skill and update the skill (skill `ai-context-maintenance`).
@@ -15,16 +16,21 @@ Protocol spec: https://github.com/ASLS-org/WSC
 ## How Studio uses it
 
 ```
-Toolbar → popup.connections.vue ─► OutputPool.addRaw({remote, port, name}) ─► WscConnection
-                                                                          └─ client = WscClientManager.createClient(...)
-Universe modifier → universe.modifier.widget.connection.vue
-   └─ universe.setupConnection(connection, protocol, address)
-        └─ connection.setupStream(universeId, protocol, address, () => universe.frame)
-             └─ WscConnectionStream: start()/stop() only flip its state
-Every Live tick (Live.onFrame, after the animations, also while paused or stopped):
-   UniversePool.processFrame() → universe.packFrame() → stream.forward(frame) if running:
-        WscPacket.create(STREAM_CHANNELS, {universe, startChannel, values}, {transport})
-        → connection.client.send(packet)
+OutputPool (models/DMX/output.pool.model.js)
+├─ outputs: WscGateway (plugins/wsc.connection.js)   saved as `outputs`: name, remote, port, autoConnect
+│    session (reactive): status, attempt, rtt, system, log, errored, lost   never saved
+│    new WscClient(...) built directly (not createClient), keepalive STATE_QUERY every 1000 ms,
+│    lost after 3000 ms without answer or client.state ERROR → reconnect 1, 2, 4, 8 s then 10 s
+│    until disconnect(); STATE_ERROR → log + errored (cleared when the inspector shows the log)
+└─ routes: DmxRoute (models/DMX/route.model.js)      saved as `routes`: universe, output, protocol,
+     iface, address, universeNumber (Art-Net = 15-bit port-address), params, enabled
+     transport + packet options rebuilt on change (SDK builders, params), never per tick
+Every Live tick (Live.onFrame, also while paused or stopped):
+   UniversePool.processFrame() → universe.packFrame() → sink.forward(universe.id, frame)
+     → OutputPool._sending (raw, per universe, rebuilt by refresh()) → route.forward(client, frame)
+        WscPacket.create(STREAM_CHANNELS, {universe: n, startChannel: 1, values}, {TR+GW flags, transport})
+UI: toolbar/_popups/outputs/ (popup.outputs.vue: flow + pages), toolbar OUTPUT indicator
+    (OutputPool.state), universe.modifier.widget.output.vue; views/utils/outputs.js (states)
 Electron: main.js spawns bundled `wsc-server-node18-<os>-<arch>` (version = WSC_VERSION in .env)
 Browser: user runs the gateway (`@asls/wsc-server`) themselves, default 127.0.0.1:4515
 ```
@@ -41,8 +47,11 @@ Browser: user runs the gateway (`@asls/wsc-server`) themselves, default 127.0.0.
 - `send(packet)` drops the packet silently if the channel isn't open. Also `close()`,
   `startKeepAliveSession()`, `stopKeepaliveSession()`, `state`, `debug` (last 100 entries).
 - ⚠ `WscClientManager.createClient(remote, port, onOpen, onMessage, onError)` passes `onError`
-  into the **onClose** slot, so errors never reach a handler. Either fix upstream in the WSC repo
-  or construct `WscClient` directly.
+  into the **onClose** slot (still in 2.2.0). Studio constructs `WscClient` directly.
+- The client calls `onClose` from its own `close()` too; WebRTC `failed`/`disconnected` only set
+  `state = ERROR` (no callback): poll it. `send()` throws when there is no peer connection.
+- `STATE_QUERY` carries no query id and the gateway echoes an undefined `queryId`: keep one
+  keepalive in flight and time it.
 
 **SDK** (`@asls/wsc-sdk`)
 - `WscPacket.create(type, data, { id?, flags?, transport? })` → `.serialize()` /
@@ -62,40 +71,31 @@ Browser: user runs the gateway (`@asls/wsc-server`) themselves, default 127.0.0.
   instead of hand-copied tables.
 - `STREAM_CHANNELS` allows protocols `DMX512, ARTNET, SACN, KINET, MODBUS, OSC, RAW`.
 
-## Known issues in Studio's WSC code (as of 2026-11-03)
+## Known issues (as of 2026-11-27)
 
-Check these before building on the output path. They are good candidates for an OpenSpec
-change (`fix-wsc-output`).
+Fixed by `rework-outputs`: flags, start channel, transport rebuilds and params, pool deletes,
+saving, dead `sendLighting`, hand-copied tables. Left:
 
-1. `WscConnectionStream.forward()` sends no flags, so TR/GW are unset while a transport is
-   attached. That is a spec violation, and `validate()` throws on it. The gateway may not forward.
-2. `startChannel: 0` is sent, but the SDK default is 1-based (`startChannel = 1`). Confirm against
-   the WSC spec and fix.
-3. ~~`stop()` never clears `streamId`~~: fixed, streams are no longer `Live` animations.
-4. The connection widget writes `stream.iface` and `stream.params`, but the stream class exposes
-   `interface` and has no `params`. Interface changes don't rebuild the transport, and
-   baud/priority/portIndex/TTL are ignored. `_rebuildTransport()` calls `serial(proto)` without
-   `portIndex` / `baudRate`.
-5. `OutputPool.delete()` calls `output.handleClosure()`, which doesn't exist. `clearAll()` (run on
-   every show load) throws once any output exists.
-6. Universe stream settings (connection, protocol, address) are missing from `Universe.showData`,
-   so they're lost on reload. Only outputs are persisted.
-7. `WscConnection.sendLighting()` is dead code with the wrong `create()` signature and a `data`
-   key instead of `values`. Delete it rather than fixing it.
-8. `universe.modifier.widget.connection.vue` duplicates the SDK compat/default tables.
-9. `prebuild.js` builds `v${version}` but defaults to `'v0.8.4'`, which gives `vv0.8.4` when
+1. The bundled gateway (binary of 2026-10-04 in `src/electron/bin`) forwards `STREAM_CHANNELS`
+   over Art-Net only and drops other protocols **silently** (no `STATE_ERROR`). Keep
+   `BUNDLED_GATEWAY_FORWARDS` in `wsc.connection.js` in step with it.
+2. WSC has no capability query: Studio can't ask a gateway what it supports (upstream wishlist in
+   `openspec/epics/show-control.md`).
+3. `prebuild.js` builds `v${version}` but defaults to `'v0.8.4'`, which gives `vv0.8.4` when
    `WSC_VERSION` is unset.
 
 ## Rules for changes
 
 - Build every packet through `WscPacket.create` with explicit `flags` and `transport`. In dev,
-  run `WscPacket.validate(packet)` once when a stream (re)configures, not on every tick.
+  run `WscPacket.validate(packet)` once when a route changes (`DmxRoute._rebuild`), never per tick.
 - Streaming is per-tick (`Live` frame phase, 60 fps), whatever the play state: output keeps
-  running while the show is paused or stopped. `forward(frame)` receives the universe's reused
-  frame: no allocations beyond the packet, no logging, no validation. Rebuild the transport only when protocol, interface, address or params
-  change.
-- Streams are not `Live` animations. Stop them before disconnecting or deleting a connection,
-  universe or output.
+  running while the show is paused or stopped. `forward` walks raw entries and the universe's
+  reused frame: no allocations beyond the SDK's packet, no reactive reads, no logging, no
+  validation. Call `OutputPool.refresh()` after any route or gateway change (route setters do).
+- Session state lives in `gateway.session` (reactive on its own, written from the client's
+  callbacks on the raw instance). Never put it in `showData`.
+- Sending is not a `Live` animation; timers (keepalive, retry) are cleared by `disconnect()`,
+  which `OutputPool.delete` and `clearAll` call.
 - Persist user-entered output config through `showData` and the load path (skill
   `dmx-model-change`).
 - Keep the browser build working without Electron. In the browser the gateway is external.
@@ -107,10 +107,12 @@ change (`fix-wsc-output`).
 
 ## Verify
 
-1. Run a gateway (Electron starts one, or run `@asls/wsc-server` locally).
-2. `npm start` → Toolbar → Connections → add `127.0.0.1:4515` → connect. Expect the state to reach
-   CONNECTED.
-3. Universe modifier → Connection Settings → Art-Net → `127.0.0.1:6454` → start streaming.
-4. Watch traffic with an Art-Net monitor (or `tcpdump -i lo0 udp port 6454`). Move a fader and
-   expect the channel value to change. Stop, then start again: streaming must resume.
-5. Save → reload: the output config must come back.
+1. Run a gateway (Electron starts one; in the browser run the binary from `src/electron/bin`).
+2. Outputs (Ctrl+Shift+O) → + gateway → Connect: *Connected* with a round-trip time.
+3. + route on a universe → Destination `127.0.0.1` → listen on UDP 6454 (a Node `dgram`
+   socket, or `tcpdump -i lo0 udp port 6454`): ArtDmx at the route's port-address, 512 values
+   following a fader.
+4. Kill the gateway: *Reconnecting* after 3–4 s; restart it: back within a second or two, frames
+   resume. Disconnect stops the retries.
+5. Save → reload: gateways and routes come back; connecting never sets `*`.
+6. `npm run app:check -- --only outputs` covers routes, packets, saving and older files.

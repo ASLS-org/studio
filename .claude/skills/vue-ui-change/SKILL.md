@@ -133,6 +133,17 @@ export default {
   manual's previews), else to the body; don't append popups to `document.body` yourself.
   Extra footer buttons go in its `#actions` slot (left of the footer, e.g. Arrange's *Apply*);
   *OK* is the one light button, every other `uk-button` is `--secondary-dark`.
+- **Coloured actions** (`uk-button filled`, opt-in) always show their `color`, text in
+  `--on-color-text`: for an action whose colour carries meaning (Outputs: Connect green,
+  Disconnect red). Other buttons stay grey until toggled.
+- **Dividers run their panel's full width.** Rows and headings pad themselves; the container
+  doesn't (a padded panel leaves its lines short of the edges). A section opens with a header
+  band (a line above and below its `h3`), as widget headers and list columns do. Some older
+  popups still pad their dividers: fix them when touched.
+- **Copy the closest screen.** A popup with a list and the selected item's settings follows the
+  Arrange popup (`universe.modifier.popup.arrange.vue`): list left, heading (icon, title, one
+  line), label/control rows right, actions in the footer. A log is a log: a dark console box, a
+  line per event (time, text), never bare rows.
 - **Toggle buttons** (`uk-button toggleable`) start from `modelValue` and light in `color`; for a
   button group showing a state (Position Tool mounts), bind `modelValue` and key each button by
   its state so a click on the lit one keeps it lit.

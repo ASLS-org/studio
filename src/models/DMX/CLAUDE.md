@@ -9,7 +9,7 @@ Show (show.model.js, singleton via singletons/show.singleton.js)
 ├─ fixturePool  FixturePool → Fixture → Channel (runtime value per fixture)
 │                Fixture.profile → shared, frozen FixtureProfile (src/models/fixtures/):
 │                modes → channels { type, attribute, fine, capabilities, lookup }
-├─ universePool UniversePool → Universe        (patch map, 512-byte frame, .stream)
+├─ universePool UniversePool → Universe        (patch map, 512-byte frame; packed frames → sink)
 ├─ groupPool    GroupPool → Group
 │                ├─ fixturePool (shared Fixture refs, via addExisting)
 │                ├─ cuePool  CuePool → Cue → Scene | Effect
@@ -17,7 +17,7 @@ Show (show.model.js, singleton via singletons/show.singleton.js)
 │                │            Effect: EffectPreset waves (sine/triangle/square), phase, spread
 │                └─ chasePool ChasePool → Chase → CueItemPool → CueItem (bar-grid timeline)
 ├─ master       Master: triggers chase "rows" (same chase id) across all groups
-├─ outputPool   OutputPool → WscConnection (plugins/wsc.connection.js)
+├─ outputPool   OutputPool → WscGateway (plugins/wsc.connection.js) + DmxRoute (route.model.js)
 └─ Live         live.model.js: singleton clock, BPM, tap tempo, animation pool
 ```
 
@@ -59,7 +59,8 @@ Enums live next to their model and are exported: `CUE_TYPES`, `CUE_STATES`,
 
 - **Serialization:** every persisted model exposes `get showData()`. `Show.showData` aggregates
   them; `Show.loadFromData()` rebuilds in this order: fixtures → universes (patch) → groups
-  (fixtures, cues, chases) → outputs. References are serialized as ids and resolved through pools.
+  (fixtures, cues, chases) → outputs (gateways, then routes; a route missing its universe or
+  gateway is dropped). References are serialized as ids and resolved through pools.
 - **No undo:** models are plain classes; undo/redo is removed until change `add-undo-redo`.
   The unsaved `*` compares `Show.showData` with the last save (`Show.refreshSaveState()`), so keep
   playback/runtime state out of `showData`.
@@ -70,7 +71,8 @@ Enums live next to their model and are exported: `CUE_TYPES`, `CUE_STATES`,
   sets both from `invertPan` / `invertTilt` / `swapPanTilt` (saved). Programmed values never change.
 - **Frames:** `Live.onFrame(fn)` callbacks run after the animations on every tick, also while
   paused or stopped. `UniversePool` uses one to pack each universe's persistent `frame`
-  (`Uint8Array(512)`) and send it on running streams. Output, and later the visualizer, read
+  (`Uint8Array(512)`) and hand it to `UniversePool.sink` (the output pool, raw), which sends it on
+  the universe's enabled routes (skill `wsc-output`). Output, and later the visualizer, read
   frames, never channel objects.
 - **Live:** `Live.add(updateFn, quantize = 0, fps = 60, onReady)` returns an id. With `quantize`
   (in beats, fractions allowed) the callback starts on the next multiple of that many beats of
@@ -142,7 +144,7 @@ Enums live next to their model and are exported: `CUE_TYPES`, `CUE_STATES`,
   getter that shapes data for `uk-list`. New pools follow the same API.
 - **Ids:** numeric and unique per pool. Getters coerce with `Number(id)`. A fixture or universe
   loaded from a show keeps its saved id (references point to it); new ones get the highest id + 1.
-  A universe's id never changes after that (it is also its output's universe number).
+  A universe's id never changes after that (routes refer to it; the number sent is the route's).
   Addresses (`chStart`) are 0-based in the engine and showfiles; views show them 1–512
   (`views/utils/dmx.js`). Move patched fixtures only through `UniversePool.repatch(moves)` (checks
   the whole result, then unpatches and patches), never by writing `chStart`. Loading
