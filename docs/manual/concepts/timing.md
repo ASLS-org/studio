@@ -67,10 +67,13 @@ the cue started last.
 - **Turning a cue off** hands each of its families to the newest cue still playing that uses it.
 - **A cue left with nothing turns off** by itself: its row shows it stopped. A chase item turned off this
   way stays off until its cue's next item.
-- **A family nobody holds rests.** Intensity goes back to its level from before playback (0, unless
-  you set it in the universe view); colour, position and beam stay as they were when their last
+- **A family nobody holds rests.** Intensity goes back to 0 (or a GDTF fixture's home value);
+  colour, position and beam stay as they were when their last
   cue stopped (even half way through a fade, or on an effect's last step) until another cue takes
   them, and NOW reads "kept:" with that cue.
+- **Above every cue:** what you set by hand in the universe view (the
+  [programmer](/programming/playback#the-programmer)), and above that,
+  [parked](/programming/playback#parking-a-channel) channels.
 - **The cue started last wins** its family; there is no priority. To keep a cue on top of a
   running chase, hold it as a flash.
 - **Flashes.** A **Temporary** cue covers what it reaches while you hold it, then hands it back; it

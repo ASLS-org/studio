@@ -12,6 +12,7 @@ The terms this manual uses, in alphabetical order.
 | **Cell** | A repeated part of a fixture with its own channels: a pixel of a bar, a head of a multi-head fixture. Scenes and effects can treat each cell on its own. [Fixture Library](/rig/fixtures#cells) |
 | **Channel** | One controllable value of a fixture (a dimmer, a colour, pan), sent as a number from 0 to 255. Each channel takes one address. [Patching](/programming/patching#channels) |
 | **Chase** | A timeline of a group's cues, measured in bars: each cue item plays a cue from a point, for a length. [Chases](/programming/chases) |
+| **Clear** | Empties the [programmer](/programming/playback#the-programmer): the channels go back to what playback gives them, at once. Parked channels stay. |
 | **Cue** | Something a group does: a scene or an effect, kept in the group's cue pool. [Show structure](/concepts/#cue) |
 | **Cue item** | One entry on a chase's timeline: a cue, where it starts and how long it lasts. [Chases](/programming/chases#the-timeline) |
 | **DMX (DMX512)** | The standard language of stage lights: 512 values per universe, sent many times a second. [How Studio works](/introduction/overview) |
@@ -31,11 +32,13 @@ The terms this manual uses, in alphabetical order.
 | **Mode** (fixture) | A fixture's DMX setup: how many channels it uses and in what order. It must match the mode set on the light itself. [Fixture Library](/rig/fixtures#finding-a-fixture) |
 | **NOW** | The line in each cue pool column's head: what the stage shows of that family and where it comes from (a cue, a chase's item, **kept** from a stopped cue, or **rest**). It only shows. [The Cue Pool](/programming/scenes#the-cue-pool) |
 | **OFL (Open Fixture Library)** | A free, community-made library of fixture descriptions. Studio has 480 of them built in. [Fixture Library](/rig/fixtures) |
+| **Park** | Locks a channel at a value above everything else (cues, the programmer, **Clear**) until you unpark it; saved with the show. [Parking a channel](/programming/playback#parking-a-channel) |
 | **Patch** | Telling Studio which lights you have, at which addresses, in which universes. [Patching](/programming/patching) |
 | **Phase** | Where a fixture is on an effect's waveform, in degrees. Spreading phases makes a movement travel across the rig. [Effects](/programming/effects#how-an-effect-moves) |
+| **Programmer** | Where the values you set by hand in the universe view go: they win over every cue until you **Clear** them, and aren't saved. [The programmer](/programming/playback#the-programmer) |
 | **Quantize** | When a chase you start actually begins: at once, or on the next bar, half bar, beat or half beat. [Chases](/programming/chases#chase-settings) |
 | **Replace** | A cue **Mode** (new cues): the cue turns off the cue it takes over once faded in. [What plays together](/concepts/timing#what-plays-together) |
-| **Rest** | Where a family goes when no cue holds it: Intensity back to its level from before playback (0 unless set in the universe view), colour, position and beam where they are (**kept**) until another cue takes them. [What plays together](/concepts/timing#what-plays-together) |
+| **Rest** | Where a family goes when no cue holds it: Intensity back to 0 (or a GDTF fixture's home value), colour, position and beam where they are (**kept**) until another cue takes them. [What plays together](/concepts/timing#what-plays-together) |
 | **Port-address** | An Art-Net universe number, written Net.Subnet.Universe (0.1.2). [Outputs](/rig/outputs#_3-route-a-universe) |
 | **Route** | One universe sent through one gateway to one receiver, with its protocol and universe number. A universe can have several. [Outputs](/rig/outputs#_3-route-a-universe) |
 | **sACN** | Another protocol for DMX over a network (E1.31). Not sent by the bundled gateway yet. [Outputs](/rig/outputs#what-s-verified) |
