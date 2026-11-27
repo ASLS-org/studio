@@ -8,7 +8,8 @@
         type="range"
         :min="min"
         :max="max"
-        :disabled="disabled"
+        :disabled="disabled || locked"
+        :class="{ locked }"
         @input="updateValue"
       >
     </div>
@@ -28,6 +29,7 @@
  * @namespace uikit/inputs/range
  * @story Default {"min": 0, "max": 100, "default": 0, "value": 50}
  * @story Disabled {"disabled":true}
+ * @story Locked {"min": 0, "max": 255, "value": 76, "locked": true, "color": "var(--accent-red)"}
  * @story Long {"min": 0, "max": 100, "default": 0, "value": 50, "long": true}
  * @story Short {"min": 0, "max": 100, "default": 0, "value": 50, "short": true}
  */
@@ -71,6 +73,10 @@ export default {
      */
     disabled: Boolean,
     /**
+     * Opt-in: takes no input but keeps its colour (a value held elsewhere, e.g. a parked channel)
+     */
+    locked: Boolean,
+    /**
      * Actual fader value
      */
     modelValue: {
@@ -100,6 +106,10 @@ export default {
       this.updateValue(false);
     },
     disabled() {
+      this.updateValue(false);
+    },
+    // The track is painted from the colour: a new colour repaints it
+    color() {
       this.updateValue(false);
     },
   },
@@ -177,6 +187,9 @@ export default {
   writing-mode: vertical-lr;
   direction: rtl;
   vertical-align: middle;
+}
+.uikit_fader_slider.locked {
+  cursor: not-allowed;
 }
 .uikit_fader_slider:disabled {
   -webkit-appearance: none;

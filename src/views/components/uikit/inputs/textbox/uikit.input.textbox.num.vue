@@ -14,7 +14,7 @@
       class="uikit_num_input_textbox_wrapper"
       :class="{color: color !== null}"
       :style="{
-        borderColor: !disabled && !readonly && color
+        borderColor: !disabled && (!readonly || locked) && color
           ? `color-mix(in srgb,${color} 70%,#0000)`
           : ''
       }"
@@ -22,7 +22,7 @@
       <input
         v-model="content"
         class="uikit_num_input_textbox"
-        :disabled="disabled || readonly"
+        :disabled="disabled || readonly || locked"
         :placeholder="placeholder"
         @keydown.up="incrementValue"
         @keydown.down="decrementValue"
@@ -38,7 +38,7 @@
       <span
         class="uikit_num_input_button"
         :style="{
-          backgroundColor: !disabled && !readonly && color
+          backgroundColor: !disabled && (!readonly || locked) && color
             ? `color-mix(in srgb,${color} 70%,#0000)`
             : ''
         }"
@@ -130,6 +130,10 @@ export default {
      */
     disabled: Boolean,
     /**
+     * Opt-in: takes no input but keeps its colour (a value held elsewhere, e.g. a parked channel)
+     */
+    locked: Boolean,
+    /**
      * Looks disabled, but the label isn't dimmed (like the text and select inputs)
      */
     readonly: Boolean,
@@ -201,13 +205,13 @@ export default {
      *
      */
     incrementValue() {
-      if (this.disabled || this.readonly) return;
+      if (this.disabled || this.readonly || this.locked) return;
       if (this.relative) {
         this.$emit('step', 10 ** -this.precision);
         return;
       }
       const increment = parseFloat(this.content) + parseFloat(10 ** -this.precision);
-      if (increment <= this.max && !this.disabled && !this.readonly) {
+      if (increment <= this.max && !this.disabled && !this.readonly && !this.locked) {
         this.content = increment.toFixed(this.precision);
         this.updateValue(true);
       }
@@ -217,13 +221,13 @@ export default {
      *
      */
     decrementValue() {
-      if (this.disabled || this.readonly) return;
+      if (this.disabled || this.readonly || this.locked) return;
       if (this.relative) {
         this.$emit('step', -(10 ** -this.precision));
         return;
       }
       const decrement = parseFloat(this.content) - parseFloat(10 ** -this.precision);
-      if (decrement >= this.min && !this.disabled && !this.readonly) {
+      if (decrement >= this.min && !this.disabled && !this.readonly && !this.locked) {
         this.content = decrement.toFixed(this.precision);
         this.updateValue(true);
       }
