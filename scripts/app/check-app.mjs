@@ -3973,6 +3973,188 @@ const SCENARIOS = {
       { before, after: afterSwitch },
     );
   },
+
+  /** The Outputs workspace: gateways, routes, packets, saving (no gateway needed) */
+  async outputs(page) {
+    const d = await demo(page);
+    const u0 = d.universes[0].id;
+    const routeData = (index = 0) => page.evaluate((i) => {
+      const r = window.__check.show.outputPool.routes[i];
+      return r && JSON.parse(JSON.stringify(r.showData));
+    }, index);
+
+    await probe(page, 'resetLongTasks');
+    check('the toolbar output indicator is idle with nothing sent', await page.evaluate(() => document.querySelector('.output_state_icon')?.classList.contains('idle')));
+    await click(page, '.output_container');
+    check('the output indicator opens the Outputs workspace', await page.evaluate(() => !!document.querySelector('.outputs_flow')));
+    const blocks = await page.evaluate((limit) => window.__check.blocks(limit), MAX_BLOCK_MS);
+    check(`opening Outputs blocks the main thread under ${MAX_BLOCK_MS} ms`, !blocks.length, blocks.join('; '));
+
+    // Left to right: Add a gateway, mark the first universe, Add above Destinations
+    check('Add above Destinations is unavailable without a gateway', await page.evaluate(() => document
+      .querySelector('.outputs_flow_route .outputs_flow_head .uikit_button')?.classList.contains('disabled')));
+    await click(page, '.outputs_flow_gateway .outputs_flow_head .uikit_button');
+    await click(page, '.outputs_flow_universe .uikit_list_body > .uikit_list_item:first-of-type');
+    check('the lists keep their marked rows: the universe and the new gateway', await page.evaluate(() => (
+      document.querySelectorAll('.outputs_flow_universe .uikit_list_item.selected').length === 1
+      && document.querySelectorAll('.outputs_flow_gateway .uikit_list_item.selected').length === 1
+    )));
+    await click(page, '.outputs_flow_route .outputs_flow_head .uikit_button');
+    const first = await routeData(0);
+    const gateways = await page.evaluate(() => JSON.parse(
+      JSON.stringify(window.__check.show.showData.outputs),
+    ));
+    check(
+      'Add: Art-Net over UDP to 127.0.0.1:6454, universe 0.0.0, forwarding, through the new local gateway',
+      first && first.protocol === 2 && first.iface === 1 && first.address.ip === '127.0.0.1'
+        && first.address.port === 6454 && first.universeNumber === 0 && first.enabled
+        && gateways.length === 1 && gateways[0].remote === '127.0.0.1' && gateways[0].port === 4515
+        && gateways[0].autoConnect === false,
+      { first, gateways },
+    );
+    check('the new route is selected, its inspector shows Net, Subnet and Universe', await page.evaluate(() => {
+      const text = document.querySelector('.outputs_side')?.textContent || '';
+      return document.querySelector('.outputs_flow_route .uikit_list_item.selected')
+        && ['Net', 'Subnet', 'Universe'].every((l) => text.includes(l));
+    }));
+    await page.evaluate(() => window.__check.show.refreshSaveState());
+    check('adding a route marks the show unsaved', await page.evaluate(() => !window.__check.show.isSaved));
+
+    // Port-address and protocol switch
+    await page.evaluate(() => { window.__check.show.outputPool.routes[0].universeNumber = 18; });
+    await wait(SETTLE_MS);
+    check('Art-Net universe 18 shows as 0.1.2', await page.evaluate(() => [...document.querySelectorAll('.outputs_flow_route h4')].some((e) => e.textContent.includes('Art-Net 0.1.2'))));
+    await page.evaluate(() => { window.__check.show.outputPool.routes[0].protocol = 3; });
+    await wait(SETTLE_MS);
+    const sacn = await routeData(0);
+    check(
+      'switching to sACN: port 5568, universe 19, Priority 100 shown',
+      sacn.address.port === 5568 && sacn.universeNumber === 19 && sacn.params.priority === 100
+        && await page.evaluate(() => document.querySelector('.outputs_side').textContent.includes('Priority')),
+      sacn,
+    );
+    await page.evaluate(() => {
+      const r = window.__check.show.outputPool.routes[0];
+      r.protocol = 2;
+      r.address = { ip: '10.0.0.20' };
+      r.universeNumber = 18;
+    });
+
+    // The packet the gateway receives
+    const packet = await page.evaluate(async () => {
+      const url = performance.getEntriesByType('resource').map((e) => e.name).find((n) => n.includes('wsc-sdk'));
+      const { WscPacket } = await import(url);
+      const r = window.__check.show.outputPool.routes[0];
+      const frame = new Uint8Array(512); frame[0] = 200;
+      const back = WscPacket.deserialize(r.packetFor(frame).serialize());
+      const data = WscPacket.decode(back);
+      return {
+        valid: WscPacket.validate(back).valid,
+        tr: back.flags.tr,
+        gw: back.flags.gw,
+        universe: data.universe,
+        start: data.startChannel,
+        count: data.values.length,
+        ch1: data.values[0],
+        transport: back.transport.toString(),
+      };
+    });
+    check(
+      'a route sends a valid STREAM_CHANNELS: TR and GW, port-address 18, from channel 1, 512 values, UDP to its destination',
+      packet.valid && packet.tr && packet.gw && packet.universe === 18 && packet.start === 1
+        && packet.count === 512 && packet.ch1 === 200 && packet.transport === 'ARTNET → 10.0.0.20:6454',
+      packet,
+    );
+
+    // Conflicts and the On switch
+    await page.evaluate((u) => {
+      window.__check.show.outputPool.addRoute({ universe: u, address: { ip: '10.0.0.20', port: 6454 }, universeNumber: 18 });
+    }, u0);
+    await wait(SETTLE_MS);
+    const conflicts = () => page.evaluate(() => [...document.querySelectorAll('.outputs_flow_route .uikit_list_item_more')]
+      .filter((e) => e.textContent.trim() === 'conflict').length);
+    check('two routes sending the same universe number to one destination are both marked', (await conflicts()) === 2);
+    await page.evaluate(() => { window.__check.show.outputPool.routes[1].enabled = false; });
+    await wait(SETTLE_MS);
+    check(
+      'a route turned off clears the conflict and dashes its wires',
+      !(await conflicts())
+        && await page.evaluate(() => document.querySelectorAll('.outputs_flow_wire.off').length === 2),
+    );
+    const wiresOk = await page.evaluate(() => {
+      const flow = document.querySelector('.outputs_flow_inner').getBoundingClientRect();
+      const rows = [...document.querySelectorAll('.outputs_flow_route .uikit_list_item')];
+      return rows.map((r) => Math.round(r.getBoundingClientRect().top - flow.top));
+    });
+    check('destination rows sit on the wires\' 30 px pitch under the 30 px headers', same(wiresOk, [30, 60]), wiresOk);
+
+    // Save, reload: the same gateway and routes, saved; connecting is never saved
+    const before = await page.evaluate(() => JSON.stringify({
+      outputs: window.__check.show.showData.outputs, routes: window.__check.show.showData.routes,
+    }));
+    await press(page, 'Escape');
+    await popupsAfterClosing(page, 0);
+    await press(page, 's', ['Control']);
+    await page.reload({ waitUntil: 'networkidle2' });
+    await page.waitForFunction(() => document.querySelector('#app')?.__vue_app__?.config.globalProperties.$show?.ready, { timeout: BOOT_MS });
+    await wait(1500);
+    await page.evaluate(installProbes);
+    const after = await page.evaluate(() => JSON.stringify({
+      outputs: window.__check.show.showData.outputs, routes: window.__check.show.showData.routes,
+    }));
+    check('gateways and routes come back after a reload, unchanged', before === after, { before, after });
+    check('the reloaded show is saved', await page.evaluate(() => window.__check.show.isSaved));
+
+    // An older showfile: outputs with a universe key, no routes (opened as Studio starts)
+    await page.evaluate(() => {
+      const data = JSON.parse(window.__check.show.genShowFile());
+      data.outputs = [{
+        id: 3, name: 'Old', color: null, remote: '10.0.0.5', port: 4515, universe: 0,
+      }];
+      delete data.routes;
+      localStorage.setItem('ASLS_STUDIO_SHOWFILE', JSON.stringify(data));
+    });
+    await page.reload({ waitUntil: 'networkidle2' });
+    await page.waitForFunction(() => document.querySelector('#app')?.__vue_app__?.config.globalProperties.$show?.ready
+      && ![...document.querySelectorAll('.splash_popup')].some((e) => e.offsetParent), { timeout: BOOT_MS, polling: 250 });
+    await wait(1500);
+    await page.evaluate(installProbes);
+    const older = await page.evaluate(() => {
+      const { show } = window.__check;
+      show.refreshSaveState();
+      return JSON.parse(JSON.stringify({
+        saved: show.isSaved, outputs: show.showData.outputs, routes: show.outputPool.routes.length,
+      }));
+    });
+    check(
+      'an older showfile opens: its output is a gateway (Connect on load off), no routes, not unsaved',
+      older.saved && older.routes === 0 && older.outputs.length === 1 && older.outputs[0].name === 'Old'
+        && older.outputs[0].autoConnect === false,
+      older,
+    );
+
+    // Deleting a gateway deletes its routes
+    const deleted = await page.evaluate((u) => {
+      const pool = window.__check.show.outputPool;
+      pool.addRoute({ universe: u });
+      pool.addRoute({ universe: u });
+      pool.delete(pool.outputs[0]);
+      return { gateways: pool.outputs.length, routes: pool.routes.length };
+    }, u0);
+    check('deleting a gateway deletes its routes', deleted.gateways === 0 && deleted.routes === 0, deleted);
+
+    // The universe's Output widget: its routes, each with its On check
+    await page.evaluate((u) => {
+      const pool = window.__check.show.outputPool;
+      pool.addRaw({});
+      pool.addRoute({ universe: u });
+    }, u0);
+    await openUniverse(page, u0);
+    const widget = await page.evaluate(() => document.querySelectorAll('.universe_output .uikit_list_body .uikit_list_item').length);
+    check('the universe\'s Output widget lists its routes', widget === 1, widget);
+    await click(page, '.universe_output .uikit_list_body .uikit_list_item_check');
+    check('its check turns the route\'s forwarding off', await page.evaluate(() => window.__check.show.outputPool.routes[0].enabled === false));
+  },
 };
 
 /**

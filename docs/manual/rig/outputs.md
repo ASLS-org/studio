@@ -7,8 +7,8 @@ speaks Art-Net) turns that into DMX on a cable.
 
 <OutputPath />
 
-Getting output going takes three steps: run the gateway, connect Studio to it, then send each
-universe through that connection.
+Getting output going takes three steps: run the gateway, connect Studio to it, then route each
+universe through it. Gateways and routes are saved with the show.
 
 ## 1. Run the Gateway
 
@@ -21,56 +21,98 @@ The gateway listens for Studio on port **4515**. Your computer and the Art-Net n
 same network, with the node's address reachable (Art-Net nodes often use `2.x.x.x` or
 `10.x.x.x` addresses: set your computer's network address to match, as the node's manual says).
 
-## 2. Connect Studio to the Gateway
+## The Outputs Workspace
 
-Open **Preferences → Outputs** (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>O</kbd>). The
-**Input/Outputs** popup lists your connections.
+Open **Preferences → Outputs** (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>O</kbd>), or click
+**OUTPUT** at the right of the toolbar. On the left, three lists show where your show goes:
 
-1. Press **Add New Connection**. A connection named *New Connection 1* appears, set for a
-   gateway on this computer.
-2. Check its settings (the defaults fit the desktop app and a gateway on the same computer).
-3. Press **Connect**. Its state in the list goes from **Disconnected** to **Connecting…** to
-   **Connected**; the log under the settings shows what happens.
+| List | What it holds |
+| --- | --- |
+| **Universes** | Every universe of the show, with how many routes send it |
+| **Gateways** | The gateways Studio connects to, with their state (dot) and response time |
+| **Destinations** | One row per route: its protocol, universe number and receiver |
+
+A wire joins each route's universe, gateway and destination, in the universe's colour: solid
+while it sends, faint while its gateway isn't connected, dashed while the route is off, red when
+its gateway is lost or reports an error. Click a row to open its page on the right. Each list
+keeps its marked row, so the flow reads left to right: a universe, the gateway it goes through,
+the route. **Add** in the Gateways and Destinations headers adds one; the bin on a gateway or
+destination deletes it (a gateway takes its routes with it). Changes apply at once; **Done** (or
+<kbd>Esc</kbd>) closes the workspace.
 
 <LivePreview preset="outputs-popup" />
 
+## 2. Connect Studio to the Gateway
+
+1. Press **Add** in the **Gateways** header. The gateway is set for a gateway on this computer
+   (`127.0.0.1`, port `4515`), which fits the desktop app, and its page opens.
+2. Press **Connect**. The dot turns green and the response time appears; **Disconnect** (red)
+   closes the session.
+
 | Setting | Description |
 | --- | --- |
-| **Label** | The connection's name, as the universes list it |
-| **Type / Protocol** | **WSC (Web Show Control)**: how Studio talks to the gateway |
-| **IP**, **Port** | Where the gateway runs: `127.0.0.1` (this computer) and `4515` |
+| **Name** | The gateway's name, as the lists show it |
+| **Host**, **Port** | Where the gateway runs: `127.0.0.1` (this computer) and `4515`, or another computer's address |
+| **Connect on load** | Connects the gateway when the show opens. Off by default, so opening a show never sends to a rig by surprise |
+| **Session** | **Connect** or **Disconnect** |
 
-Press **Disconnect** to close the connection, **Delete** to remove it.
+While connected, Studio checks the gateway every second. If it stops answering, Studio says so
+and tries again on its own (after 1, 2, 4 and 8 seconds, then every 10 seconds) until it's back
+or you press **Disconnect**; the routes send again as soon as it reconnects. The page also shows
+the **Gateway computer** (its name, system, how long the gateway has run, its load) and the
+gateway's **Log**: a line per event (connecting, connected, lost, anything the gateway refused),
+newest at the bottom, errors in red.
 
-## 3. Send a Universe
+## 3. Route a Universe
 
-Open the universe in the patch bay. In its **Universe** settings, pick the connection as its
-**Output**: the **Stream** widget appears next to it, where you say how the gateway sends this
-universe. **Config**, next to **Output**, opens **Preferences → Outputs** to add or set up a
-connection.
+A **route** sends one universe through one gateway to one receiver. A universe can have several:
+two nodes, or Art-Net and sACN at once.
 
-1. **Protocol**: **ARTNET** for an Art-Net node (see what's verified below).
-2. **Host**: the Art-Net node's IP address, and **Port**: `6454`, the Art-Net port (filled in
-   when you pick the protocol).
-3. Press **Start streaming**. The universe goes out continuously, every frame, whether the show
-   is playing or paused. **Stop streaming** stops it.
+1. Click the universe, then the gateway it goes through, then **Add** in the **Destinations**
+   header. The route opens: Art-Net to `127.0.0.1:6454`, with the next free universe number.
+2. **Protocol**: Art-Net for an Art-Net node; pick another when your receiver needs it.
+3. **Address**: your node's address. **Port** `6454` is the Art-Net port.
+4. **Net · Subnet · Universe**: the Art-Net universe the node listens to.
 
-<LivePreview preset="universe-stream" />
-
-Studio's universe 0 goes out as Art-Net universe 0, universe 1 as 1, and so on: set each node to
-the universe it should listen to.
+A route that is **Forwarding** sends the universe every frame while its gateway is connected, whether the
+show plays, is paused or stopped. Turn **Forwarding** off to hold it back without losing its
+settings: the list then reads "not forwarding".
 
 | Setting | Shown for | Description |
 | --- | --- | --- |
-| **Protocol** | Always | How the gateway sends the universe |
+| **Forwarding** | Always | Whether the route sends |
+| **Universe**, **Gateway** | Always | What is sent, and through which gateway |
+| **Protocol** | Always | How the gateway sends the universe: DMX512, Art-Net, sACN, KiNET, Modbus, OSC or Raw |
 | **Interface** | Protocols with several | The gateway's way out: network (UDP, TCP), serial, USB, WebSocket |
-| **Host**, **Port** | Network interfaces | The receiving device's address |
-| **Serial port**, **Baud** | Serial | The port's number on the gateway's computer and its speed |
+| **Address**, **Port** | Network interfaces | The receiving device's address. Picking a protocol fills in its usual port |
+| **Serial port**, **Baud rate** | Serial | The port's number on the gateway's computer and its speed (DMX512: 250000) |
 | **Vendor ID**, **Product ID** | USB | The USB interface's identifiers |
-| **URL** | WebSocket | The receiver's address (`ws://host:port/path`) |
-| **Priority** | sACN | The stream's sACN priority (default 100): the receiver follows the highest |
+| **URL** | WebSocket, HTTP | The receiver's address (`ws://host:port/path`) |
+| **Net · Subnet · Universe** | Art-Net | The Art-Net universe (0–127, 0–15, 0–15): set the node to the same |
+| **Universe number** | Other protocols | The universe number (sACN: 1–63999) |
+| **Priority** | sACN | The stream's priority (0–200, default 100): receivers follow the highest |
 | **TTL** | UDP | How many network hops packets may cross (0: the gateway's default) |
-| **NIC** | UDP, TCP | Which of the gateway computer's network cards sends them (0: the default) |
+| **Network card** | UDP, TCP | Which of the gateway computer's network cards sends them (0: the default) |
+
+Two routes on the same gateway sending the same universe number to the same receiver read
+**conflict** in the Destinations list: the receiver would get two streams for one universe.
+
+In the universe panel, the **Output** widget lists the universe's routes, each with a check that
+turns its forwarding on or off. **OUTPUTS** in its header opens the workspace on the universe; clicking a
+route opens it on that route.
+
+<LivePreview preset="universe-output" />
+
+## The OUTPUT Indicator
+
+The dot next to **OUTPUT** in the toolbar sums up what is sent:
+
+| Dot | Means |
+| --- | --- |
+| Grey | Nothing is sent: no route is on, or their gateways are disconnected |
+| Green | Every route that is on is sending |
+| Gold | A gateway is connecting or reconnecting |
+| Red | A gateway has been gone for more than 10 seconds, or reported an error. Hover the dot for its name |
 
 ## Check That It Works
 
@@ -84,16 +126,12 @@ your network) shows the values Studio sends.
 
 ## What's Verified
 
-Checked with the gateway bundled with Studio, sending to an Art-Net receiver on the same
-computer: connecting, streaming Art-Net, and the values following faders, scenes and effects.
+Checked with the gateway bundled with Studio, sending to a receiver on the same computer:
+connecting, reconnecting after the gateway restarts, streaming Art-Net, and the values following
+faders, scenes and effects.
 
 | Protocol | Status |
 | --- | --- |
-| **ARTNET** over UDP | Works |
-| **SACN** | The current gateway answers "Unsupported protocol": not available yet |
-| **OSC** over UDP | The gateway has an OSC sender; not verified with Studio yet |
-| **DMX512** (USB or serial interfaces), **KINET**, **MODBUS**, **RAW** | Not verified yet |
-
-> **Note:** In this release, connections and universe streams aren't saved with the show: after
-> opening a show or reloading Studio, connect again and set each universe's **Output** and
-> **Stream** again. See [Known limitations](/reference/limitations#outputs).
+| **Art-Net** over UDP | Works |
+| **sACN** | The bundled gateway doesn't send it yet (nothing goes out, and no error is shown) |
+| **DMX512** (USB or serial), **KiNET**, **Modbus**, **OSC**, **Raw** | Not verified yet |

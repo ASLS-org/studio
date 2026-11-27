@@ -64,8 +64,8 @@ files first: see [Opening a show with missing fixtures](/rig/fixtures#opening-a-
 1. On the first computer: **File → Export Showfile**.
 2. Copy the `.json` file, along with the `.gdtf` files of any imported fixtures.
 3. On the other computer: **File → Load Showfile**, then import the GDTF files when asked.
-4. Set up outputs again: connections and universe streams aren't part of the showfile yet
-   ([Outputs](/rig/outputs#what-s-verified)).
+4. Check the outputs: gateways and routes come with the show, but the other computer's
+   network may differ ([Outputs](/rig/outputs#_3-route-a-universe)).
 
 ## First Run
 

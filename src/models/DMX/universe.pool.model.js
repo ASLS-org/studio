@@ -10,11 +10,17 @@ class UniversePool {
   constructor() {
     this.universes = [];
     this.selected = [0];
+    /**
+     * Where packed frames go (the show's output pool, raw), set by the show
+     *
+     * @type {OutputPool|null}
+     */
+    this.sink = null;
     this.frameCallbackId = Live.onFrame(this.processFrame.bind(this));
   }
 
   /**
-   * Live frame phase: packs every universe's frame, then sends it on its running stream.
+   * Live frame phase: packs every universe's frame, then sends it on the universe's routes.
    * Runs after the animations of every tick, also while the show is paused or stopped.
    *
    * @public
@@ -23,9 +29,7 @@ class UniversePool {
     for (let i = 0; i < this.universes.length; i++) {
       const universe = this.universes[i];
       const frame = universe.packFrame();
-      if (universe.stream && universe.stream.isRunning) {
-        universe.stream.forward(frame);
-      }
+      if (this.sink) this.sink.forward(universe.id, frame);
     }
   }
 
@@ -142,6 +146,7 @@ class UniversePool {
     const universeIndex = this.universes.findIndex((item) => item.id === universe.id);
     if (universeIndex > -1) {
       this.universes.splice(universeIndex, 1);
+      if (this.sink) this.sink.deleteUniverseRoutes(universe.id);
       EventBus.emit('patch_changed');
     } else {
       throw new Error('Could not find universe in universe pool');

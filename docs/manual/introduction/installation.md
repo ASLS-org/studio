@@ -68,7 +68,7 @@ The first time, Studio opens the demo show.
 ### The built-in gateway
 
 The app starts the gateway when it opens and stops it when it closes; connect Studio to it as
-[Outputs](/rig/outputs#_2-connect-studio-to-the-gateway) explains. If the gateway program can't be
+[Outputs](/rig/outputs#_2-connect-studio-to-the-gateway) explains (or turn on its **Connect on load**). If the gateway program can't be
 launched, the app shows "Failed to start WSC Gateway": reinstall the app. Don't run a second
 gateway of your own next to the app: both want port 4515.
 

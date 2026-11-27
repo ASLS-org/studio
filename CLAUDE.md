@@ -50,7 +50,7 @@ openspec/                 specs + change proposals (spec-driven workflow)
 Data flow: `Show` → pools (`universePool`, `fixturePool`, `groupPool`, `outputPool`) → `Group` →
 `cuePool` (Scene/Effect cues) + `chasePool`. `Live` (singleton clock) calls every registered
 animation each tick; cues write fixture channels; `Universe` packs channels into a 512-byte DMX
-buffer; a `WscConnectionStream` sends the buffer to the gateway every tick.
+buffer; the output pool sends it on the universe's DMX routes to their gateways every tick.
 
 ## Rules that break things when ignored
 

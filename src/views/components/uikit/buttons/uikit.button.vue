@@ -1,8 +1,8 @@
 <template>
   <button
     class="uikit_button"
-    :style="{background: toggled && color ? color : 'var(--secondary-dark)' }"
-    :class="{ disabled, toggled, toggleable, square }"
+    :style="{background: (toggled || filled) && color ? color : 'var(--secondary-dark)' }"
+    :class="{ disabled, toggled, toggleable, square, filled }"
     @click.stop="handleClick"
   >
     <uk-icon
@@ -22,6 +22,7 @@
  * @story Square {"label":"square", "square": true, "value": false}
  * @story Toggle {"label":"toggle", "toggleable": true, "value": false}
  * @story Icon {"label":"Icon", "toggleable": true, "value": false, "icon":"new"}
+ * @story Filled {"label":"connect", "filled": true, "color": "var(--accent-green)"}
  */
 export default {
   name: 'UkButton',
@@ -49,6 +50,11 @@ export default {
      * Whether alternate "square" styling should be applied
      */
     square: Boolean,
+    /**
+     * Opt-in: the button always shows its `color` (an action that carries a meaning, such as
+     * Connect / Disconnect), not only while toggled
+     */
+    filled: Boolean,
     /**
      * The button's current value. Either true or false.
      */
@@ -123,8 +129,14 @@ export default {
   padding: 0 var(--space-6);
   opacity: .9;
 }
-.uikit_button:not(.disabled):not(.toggleable){
+.uikit_button:not(.disabled):not(.toggleable):not(.filled){
   background: var(--secondary-dark)!important;
+}
+.uikit_button.filled h4 {
+  color: var(--on-color-text);
+}
+.uikit_button.filled.disabled {
+  opacity: .4;
 }
 .uikit_button.toggleable{
   background: var(--secondary-darker);

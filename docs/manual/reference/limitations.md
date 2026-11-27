@@ -8,11 +8,9 @@ it. The rest of the manual only describes what works. Found something else? Repo
 
 | What doesn't work | Workaround |
 | --- | --- |
-| Connections and universe streams aren't saved with the show | After opening a show or reloading Studio, connect again in **Preferences → Outputs** and set each universe's **Output** and **Stream** again |
-| **SACN**: the current gateway answers "Unsupported protocol" | Use Art-Net; most sACN nodes also accept Art-Net |
-| **DMX512** (USB and serial interfaces), **KINET**, **MODBUS**, **OSC** and **RAW** aren't verified yet | Prefer an Art-Net node |
-| **Baud**, **Serial port**, **Priority** and **TTL** may not reach the gateway; changing **Interface** may not take effect until streaming restarts | Keep the defaults; stop and start streaming after a change |
-| Deleting a connection can raise an error | Leave unused connections in the list; they're gone after a reload anyway |
+| **sACN**: the bundled gateway doesn't send it yet, and shows no error | Use Art-Net; most sACN nodes also accept Art-Net |
+| **DMX512** (USB and serial interfaces), **KiNET**, **Modbus**, **OSC** and **Raw** aren't verified yet | Prefer an Art-Net node |
+| Studio can't tell which protocols a gateway supports, so it offers them all | Check [What's verified](/rig/outputs#what-s-verified) |
 
 ## Programming
 

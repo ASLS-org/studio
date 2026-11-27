@@ -4,7 +4,7 @@ Patching tells Studio which lights you have and where they listen: each fixture 
 **universe**, a first **address** and a **mode**, plus a position on stage for the visualizer. You
 patch, try and adjust fixtures in the **universe view**, which opens at the bottom of the screen
 when you pick a universe in the [patch bay](/getting-started/interface#patch-bay). From left to
-right: the universe's settings and **Stream**, its **Fixture Pool**, then the selected fixture's
+right: the universe's settings and its **Output** ([where it is sent](/rig/outputs#_3-route-a-universe)), its **Fixture Pool**, then the selected fixture's
 settings, position and controls, each explained below.
 
 A new show comes with four universes (**Universe 0** to **Universe 3**). Each holds 512 DMX
@@ -105,7 +105,6 @@ and the rig on stage loses its right-hand head.
 | --- | --- |
 | **Name** | The universe's name |
 | **ID** | The universe's number, given when it is created and fixed from then on (shown greyed out). Its output sends to this universe number |
-| **Output** | The connection this universe is sent through: see [Outputs](/rig/outputs#_3-send-a-universe) |
 | **Color** | The universe's colour in the patch bay |
 
 ## Fixture Settings and Position

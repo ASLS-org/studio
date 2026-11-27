@@ -9,12 +9,14 @@ check [Known limitations](/reference/limitations), then ask in the
 
 | What you see | Likely cause | Fix |
 | --- | --- | --- |
-| The connection stays **Disconnected** or shows **Conn error** | The gateway isn't running, or listens elsewhere | Desktop app: restart it. Browser: start the gateway, then **Connect** again. Check **IP** `127.0.0.1` and **Port** `4515` |
-| **Connected**, but no light reacts | The universe isn't streaming | Open the universe: set its **Output**, then **Start streaming** in **Stream** |
-| Streaming, but no light reacts | Wrong node address, network, or Art-Net universe | Check the node's IP in **Host**, that your computer is on the node's network, and that the node listens to the same universe number |
-| Streaming, but the wrong lights react, or faders do the wrong thing | Addresses or modes don't match the lights | Check that each fixture's **Ch Start** address (in Fixture Settings) is the one on the light's display (move it with [Repatching](/programming/patching#repatching)) and that its **Fixture mode** is the mode set on the light |
-| The Outputs log says "Unsupported protocol" | The gateway can't send that protocol yet | Use **ARTNET** ([what's verified](/rig/outputs#what-s-verified)) |
-| Everything worked, then stopped after reopening the show | Outputs aren't saved yet | Connect again and set each universe's **Output** and **Stream** again |
+| The gateway stays **Connecting**, or keeps **Reconnecting** | The gateway isn't running, or listens elsewhere | Desktop app: restart it. Browser: start the gateway; Studio connects as soon as it answers. Check **Host** `127.0.0.1` and **Port** `4515` |
+| **Connected**, but no light reacts | The universe has no route, or its route isn't forwarding | In **Outputs**, click the universe, then the gateway, then **Add** above Destinations; or check its route in the universe's **Output** widget |
+| The wire is green, but no light reacts | Wrong node address, network, or Art-Net universe | Check the route's **Destination**, that your computer is on the node's network, and that the node listens to the route's **Net**, **Subnet** and **Universe** |
+| A route is marked **conflict** | Two routes send the same universe number to the same receiver | Give one of them another universe number or destination, or turn it off |
+| The OUTPUT dot is red | A gateway has been gone for more than 10 seconds, or reported an error | Open **Outputs**: the gateway's **Log** says what happened |
+| Sending, but the wrong lights react, or faders do the wrong thing | Addresses or modes don't match the lights | Check that each fixture's **Ch Start** address (in Fixture Settings) is the one on the light's display (move it with [Repatching](/programming/patching#repatching)) and that its **Fixture mode** is the mode set on the light |
+| Nothing goes out over sACN or another protocol | The gateway doesn't send that protocol yet | Use **Art-Net** ([what's verified](/rig/outputs#what-s-verified)) |
+| Everything worked, then nothing goes out after reopening the show | The gateway isn't connected yet | Press **Connect** on the gateway, or turn its **Connect on load** on |
 | Lights flicker or answer slowly | Two programs send to the same node, or a busy Wi-Fi network | Close the other lighting software; use a cable for the network |
 
 ## Fixtures and GDTF

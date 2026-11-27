@@ -46,24 +46,38 @@
     >
       <h3>TAP TEMPO</h3>
     </uk-flex>
+    <uk-flex
+      center-both
+      class="output_container"
+      :title="outputTitle"
+      @click="connectionsPopupState = true"
+    >
+      <div
+        class="output_state_icon"
+        :class="outputState"
+      />
+      <h3>OUTPUT</h3>
+    </uk-flex>
     <visualizer-popup v-model="visualizerPopupState" />
     <license-popup v-model="licensePopupState" />
     <credits-popup v-model="creditsPopupState" />
     <newshow-popup v-model="newProjectPopupState" />
     <saveas-popup v-model="saveasPopupState" />
-    <connections-popup v-model="connectionsPopupState" />
+    <outputs-popup v-model="connectionsPopupState" />
   </uk-flex>
 </template>
 
 <script>
 import modal from '@/views/mixins/modal.mixin';
 import EventBus from '@/plugins/eventbus';
+import { OUTPUT_STATE } from '@/models/DMX/output.pool.model';
+import { GATEWAY_STATUS } from '@/plugins/wsc.connection';
 import VisualizerPopup from './_popups/popup.visualizer.vue';
 import LicensePopup from './_popups/popup.license.vue';
 import CreditsPopup from './_popups/popup.credits.vue';
 import NewshowPopup from './_popups/popup.newshow.vue';
 import SaveasPopup from './_popups/popup.saveas.vue';
-import ConnectionsPopup from './_popups/popup.connections.vue';
+import OutputsPopup from './_popups/outputs/popup.outputs.vue';
 
 /**
  * Window events that end an edit gesture and trigger a save state check
@@ -90,7 +104,7 @@ export default {
     CreditsPopup,
     NewshowPopup,
     SaveasPopup,
-    ConnectionsPopup,
+    OutputsPopup,
   },
   data() {
     return {
@@ -218,9 +232,31 @@ export default {
      */
     bpmPopupState: modal('toolbar.bpm', 'app'),
     /**
-     * Connection popup state
+     * Outputs popup state
      */
     connectionsPopupState: modal('toolbar.connections', 'app'),
+    /**
+     * What the output indicator shows (OUTPUT_STATE)
+     */
+    outputState() {
+      return this.$show.outputPool.state;
+    },
+    /**
+     * The output indicator's tooltip: what's lost, else the state
+     */
+    outputTitle() {
+      const pool = this.$show.outputPool;
+      if (this.outputState === OUTPUT_STATE.LOST) {
+        const lost = pool.outputs.filter((g) => g.session.errored || g.session.lost
+          || g.session.status === GATEWAY_STATUS.ERROR);
+        return `Output lost: ${lost.map((g) => g.name).join(', ')}. Click to open Outputs`;
+      }
+      return {
+        [OUTPUT_STATE.IDLE]: 'Nothing is sent. Click to set up Outputs',
+        [OUTPUT_STATE.CONNECTING]: 'Connecting to a gateway…',
+        [OUTPUT_STATE.SENDING]: 'Every route is sending',
+      }[this.outputState];
+    },
     /**
      * Credits popup state
      */
@@ -409,7 +445,8 @@ export default {
 .header_menu,
 .bpm_container,
 .tap_container,
-.state_container {
+.state_container,
+.output_container {
   height: 100%;
   padding: 0 var(--space-7);
   border-left: var(--border-width) solid var(--primary-dark);
@@ -419,10 +456,10 @@ export default {
   min-width: 100px;
   max-width: 100px;
 }
-.tap_container:active, .state_container:active{
+.tap_container:active, .state_container:active, .output_container:active {
   background: var(--secondary-dark) !important;
 }
-.tap_container:hover, .state_container:hover {
+.tap_container:hover, .state_container:hover, .output_container:hover {
   background: var(--secondary-darker);
   cursor: pointer;
 }
@@ -434,6 +471,22 @@ export default {
   animation-name: softblink;
   animation-iteration-count: infinite;
   animation-direction: alternate;
+}
+.output_state_icon {
+  height: 8px;
+  width: 8px;
+  border-radius: var(--radius-round);
+  margin-right: var(--space-4);
+  background: var(--secondary-light);
+}
+.output_state_icon.sending {
+  background: var(--accent-green);
+}
+.output_state_icon.connecting {
+  background: var(--accent-gold);
+}
+.output_state_icon.lost {
+  background: var(--accent-red);
 }
 .play_state_icon {
   height: var(--icon-xs);

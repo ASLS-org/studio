@@ -22,7 +22,8 @@ context: |
   - Chase: a bar-grid timeline of cue items per group, with quantize, BPM sync, loop or one-shot.
   - Master: triggers chase rows across groups.
   - Live: the global clock (BPM, tap tempo, play/pause/stop) driving every animation.
-  - Output: a WSC gateway connection; each universe streams to it with a protocol/transport.
+  - Output: a WSC gateway (connection, saved as `outputs`) and DMX routes (a universe sent
+    through a gateway with a protocol, interface, destination and universe number).
   - Visualizer: the 3D viewport rendering fixtures from live channel data.
 
   Architecture invariants every change must respect:

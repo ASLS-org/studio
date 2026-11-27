@@ -57,6 +57,7 @@ class Show extends EventEmitter {
     this.groupPool = new GroupPool();
     this.master = new Master(this.groupPool);
     this.outputPool = new OutputPool();
+    this.universePool.sink = this.outputPool;
     this.running = false;
     this.slave = false;
     this.selectedOutputs = [];
@@ -104,6 +105,7 @@ class Show extends EventEmitter {
       groups: this.groupPool.groups.map((g) => g.showData),
       visualizer: this.visualizerHandle.showData,
       outputs: this.outputPool.showData,
+      routes: this.outputPool.routesData,
     };
   }
 
@@ -293,12 +295,23 @@ class Show extends EventEmitter {
    * @param {Object} showData hande toa show configuration object
    */
   prepareOutputs(showData) {
-    if (showData.outputs) {
-      showData.outputs.forEach((o) => {
-        // An output's saved universe isn't used (and may have been deleted)
-        this.outputPool.addRaw(o);
+    (showData.outputs || []).forEach((o) => {
+      // An older output's saved universe isn't used (and may have been deleted)
+      this.outputPool.addRaw({
+        id: o.id,
+        name: o.name,
+        color: o.color,
+        remote: o.remote,
+        port: o.port,
+        autoConnect: o.autoConnect ?? false,
       });
-    }
+    });
+    // A route whose universe or gateway is gone is dropped
+    (showData.routes || []).forEach((r) => {
+      const universe = this.universePool.universes.some((u) => u.id === Number(r.universe));
+      const gateway = this.outputPool.outputs.some((o) => o.id === Number(r.output));
+      if (universe && gateway) this.outputPool.addRoute(r);
+    });
   }
 
   /**
@@ -468,6 +481,8 @@ class Show extends EventEmitter {
 
     this.persistLocally();
     EventBus.emit('show_loaded');
+    // Gateways set to connect on load connect once the show is up (never while loading)
+    setTimeout(() => this.outputPool.connectOnLoad(), 0);
   }
 
   /**

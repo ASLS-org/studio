@@ -61,7 +61,7 @@ const EffectModifier = () => import('@/views/activities/app/fragments/modifiers/
 const Timeline = () => import('@/views/activities/app/fragments/modifiers/chase/_widgets/chase.modifier.widget.timeline.vue');
 const UniverseModifier = () => import('@/views/activities/app/fragments/modifiers/universe/universe.modifier.fragment.vue');
 const Toolbar = () => import('@/views/activities/app/fragments/toolbar/toolbar.fragment.vue');
-const OutputsPopup = () => import('@/views/activities/app/fragments/toolbar/_popups/popup.connections.vue');
+const OutputsPopup = () => import('@/views/activities/app/fragments/toolbar/_popups/outputs/popup.outputs.vue');
 const VisualizerSettings = () => import('@/views/activities/app/fragments/toolbar/_popups/popup.visualizer.vue');
 
 /* ── Demo steps ─────────────────────────────────────────────────────── */
@@ -693,34 +693,41 @@ const PRESETS = {
     start: (show) => playAll(show, 'Sunset'),
     clock: true,
   },
-  /* ── Outputs: demos only, they never connect or stream ── */
+  /* ── Outputs: demos only, they never connect ── */
   'outputs-popup': {
-    // Preferences → Outputs: a connection to the gateway is added and pointed at; never connected
-    title: 'Input/Outputs',
-    width: 760,
-    height: 500,
-    componentWidth: 760,
-    componentHeight: 500,
+    // Preferences → Outputs: the demo show's gateway and route; a route is added left to right
+    // (universe, gateway, Add) and pointed at its node; Connect is pointed at, never clicked
+    title: 'Outputs',
+    width: 1024,
+    height: 552,
+    componentWidth: 1024,
+    componentHeight: 552,
     component: OutputsPopup,
     props: () => ({ modelValue: true }),
     demo: [
-      { caption: 'Preferences → Outputs (Ctrl+Shift+O): your connections to a gateway' },
-      { wait: 1200 },
-      { caption: 'Add a connection' },
-      popupButton('add new connection'),
+      { caption: 'Universes, gateways, and where each route goes: one wire per route' },
+      { wait: 2400 },
+      { caption: 'Left to right: a universe, the gateway it goes through…' },
+      { click: '.outputs_flow_universe .uikit_list_item', nth: 0 },
       { wait: 1000 },
-      { caption: 'Label: its name. IP and Port: where the gateway runs (127.0.0.1, 4515 on this computer)' },
-      { move: '.popup .label', has: 'IP' },
-      { wait: 2600 },
-      { caption: 'Connect: Studio links to the gateway; the list shows Connected, the log what happens' },
-      { move: '.popup .uikit_button', has: 'connect', nth: 1 },
-      { wait: 3200 },
+      { click: '.outputs_flow_gateway .uikit_list_item', nth: 0 },
+      { wait: 1000 },
+      { caption: '…then Add above Destinations: the new route opens on the right' },
+      { click: '.outputs_flow_route .outputs_flow_head .uikit_button' },
+      { wait: 1200 },
+      { caption: 'Address: your Art-Net node. Net, Subnet and Universe: what it listens to' },
+      { field: 'Address', text: '2.0.0.11', within: '.outputs_side' },
+      { wait: 2000 },
+      { caption: 'A gateway\'s page: where it runs, its session, and what happened' },
+      { click: '.outputs_flow_gateway .uikit_list_item', nth: 0 },
+      { wait: 1200 },
+      { move: '.outputs_side .uikit_button', has: 'connect' },
+      { wait: 2400 },
       { caption: null },
     ],
   },
-  'universe-stream': {
-    // A universe sent through a connection: Output, then the Stream widget's protocol and
-    // address; Start streaming is pointed at, never clicked
+  'universe-output': {
+    // A universe's Output widget: its routes and their checks; OUTPUTS is pointed at
     title: 'Universe',
     width: 560,
     height: STRIP,
@@ -728,26 +735,18 @@ const PRESETS = {
     componentHeight: STRIP,
     component: UniverseModifier,
     view: (view) => view.openUniverse(0),
-    start: (show) => {
-      if (!show.outputPool.outputs.length) {
-        show.outputPool.addRaw({ name: 'Gateway', remote: '127.0.0.1', port: 4515 });
-      }
-    },
     demo: [
-      { caption: 'Output: the connection this universe goes through' },
-      { click: '.uikit_select_textbox_wrapper', nth: 0 },
-      { click: '.uikit_select_option', has: 'Gateway', anywhere: true },
-      { wait: 900 },
-      { caption: 'Stream: how the gateway sends it. Protocol: Art-Net' },
-      { click: '.universe_connection_settings_wrapper .uikit_select_textbox_wrapper' },
-      { click: '.uikit_select_option', has: 'ARTNET', anywhere: true },
-      { wait: 900 },
-      { caption: 'Host and Port: where your Art-Net node listens (6454 is the Art-Net port)' },
-      { field: 'Host', text: '2.0.0.10', within: '.universe_connection_settings_wrapper' },
-      { wait: 1400 },
-      { caption: 'Start streaming: the universe goes out, every frame' },
-      { move: '.universe_connection_settings_wrapper .uikit_button', has: 'Start streaming' },
-      { wait: 3000 },
+      { caption: 'Output: where this universe is sent, one row per route' },
+      { move: '.universe_output .uikit_list_body .uikit_list_item' },
+      { wait: 1600 },
+      { caption: 'Its check turns a route off, and on again' },
+      { click: '.universe_output .uikit_list_body .uikit_list_item_check' },
+      { wait: 1000 },
+      { click: '.universe_output .uikit_list_body .uikit_list_item_check' },
+      { wait: 1000 },
+      { caption: 'OUTPUTS opens the workspace on this universe; a route opens it on that route' },
+      { move: '.universe_output .uikit_button', has: 'outputs' },
+      { wait: 2400 },
       { caption: null },
     ],
   },
