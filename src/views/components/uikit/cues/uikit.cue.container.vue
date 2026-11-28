@@ -139,41 +139,46 @@
           class="uikit_vuemeter"
           :gap="4"
         >
+          <!-- Lit from the bottom: bright up to what the group's playback sends after the masters,
+            faint up to what its cues ask for (the master column: the rig) -->
           <div
             v-for="i in 5"
             :key="i"
             class="uikit_vuemeter_dot"
-            :style="{
-              backgroundColor: parseInt(binDisplay[i])
-                ? group.color || 'var(--secondary-lighter)'
-                : 'var(--secondary-dark)'
-            }"
-            style="
-              height: 10px;
-              width: 10px;
-              border-radius: var(--radius-round);
-              box-shadow: inset 1px 1px 2px var(--primary-dark);
-              transition: all .2s;
-            "
+            :class="{ sent: i <= dots.sent, asked: i > dots.sent && i <= dots.asked }"
+            :title="`Output ${Math.round(liveLevels.sent * 100)}%`"
+            :style="{ '--dot-color': accent }"
           />
         </uk-flex>
+        <!-- A group: its dimmer knob, Isolate, Blackout. The master column: the grand master and
+          DBO (models/DMX/master.model.js) -->
+        <!-- Grey while something else holds the column back (Blackout, Isolate elsewhere, DBO);
+          a double-click puts it back to full -->
         <uk-knob
-          v-model="group.master"
+          v-model="masters.master"
           label=""
-          :color="group.color || 'var(--secondary-lighter)'"
+          :color="held ? 'var(--secondary-light)' : accent"
+          :title="heldReason"
           :disabled="false"
           :min="0"
           :max="255"
+          :reset="255"
         />
+        <!-- The master column has no Isolate: its place is kept so the knobs stay in line -->
         <uk-button
+          v-if="!master"
           v-model="group.solo"
           style="width: 90px"
           color="var(--accent-blue)"
           label="isolate"
           toggleable
         />
+        <div
+          v-else
+          class="uikit_cue_container_isolate_space"
+        />
         <uk-button
-          v-model="group.disabled"
+          v-model="masters.blackout"
           style="width: 90px"
           color="var(--accent-maroon)"
           label="blackout"
@@ -186,6 +191,7 @@
 
 <script>
 import LiveMixin from '@/views/mixins/live.mixin';
+import { toRaw } from '@/models/utils/reactivity';
 import { CHASE_ROW_HEIGHT } from '@/views/utils/geometry';
 
 export default {
@@ -243,26 +249,102 @@ export default {
        * List of chases contained within the group
        */
       chases: this.master ? [] : this.group?.chasePool.chases,
-      binDisplay: [0, 0, 0, 0],
       masterPlayingRow: this.$show.master.test,
     };
   },
   computed: {
     /**
-     * Group's DMX activity, refreshed by the live ticker (playback writes bypass Vue)
+     * What the knob and Blackout drive: a group's dimmer knob and Blackout, or on the master
+     * column the grand master and DBO (models/DMX/master.model.js). Never saved
+     *
+     * @type {{master: Number, blackout: Boolean}}
      */
-    liveActivity() {
-      return this.live(this.group ? this.group.DMXActivity : 0);
+    masters() {
+      const target = this.master ? this.$show.master : this.group;
+      const isMaster = this.master;
+      return {
+        get master() { return isMaster ? target.level : target.master; },
+        set master(value) {
+          if (isMaster) target.level = value;
+          else target.master = value;
+        },
+        get blackout() { return isMaster ? target.blackout : target.disabled; },
+        set blackout(value) {
+          if (isMaster) target.blackout = value;
+          else target.disabled = value;
+        },
+      };
+    },
+    /**
+     * Every master setting (knobs, Isolate, Blackout, DBO), so the dots follow them at once, also
+     * while the show is paused
+     *
+     * @type {String}
+     */
+    masterSettings() {
+      const { master } = this.$show;
+      const groups = this.$show.groupPool.groups
+        .map((group) => `${group.master}/${group.solo}/${group.disabled}`);
+      return `${master.level}/${master.blackout}/${groups.join()}`;
+    },
+    /**
+     * What the group's playback asks for and sends after the masters (the master column: the
+     * rig), 0-1 each, refreshed by the live ticker and by any master setting
+     *
+     * @type {{asked: Number, sent: Number}}
+     */
+    liveLevels() {
+      const master = toRaw(this.$show.master);
+      // Touched so a master setting refreshes it (it is always set)
+      if (!this.masterSettings) return { asked: 0, sent: 0 };
+      // The factors as the settings stand now (the next packed frame computes the same)
+      master.prepare();
+      return this.live(this.master ? master.rigLevels() : master.groupLevels(this.group));
+    },
+    /**
+     * How many dots light bright (sent) and faint (asked for): any level lights the first
+     *
+     * @type {{asked: Number, sent: Number}}
+     */
+    dots() {
+      const count = (level) => (level > 0 ? Math.ceil(level * 5) : 0);
+      return { asked: count(this.liveLevels.asked), sent: count(this.liveLevels.sent) };
+    },
+    /**
+     * The column's colour: its group's, the master column's light grey
+     *
+     * @type {String}
+     */
+    accent() {
+      return (!this.master && this.group.color) || 'var(--secondary-lighter)';
+    },
+    /**
+     * Why the column's output is held back by something other than its knob: its Blackout,
+     * another group isolated, DBO; empty when nothing holds it
+     *
+     * @type {String}
+     */
+    heldReason() {
+      const { master } = this.$show;
+      if (master.blackout) return 'Held back by DBO';
+      if (this.master) return '';
+      if (this.group.disabled) return 'Held back by its Blackout';
+      const isolating = this.$show.groupPool.groups.some((group) => group.solo);
+      if (isolating && !this.group.solo) return 'Held back: another group is isolated';
+      return '';
+    },
+    /**
+     * Whether the column's output is held back (see heldReason)
+     *
+     * @type {Boolean}
+     */
+    held() {
+      return !!this.heldReason;
     },
   },
   watch: {
     scrollTo() {
       this.$refs.cue_list.scrollTo(0, this.scrollTo);
-    },
-    liveActivity: function liveActivityWatcher(val) {
-      let n = Math.round(val * 100).toString(2);
-      n = ('00000'.substring(n.length) + n).slice(0, 5);
-      this.binDisplay = n.split('').sort((a, b) => b - a);
     },
   },
   methods: {
@@ -412,6 +494,24 @@ export default {
 </script>
 
 <style scoped>
+.uikit_vuemeter_dot {
+  height: 10px;
+  width: 10px;
+  border-radius: var(--radius-round);
+  box-shadow: inset 1px 1px 2px var(--primary-dark);
+  background: var(--secondary-dark);
+  transition: all .2s;
+}
+/* Sent after the masters: the column's colour; asked for but held back: a faint tint of it */
+.uikit_vuemeter_dot.sent {
+  background: var(--dot-color);
+}
+.uikit_vuemeter_dot.asked {
+  background: color-mix(in srgb, var(--dot-color) 30%, var(--secondary-dark));
+}
+.uikit_cue_container_isolate_space {
+  height: var(--button-height);
+}
 .uikit_cue_container {
   display: flex;
   height: 100%;

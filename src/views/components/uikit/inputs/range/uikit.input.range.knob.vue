@@ -46,6 +46,7 @@
  * @namespace uikit/inputs/range
  * @story Default {"min": 0, "max": 100, "default": 0, "value": 50}
  * @story Disabled {"disabled":true}
+ * @story Reset {"min": 0, "max": 255, "value": 90, "reset": 255, "disabled": false}
  */
 export default {
   name: 'UkKnob',
@@ -95,6 +96,14 @@ export default {
     disabled: {
       type: Boolean,
       default: true,
+    },
+    /**
+     * Opt-in: a double-click sets the knob to this value (a master back to full); null keeps the
+     * plain double-click, which only emits `input` 0
+     */
+    reset: {
+      type: Number,
+      default: null,
     },
   },
   emits: ['update:modelValue', 'input'],
@@ -158,6 +167,12 @@ export default {
      *
      */
     startDrag(e) {
+      if (e.detail === 2 && this.reset !== null && !this.disabled) {
+        this.$refs.fill.setAttribute('d', this.describeArc(25, 25, 23, -150, (this.reset / this.max) * 300 - 150));
+        this.$emit('input', this.reset);
+        this.$emit('update:modelValue', this.reset);
+        return;
+      }
       if (e.detail === 2) {
         this.$emit('input', 0);
       }
