@@ -58,6 +58,15 @@ class Channel {
     this.fromValue = 0;
     this.restValue = 0;
     /**
+     * What the masters scale on this channel (Fixture.setupFamilies, runtime): 'level' (a dimmer),
+     * 'colour' (additive colour on a fixture without a dimmer) or null. A fine channel takes its
+     * coarse channel's, and links it as `coarse`
+     *
+     * @type {?String}
+     */
+    this.scale = null;
+    this.coarse = null;
+    /**
      * A value set by hand in the universe view (models/DMX/programmer.js), DMX 0-255, else null.
      * It goes out instead of what playback writes, until cleared. Runtime only.
      *

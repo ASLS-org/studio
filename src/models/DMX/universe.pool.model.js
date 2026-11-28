@@ -16,6 +16,12 @@ class UniversePool {
      * @type {OutputPool|null}
      */
     this.sink = null;
+    /**
+     * The show's master (raw), set by the show: its factors scale levels when packing
+     *
+     * @type {Master|null}
+     */
+    this.master = null;
     this.frameCallbackId = Live.onFrame(this.processFrame.bind(this));
   }
 
@@ -26,9 +32,10 @@ class UniversePool {
    * @public
    */
   processFrame() {
+    if (this.master) this.master.prepare();
     for (let i = 0; i < this.universes.length; i++) {
       const universe = this.universes[i];
-      const frame = universe.packFrame();
+      const frame = universe.packFrame(this.master);
       if (this.sink) this.sink.forward(universe.id, frame);
     }
   }

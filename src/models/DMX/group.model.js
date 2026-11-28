@@ -40,8 +40,13 @@ class Group {
       this.fixturePool = new FixturePool();
       // One stack per family of the tokens playing it in the group (claims.js), runtime only
       this.familyStacks = markRaw([[], [], [], []]);
-      this.cuePool = new CuePool(this.familyStacks);
+      // What the masters let through of the group's playback (Master.prepare, once per tick),
+      // read by its cues' claim tokens when frames are packed. Runtime only
+      this.output = markRaw({ factor: 1 });
+      this.cuePool = new CuePool(this.familyStacks, this.output);
       this.chasePool = new ChasePool();
+      // The masters (never saved: a show opens at full): dimmer knob (DMX 0-255), Isolate,
+      // Blackout
       this.solo = false;
       this.disabled = false;
       this._color = data.color;
@@ -93,10 +98,7 @@ class Group {
       })),
       cues: this.cuePool.cues.map((c) => c.showData),
       chases: this.chasePool.chases.map((c) => c.showData),
-      solo: this.solo,
-      disabled: this.disabled,
       color: this.color,
-      master: this.master,
     };
   }
 
