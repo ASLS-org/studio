@@ -105,14 +105,33 @@ row 0 of the master plays both verses together, row 1 both choruses, on the same
 
 ## Group Controls
 
-Under each group's chases:
+Under each group's chases are its masters. They change what the group sends, never what its cues
+hold, and they aren't saved: a show always opens with every knob at full and every button off.
 
-- the **activity meter** (five dots) shows how much the group is outputting;
-- the **dimmer** knob, **Isolate** and **Blackout** are saved with the show.
+| Control | What it does |
+| --- | --- |
+| **Dimmer** knob | Scales the group's playback: at half, every level its cues and chases send goes out at half. Other groups' cues on the same fixtures and your [programmer](#the-programmer) values aren't affected. Double-click it to put it back to full |
+| **Isolate** | Only isolated groups' playback is sent: every other group goes dark. Isolate several groups to keep them all. Turn the last one off to bring everyone back |
+| **Blackout** | Sends the group's playback dark at once, without moving its knob. Off, it comes back at once |
+| Activity dots | Light from the bottom with the highest level the group sends: bright up to what goes out, faint up to what its cues ask for. A group playing at full with its knob at 40 % shows one bright dot and four faint. Hover them to read the level |
 
-> **Note:** In this release, the group **dimmer** knob, **Isolate** and **Blackout** don't change
-> what the group outputs yet, and neither do the master column's knob and **Blackout**. Stop the
-> group's cues and chases to darken it ([Known limitations](/reference/limitations#programming)).
+Masters only touch levels: a fixture's dimmer, or its red, green, blue, white and amber when it has
+no dimmer (an RGB PAR). Shutters, strobes, colour wheels, CMY and positions go out as the cues set
+them. [Parked](#parking-a-channel) channels ignore every master.
+
+When something other than its own knob holds a group dark (its **Blackout**, another group
+isolated, or **DBO**), its knob turns grey: hover it to read why.
+
+### Grand Master and DBO
+
+At the bottom of the **Master** column:
+
+- the **grand master** knob scales everything Studio sends, after the group knobs, your programmer
+  values included: a group at half under a grand master at half goes out at a quarter;
+- **Blackout** (DBO, "dead blackout") sends every level dark at once, without moving the grand
+  master; only parked channels stay. Off, everything comes back at once.
+
+The Master column's dots show the whole rig. Double-click the grand master to put it back to full.
 
 ## Running a Show
 

@@ -15,6 +15,7 @@ The terms this manual uses, in alphabetical order.
 | **Clear** | Empties the [programmer](/programming/playback#the-programmer): the channels go back to what playback gives them, at once. Parked channels stay. |
 | **Cue** | Something a group does: a scene or an effect, kept in the group's cue pool. [Show structure](/concepts/#cue) |
 | **Cue item** | One entry on a chase's timeline: a cue, where it starts and how long it lasts. [Chases](/programming/chases#the-timeline) |
+| **DBO** | Dead blackout: the Master column's **Blackout**. Every level goes dark at once without moving the grand master; parked channels stay. [Grand Master and DBO](/programming/playback#grand-master-and-dbo) |
 | **DMX (DMX512)** | The standard language of stage lights: 512 values per universe, sent many times a second. [How Studio works](/introduction/overview) |
 | **Effect** | A cue that moves channels along a waveform between a minimum and a maximum, offset from fixture to fixture. [Effects](/programming/effects) |
 | **Fade** | How a cue moves into its values (**Fade in**) or out of them into what is underneath (**Fade out**), over its own time in bars, along its curve. [Scenes](/programming/scenes#fade-in-and-fade-out) |
@@ -23,8 +24,10 @@ The terms this manual uses, in alphabetical order.
 | **Gateway** | The small program that receives Studio's output and sends it to your lights (as Art-Net). Built into the desktop app; run on its own with the browser version. Studio connects to it, and reconnects on its own. [Outputs](/rig/outputs#_2-connect-studio-to-the-gateway) |
 | **GDTF** | General Device Type Format: the file format manufacturers use to describe their fixtures, with their channels, 3D models and gobos. [Fixture Library](/rig/fixtures#gdtf-fixtures) |
 | **Gobo** | A pattern placed in a beam to project a shape. The visualizer draws gobos on the floor and in the haze. [Visualizer](/interface/visualizer/#light-on-stage) |
+| **Grand master** | The Master column's knob: scales every level Studio sends, after the group knobs, programmer values included. Not saved. [Grand Master and DBO](/programming/playback#grand-master-and-dbo) |
 | **Group** | A set of fixtures programmed together. It owns its cues and chases, which only touch its fixtures. [Groups](/programming/groups) |
 | **Haze** | Fine smoke in the air that makes beams visible. The visualizer's **Density** sets how much. [Visualizer](/interface/visualizer/#haze) |
+| **Isolate** | A group button: while any group is isolated, only isolated groups' playback is sent. [Group Controls](/programming/playback#group-controls) |
 | **Kept** | A colour, aim or beam the fixtures keep as it was when its cue stopped, until another cue takes that family; NOW reads "kept:" and the cue, whose row keeps its fill where it stopped. [The Cue Pool](/programming/scenes#the-cue-pool) |
 | **Layer** | A cue **Mode**: the cue plays over the cue it takes over and gives it back when stopped, fading in from it and back into it. [What plays together](/concepts/timing#what-plays-together) |
 | **Master** | The column on the right of the group pool: row *n* starts or stops chase *n* of every group at once. [Playing a show](/programming/playback#master-rows) |

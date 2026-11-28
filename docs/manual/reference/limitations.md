@@ -16,7 +16,6 @@ it. The rest of the manual only describes what works. Found something else? Repo
 
 | What doesn't work | Workaround |
 | --- | --- |
-| The group pool's **dimmer** knob, **Isolate** and **Blackout**, and the master column's knob and **Blackout**, don't change the output | Stop a group's cues and chases to darken it; keep a dark scene to click |
 | In **Scene Fixtures**, <kbd>Ctrl</kbd>+click selecting several fixtures doesn't work in a group's first cue (the one selected when the group opens) | Set that cue's fixtures one at a time |
 | A cue made for **Intensity** doesn't dim fixtures with no dimmer channel (RGB-only PARs, pixel bars): their brightness is their colour | Use a **Colour** cue for them |
 | Opening a scene of a group whose fixtures aren't the show's first ones can log an error | The scene panel works anyway |
