@@ -83,6 +83,22 @@ export function familyOf(channel) {
 }
 
 /**
+ * What the masters scale on a channel (models/DMX/master.model.js): `'level'` for a dimmer or a
+ * brightness, `'colour'` for an additive colour channel, else null. A colour channel is only
+ * scaled on a fixture without a level channel (Fixture.setupFamilies decides)
+ *
+ * @param {Object} channel fixture channel (coarse)
+ * @returns {?String}
+ */
+export function scaleOf(channel) {
+  const attribute = channel && channel.attribute;
+  if (!attribute) return null;
+  if (/^(Dimmer|Intensity)\d*$|^(HSB|CIE)_Brightness$/.test(attribute)) return 'level';
+  if (/^Color(Add|RGB)_/.test(attribute)) return 'colour';
+  return null;
+}
+
+/**
  * The index of a family key, -1 for an unknown key
  *
  * @param {String} key family key

@@ -33,6 +33,13 @@ import { markRaw } from '../utils/reactivity';
 const MAX_DMX = 255;
 
 /**
+ * The master factor of a cue outside a group: never scaled
+ *
+ * @constant {Object} FULL
+ */
+const FULL = Object.freeze({ factor: 1 });
+
+/**
  * @class ClaimToken
  * @classdesc One play of a cue: its start order, its mode, the values it wrote last, the slots it
  * reaches and its fade state
@@ -49,6 +56,8 @@ class ClaimToken {
     this.cue = cue;
     // The family stacks of the cue's group (a cue outside a group gets its own)
     this.stage = cue.stage || [[], [], [], []];
+    // Its group's master factor (master.model.js), read when frames are packed
+    this.output = cue.output || FULL;
     this.stamp = stamp;
     this.layer = !!options.layer;
     this.temporary = !!options.temporary;

@@ -10,7 +10,7 @@
  *   --url    use a running dev server instead of starting one
  *   --only   run only these scenarios (repeatable): panels, playing, textscroll, select, resize,
  *            widgets, curves, repatch, position, scopes, fxfades, families, presets, memory,
- *            shared, highlight, deletes, keys, popups, programmer, outputs
+ *            shared, highlight, deletes, keys, popups, programmer, masters, outputs
  * Chrome: CHROME_PATH, else the usual install path for the system.
  */
 /* eslint-disable no-console -- a command-line report */
@@ -3770,15 +3770,15 @@ const SCENARIOS = {
       offered,
     );
 
-    // The master column keeps Isolate and Blackout like the groups; no HELD tile anywhere
+    // The master column has Blackout (DBO) and no Isolate (masters); no HELD tile anywhere
     const master = await ev(() => ({
       buttons: [...document.querySelectorAll('.group_pool .uikit_cue_container.master .uikit_button')]
         .map((e) => e.textContent.trim().toLowerCase()),
       held: document.querySelectorAll('.master_release').length,
     }));
     check(
-      'The master column has Isolate and Blackout as the groups do, and no tile shows HELD',
-      same(master.buttons, ['isolate', 'blackout']) && master.held === 0,
+      'The master column has Blackout (DBO) and no Isolate, and no tile shows HELD',
+      same(master.buttons, ['blackout']) && master.held === 0,
       master,
     );
     const errors = await ev(() => [...window.__check.errors, ...window.__appErrors]);
@@ -3974,6 +3974,262 @@ const SCENARIOS = {
       before.length === 1 && afterSwitch.length === 0,
       { before, after: afterSwitch },
     );
+  },
+
+  /** Group knobs, Isolate, Blackout, the grand master and DBO: what is sent, and what they show */
+  async masters(page) {
+    // A dimmerless RGB PAR and a 16-bit dimmer join group 0's Auras; the MAC 600 makes group 1.
+    // Scenes with fixed values, no fades: frames are exact
+    const setup = await page.evaluate(async () => {
+      const { show } = window.__check;
+      const library = '/src/models/fixtures/fixture.library.js';
+      const { default: FL } = await window.__check.module(library);
+      const u2 = show.universePool.universes[2];
+      const add = async (model, mode, chStart) => {
+        const profile = await FL.getProfile('ofl', 'generic', model);
+        const fixture = show.fixturePool.addRaw({
+          profile,
+          manufacturer: 'generic',
+          model,
+          name: model,
+          category: 'Color Changer',
+          mode,
+          universe: u2.id,
+          chStart,
+          position: { x: 0, y: 0, z: 0 },
+          rotation: { x: 0, y: 0, z: 0 },
+        });
+        u2.patchFixture(fixture);
+        return fixture;
+      };
+      const par = await add('rgb-fader', '8 bit', 0);
+      const deep = await add('drgb-fader', '16 bit Dimmer', 10);
+      const [g0, g1] = show.groupPool.groups;
+      g0.addFixture(par);
+      g0.addFixture(deep);
+      const first = g0.fixturePool.fixtures[0];
+      const head = show.fixturePool.fixtures
+        .find((f) => f.universe !== first.universe && f !== par && f !== deep);
+      g1.addFixture(head);
+      const aura = g0.fixturePool.fixtures[0];
+      const index = (f, re, fine = false) => f.channels
+        .findIndex((c) => re.test(c.attribute || c.type) && !!c.isFine === fine);
+      const shutter = index(aura, /^Shutter/);
+      const open = aura.channels[shutter].capabilities.find((c) => /open/i.test(c.label));
+      const scene = (g, name, family, writes) => {
+        const cue = g.addCue({ type: 0, name, family });
+        cue.fadeIn.duration = 0;
+        cue.fadeOut.duration = 0;
+        writes.forEach(([f, i, v]) => {
+          const value = cue.fixtureValues.find((fv) => fv.fixture === f || fv.fixture?.id === f.id);
+          value.writeEntry(i, v);
+        });
+        return cue;
+      };
+      const d = (f) => index(f, /^(Dimmer|Intensity)/);
+      // A fine channel is found through its coarse channel (it has no attribute of its own)
+      const df = (f) => f.channels.indexOf(f.channels[d(f)].fineChannels[0]);
+      const t = {
+        aura,
+        aura1: g0.fixturePool.fixtures[1],
+        par,
+        deep,
+        head,
+        shutter,
+        openValue: open ? open.range[0] : 0,
+      };
+      t.cues = [
+        scene(g0, 'Full', 'intensity', [
+          [aura, d(aura), 200], [aura, shutter, t.openValue], [deep, d(deep), 200],
+        ]),
+        scene(g0, 'Red', 'colour', [[par, index(par, /ColorAdd_R/), 255]]),
+        scene(g1, 'Head', 'intensity', [[head, d(head), 255]]),
+      ];
+      t.cues.forEach((c) => c.cue(true));
+      const universeOf = (f) => show.universePool.universes.find((u) => u.id === f.universe);
+      const addr = (f, i) => [universeOf(f), f.chStart + i];
+      t.read = () => {
+        const at = ([u, a]) => u.frame[a];
+        return {
+          aura: at(addr(aura, d(aura))),
+          aura1: at(addr(t.aura1, d(t.aura1))),
+          shutter: at(addr(aura, shutter)),
+          deep: at(addr(deep, d(deep))),
+          deepFine: at(addr(deep, df(deep))),
+          red: at(addr(par, index(par, /ColorAdd_R/))),
+          head: at(addr(head, d(head))),
+        };
+      };
+      window.__masters = t;
+      return {
+        open: t.openValue, deepFine: df(deep) >= 0, head: head.name, shutter: shutter >= 0,
+      };
+    });
+    await wait(800);
+    await page.evaluate(() => window.__check.show.persistLocally());
+    const frames = () => page.evaluate(() => window.__masters.read());
+    const set = (code) => page.evaluate(code);
+    const column = (n) => (n === 'master' ? '.group_pool .group_pool_master'
+      : `.group_pool .group_pool_groups > .uikit_cue_container:nth-child(${n + 1})`);
+    const look = (n) => page.evaluate((sel) => {
+      const c = document.querySelector(sel);
+      const dots = [...c.querySelectorAll('.uikit_vuemeter_dot')];
+      return {
+        sent: dots.filter((x) => x.classList.contains('sent')).length,
+        asked: dots.filter((x) => x.classList.contains('asked')).length,
+        output: dots[0]?.getAttribute('title'),
+        held: c.querySelector('.uikit_knob_wrapper')?.getAttribute('title') || '',
+        grey: /secondary-light\)/
+          .test(c.querySelector('.uikit_knob svg path:last-child')?.getAttribute('stroke') || ''),
+        isolate: c.querySelectorAll('.uikit_button').length,
+      };
+    }, column(n));
+    const toggle = (n, label) => click(page, `${column(n)} .uikit_button`, label);
+    const full = await frames();
+    check(
+      'scenes play as set: Dimmers 200 (a 16-bit one too), shutter open, a dimmerless PAR\'s red 255, group 1\'s head 255',
+      setup.deepFine && setup.shutter && full.aura === 200 && full.deep === 200
+        && full.deepFine === 0 && full.red === 255 && full.head === 255
+        && full.shutter === setup.open,
+      { setup, full },
+    );
+
+    // A group's knob scales its playback's levels only
+    await set(() => { window.__check.show.groupPool.groups[0].master = 128; });
+    await wait(SETTLE_MS);
+    const half = await frames();
+    check(
+      'group 0\'s knob at 128: its Dimmers at half (16-bit as one value), the PAR\'s red at half, the shutter and group 1 untouched',
+      half.aura === 100 && half.deep === 100 && half.deepFine === 100 && half.red === 128
+        && half.shutter === setup.open && half.head === 255,
+      half,
+    );
+
+    // The programmer ignores group knobs, follows the grand master
+    await set(async () => {
+      const { default: P } = await window.__check.module('/src/models/DMX/programmer.js');
+      window.__P = P;
+      const { aura } = window.__masters;
+      window.__check.show.groupPool.groups[0].master = 0;
+      const dimmer = aura.channels.findIndex((c) => c.attribute === 'Dimmer' && !c.isFine);
+      P.run([aura], (f) => f.setChannel(dimmer, 180));
+      // 16 bits: 200.5 in the programmer (200 and 128)
+      const { deep } = window.__masters;
+      const deepDimmer = deep.channels.findIndex((c) => c.attribute === 'Dimmer' && !c.isFine);
+      P.run([deep], (f) => f.setChannel(deepDimmer, 200 + 128 / 255));
+    });
+    await wait(SETTLE_MS);
+    const prog = (await frames()).aura;
+    await set(() => { window.__check.show.master.level = 128; });
+    await wait(SETTLE_MS);
+    const grandFrames = await frames();
+    const progGrand = grandFrames.aura;
+    // (200 + 128/255) x 128/255 = 100.64: 100 and 164
+    const deep16 = [grandFrames.deep, grandFrames.deepFine];
+    await set(() => {
+      window.__P.clear();
+      window.__check.show.master.level = 255;
+      window.__check.show.groupPool.groups[0].master = 255;
+    });
+    check(
+      'a programmer value ignores its group\'s knob at 0 (180 sent) and follows the grand master at 128 (90; a 16-bit 200/128 as one value: 100/164)',
+      prog === 180 && progGrand === 90 && deep16[0] === 100 && deep16[1] === 164,
+      { prog, progGrand, deep16 },
+    );
+
+    // Blackout: the group's levels at 0 at once, its knob grey and saying why
+    await toggle(0, 'blackout');
+    const cut = await frames();
+    const cutLook = await look(0);
+    await toggle(0, 'blackout');
+    const back = await frames();
+    check(
+      'group 0\'s Blackout cuts its levels at once (group 1 plays), greys its knob with the reason; off, they come back',
+      cut.aura === 0 && cut.deep === 0 && cut.red === 0 && cut.head === 255
+        && cut.shutter === setup.open && cutLook.grey && cutLook.held === 'Held back by its Blackout'
+        && back.aura === 200 && back.red === 255,
+      { cut, cutLook, back },
+    );
+
+    // Isolate: only isolated groups' playback is sent
+    await toggle(1, 'isolate');
+    const solo = await frames();
+    const soloLook = await look(0);
+    await toggle(0, 'isolate');
+    const both = await frames();
+    await toggle(0, 'isolate');
+    await toggle(1, 'isolate');
+    check(
+      'isolating group 1 sends group 0 dark (its knob grey, its dots faint); isolating both plays both',
+      solo.aura === 0 && solo.red === 0 && solo.head === 255 && soloLook.grey
+        && soloLook.held === 'Held back: another group is isolated'
+        && soloLook.sent === 0 && soloLook.asked === 5
+        && both.aura === 200 && both.head === 255,
+      { solo, soloLook, both },
+    );
+
+    // The grand master after the group knobs; DBO cuts everything but parked channels
+    await set(() => {
+      window.__check.show.master.level = 128;
+      window.__check.show.groupPool.groups[0].master = 128;
+    });
+    await wait(SETTLE_MS);
+    const grand = await frames();
+    await set(() => {
+      window.__check.show.master.level = 255;
+      window.__check.show.groupPool.groups[0].master = 255;
+      const { aura1 } = window.__masters;
+      aura1.park(aura1.channels.find((c) => c.attribute === 'Dimmer' && !c.isFine), 76);
+    });
+    await toggle('master', 'blackout');
+    const dbo = await frames();
+    const dboLook = await look('master');
+    const dboGroup = await look(1);
+    await toggle('master', 'blackout');
+    await set(() => {
+      const { aura1 } = window.__masters;
+      aura1.unpark(aura1.channels.find((c) => c.attribute === 'Dimmer' && !c.isFine));
+    });
+    check(
+      'grand master and group knob at 128: 200 sent at 50; DBO sends every level at 0 but a parked one (76), every knob saying why',
+      grand.aura === 50 && dbo.aura === 0 && dbo.head === 0 && dbo.red === 0 && dbo.aura1 === 76
+        && dboLook.held === 'Held back by DBO' && dboGroup.held === 'Held back by DBO',
+      {
+        grand, dbo, dboLook, dboGroup,
+      },
+    );
+    check('the master column has no Isolate', dboLook.isolate === 1, dboLook);
+
+    // The dots: bright up to what is sent, faint up to what the cues ask; double-click to full
+    await set(() => { window.__check.show.groupPool.groups[0].master = 40; });
+    await wait(SETTLE_MS);
+    const dim = await look(0);
+    const knob = await page.evaluate((sel) => {
+      const r = document.querySelector(`${sel} .uikit_knob`).getBoundingClientRect();
+      return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+    }, column(0));
+    await page.mouse.click(knob.x, knob.y, { clickCount: 1 });
+    await page.mouse.click(knob.x, knob.y, { clickCount: 2 });
+    await page.mouse.move(2, 2);
+    await wait(SETTLE_MS);
+    const reset = await page.evaluate(() => window.__check.show.groupPool.groups[0].master);
+    const lit = await look(0);
+    const idle = await look(2);
+    check(
+      'group 0 at 40: one bright dot, four faint, "Output 16%"; a double-click puts it back to full (five bright); an idle group shows none',
+      dim.sent === 1 && dim.asked === 4 && dim.output === 'Output 16%' && reset === 255
+        && lit.sent === 5 && lit.asked === 0 && idle.sent === 0 && idle.asked === 0,
+      {
+        dim, reset, lit, idle,
+      },
+    );
+
+    const saved = await page.evaluate(() => {
+      window.__check.show.refreshSaveState();
+      return window.__check.show.isSaved && !('master' in window.__check.show.groupPool.groups[0].showData);
+    });
+    check('none of the masters is saved or marks the show unsaved', saved);
+    await page.evaluate(() => window.__masters.cues.forEach((c) => c.cue(false)));
   },
 
   /** The programmer above cues, Clear, Park, and what each channel shows of its source */

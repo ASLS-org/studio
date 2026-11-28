@@ -20,10 +20,12 @@ const CUE_TYPES = {
 class CuePool {
   /**
    * @param {Array<Array>} [stage] the family stacks of the pool's group (claims.js)
+   * @param {Object} [output] the group's master factor `{ factor }` (master.model.js)
    */
-  constructor(stage = null) {
+  constructor(stage = null, output = null) {
     this.cues = [];
     this.stage = stage;
+    this.output = output;
   }
 
   /**
@@ -60,6 +62,7 @@ class CuePool {
    */
   addExisting(cue) {
     toRaw(cue).stage = this.stage;
+    toRaw(cue).output = this.output;
     this.cues.push(cue);
   }
 
@@ -86,6 +89,7 @@ class CuePool {
     }
     cue.id = cueData.id !== undefined ? cueData.id : this.genCueId();
     cue.stage = this.stage;
+    cue.output = this.output;
     return cue;
   }
 

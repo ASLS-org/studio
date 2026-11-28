@@ -2,7 +2,7 @@ import { markRaw } from '../utils/reactivity';
 import Channel from './channel.model';
 import Claims from './claims';
 import Programmer from './programmer';
-import { familyOf } from './families';
+import { familyOf, scaleOf } from './families';
 import { PROFILE_SOURCES, resolveModeName } from '../fixtures/fixture.profile';
 import modeCells from '../fixtures/fixture.cells';
 import {
@@ -854,6 +854,28 @@ class Fixture {
       channel.slot = slots[channel.family];
     });
     this.slots = markRaw(slots);
+    this.setupScales();
+  }
+
+  /**
+   * Marks what the masters scale (models/DMX/master.model.js): level channels, else on a fixture
+   * without one its additive colour channels; fine channels follow their coarse channel
+   *
+   * @public
+   */
+  setupScales() {
+    const coarse = this.channels.filter((channel) => !channel.isFine);
+    const scales = coarse.map((channel) => scaleOf(channel));
+    const dimmed = scales.includes('level');
+    this.channels.forEach((channel) => { channel.scale = null; channel.coarse = null; });
+    coarse.forEach((channel, i) => {
+      const scale = scales[i];
+      channel.scale = scale === 'level' || (scale === 'colour' && !dimmed) ? scale : null;
+      channel.fineChannels.forEach((fine) => {
+        fine.coarse = channel;
+        fine.scale = channel.scale;
+      });
+    });
   }
 
   /**

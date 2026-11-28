@@ -56,9 +56,10 @@ class Show extends EventEmitter {
     this.fixturePool = new FixturePool();
     this.universePool = new UniversePool();
     this.groupPool = new GroupPool();
-    this.master = new Master(this.groupPool);
+    this.master = new Master(this.groupPool, this.fixturePool);
     this.outputPool = new OutputPool();
     this.universePool.sink = this.outputPool;
+    this.universePool.master = this.master;
     this.running = false;
     this.slave = false;
     this.selectedOutputs = [];

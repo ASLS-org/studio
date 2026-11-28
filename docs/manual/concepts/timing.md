@@ -74,6 +74,9 @@ the cue started last.
 - **Above every cue:** what you set by hand in the universe view (the
   [programmer](/programming/playback#the-programmer)), and above that,
   [parked](/programming/playback#parking-a-channel) channels.
+- **Then the masters:** each group's knob, **Isolate** and **Blackout** scale what its cues send,
+  and the grand master and DBO scale everything, on the way out. They never change what the cues
+  hold ([Group Controls](/programming/playback#group-controls)).
 - **The cue started last wins** its family; there is no priority. To keep a cue on top of a
   running chase, hold it as a flash.
 - **Flashes.** A **Temporary** cue covers what it reaches while you hold it, then hands it back; it

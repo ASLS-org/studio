@@ -181,6 +181,8 @@ export default {
   disabled look with the label not dimmed, like read-only text and selects); `relative` is for a
   field standing for several values: a `null` value shows the `placeholder` (`--`), and the arrows
   and arrow keys emit `step` (±1 precision unit) instead of changing the value (Position Tool).
+- **Knobs** (`uk-knob`): opt-in `reset` (a value) makes a double-click set it (the group pool's
+  masters reset to full); without it the old double-click only emits `input` 0.
 - **Locked controls**: `uk-fader` and `uk-num-input` take `locked` (no input, colour kept; the
   universe view's parked channels). `disabled` greys them out instead.
 - **Widget header actions**: `uk-widget`'s `actions` (array of `action`-like items plus

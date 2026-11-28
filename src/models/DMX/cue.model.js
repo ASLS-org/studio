@@ -100,6 +100,8 @@ class Cue {
       this.heldFamilies = noFamilies();
       // The family stacks of its group (runtime, set by its cue pool)
       this.stage = null;
+      // Its group's master factor (CuePool), runtime
+      this.output = null;
       this.animationId = null;
       this.deltaStart = null;
       this.time = 0;

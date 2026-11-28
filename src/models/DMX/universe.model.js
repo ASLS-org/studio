@@ -1,6 +1,7 @@
 import ukColors from '@/views/components/uikit/colors/uikit.colors';
 import FixturePool from './fixture.pool.model';
 import EventBus from '../../plugins/eventbus';
+import { scaledLevel } from './master.model';
 
 /**
  * DMX512 universe length
@@ -8,6 +9,7 @@ import EventBus from '../../plugins/eventbus';
  * @constant {Number} DMX_UNIVERSE_LENGTH
  */
 const DMX_UNIVERSE_LENGTH = 512;
+
 /**
  * Minimum universe ID
  *
@@ -163,13 +165,16 @@ class Universe {
   }
 
   /**
-   * Copies the patched fixtures' output values (parked, programmer, playback) into the frame
+   * Copies the patched fixtures' output values (parked, programmer, playback) into the frame,
+   * levels scaled by the masters
    *
    * @public
+   * @param {Master} [master] the show's master (raw), its factors computed for this tick
    * @returns {Uint8Array} The universe frame
    */
-  packFrame() {
+  packFrame(master = null) {
     const frame = this._dmxBuffer;
+    const grand = master ? master.grand : 1;
     for (let i = 0; i < DMX_UNIVERSE_LENGTH; i++) {
       const address = this._addressMap[i];
       const fixture = address === undefined ? undefined : this._patch[address];
@@ -181,6 +186,10 @@ class Universe {
         let value = source.value.DMX;
         if (source.parked !== null) value = source.parked;
         else if (source.programmed !== null) value = source.programmed;
+        // Levels as the masters let them through (master.model.js)
+        if (source.scale !== null && source.parked === null) {
+          value = scaledLevel(source, value, grand);
+        }
         frame[i] = channel.outputInvert ? 255 - value : value;
       } else {
         frame[i] = 0;
