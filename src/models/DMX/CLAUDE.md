@@ -16,7 +16,7 @@ Show (show.model.js, singleton via singletons/show.singleton.js)
 │                │            Scene: per-fixture channel values + Fade (Bézier in/out)
 │                │            Effect: EffectPreset waves (sine/triangle/square), phase, spread
 │                └─ chasePool ChasePool → Chase → CueItemPool → CueItem (bar-grid timeline)
-├─ master       Master: triggers chase "rows" (same chase id) across all groups
+├─ master       Master: chase "rows" across all groups; grand master, DBO, group factors
 ├─ outputPool   OutputPool → WscGateway (plugins/wsc.connection.js) + DmxRoute (route.model.js)
 └─ Live         live.model.js: singleton clock, BPM, tap tempo, animation pool
 ```
@@ -76,8 +76,16 @@ Enums live next to their model and are exported: `CUE_TYPES`, `CUE_STATES`,
   `Programmer.writing`, `Fixture.setChannel` stores into `programmed` (checked before
   `Claims.writer`). Park is `Fixture.park` / `unpark`, saved as `showData.parked` (index → value);
   the programmer is never saved and `Programmer.reset()` runs on show clear. The UI reads
-  `Programmer.state` (reactive id lists), not the channels. Unit 4's masters and blackout must
-  scale the merged value before the parked check.
+  `Programmer.state` (reactive id lists), not the channels.
+- **Masters (master.model.js):** applied in `Universe.packFrame` too, never written to channels
+  (they'd leak into fades, kept values and the rest). `Master.prepare()` runs once per tick
+  (`UniversePool.processFrame`) and sets each group's raw `output.factor` (knob, Blackout,
+  Isolate) and `grand` (grand master, DBO). Cues reach their group's factor as `cue.output`
+  (`CuePool`), tokens as `token.output`. `scaledLevel` scales a channel marked `scale`
+  (`Fixture.setupScales`: `'level'` dimmers, else additive colour on a dimmerless fixture;
+  shutters never) by its slot's group (blended while fading) × grand, the programmer by grand
+  only, 16-bit pairs as one value; parked channels skip it. Masters are runtime only (never in
+  `showData`).
 - **Frames:** `Live.onFrame(fn)` callbacks run after the animations on every tick, also while
   paused or stopped. `UniversePool` uses one to pack each universe's persistent `frame`
   (`Uint8Array(512)`) and hand it to `UniversePool.sink` (the output pool, raw), which sends it on
