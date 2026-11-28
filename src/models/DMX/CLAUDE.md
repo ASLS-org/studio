@@ -123,6 +123,9 @@ Enums live next to their model and are exported: `CUE_TYPES`, `CUE_STATES`,
     `rested` slot is taken, so a kept value never becomes the rest.
   - **No direct writes.** Writes with no writer (scene editing, loading) go straight to the
     channel; the universe view writes into the programmer, so hand values never become the rest.
+  - **16 bits.** `Claims.write` drops writes to fine channels: a 16-bit value arrives as one
+    fractional value on the coarse channel (effects, the programmer, `Scene.update` with
+    `coarse + fine / 255` via `FixtureValue` entries' runtime `fine` link).
   - **Programming is blind.** A click on a cue only opens it; only `cue()` and chase items play.
     There is no preview token and no raise.
   - **One family per cue.** `Cue.family` (saved key, one of `FAMILY_KEYS`) is its cue pool column.

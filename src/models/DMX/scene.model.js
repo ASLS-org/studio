@@ -5,6 +5,13 @@ import {
 } from './cell.access';
 
 /**
+ * A fine byte's full scale: a 16-bit channel's value is coarse + fine / MAX_FINE
+ *
+ * @constant {Number} MAX_FINE
+ */
+const MAX_FINE = 255;
+
+/**
  * Deep-clones the {type: [channel, ...]} accessor map without going through
  * JSON.stringify/JSON.parse. The JSON round trip was serializing every
  * channel object to a string and re-parsing it just to get a structurally
@@ -92,6 +99,8 @@ class FixtureValue {
       }
     }
 
+    this.linkFineChannels();
+
     if (!channelValues.length) {
       for (let i = 0; i < this._channels.length; i++) {
         const channel = this._channels[i];
@@ -103,6 +112,29 @@ class FixtureValue {
       for (let i = 0; i < channelValues.length; i++) {
         this.setQuickAccessor(channelValues[i]);
       }
+    }
+  }
+
+  /**
+   * Links each entry of a 16-bit channel to its fine channel's entry (`fine`), and marks fine
+   * entries (`isFine`): a playing scene sends both as one value. Runtime only, not enumerable, so
+   * never saved
+   *
+   * @private
+   */
+  linkFineChannels() {
+    const entries = this._channels;
+    const { channels } = this.fixture;
+    if (!channels || !channels.length) return;
+    for (let i = 0; i < entries.length; i++) {
+      const entry = entries[i];
+      const channel = channels[entry.id - 1];
+      const fineChannel = channel && channel.fineChannels[0];
+      const fine = fineChannel ? entries.find((e) => e.id === fineChannel.id) || null : null;
+      Object.defineProperty(entry, 'fine', { value: fine, writable: true, enumerable: false });
+      Object.defineProperty(entry, 'isFine', {
+        value: !!(channel && channel.isFine), writable: true, enumerable: false,
+      });
     }
   }
 
@@ -596,11 +628,13 @@ class Scene extends Cue {
           continue;
         }
 
-        const { value } = channelValue;
+        const { value, fine } = channelValue;
 
-        // This condition patches fine channels not updating automatically.
+        // A 16-bit channel goes out as one value, its fine byte as the fraction (the merge writes
+        // both); the fine entry itself isn't sent
         if (!channelValue.isFine) {
-          fixture.setQuickAccessor(channelValue, value);
+          const sent = fine && fine.active ? value + fine.value / MAX_FINE : value;
+          fixture.setQuickAccessor(channelValue, sent);
         }
 
         activity += value;

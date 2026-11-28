@@ -4040,7 +4040,8 @@ const SCENARIOS = {
       };
       t.cues = [
         scene(g0, 'Full', 'intensity', [
-          [aura, d(aura), 200], [aura, shutter, t.openValue], [deep, d(deep), 200],
+          [aura, d(aura), 200], [aura, shutter, t.openValue],
+          [deep, d(deep), 200], [deep, df(deep), 128],
         ]),
         scene(g0, 'Red', 'colour', [[par, index(par, /ColorAdd_R/), 255]]),
         scene(g1, 'Head', 'intensity', [[head, d(head), 255]]),
@@ -4087,9 +4088,9 @@ const SCENARIOS = {
     const toggle = (n, label) => click(page, `${column(n)} .uikit_button`, label);
     const full = await frames();
     check(
-      'scenes play as set: Dimmers 200 (a 16-bit one too), shutter open, a dimmerless PAR\'s red 255, group 1\'s head 255',
+      'scenes play as set: Dimmers 200 (a 16-bit one 200/128), shutter open, a dimmerless PAR\'s red 255, group 1\'s head 255',
       setup.deepFine && setup.shutter && full.aura === 200 && full.deep === 200
-        && full.deepFine === 0 && full.red === 255 && full.head === 255
+        && full.deepFine === 128 && full.red === 255 && full.head === 255
         && full.shutter === setup.open,
       { setup, full },
     );
@@ -4100,7 +4101,7 @@ const SCENARIOS = {
     const half = await frames();
     check(
       'group 0\'s knob at 128: its Dimmers at half (16-bit as one value), the PAR\'s red at half, the shutter and group 1 untouched',
-      half.aura === 100 && half.deep === 100 && half.deepFine === 100 && half.red === 128
+      half.aura === 100 && half.deep === 100 && half.deepFine === 164 && half.red === 128
         && half.shutter === setup.open && half.head === 255,
       half,
     );
